@@ -1,6 +1,4 @@
-from glob import glob
 from setuptools import setup, find_packages
-
 
 setup(
     name="Monitoring Agent",
@@ -11,6 +9,5 @@ setup(
             'monagent = monagent.agent:main'
         ],
     },
-    scripts=glob('bin/*'),
     test_suite='tests'
 )
