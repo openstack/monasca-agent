@@ -1,7 +1,7 @@
 Source: mon-agent
 Section: python
 Priority: optional
-Maintainer: Gary Hessler, <gary.hessler@hp.com>
+Maintainer: HP Cloud Monitoring <hpcs-mon@hp.com>
 Build-Depends: debhelper (>= 7),
                python (>= 2.6.6-3~),
                python-setuptools
@@ -12,6 +12,5 @@ Package:mon-agent
 Architecture: all
 Section: python
 Depends: ${misc:Depends}, ${python:Depends}, python-memcached, pyyaml, simplejson, psutil, pylint
-
 Description: Monitoring Agent
   Used to send metrics from the host system to a centralized collection point
