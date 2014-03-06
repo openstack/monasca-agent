@@ -20,11 +20,10 @@
 # IN THE SOFTWARE.
 
 import datetime
-import re
-
-from monagent.checks.libs.boto.sdb.db.key import Key
+from key import Key
 from boto.utils import Password
 from boto.sdb.db.query import Query
+import re
 import boto
 import boto.s3.key
 from boto.sdb.db.blob import Blob

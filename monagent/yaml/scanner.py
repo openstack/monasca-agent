@@ -26,8 +26,8 @@
 
 __all__ = ['Scanner', 'ScannerError']
 
-from monagent.yaml.error import MarkedYAMLError
-from monagent.yaml.tokens import *
+from error import MarkedYAMLError
+from tokens import *
 
 class ScannerError(MarkedYAMLError):
     pass

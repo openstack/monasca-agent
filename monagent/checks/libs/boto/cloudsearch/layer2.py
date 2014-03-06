@@ -22,8 +22,8 @@
 # IN THE SOFTWARE.
 #
 
-from .monagent.checks.libs.boto.cloudsearch.layer1 import Layer1
-from .monagent.checks.libs.boto.cloudsearch.domain import Domain
+from .layer1 import Layer1
+from .domain import Domain
 
 
 class Layer2(object):

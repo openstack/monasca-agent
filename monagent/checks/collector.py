@@ -1,11 +1,18 @@
 # Core modules
+import os
+import re
 import logging
+import subprocess
 import sys
 import time
+import datetime
 import socket
 
 import modules
+
+from util import get_os, get_uuid, md5, Timer, get_hostname, EC2
 from config import get_version, get_system_stats
+
 import checks.system.unix as u
 import checks.system.win32 as w32
 from checks.agent_metrics import CollectorMetrics
@@ -13,7 +20,7 @@ from checks.ganglia import Ganglia
 from checks.nagios import Nagios
 from checks.datadog import Dogstreams, DdForwarder
 from checks.check_status import CheckStatus, CollectorStatus, EmitterStatus
-from monagent.resources.processes import Processes as ResProcesses
+from resources.processes import Processes as ResProcesses
 
 
 log = logging.getLogger(__name__)

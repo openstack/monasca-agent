@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-from monagent.checks.libs.boto.cloudformation.connection import CloudFormationConnection
+from connection import CloudFormationConnection
 from boto.regioninfo import RegionInfo
 
 RegionData = {

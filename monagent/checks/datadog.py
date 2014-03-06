@@ -1,3 +1,5 @@
+from checks.utils import TailFile
+import modules
 import os
 import sys
 import traceback
@@ -6,10 +8,7 @@ import time
 from datetime import datetime
 from itertools import groupby # >= python 2.4
 
-from checks.utils import TailFile
 from checks import LaconicFilter
-from monagent import modules
-
 
 if hasattr('some string', 'partition'):
     def partition(s, sep):

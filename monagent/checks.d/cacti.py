@@ -1,9 +1,9 @@
+from checks import AgentCheck
+
 from fnmatch import fnmatch
 import os
 import time
-
-from checks import AgentCheck
-from monagent.util import namedtuple
+from util import namedtuple
 
 CFUNC_TO_AGGR = {
     'AVERAGE': 'avg',

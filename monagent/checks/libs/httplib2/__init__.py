@@ -1,6 +1,4 @@
 from __future__ import generators
-from monagent.checks.libs.httplib2 import iri2uri, socks
-
 """
 httplib2
 
@@ -60,7 +58,8 @@ import socket
 try:
     from httplib2 import socks
 except ImportError:
-    try: \
+    try:
+        import socks
     except ImportError:
         socks = None
 
@@ -92,7 +91,8 @@ except (AttributeError, ImportError):
         return httplib.FakeSocket(sock, ssl_sock)
 
 
-if sys.version_info >= (2,3): \
+if sys.version_info >= (2,3):
+    from iri2uri import iri2uri
 else:
     def iri2uri(uri):
         return uri

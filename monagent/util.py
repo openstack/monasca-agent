@@ -46,14 +46,18 @@ except ImportError:
     except ImportError:
         json = generate_minjson_adapter()
 
+
+
+import yaml
 try:
-    from monagent.yaml import CLoader as yLoader
+    from yaml import CLoader as yLoader
 except ImportError:
-    from monagent.yaml import Loader as yLoader
+    from yaml import Loader as yLoader
 
 try:
     from collections import namedtuple
 except ImportError:
+    from compat.namedtuple import namedtuple
 
 import logging
 log = logging.getLogger(__name__)
@@ -177,7 +181,7 @@ def get_hostname(config=None):
 
     # first, try the config
     if config is None:
-        from monagent.config import get_config
+        from config import get_config
         config = get_config(parse_args=True)
     config_hostname = config.get('hostname')
     if config_hostname and is_valid_hostname(config_hostname):
@@ -241,7 +245,7 @@ class EC2(object):
         try:
             iam_role = urllib2.urlopen(EC2.URL + "/iam/security-credentials").read().strip()
             iam_params = json.loads(urllib2.urlopen(EC2.URL + "/iam/security-credentials" + "/" + unicode(iam_role)).read().strip())
-            from monagent.checks.libs.boto.ec2.connection import EC2Connection
+            from checks.libs.boto.ec2.connection import EC2Connection
             connection = EC2Connection(aws_access_key_id=iam_params['AccessKeyId'], aws_secret_access_key=iam_params['SecretAccessKey'], security_token=iam_params['Token'])
             instance_object = connection.get_only_instances([EC2.metadata['instance-id']])[0]
 

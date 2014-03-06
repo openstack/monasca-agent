@@ -28,7 +28,7 @@ import boto.glacier
 from boto.compat import json
 from boto.connection import AWSAuthConnection
 from .exceptions import UnexpectedHTTPResponseError
-from .monagent.checks.libs.boto.glacier.response import GlacierResponse
+from .response import GlacierResponse
 from .utils import ResettingFileSender
 
 

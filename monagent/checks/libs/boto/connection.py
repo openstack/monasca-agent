@@ -48,6 +48,7 @@ import base64
 import errno
 import httplib
 import os
+import Queue
 import random
 import re
 import socket
@@ -59,17 +60,19 @@ import xml.sax
 import copy
 
 import auth
+import auth_handler
 import boto
 import boto.utils
 import boto.handler
 import boto.cacerts
+
 from boto import config, UserAgent
+from boto.exception import AWSConnectionError
 from boto.exception import BotoClientError
 from boto.exception import BotoServerError
 from boto.exception import PleaseRetryException
 from boto.provider import Provider
 from boto.resultset import ResultSet
-
 
 HAVE_HTTPS_CONNECTION = False
 try:

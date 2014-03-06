@@ -1,8 +1,7 @@
 import urllib2
+from util import json, headers
 
-from monagent.util import json, headers
 from checks import AgentCheck
-
 
 class CouchDb(AgentCheck):
     """Extracts stats from CouchDB via its REST API

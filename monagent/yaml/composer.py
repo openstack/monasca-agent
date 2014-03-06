@@ -1,9 +1,9 @@
 
 __all__ = ['Composer', 'ComposerError']
 
-from monagent.yaml.error import MarkedYAMLError
-from monagent.yaml.events import *
-from monagent.yaml.nodes import *
+from error import MarkedYAMLError
+from events import *
+from nodes import *
 
 class ComposerError(MarkedYAMLError):
     pass

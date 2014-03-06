@@ -1,10 +1,10 @@
 
 __all__ = ['BaseDumper', 'SafeDumper', 'Dumper']
 
-from monagent.yaml.emitter import *
-from monagent.yaml.serializer import *
-from monagent.yaml.representer import *
-from monagent.yaml.resolver import *
+from emitter import *
+from serializer import *
+from representer import *
+from resolver import *
 
 class BaseDumper(Emitter, Serializer, BaseRepresenter, BaseResolver):
 

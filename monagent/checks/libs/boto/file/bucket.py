@@ -23,11 +23,9 @@
 # File representation of bucket, for use with "file://" URIs.
 
 import os
-
-from monagent.checks.libs.boto.file.key import Key
+from key import Key
 from boto.file.simpleresultset import SimpleResultSet
 from boto.s3.bucketlistresultset import BucketListResultSet
-
 
 class Bucket(object):
     def __init__(self, name, contained_key):

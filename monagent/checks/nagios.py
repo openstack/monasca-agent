@@ -1,9 +1,7 @@
 import time
 import re
-
-from monagent.util import namedtuple, get_hostname
+from util import namedtuple, get_hostname
 from utils import TailFile
-
 
 # Event types we know about but decide to ignore in the parser
 IGNORE_EVENT_TYPES = []
@@ -152,6 +150,8 @@ class Nagios(object):
 
 def parse_log(api_key, log_file):
     import logging
+    import socket
+    import sys
 
     logger = logging.getLogger("ddagent.checks.nagios")
     nagios = Nagios(get_hostname())
@@ -162,6 +162,7 @@ def parse_log(api_key, log_file):
 
 if __name__ == "__main__":
     import logging
+    import socket
 
     logger = logging.getLogger("ddagent.checks.nagios")
     nagios = Nagios(get_hostname())

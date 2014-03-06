@@ -17,10 +17,9 @@
 
 __all__ = ['Reader', 'ReaderError']
 
-import codecs
-import re
+from error import YAMLError, Mark
 
-from monagent.yaml.error import YAMLError, Mark
+import codecs, re
 
 # Unfortunately, codec functions in Python 2.3 does not support the `finish`
 # arguments, so we have to write our own wrappers.

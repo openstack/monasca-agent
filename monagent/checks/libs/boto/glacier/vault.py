@@ -22,13 +22,12 @@
 # IN THE SOFTWARE.
 #
 from __future__ import with_statement
-import os.path
-
 from .exceptions import UploadArchiveError
 from .job import Job
 from .writer import compute_hashes_from_fileobj, resume_file_upload, Writer
-from .monagent.checks.libs.boto.glacier.concurrent import ConcurrentUploader
+from .concurrent import ConcurrentUploader
 from .utils import minimum_part_size, DEFAULT_PART_SIZE
+import os.path
 
 
 _MEGABYTE = 1024 * 1024

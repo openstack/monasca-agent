@@ -2,18 +2,17 @@
 __all__ = ['BaseRepresenter', 'SafeRepresenter', 'Representer',
     'RepresenterError']
 
-import datetime
-
-from monagent.yaml.error import *
+from error import *
 from nodes import *
 
+import datetime
 
 try:
     set
 except NameError:
     from sets import Set as set
 
-import copy_reg, types
+import sys, copy_reg, types
 
 class RepresenterError(YAMLError):
     pass

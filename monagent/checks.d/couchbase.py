@@ -1,10 +1,9 @@
 import urllib2
 import re
+from util import json, headers
 
-from monagent.util import json, headers
 from checks import AgentCheck
 from checks.utils import add_basic_auth
-
 
 #Constants
 COUCHBASE_STATS_PATH = '/pools/nodes'

@@ -6,17 +6,17 @@ The Check class is being deprecated so don't write new checks with it.
 
 import logging
 import re
+import socket
 import time
 import types
 import os
+import sys
 import traceback
 from pprint import pprint
 
 from util import LaconicFilter, get_os, get_hostname
 from config import get_confd_path
-from monagent import yaml
-from monagent.checks import check_status
-
+from checks import check_status
 
 log = logging.getLogger(__name__)
 
@@ -120,7 +120,7 @@ class Check(object):
     def save_sample(self, metric, value, timestamp=None, tags=None, hostname=None, device_name=None):
         """Save a simple sample, evict old values if needed
         """
-        from monagent.util import cast_metric_val
+        from util import cast_metric_val
 
         if timestamp is None:
             timestamp = time.time()
@@ -271,7 +271,7 @@ class AgentCheck(object):
         :param agentConfig: The global configuration for the agent
         :param instances: A list of configuration objects for each instance.
         """
-        from monagent.aggregator import MetricsAggregator
+        from aggregator import MetricsAggregator
 
 
         self.name = name
@@ -496,7 +496,7 @@ class AgentCheck(object):
         """
         A method used for testing your check without running the agent.
         """
-        from monagent.util import yLoader
+        from util import yaml, yLoader
         if path_to_yaml:
             check_name = os.path.basename(path_to_yaml).split('.')[0]
             try:

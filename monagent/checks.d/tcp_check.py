@@ -1,8 +1,6 @@
+from checks.services_checks import ServicesCheck, Status, EventType
 import socket
 import time
-
-from monagent.checks.services_checks import ServicesCheck, Status, EventType
-
 
 class BadConfException(Exception): pass
 

@@ -24,7 +24,7 @@ from __future__ import with_statement
 import math
 import socket
 
-from .monagent.checks.libs.boto.glacier.exceptions import TreeHashDoesNotMatchError, DownloadArchiveError
+from .exceptions import TreeHashDoesNotMatchError, DownloadArchiveError
 from .utils import tree_hash_from_str
 
 

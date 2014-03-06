@@ -1,11 +1,10 @@
 import os
 import urlparse
-
 import boto
 import boto.connection
 import boto.jsonresponse
 import boto.exception
-
+import awsqueryrequest
 
 class NoCredentialsError(boto.exception.BotoClientError):
 

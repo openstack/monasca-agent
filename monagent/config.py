@@ -17,13 +17,12 @@ from optparse import OptionParser, Values
 from cStringIO import StringIO
 
 # project
-from monagent import yaml
-from monagent.util import get_os, yLoader, Platform
-from monagent.jmxfetch import JMXFetch
-from monagent.migration import migrate_old_style_configuration
+from util import get_os, yLoader, Platform
+from jmxfetch import JMXFetch
+from migration import migrate_old_style_configuration
 
 # CONSTANTS
-DATADOG_CONF = "datadog.conf"
+AGENT_CONF = "agent.conf"
 DEFAULT_CHECK_FREQUENCY = 15   # seconds
 DEFAULT_STATSD_FREQUENCY = 10  # seconds
 PUP_STATSD_FREQUENCY = 2       # seconds
@@ -92,7 +91,7 @@ def _windows_commondata_path():
 
 def _windows_config_path():
     common_data = _windows_commondata_path()
-    path = os.path.join(common_data, 'Datadog', DATADOG_CONF)
+    path = os.path.join(common_data, 'mon-agent', AGENT_CONF)
     if os.path.exists(path):
         return path
     raise PathNotFound(path)
@@ -100,7 +99,7 @@ def _windows_config_path():
 
 def _windows_confd_path():
     common_data = _windows_commondata_path()
-    path = os.path.join(common_data, 'Datadog', 'conf.d')
+    path = os.path.join(common_data, 'mon-agent', 'conf.d')
     if os.path.exists(path):
         return path
     raise PathNotFound(path)
@@ -114,7 +113,7 @@ def _windows_checksd_path():
     else:
 
         cur_path = os.path.dirname(__file__)
-        checksd_path = os.path.join(cur_path, 'monagent/checks.d')
+        checksd_path = os.path.join(cur_path, 'mon-agent/checks.d')
 
     if os.path.exists(checksd_path):
         return checksd_path
@@ -122,14 +121,14 @@ def _windows_checksd_path():
 
 
 def _unix_config_path():
-    path = os.path.join('/etc/dd-agent', DATADOG_CONF)
+    path = os.path.join('/etc/mon-agent', AGENT_CONF)
     if os.path.exists(path):
         return path
     raise PathNotFound(path)
 
 
 def _unix_confd_path():
-    path = os.path.join('/etc/dd-agent', 'conf.d')
+    path = os.path.join('/etc/mon-agent', 'conf.d')
     if os.path.exists(path):
         return path
     raise PathNotFound(path)
@@ -139,7 +138,7 @@ def _unix_checksd_path():
     # Unix only will look up based on the current directory
     # because checks.d will hang with the other python modules
     cur_path = os.path.dirname(os.path.realpath(__file__))
-    checksd_path = os.path.join(cur_path, 'monagent/checks.d')
+    checksd_path = os.path.join(cur_path, 'checks.d')
 
     if os.path.exists(checksd_path):
         return checksd_path
@@ -176,8 +175,8 @@ def get_config_path(cfg_path=None, os_name=None):
     # Check if there's a config stored in the current agent directory
     path = os.path.realpath(__file__)
     path = os.path.dirname(path)
-    if os.path.exists(os.path.join(path, DATADOG_CONF)):
-        return os.path.join(path, DATADOG_CONF)
+    if os.path.exists(os.path.join(path, AGENT_CONF)):
+        return os.path.join(path, AGENT_CONF)
 
     # If all searches fail, exit the agent with an error
     sys.stderr.write("Please supply a configuration file at %s or in the directory where the Agent is currently deployed.\n" % bad_path)
@@ -253,7 +252,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         elif get_os() == 'windows':
             # default windows location
             common_path = _windows_commondata_path()
-            agentConfig['additional_checksd'] = os.path.join(common_path, 'Datadog', 'checks.d')
+            agentConfig['additional_checksd'] = os.path.join(common_path, 'mon-agent', 'checks.d')
 
         # Whether also to send to Pup
         if config.has_option('Main', 'use_pup'):
@@ -281,7 +280,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
             dogstatsd_interval = PUP_STATSD_FREQUENCY
 
         if not agentConfig['use_dd'] and not agentConfig['use_pup']:
-            sys.stderr.write("Please specify at least one endpoint to send metrics to. This can be done in datadog.conf.")
+            sys.stderr.write("Please specify at least one endpoint to send metrics to. This can be done in agent.conf.")
             exit(2)
 
         # Which API key to use
@@ -631,7 +630,7 @@ def load_check_directory(agentConfig):
     ''' Return the initialized checks from checks.d, and a mapping of checks that failed to
     initialize. Only checks that have a configuration
     file in conf.d will be returned. '''
-    from monagent.checks import AgentCheck
+    from checks import AgentCheck
 
     initialized_checks = {}
     init_failed_checks = {}
@@ -713,7 +712,7 @@ def load_check_directory(agentConfig):
             if not check_config:
                 continue
             d = [
-                "Configuring %s in datadog.conf is deprecated." % (check_name),
+                "Configuring %s in agent.conf is deprecated." % (check_name),
                 "Please use conf.d. In a future release, support for the",
                 "old style of configuration will be dropped.",
             ]
@@ -790,19 +789,19 @@ def get_logging_config(cfg_path=None):
     if system_os != 'windows':
         logging_config = {
             'log_level': None,
-            'collector_log_file': '/var/log/datadog/collector.log',
-            'forwarder_log_file': '/var/log/datadog/forwarder.log',
-            'dogstatsd_log_file': '/var/log/datadog/dogstatsd.log',
-            'pup_log_file': '/var/log/datadog/pup.log',
-            'jmxfetch_log_file': '/var/log/datadog/jmxfetch.log',
+            'collector_log_file': '/var/log/mon-agent/collector.log',
+            'forwarder_log_file': '/var/log/mon-agent/forwarder.log',
+            'dogstatsd_log_file': '/var/log/mon-agent/dogstatsd.log',
+            'pup_log_file': '/var/log/mon-agent/pup.log',
+            'jmxfetch_log_file': '/var/log/mon-agent/jmxfetch.log',
             'log_to_event_viewer': False,
             'log_to_syslog': True,
             'syslog_host': None,
             'syslog_port': None,
         }
     else:
-        windows_log_location = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'ddagent.log')
-        jmxfetch_log_file = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'jmxfetch.log')
+        windows_log_location = os.path.join(_windows_commondata_path(), 'mon-agent', 'logs', 'ddagent.log')
+        jmxfetch_log_file = os.path.join(_windows_commondata_path(), 'mon-agent', 'logs', 'jmxfetch.log')
         logging_config = {
             'log_level': None,
             'ddagent_log_file': windows_log_location,
@@ -824,7 +823,7 @@ def get_logging_config(cfg_path=None):
             config_example_file = "https://github.com/DataDog/dd-agent/blob/master/datadog.conf.example"
 
         sys.stderr.write("""Python logging config is no longer supported and will be ignored.
-            To configure logging, update the logging portion of 'datadog.conf' to match:
+            To configure logging, update the logging portion of 'agent.conf' to match:
              '%s'.
              """ % config_example_file)
 

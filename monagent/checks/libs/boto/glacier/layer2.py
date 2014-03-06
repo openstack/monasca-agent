@@ -21,8 +21,8 @@
 # IN THE SOFTWARE.
 #
 
-from .monagent.checks.libs.boto.glacier.layer1 import Layer1
-from .monagent.checks.libs.boto.glacier.vault import Vault
+from .layer1 import Layer1
+from .vault import Vault
 
 
 class Layer2(object):

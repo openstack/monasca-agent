@@ -8,8 +8,7 @@ import tempfile
 import time
 
 # datadog
-from monagent import yaml
-from monagent.util import PidFile, yLoader, get_os
+from util import PidFile, yaml, yLoader, get_os
 
 log = logging.getLogger(__name__)
 
@@ -273,7 +272,7 @@ class JMXFetch(object):
         if get_os() != 'windows':
             return os.path.realpath(os.path.join(os.path.abspath(__file__), "..", "checks", "libs", JMX_FETCH_JAR_NAME))
 
-        return os.path.realpath(os.path.join(os.path.abspath(__file__), "..", "../../", "jmxfetch", JMX_FETCH_JAR_NAME))
+        return os.path.realpath(os.path.join(os.path.abspath(__file__), "..", "..", "jmxfetch", JMX_FETCH_JAR_NAME))
 
     @classmethod
     def start(cls, confd_path, agentConfig, logging_config, path_to_java, java_run_opts, 

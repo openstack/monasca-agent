@@ -49,7 +49,7 @@ def regions():
     :rtype: list
     :return: A list of :class:`boto.regioninfo.RegionInfo`
     """
-    from .monagent.checks.libs.boto.s3.connection import S3Connection
+    from .connection import S3Connection
     return [S3RegionInfo(name='us-east-1',
                          endpoint='s3.amazonaws.com',
                          connection_cls=S3Connection),

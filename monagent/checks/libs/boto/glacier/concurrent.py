@@ -30,7 +30,7 @@ import binascii
 
 from .utils import DEFAULT_PART_SIZE, minimum_part_size, chunk_hashes, \
         tree_hash, bytes_to_hex
-from .monagent.checks.libs.boto.glacier.exceptions import UploadArchiveError, DownloadArchiveError, \
+from .exceptions import UploadArchiveError, DownloadArchiveError, \
         TreeHashDoesNotMatchError
 
 

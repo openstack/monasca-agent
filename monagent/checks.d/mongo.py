@@ -3,8 +3,7 @@ import types
 import time
 
 from checks import AgentCheck
-from monagent.util import get_hostname
-
+from util import get_hostname
 
 # When running with pymongo < 2.0
 # Not the full spec for mongo URIs -- just extract username and password

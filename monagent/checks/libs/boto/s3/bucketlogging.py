@@ -20,9 +20,7 @@
 # IN THE SOFTWARE.
 
 import xml.sax.saxutils
-
-from monagent.checks.libs.boto.s3.acl import Grant
-
+from acl import Grant
 
 class BucketLogging:
 

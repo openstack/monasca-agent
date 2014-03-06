@@ -5,6 +5,8 @@ http://gunicorn.org/
 """
 
 # stdlib
+import os
+import sys
 import time
 
 # 3p
@@ -14,7 +16,7 @@ except ImportError:
     psutil = None
 
 # project
-from monagent.checks import AgentCheck
+from checks import AgentCheck
 
 
 class GUnicornCheck(AgentCheck):

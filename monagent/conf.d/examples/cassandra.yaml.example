@@ -47,7 +47,7 @@ init_config:
             - PendingTasks
         exclude:
           keyspace: system
-          attribute: 
+          attribute:
             - MinimumCompactionThreshold
             - MaximumCompactionThreshold
             - RowCacheKeysToSave

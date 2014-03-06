@@ -5,11 +5,16 @@ Unix system checks.
 # stdlib
 import operator
 import platform
+import re
+import socket
+import string
 import subprocess as sp
 import sys
+import time
 
 # project
-from monagent.util import get_hostname, Platform
+from checks import Check, UnknownValue
+from util import get_hostname, Platform
 
 
 # locale-resilient float converter
@@ -898,6 +903,7 @@ if __name__ == '__main__':
     # 1s loop with results
     import logging
     import time
+    import pprint
     import re
     
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)-15s %(message)s')

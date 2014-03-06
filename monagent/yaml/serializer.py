@@ -1,9 +1,9 @@
 
 __all__ = ['Serializer', 'SerializerError']
 
-from monagent.yaml.error import YAMLError
-from monagent.yaml.events import *
-from monagent.yaml.nodes import *
+from error import YAMLError
+from events import *
+from nodes import *
 
 class SerializerError(YAMLError):
     pass

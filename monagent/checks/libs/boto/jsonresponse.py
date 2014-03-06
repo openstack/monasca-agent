@@ -21,9 +21,7 @@
 # IN THE SOFTWARE.
 
 import xml.sax
-
-from monagent.checks.libs.boto import utils
-
+import utils
 
 class XmlHandler(xml.sax.ContentHandler):
 

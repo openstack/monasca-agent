@@ -3,7 +3,7 @@ from os import stat, walk
 from os.path import abspath, exists, join
 import time
 
-from monagent.checks import AgentCheck
+from checks import AgentCheck
 
 
 class DirectoryCheck(AgentCheck):

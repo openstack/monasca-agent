@@ -1,6 +1,6 @@
 import os
 
-from monagent.checks import AgentCheck
+from checks import AgentCheck
 
 class PostfixCheck(AgentCheck):
     """This check provides metrics on the number of messages in a given postfix queue

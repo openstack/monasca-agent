@@ -22,7 +22,7 @@
 
 # this is here for backward compatibility
 # originally, the IAMConnection class was defined here
-from monagent.checks.libs.boto.iam.connection import IAMConnection
+from connection import IAMConnection
 from boto.regioninfo import RegionInfo
 
 

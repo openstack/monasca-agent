@@ -1,12 +1,12 @@
 
 __all__ = ['BaseLoader', 'SafeLoader', 'Loader']
 
-from monagent.yaml.reader import *
-from monagent.yaml.scanner import *
-from monagent.yaml.parser import *
-from monagent.yaml.composer import *
-from monagent.yaml.constructor import *
-from monagent.yaml.resolver import *
+from reader import *
+from scanner import *
+from parser import *
+from composer import *
+from constructor import *
+from resolver import *
 
 class BaseLoader(Reader, Scanner, Parser, Composer, BaseConstructor, BaseResolver):
 

@@ -2,11 +2,10 @@
 __all__ = ['BaseConstructor', 'SafeConstructor', 'Constructor',
     'ConstructorError']
 
-import datetime
-
-from monagent.yaml.error import *
+from error import *
 from nodes import *
 
+import datetime
 
 try:
     set

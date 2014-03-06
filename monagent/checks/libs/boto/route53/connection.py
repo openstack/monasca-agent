@@ -27,15 +27,13 @@
 import xml.sax
 import uuid
 import urllib
-
 import boto
 from boto.connection import AWSAuthConnection
 from boto import handler
 from boto.route53.record import ResourceRecordSets
 from boto.route53.zone import Zone
 import boto.jsonresponse
-from monagent.checks.libs.boto.route53 import exception
-
+import exception
 
 HZXML = """<?xml version="1.0" encoding="UTF-8"?>
 <CreateHostedZoneRequest xmlns="%(xmlns)s">

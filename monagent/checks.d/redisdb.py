@@ -3,9 +3,7 @@ Redis checks
 '''
 import re
 import time
-
-from monagent.checks import AgentCheck
-
+from checks import AgentCheck
 
 class Redis(AgentCheck):
     db_key_pattern = re.compile(r'^db\d+')

@@ -1,6 +1,6 @@
 import urllib2
 
-from monagent.util import headers
+from util import headers
 from checks import AgentCheck
 from checks.utils import add_basic_auth
 

@@ -19,8 +19,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-from monagent.checks.libs.boto.file.connection import FileConnection as Connection
-from monagent.checks.libs.boto.file.key import Key
-from monagent.checks.libs.boto.file.bucket import Bucket
+import boto
+
+from connection import FileConnection as Connection
+from key import Key
+from bucket import Bucket
 
 __all__ = ['Connection', 'Key', 'Bucket']

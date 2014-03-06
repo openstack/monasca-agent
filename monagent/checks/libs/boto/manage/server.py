@@ -24,11 +24,6 @@
 High-level abstraction of an EC2 server
 """
 from __future__ import with_statement
-import os
-import time
-import StringIO
-from contextlib import closing
-
 import boto.ec2
 from boto.mashups.iobject import IObject
 from boto.pyami.config import BotoConfigPath, Config
@@ -37,9 +32,9 @@ from boto.sdb.db.property import StringProperty, IntegerProperty, BooleanPropert
 from boto.manage import propget
 from boto.ec2.zone import Zone
 from boto.ec2.keypair import KeyPair
+import os, time, StringIO
+from contextlib import closing
 from boto.exception import EC2ResponseError
-from monagent.checks.libs.boto.manage import cmdshell
-
 
 InstanceTypes = ['m1.small', 'm1.large', 'm1.xlarge',
                  'c1.medium', 'c1.xlarge',
@@ -532,6 +527,7 @@ class Server(Model):
 
     def get_cmdshell(self):
         if not self._cmdshell:
+            import cmdshell
             self.get_ssh_key_file()
             self._cmdshell = cmdshell.start(self)
         return self._cmdshell

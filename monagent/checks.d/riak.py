@@ -1,10 +1,11 @@
 import time
-import socket
 
 from checks import AgentCheck
-from monagent.util import md5
-from monagent.util import json
+from util import md5
+from util import json
+
 from checks.libs.httplib2 import Http, HttpLib2Error
+import socket
 
 class Riak(AgentCheck):
 

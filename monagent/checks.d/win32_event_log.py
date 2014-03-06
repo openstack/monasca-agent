@@ -1,14 +1,14 @@
 '''
 Monitor the Windows Event Log
 '''
-from datetime import datetime
+from datetime import datetime, timedelta
 import calendar
 try:
     import wmi
 except Exception:
     wmi = None
 
-from monagent.checks import AgentCheck
+from checks import AgentCheck
 
 SOURCE_TYPE_NAME = 'event viewer'
 EVENT_TYPE = 'win32_log_event'

@@ -1,9 +1,8 @@
+from checks.services_checks import ServicesCheck, Status, EventType
+from util import headers
 import socket
 import time
-
-from checks.services_checks import ServicesCheck, Status, EventType
 from checks.libs.httplib2 import Http, HttpLib2Error
-
 
 class HTTPCheck(ServicesCheck):
 

@@ -1,7 +1,8 @@
+
 from datetime import datetime, timedelta
 import time
 
-from monagent.util import namedtuple
+from util import namedtuple
 
 
 class agg(object):

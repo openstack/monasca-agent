@@ -10,7 +10,7 @@ try:
 except Exception:
     wmi = None
 
-from monagent.checks import AgentCheck
+from checks import AgentCheck
 
 UP_METRIC = 'Up'
 SEARCH_WILDCARD = '*'

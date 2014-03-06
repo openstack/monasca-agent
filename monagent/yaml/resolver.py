@@ -1,11 +1,10 @@
 
 __all__ = ['BaseResolver', 'Resolver']
 
-import re
-
-from monagent.yaml.error import *
+from error import *
 from nodes import *
 
+import re
 
 class ResolverError(YAMLError):
     pass

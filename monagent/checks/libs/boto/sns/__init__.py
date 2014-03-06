@@ -22,7 +22,7 @@
 
 # this is here for backward compatibility
 # originally, the SNSConnection class was defined here
-from monagent.checks.libs.boto.sns.connection import SNSConnection
+from connection import SNSConnection
 from boto.regioninfo import RegionInfo
 
 

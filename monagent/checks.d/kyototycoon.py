@@ -1,11 +1,11 @@
 import re
 import urllib2
-
 try:
     from collections import defaultdict
 except ImportError:
+    from compat.defaultdict import defaultdict
 
-from monagent.checks import AgentCheck
+from checks import AgentCheck
 
 db_stats = re.compile(r'^db_(\d)+$')
 whitespace = re.compile(r'\s')

@@ -5,10 +5,9 @@ import time
 import urlparse
 import urllib2
 
-from monagent.util import json, headers
+from util import json, headers
 from checks import AgentCheck
 from checks.utils import add_basic_auth
-
 
 HEALTH_URL = "/_cluster/health?pretty=true"
 STATS_URL = "/_cluster/nodes/stats?all=true"

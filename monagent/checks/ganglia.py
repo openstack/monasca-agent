@@ -1,8 +1,6 @@
+from checks import Check
 import socket
 from cStringIO import StringIO
-
-from monagent.checks import Check
-
 
 class Ganglia(Check):
     BUFFER = 4096

@@ -11,7 +11,7 @@
 '''
 
 # set up logging before importing any other components
-from monagent.config import get_version, initialize_logging; initialize_logging('collector')
+from config import get_version, initialize_logging; initialize_logging('collector')
 
 import os; os.umask(022)
 
@@ -30,14 +30,14 @@ if int(sys.version_info[1]) <= 3:
     sys.exit(2)
 
 # Custom modules
-from monagent.checks.collector import Collector
-from monagent.checks.check_status import CollectorStatus
-from monagent.config import get_config, get_system_stats, get_parsed_args, load_check_directory, get_confd_path, check_yaml, get_logging_config
-from monagent.daemon import Daemon, AgentSupervisor
-from monagent.emitter import http_emitter
-from monagent.emitter import maas_http_emitter
-from monagent.util import Watchdog, PidFile, EC2, get_os
-from monagent.jmxfetch import JMXFetch
+from checks.collector import Collector
+from checks.check_status import CollectorStatus
+from config import get_config, get_system_stats, get_parsed_args, load_check_directory, get_confd_path, check_yaml, get_logging_config
+from daemon import Daemon, AgentSupervisor
+from emitter import http_emitter
+from emitter import mon_api_http_emitter
+from util import Watchdog, PidFile, EC2, get_os
+from jmxfetch import JMXFetch
 
 
 # Constants
@@ -167,7 +167,7 @@ class Agent(Daemon):
         sys.exit(0)
 
     def _get_emitters(self, agentConfig):
-        return [http_emitter, maas_http_emitter]
+        return [http_emitter, mon_api_http_emitter]
 
     def _get_watchdog(self, check_freq, agentConfig):
         watchdog = None

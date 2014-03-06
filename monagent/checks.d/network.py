@@ -3,12 +3,14 @@ Collects network metrics.
 """
 
 # stdlib
+import platform
 import subprocess
+import sys
 import re
 
 # project
-from monagent.checks import AgentCheck
-from monagent.util import Platform
+from checks import AgentCheck
+from util import Platform
 
 
 class Network(AgentCheck):

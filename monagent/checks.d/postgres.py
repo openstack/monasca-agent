@@ -1,4 +1,4 @@
-from monagent.checks import AgentCheck, CheckException
+from checks import AgentCheck, CheckException
 
 class PostgreSql(AgentCheck):
     """Collects per-database, and optionally per-relation metrics

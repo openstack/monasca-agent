@@ -6,7 +6,7 @@ try:
 except Exception:
     wmi = None
 
-from monagent.checks import AgentCheck
+from checks import AgentCheck
 
 class IIS(AgentCheck):
     METRICS = [

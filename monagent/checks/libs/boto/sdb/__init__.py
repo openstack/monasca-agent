@@ -20,7 +20,7 @@
 # IN THE SOFTWARE.
 #
 
-from .monagent.checks.libs.boto.sdb.regioninfo import SDBRegionInfo
+from .regioninfo import SDBRegionInfo
 
 
 def regions():

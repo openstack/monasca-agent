@@ -4,8 +4,7 @@ import sys
 import re
 import traceback
 
-from monagent.checks import AgentCheck
-
+from checks import AgentCheck
 
 GAUGE = "gauge"
 RATE = "rate"

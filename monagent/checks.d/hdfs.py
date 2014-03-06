@@ -1,4 +1,4 @@
-from monagent.checks import AgentCheck
+from checks import AgentCheck
 
 
 class HDFSCheck(AgentCheck):

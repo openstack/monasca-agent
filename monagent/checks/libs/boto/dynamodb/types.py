@@ -27,8 +27,7 @@ Python types and vice-versa.
 import base64
 from decimal import (Decimal, DecimalException, Context,
                      Clamped, Overflow, Inexact, Underflow, Rounded)
-
-from monagent.checks.libs.boto.dynamodb.exceptions import DynamoDBNumberError
+from exceptions import DynamoDBNumberError
 
 
 DYNAMODB_CONTEXT = Context(

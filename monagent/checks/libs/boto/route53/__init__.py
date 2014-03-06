@@ -23,7 +23,7 @@
 
 # this is here for backward compatibility
 # originally, the Route53Connection class was defined here
-from monagent.checks.libs.boto.route53.connection import Route53Connection
+from connection import Route53Connection
 from boto.regioninfo import RegionInfo
 
 

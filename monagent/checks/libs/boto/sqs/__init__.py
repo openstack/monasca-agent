@@ -20,7 +20,7 @@
 # IN THE SOFTWARE.
 #
 
-from monagent.checks.libs.boto.sqs.regioninfo import SQSRegionInfo
+from regioninfo import SQSRegionInfo
 
 
 def regions():

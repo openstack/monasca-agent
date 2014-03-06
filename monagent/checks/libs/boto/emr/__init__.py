@@ -26,9 +26,9 @@
 This module provies an interface to the Elastic MapReduce (EMR)
 service from AWS.
 """
-from monagent.checks.libs.boto.emr.connection import EmrConnection
-from monagent.checks.libs.boto.emr.step import Step, StreamingStep, JarStep
-from monagent.checks.libs.boto.emr.bootstrap_action import BootstrapAction
+from connection import EmrConnection
+from step import Step, StreamingStep, JarStep
+from bootstrap_action import BootstrapAction
 from boto.regioninfo import RegionInfo
 
 

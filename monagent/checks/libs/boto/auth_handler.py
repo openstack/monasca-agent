@@ -23,7 +23,7 @@
 Defines an interface which all Auth handlers need to implement.
 """
 
-from monagent.checks.libs.boto.plugin import Plugin
+from plugin import Plugin
 
 class NotReadyToAuthenticate(Exception):
   pass

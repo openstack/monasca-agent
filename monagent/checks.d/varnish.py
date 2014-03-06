@@ -2,8 +2,7 @@ import xml.parsers.expat # python 2.4 compatible
 import re
 import subprocess
 
-from monagent.checks import AgentCheck
-
+from checks import AgentCheck
 
 class Varnish(AgentCheck):
     # XML parsing bits, a.k.a. Kafka in Code

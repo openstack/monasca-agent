@@ -14,11 +14,11 @@ import logging
 import string
 
 # 3rd party
-from monagent.yaml import dump as dump_to_yaml
+from yaml import dump as dump_to_yaml
 try:
-    from monagent.yaml import CDumper as Dumper
+    from yaml import CDumper as Dumper
 except ImportError:
-    from monagent.yaml import Dumper
+    from yaml import Dumper
 
 
 log = logging.getLogger(__name__)

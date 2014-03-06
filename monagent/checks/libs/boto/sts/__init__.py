@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-from monagent.checks.libs.boto.sts.connection import STSConnection
+from connection import STSConnection
 from boto.regioninfo import RegionInfo
 
 

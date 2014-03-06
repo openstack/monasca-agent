@@ -61,10 +61,10 @@
 
 __all__ = ['Parser', 'ParserError']
 
-from monagent.yaml.error import MarkedYAMLError
-from monagent.yaml.tokens import *
-from monagent.yaml.events import *
-
+from error import MarkedYAMLError
+from tokens import *
+from events import *
+from scanner import *
 
 class ParserError(MarkedYAMLError):
     pass

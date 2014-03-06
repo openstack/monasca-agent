@@ -1,10 +1,8 @@
 '''
 Check the performance counters from SQL Server
 '''
+from checks import AgentCheck
 import traceback
-
-from monagent.checks import AgentCheck
-
 
 ALL_INSTANCES = 'ALL'
 VALID_METRIC_TYPES = ('gauge', 'rate', 'histogram')

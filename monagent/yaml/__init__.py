@@ -1,17 +1,17 @@
 
-from monagent.yaml.error import *
+from error import *
 
-from monagent.yaml.tokens import *
-from monagent.yaml.events import *
-from monagent.yaml.nodes import *
+from tokens import *
+from events import *
+from nodes import *
 
-from monagent.yaml.loader import *
-from monagent.yaml.dumper import *
+from loader import *
+from dumper import *
 
 __version__ = '3.09'
 
 try:
-    from monagent.yaml.cyaml import *
+    from cyaml import *
     __with_libyaml__ = True
 except ImportError:
     __with_libyaml__ = False

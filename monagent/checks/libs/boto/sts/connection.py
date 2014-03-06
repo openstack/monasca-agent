@@ -21,16 +21,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-import datetime
-import threading
-
 from boto.connection import AWSQueryConnection
 from boto.regioninfo import RegionInfo
-from monagent.checks.libs.boto.sts.credentials import Credentials, FederationToken, AssumedRole
-from monagent.checks.libs.boto.sts.credentials import DecodeAuthorizationMessage
+from credentials import Credentials, FederationToken, AssumedRole
+from credentials import DecodeAuthorizationMessage
 import boto
 import boto.utils
-
+import datetime
+import threading
 
 _session_token_cache = {}
 

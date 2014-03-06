@@ -26,8 +26,7 @@ SQS Message class that supports YAML as the body of the message.
 This module requires the yaml module.
 """
 from boto.sqs.message import Message
-from monagent import yaml
-
+import yaml
 
 class YAMLMessage(Message):
     """

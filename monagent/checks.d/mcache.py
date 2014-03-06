@@ -1,4 +1,4 @@
-from monagent.checks import *
+from checks import *
 
 # Reference: http://code.sixapart.com/svn/memcached/trunk/server/doc/protocol.txt
 # Name              Type     Meaning

@@ -1,6 +1,5 @@
 import threading
-
-from monagent.checks import Check
+from checks import Check
 
 
 MAX_THREADS_COUNT = 50
