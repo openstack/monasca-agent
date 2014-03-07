@@ -63,7 +63,6 @@ class WrapNagios(AgentCheck):
 
         # Exit here if it is not yet time to re-run this check
         if self._do_skip_check(instance, last_run_data) is True:
-            print "Too soon since last check."
             return
 
         try:
@@ -74,10 +73,9 @@ class WrapNagios(AgentCheck):
             output = proc.communicate()
             # The check detail is all the text before the pipe
             detail = output[0].split('|')[0]
-            print "detail is '" + detail + "'"
             if detail != '':
                 # Serialize the output for JSON-friendliness and add to the tags
-                tags.extend([json.dumps(detail)])
+                tags.extend(['detail:' + json.dumps(detail)])
         except OSError:
             # Return an UNKNOWN code (3) if I have landed here
             self.gauge(instance['service_name'], 3, tags=tags)
