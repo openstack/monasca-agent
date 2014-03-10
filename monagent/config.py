@@ -13,6 +13,7 @@ import inspect
 import traceback
 import re
 import imp
+import yaml
 from optparse import OptionParser, Values
 from cStringIO import StringIO
 

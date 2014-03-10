@@ -58,7 +58,6 @@ class Keystone(object):
         self.endpoint = endpoint
 
     def get_token_password_auth(self, user_id, password, project_id):
-        print user_id, password, project_id
         self.password_auth['auth']['identity']['password']['user']['id'] = user_id
         self.password_auth['auth']['identity']['password']['user']['password'] = password
         self.password_auth['auth']['scope']['project']['id'] = project_id
