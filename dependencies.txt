@@ -1,7 +1,7 @@
 pep8
-nose
-python-memcached
-pyyaml
-simplejson
-psutil
+python-nose
+python-memcache
+python-yaml
+python-simplejson
+python-psutil
 pylint

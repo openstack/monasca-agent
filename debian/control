@@ -11,6 +11,6 @@ X-Python-Version: >= 2.6
 Package:mon-agent
 Architecture: all
 Section: python
-Depends: ${misc:Depends}, ${python:Depends}, python-memcached, pyyaml, simplejson, psutil, pylint
+Depends: ${misc:Depends}, ${python:Depends}, python-memcache, python-yaml, python-simplejson, python-psutil, pylint, python-nose
 Description: Monitoring Agent
   Used to send metrics from the host system to a centralized collection point
