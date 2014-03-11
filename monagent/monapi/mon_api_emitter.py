@@ -10,9 +10,9 @@ class MonApiEmitter(object):
         self.project_id = config['mon_api_project_id']
         self.user_id = config['mon_api_username']
         self.password = config['mon_api_password']
-        self.use_keystone = bool(config['use_keystone'])
+        self.use_keystone = config['use_keystone']
         self.keystone_url = config['keystone_url']
-        self.aggregate_metrics = bool(config['aggregate_metrics'])
+        self.aggregate_metrics = config['aggregate_metrics']
         self.sendToAPI()
         
     def sendToAPI(self):
@@ -24,10 +24,9 @@ class MonApiEmitter(object):
 
         for body in self.get_metric(self.payload, self.project_id):
             try:
-                if self.aggregate_metrics:
+                if self.aggregate_metrics.upper() == "TRUE":
                     metrics_list.append(body)
                 else:
-                    print body
                     api.create_or_update_metric(body)
                 
                 #logger.debug('mon_api_http_emitter: postback response: ' + str(response.read()))
@@ -35,18 +34,15 @@ class MonApiEmitter(object):
                 self.logger.error("Error sending message to mon-api", ex)
     
         if len(metrics_list) > 0:
-            print metrics_list
             api.create_or_update_metric(metrics_list)
     
     def get_metric(self, message, project_id):
-        blacklist = ["collection_timestamp"]
         timestamp = self.get_timestamp(message)
         for key in message:
-            if key not in blacklist:
-                value = message[key]
-                if isinstance(value, int) or isinstance(value, float):
-                    metric = {"name": key, "timestamp": timestamp, "value": value, "dimensions": {"origin": "hpcs.collector", "OS": message["os"]}}
-                    yield metric
+            value = message[key]
+            if isinstance(value, int) or isinstance(value, float):
+                metric = {"name": key, "timestamp": timestamp, "value": value, "dimensions": {"origin": "hpcs.collector", "OS": message["os"]}}
+                yield metric
     
     def get_timestamp(self, message):
         if "collection_timestamp" in message:
