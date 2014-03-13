@@ -7,6 +7,7 @@ Build-Depends: debhelper (>= 7),
                python-setuptools
 Standards-Version: 3.9.3
 X-Python-Version: >= 2.6
+
 Package: mon-agent
 Architecture: all
 Section: python
