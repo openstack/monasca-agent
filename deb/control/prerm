@@ -1,9 +1,0 @@
-#!/bin/sh
-
-case "$1" in
-  remove)
-    stop mon-agent
-  ;;
-esac
-
-exit 0
