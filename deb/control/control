@@ -1,0 +1,13 @@
+Package: [[name]]
+Section: python
+Priority: optional
+Architecture: all
+Depends: python-memcache, python-yaml, python-simplejson, python-psutil
+Build-Depends: debhelper (>= 7),
+               python (>= 2.6.6-3~),
+               python-setuptools
+Version: [[version]]-[[timestamp]]-[[buildNumber]]
+X-Python-Version: >= 2.6
+Maintainer: HPCloud Monitoring <hpcs-mon@hp.com>
+Description: Monitoring Agent
+  Used to send metrics from the host system to a centralized collection point.
