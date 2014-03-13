@@ -1,16 +1,13 @@
-Source: mon-agent
+Package: [[name]]
 Section: python
 Priority: optional
-Maintainer: HP Cloud Monitoring <hpcs-mon@hp.com>
+Architecture: all
+Depends: python-memcache, python-yaml, python-simplejson, python-psutil
 Build-Depends: debhelper (>= 7),
                python (>= 2.6.6-3~),
                python-setuptools
-Standards-Version: 3.9.3
+Version: [[version]]-[[timestamp]]-[[buildNumber]]
 X-Python-Version: >= 2.6
-
-Package:mon-agent
-Architecture: all
-Section: python
-Depends: ${misc:Depends}, ${python:Depends}, python-memcache, python-yaml, python-simplejson, python-psutil
+Maintainer: HPCloud Monitoring <hpcs-mon@hp.com>
 Description: Monitoring Agent
-  Used to send metrics from the host system to a centralized collection point
+  Used to send metrics from the host system to a centralized collection point.
