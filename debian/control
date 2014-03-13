@@ -1,4 +1,4 @@
-Source: monagent
+Source: mon-agent
 Section: python
 Priority: optional
 Maintainer: HPCloud Monitoring <hpcs-mon@hp.com>
