@@ -1,0 +1,9 @@
+#!/bin/sh
+
+case "$1" in
+  remove|purge)
+    userdel mon_agent
+  ;;
+esac
+
+exit 0
