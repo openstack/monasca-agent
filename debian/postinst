@@ -5,6 +5,7 @@ case "$1" in
     if ! [ `getent passwd mon_agent` ]; then
       adduser --system mon_agent --disabled-login --shell /bin/sh --no-create-home --quiet
     fi
+
   ;;
 esac
 
