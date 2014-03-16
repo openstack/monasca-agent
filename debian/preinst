@@ -1,11 +1,10 @@
-#!/bin/sh
+#! /bin/bash
+set -e
 
-case "$1" in
-  configure)
-    if ! [ `getent passwd mon_agent` ]; then
-      adduser --system --group mon_agent
+if [ -f /etc/init.d/mon-agent ]; then
+    if which invoke-rc.d >/dev/null 2>&1; then
+        invoke-rc.d mon-agent stop || true
+    else
+        /etc/init.d/mon-agent stop || true
     fi
-  ;;
-esac
-
-exit 0
+fi
