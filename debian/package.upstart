@@ -15,4 +15,4 @@ setuid mon_agent
 script
     chdir /usr/lib/python2.7/dist-packages/monagent
     exec /usr/bin/python agent.py
-end script 
+end script
