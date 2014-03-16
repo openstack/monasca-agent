@@ -3,7 +3,7 @@
 case "$1" in
   configure)
     if ! [ `getent passwd mon_agent` ]; then
-      adduser --system --group mon_agent
+      adduser --system mon_agent --disabled-login --shell /bin/sh --no-create-home --quiet
     fi
   ;;
 esac
