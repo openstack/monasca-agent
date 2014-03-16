@@ -5,6 +5,7 @@ case "$1" in
     if ! [ `getent passwd mon_agent` ]; then
       adduser --system --group mon_agent
     fi
+
   ;;
 esac
 
