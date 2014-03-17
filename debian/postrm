@@ -1,9 +1,9 @@
-#!/bin/sh
+#! /bin/bash
+set -e
 
-case "$1" in
-  remove|purge)
-    userdel mon_agent
-  ;;
-esac
+if [ "$1" = purge ]; then
+    update-rc.d mon-agent remove
+    deluser mon-agent
+fi
 
 exit 0
