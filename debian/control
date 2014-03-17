@@ -1,6 +1,6 @@
 Source: mon-agent
-Section: python
-Priority: optional
+Priority: extra
+Section: default
 Maintainer: HPCloud Monitoring <hpcs-mon@hp.com>
 Build-Depends: debhelper (>= 7),
                python (>= 2.6.6-3~),
@@ -9,8 +9,9 @@ Standards-Version: 3.9.3
 X-Python-Version: >= 2.6
 
 Package: mon-agent
+Priority: extra
+Section: default
 Architecture: all
-Section: python
-Depends: ${misc:Depends}, ${python:Depends}, python-memcache, python-yaml, python-simplejson, python-psutil, python-requests
+Depends: python (>= 2.6), python-tornado (>= 2.3), supervisor (>= 3.0), adduser, sysstat, python-pexpect
 Description: Monitoring Agent
   Used to send metrics from the host system to a centralized collection point.
