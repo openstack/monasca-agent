@@ -48,7 +48,7 @@ check_status() {
                                        grep $NAME |
                                        grep -c RUNNING)
         supervisor_config_programs=$(grep -v pup $SUPERVISOR_FILE |
-                                     grep -c '\[program:')
+                                     grep -c '^\[program:')
 
         if [ "$datadog_supervisor_processes" -ne "$supervisor_config_programs" ]; then
             echo "$supervisor_processes"

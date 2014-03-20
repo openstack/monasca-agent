@@ -4,6 +4,10 @@ set -e
 if [ "$1" = purge ]; then
     update-rc.d mon-agent remove
     deluser mon-agent
+    [ -h /usr/bin/mon-agent ] && rm /usr/bin/mon-agent
+    [ -h /etc/mon-agent/config.py ] && rm /etc/mon-agent/config.py
+    [ -h /usr/bin/dogstatsd ] && rm /usr/bin/dogstatsd
+
 fi
 
 exit 0
