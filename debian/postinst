@@ -8,10 +8,11 @@ case "$1" in
         adduser --system mon-agent --disabled-login --shell /bin/sh --no-create-home --quiet
         usermod -d /usr/share/datadog/agent mon-agent
         mkdir -p /var/log/mon-agent
+        mkdir -p /usr/share/pyshared/monagent/checks.d /usr/share/pyshared/monagent/conf.d
         [ ! -e /usr/bin/mon-agent ] && ln -s /usr/share/pyshared/monagent/agent.py /usr/bin/mon-agent
         [ ! -e /etc/mon-agent/config.py ] && ln -s /usr/share/pyshared/monagent/config.py /etc/mon-agent/config.py
         [ ! -e /usr/bin/dogstatsd ] && ln -s /usr/share/pyshared/tests/test_dogstatsd.py /usr/bin/dogstatsd
-        [ ! -d /etc/dd-agent ] && ln -s /etc/monagent /etc/dd-agent
+        [ ! -d /etc/dd-agent ] && ln -s /etc/mon-agent /etc/dd-agent
         chmod +x /usr/share/pyshared/monagent/agent.py
         chmod +x /usr/share/pyshared/tests/test_dogstatsd.py
         chown root:root /etc/init.d/mon-agent
