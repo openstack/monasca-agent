@@ -167,7 +167,10 @@ class Agent(Daemon):
         sys.exit(0)
 
     def _get_emitters(self, agentConfig):
-        return [http_emitter, MonApiEmitter]
+        if agentConfig.get("send_to_datadog").upper() == "YES":
+            return [http_emitter, MonApiEmitter]
+        else:
+            return [MonApiEmitter]
 
     def _get_watchdog(self, check_freq, agentConfig):
         watchdog = None
