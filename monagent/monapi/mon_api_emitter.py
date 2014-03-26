@@ -6,9 +6,9 @@ from config import _is_affirmative
 class MonApiEmitter(object):
 
     def __init__(self, payload, logger, config):
-        print "\n\nConfiguration Info: " + str(config)
-        print "\n\nPayload Info: " + str(payload)
         self.logger = logger
+        self.logger = logger
+        self.logger.debug("Configuration Info: " + str(config))
         self.mapping_key = "_mapping"
         self.config = config
         self.payload = payload
@@ -30,7 +30,9 @@ class MonApiEmitter(object):
         metrics_list = []
         for agent_metric in self.payload:
             try:
+                self.logger.debug("Agent Metric to Process: " + str(agent_metric))
                 api_metric = self.get_api_metric(agent_metric, self.project_id)
+                self.logger.debug("API Metric to Send: " + str(api_metric))
                 if _is_affirmative(self.aggregate_metrics):
                     metrics_list.extend(api_metric)
                 else:
@@ -137,6 +139,7 @@ class MonApiEmitter(object):
             dimensions.update({"hostname": payload["internalHostname"]})
         if "host-tags" in payload:
             host_tags = payload["host-tags"]["system"]
+            self.logger.debug("Host-Tags" + str(host_tags))
             if host_tags:
                 dimensions.update(self.process_tags(host_tags))
         return dimensions
