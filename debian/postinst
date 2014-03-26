@@ -9,12 +9,14 @@ case "$1" in
         usermod -d /usr/share/datadog/agent mon-agent
         mkdir -p /var/log/mon-agent
         mkdir -p /usr/share/pyshared/monagent/checks.d /usr/share/pyshared/monagent/conf.d
-        [ ! -e /usr/bin/mon-agent ] && ln -s /usr/share/pyshared/monagent/agent.py /usr/bin/mon-agent
         [ ! -e /etc/mon-agent/config.py ] && ln -s /usr/share/pyshared/monagent/config.py /etc/mon-agent/config.py
-        [ ! -e /usr/bin/dogstatsd ] && ln -s /usr/share/pyshared/tests/test_dogstatsd.py /usr/bin/dogstatsd
+        [ ! -e /usr/bin/mon-agent ] && ln -s /usr/share/pyshared/monagent/agent.py /usr/bin/mon-agent
+        [ ! -e /usr/bin/dogstatsd ] && ln -s /usr/share/pyshared/monagent/dogstatsd.py /usr/bin/dogstatsd
+        [ ! -e /usr/bin/dd-forwarder ] && ln -s /usr/share/pyshared/monagent/ddagent.py /usr/bin/dd-forwarder
         [ ! -d /etc/dd-agent ] && ln -s /etc/mon-agent /etc/dd-agent
         chmod +x /usr/share/pyshared/monagent/agent.py
-        chmod +x /usr/share/pyshared/tests/test_dogstatsd.py
+        chmod +x /usr/share/pyshared/monagent/dogstatsd.py
+        chmod +x /usr/share/pyshared/monagent/ddagent.py
         chown root:root /etc/init.d/mon-agent
         chown -R mon-agent:root /etc/mon-agent
         chown -R mon-agent:root /var/log/mon-agent
