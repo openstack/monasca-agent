@@ -19,7 +19,7 @@ class MonApiEmitter(object):
         self.use_keystone = config['use_keystone']
         self.keystone_url = config['keystone_url']
         self.aggregate_metrics = config['aggregate_metrics']
-        self.host_tags = self.get_standard_dimensions(payload)
+        self.host_tags = self.get_standard_dimensions()
         self.discard = "DISCARD"
         self.sendToAPI()
         
@@ -133,13 +133,13 @@ class MonApiEmitter(object):
             name = self.config[lookup]
         return name
     
-    def get_standard_dimensions(self, payload):
+    def get_standard_dimensions(self):
         dimensions = {}
-        if "internalHostname" in payload:
-            dimensions.update({"hostname": payload["internalHostname"]})
-        if "host-tags" in payload:
-            host_tags = payload["host-tags"]["system"]
-            self.logger.debug("Host-Tags" + str(host_tags))
+        if "internalHostname" in self.payload:
+            dimensions.update({"hostname": self.payload["internalHostname"]})
+        if "host-tags" in self.payload:
+            self.logger.debug("Host-Tags" + str(self.payload["host-tags"]))
+            host_tags = self.payload["host-tags"]["system"]
             if host_tags:
                 dimensions.update(self.process_tags(host_tags))
         return dimensions
