@@ -1,16 +1,19 @@
 import time
 import copy
 from monapi import MonAPI
+from config import _is_affirmative
 
 class MonApiEmitter(object):
 
     def __init__(self, payload, logger, config):
+        print "\n\nConfiguration Info: " + str(config)
+        print "\n\nPayload Info: " + str(payload)
+        self.logger = logger
         self.mapping_key = "_mapping"
         self.config = config
         self.payload = payload
-        self.logger = logger
-        self.mon_api_url = config['mon_api_url']
         self.project_id = config['mon_api_project_id']
+        self.mon_api_url = config['mon_api_url']
         self.user_id = config['mon_api_username']
         self.password = config['mon_api_password']
         self.use_keystone = config['use_keystone']
@@ -28,7 +31,7 @@ class MonApiEmitter(object):
         for agent_metric in self.payload:
             try:
                 api_metric = self.get_api_metric(agent_metric, self.project_id)
-                if self.aggregate_metrics.upper() == "TRUE":
+                if _is_affirmative(self.aggregate_metrics):
                     metrics_list.extend(api_metric)
                 else:
                     self.logger.debug("Sending metric to API: %s", str(api_metric))
@@ -44,7 +47,6 @@ class MonApiEmitter(object):
             api.create_or_update_metric(metrics_list)
     
     def get_api_metric(self, agent_metric, project_id):
-        print agent_metric
         timestamp = self.get_timestamp(self.payload)
         metrics_list = []
         dimensions = copy.deepcopy(self.host_tags)
@@ -125,10 +127,8 @@ class MonApiEmitter(object):
     def normalize_name(self, key):
         name = key
         lookup = key.lower() + self.mapping_key
-        print "Looking up: " + lookup
         if lookup in self.config:
             name = self.config[lookup]
-            print "Found: " + name
         return name
     
     def get_standard_dimensions(self, payload):

@@ -32,7 +32,7 @@ if int(sys.version_info[1]) <= 3:
 # Custom modules
 from checks.collector import Collector
 from checks.check_status import CollectorStatus
-from config import get_config, get_system_stats, get_parsed_args, load_check_directory, get_confd_path, check_yaml, get_logging_config
+from config import get_config, get_system_stats, get_parsed_args, load_check_directory, get_confd_path, check_yaml, get_logging_config, _is_affirmative
 from daemon import Daemon, AgentSupervisor
 from emitter import http_emitter
 from util import Watchdog, PidFile, EC2, get_os
@@ -167,10 +167,12 @@ class Agent(Daemon):
         sys.exit(0)
 
     def _get_emitters(self, agentConfig):
-        if agentConfig.get("send_to_datadog").upper() == "YES":
-            return [http_emitter, MonApiEmitter]
-        else:
-            return [MonApiEmitter]
+        emitters = []
+        if _is_affirmative(agentConfig.get("send_to_datadog")):
+            emitters.append(http_emitter)
+        elif _is_affirmative(agentConfig.get("send_to_mon_api")):
+            emitters.append(MonApiEmitter)
+        return emitters
 
     def _get_watchdog(self, check_freq, agentConfig):
         watchdog = None
