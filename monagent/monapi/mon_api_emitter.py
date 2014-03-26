@@ -1,12 +1,11 @@
 import time
-import copy
+from copy import deepcopy
 from monapi import MonAPI
 from config import _is_affirmative
 
 class MonApiEmitter(object):
 
     def __init__(self, payload, logger, config):
-        self.logger = logger
         self.logger = logger
         self.logger.debug("Configuration Info: " + str(config))
         self.mapping_key = "_mapping"
@@ -51,7 +50,7 @@ class MonApiEmitter(object):
     def get_api_metric(self, agent_metric, project_id):
         timestamp = self.get_timestamp(self.payload)
         metrics_list = []
-        dimensions = copy.deepcopy(self.host_tags)
+        dimensions = deepcopy(self.host_tags)
         name = self.normalize_name(agent_metric)
         if name != self.discard:
             value = self.payload[agent_metric]
@@ -80,7 +79,7 @@ class MonApiEmitter(object):
             for key in values.iterkeys():
                 metric_name = self.normalize_name(key)
                 if metric_name != self.discard:
-                    dimensions = copy.deepcopy(self.host_tags)
+                    dimensions = deepcopy(self.host_tags)
                     dimensions.update({"device": self.device_name})
                     metric = {"name": metric_name, "timestamp": timestamp, "value": values[key], "dimensions": dimensions}
                     metrics.append(metric)
@@ -91,14 +90,14 @@ class MonApiEmitter(object):
         if name == "diskUsage" or name == "inodes":
             for item in values:
                 if name != self.discard:
-                    dimensions = copy.deepcopy(self.host_tags)
+                    dimensions = deepcopy(self.host_tags)
                     dimensions.update({"device": item[0], "mountpoint": item[8]})
                     metric = {"name": name, "timestamp": timestamp, "value": item[4], "dimensions": dimensions}
                     metrics.append(metric)
         elif name == "metrics":
             # These are metrics sent in a format we know about from checks
             for item in values:
-                dimensions = copy.deepcopy(self.host_tags)
+                dimensions = deepcopy(self.host_tags)
                 for key in item[3].iterkeys():
                     if key == "tags":
                         dimensions.update(self.process_tags(item[key]))
@@ -109,7 +108,7 @@ class MonApiEmitter(object):
         else:
             # We don't know what this metric list is.  Just add it as dimensions
             counter = 0
-            dimensions = copy.deepcopy(self.host_tags)
+            dimensions = deepcopy(self.host_tags)
             for item in values:
                 dimensions.update({"Value" + str(counter) : item})
                 counter+= 1
@@ -121,9 +120,10 @@ class MonApiEmitter(object):
         processed_tags = {}
         # Metrics tags are a list of strings
         for tag in tags:
-            tag.lstrip('u')
             tag_parts = tag.split(':')
-            processed_tags.update({tag_parts[0].strip() : tag_parts[1].strip()})
+            name = tag_parts[0].strip()
+            value = tag_parts[1].strip()
+            processed_tags.update({name.encode('ascii','ignore') : value.encode('ascii','ignore')})
         return processed_tags
 
     def normalize_name(self, key):
@@ -139,7 +139,8 @@ class MonApiEmitter(object):
             dimensions.update({"hostname": self.payload["internalHostname"]})
         if "host-tags" in self.payload:
             self.logger.debug("Host-Tags" + str(self.payload["host-tags"]))
-            host_tags = self.payload["host-tags"]["system"]
-            if host_tags:
-                dimensions.update(self.process_tags(host_tags))
+            host_tags = self.payload["host-tags"]
+            if host_tags and "system" in host_tags:
+                dimensions.update(self.process_tags(host_tags["system"]))
         return dimensions
+    
