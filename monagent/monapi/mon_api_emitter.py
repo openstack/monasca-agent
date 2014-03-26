@@ -141,6 +141,8 @@ class MonApiEmitter(object):
             self.logger.debug("Host-Tags" + str(self.payload["host-tags"]))
             host_tags = self.payload["host-tags"]
             if host_tags and "system" in host_tags:
-                dimensions.update(self.process_tags(host_tags["system"]))
+                taglist = host_tags["system"]
+                for tag in taglist:
+                    tags = tag.split(',')
+                    dimensions.update(self.process_tags(tags))
         return dimensions
-    
