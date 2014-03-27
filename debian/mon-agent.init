@@ -45,8 +45,8 @@ check_status() {
         supervisor_processes=$(supervisorctl -c $SUPERVISOR_FILE status)
         datadog_supervisor_processes=$(echo "$supervisor_processes" |
                                        grep -v pup |
-                                       grep $NAME |
                                        grep -c RUNNING)
+#                                       grep $NAME |
         supervisor_config_programs=$(grep -v pup $SUPERVISOR_FILE |
                                      grep -c '^\[program:')
 
