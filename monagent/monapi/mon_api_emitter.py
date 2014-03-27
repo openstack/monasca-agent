@@ -27,6 +27,7 @@ class MonApiEmitter(object):
     
         self.logger.debug('mon_api_http_emitter: attempting postback to ' + self.mon_api_url)
         metrics_list = []
+        self.logger.debug("Payload", self.payload)
         for agent_metric in self.payload:
             try:
                 self.logger.debug("Agent Metric to Process: " + str(agent_metric))
@@ -68,7 +69,7 @@ class MonApiEmitter(object):
                     self.logger.debug("Metrics are a tuple!!!!")
                 metrics_list.extend(self.process_list(name, timestamp, value))
             elif isinstance(value, tuple):
-                metrics_list.extend(self.process_tuple(name, timestamp, value))
+                metrics_list.extend(self.process_list(name, timestamp, value))
         return metrics_list
     
     def get_timestamp(self, message):
@@ -84,9 +85,6 @@ class MonApiEmitter(object):
             for key in values.iterkeys():
                 self.device_name = key
                 metrics.extend(self.process_dict(key, timestamp, values[key]))
-        elif name == "metrics":
-            # These are metrics sent in a format we know about from checks
-            self.logger.debug("Metric Values in process_dict: ", str(values))
         else:
             for key in values.iterkeys():
                 metric_name = self.normalize_name(key)
@@ -134,34 +132,6 @@ class MonApiEmitter(object):
             metrics.append(metric)
         return metrics
                 
-    def process_tuple(self, name, timestamp, values):
-        metrics = []
-        if name == "metrics":
-            # These are metrics sent in a format we know about from checks
-            self.logger.debug("Metric Values: ", str(values))
-            for item in values:
-                self.logger.debug("Metric Item: ", str(item))
-                dimensions = deepcopy(self.host_tags)
-                for name2 in item[3].iterkeys():
-                     value2 = item[3][name2]
-                     self.logger.debug("Metric Item2: ", name2)
-                     if name2 == "tags":
-                         dimensions.update(self.process_tags(value2))
-                     else:
-                         dimensions.update({name2 : value2})
-                metric = {"name": item[0], "timestamp": timestamp, "value": item[2], "dimensions": dimensions}
-                metrics.append(metric)
-        else:
-            # We don't know what this metric list is.  Just add it as dimensions
-            counter = 0
-            dimensions = deepcopy(self.host_tags)
-            for item in values:
-                dimensions.update({"Value" + str(counter) : item})
-                counter+= 1
-            metric = {"name": name, "timestamp": timestamp, "value": 0, "dimensions": dimensions}
-            metrics.append(metric)
-        return metrics
-
     def process_tags(self, tags):
         # This will process tag strings in the format "name:value" and put them in a dictionary to be added as dimensions
         processed_tags = {}
