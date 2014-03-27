@@ -35,16 +35,14 @@ class MonApiEmitter(object):
                 if _is_affirmative(self.aggregate_metrics):
                     metrics_list.extend(api_metric)
                 else:
-                    self.logger.debug("Sending metric to API: %s", str(api_metric))
                     api.create_or_update_metric(api_metric)
-                
+                self.logger.debug("Sending metric to API: %s", str(api_metric))
+               
                 #self.logger.debug('mon_api_http_emitter: postback response: ' + str(response.read()))
             except Exception as ex:
                 self.logger.exception("Error sending message to mon-api")
     
         if len(metrics_list) > 0:
-            for metric in metrics_list:
-                self.logger.debug("Sending metric to API: %s", str(metric))
             api.create_or_update_metric(metrics_list)
     
     def get_api_metric(self, agent_metric, project_id):
@@ -55,7 +53,8 @@ class MonApiEmitter(object):
         if name != self.discard:
             value = self.payload[agent_metric]
             if isinstance(value, int) or isinstance(value, float):
-                metrics_list.append({"name": name, "timestamp": timestamp, "value": value, "dimensions": dimensions})
+                metric = {"name": name, "timestamp": timestamp, "value": value, "dimensions": dimensions}
+                metrics_list.append(metric)
             elif isinstance(value, dict):
                 metrics_list.extend(self.process_dict(name, timestamp, value))
             elif isinstance(value, list):
@@ -74,7 +73,7 @@ class MonApiEmitter(object):
         if name == "ioStats" or name == "system_metrics":
             for key in values.iterkeys():
                 self.device_name = key
-                metrics.append(self.process_dict(key, timestamp, values[key]))
+                metrics.extend(self.process_dict(key, timestamp, values[key]))
         else:
             for key in values.iterkeys():
                 metric_name = self.normalize_name(key)
@@ -112,7 +111,8 @@ class MonApiEmitter(object):
             for item in values:
                 dimensions.update({"Value" + str(counter) : item})
                 counter+= 1
-            metrics.append({"name": name, "timestamp": timestamp, "value": 0, "dimensions": dimensions})
+            metric = {"name": name, "timestamp": timestamp, "value": 0, "dimensions": dimensions}
+            metrics.append(metric)
         return metrics
                 
     def process_tags(self, tags):
