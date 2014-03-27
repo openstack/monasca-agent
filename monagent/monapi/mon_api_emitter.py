@@ -74,6 +74,9 @@ class MonApiEmitter(object):
             for key in values.iterkeys():
                 self.device_name = key
                 metrics.extend(self.process_dict(key, timestamp, values[key]))
+        elif name == "metrics":
+            # These are metrics sent in a format we know about from checks
+            self.logger.debug("Metric Values in process_dict: ", str(values))
         else:
             for key in values.iterkeys():
                 metric_name = self.normalize_name(key)
