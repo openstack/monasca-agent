@@ -1,4 +1,5 @@
 import time
+import json
 from copy import deepcopy
 from monapi import MonAPI
 from config import _is_affirmative
@@ -55,7 +56,8 @@ class MonApiEmitter(object):
         if name != self.discard:
             value = self.payload[agent_metric]
             if isinstance(value, int) or isinstance(value, float):
-                metrics_list.append({"name": name, "timestamp": timestamp, "value": value, "dimensions": dimensions})
+                metric = json.dumps({"name": name, "timestamp": timestamp, "value": value, "dimensions": dimensions})
+                metrics_list.append(metric)
             elif isinstance(value, dict):
                 metrics_list.extend(self.process_dict(name, timestamp, value))
             elif isinstance(value, list):
@@ -81,7 +83,7 @@ class MonApiEmitter(object):
                 if metric_name != self.discard:
                     dimensions = deepcopy(self.host_tags)
                     dimensions.update({"device": self.device_name})
-                    metric = {"name": metric_name, "timestamp": timestamp, "value": values[key], "dimensions": dimensions}
+                    metric = json.dumps({"name": metric_name, "timestamp": timestamp, "value": values[key], "dimensions": dimensions})
                     metrics.append(metric)
         return metrics
 
@@ -92,7 +94,7 @@ class MonApiEmitter(object):
                 if name != self.discard:
                     dimensions = deepcopy(self.host_tags)
                     dimensions.update({"device": item[0], "mountpoint": item[8]})
-                    metric = {"name": name, "timestamp": timestamp, "value": item[4], "dimensions": dimensions}
+                    metric = json.dumps({"name": name, "timestamp": timestamp, "value": item[4], "dimensions": dimensions})
                     metrics.append(metric)
         elif name == "metrics":
             # These are metrics sent in a format we know about from checks
@@ -103,7 +105,7 @@ class MonApiEmitter(object):
                         dimensions.update(self.process_tags(item[key]))
                     else:
                         dimensions.update({key : item[key]})
-                metric = {"name": item[0], "timestamp": timestamp, "value": item[1], "dimensions": dimensions}
+                metric = json.dumps({"name": item[0], "timestamp": timestamp, "value": item[1], "dimensions": dimensions})
                 metrics.append(metric)
         else:
             # We don't know what this metric list is.  Just add it as dimensions
@@ -112,7 +114,8 @@ class MonApiEmitter(object):
             for item in values:
                 dimensions.update({"Value" + str(counter) : item})
                 counter+= 1
-            metrics.append({"name": name, "timestamp": timestamp, "value": 0, "dimensions": dimensions})
+            metric = json.dumps({"name": name, "timestamp": timestamp, "value": 0, "dimensions": dimensions})
+            metrics.append(metric)
         return metrics
                 
     def process_tags(self, tags):
