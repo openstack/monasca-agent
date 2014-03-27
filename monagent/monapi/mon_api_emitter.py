@@ -56,8 +56,16 @@ class MonApiEmitter(object):
                 metric = {"name": name, "timestamp": timestamp, "value": value, "dimensions": dimensions}
                 metrics_list.append(metric)
             elif isinstance(value, dict):
+                if name == "metrics":
+                    self.logger.debug("Metrics are a dict!!!!")
                 metrics_list.extend(self.process_dict(name, timestamp, value))
             elif isinstance(value, list):
+                if name == "metrics":
+                    self.logger.debug("Metrics are a list!!!!")
+                metrics_list.extend(self.process_list(name, timestamp, value))
+            elif isinstance(value, tuple):
+                if name == "metrics":
+                    self.logger.debug("Metrics are a tuple!!!!")
                 metrics_list.extend(self.process_list(name, timestamp, value))
             elif isinstance(value, tuple):
                 metrics_list.extend(self.process_tuple(name, timestamp, value))
