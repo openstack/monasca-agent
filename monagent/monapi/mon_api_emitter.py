@@ -104,13 +104,13 @@ class MonApiEmitter(object):
             for item in values:
                 self.logger.debug("Metric Item: ", str(item))
                 dimensions = deepcopy(self.host_tags)
-                for name2 in item[3].iterkeys():
-                    value2 = item[3][name2]
-                    self.logger.debug("Metric Item2: ", name2)
-                    if name2 == "tags":
-                        dimensions.update(self.process_tags(value2))
-                    else:
-                        dimensions.update({name2 : value2})
+#                for name2 in item[3].iterkeys():
+#                     value2 = item[3][name2]
+#                     self.logger.debug("Metric Item2: ", name2)
+#                     if name2 == "tags":
+#                         dimensions.update(self.process_tags(value2))
+#                     else:
+#                         dimensions.update({name2 : value2})
                 metric = {"name": item[0], "timestamp": timestamp, "value": item[2], "dimensions": dimensions}
                 metrics.append(metric)
         else:
