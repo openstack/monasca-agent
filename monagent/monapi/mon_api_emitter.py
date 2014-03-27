@@ -90,19 +90,21 @@ class MonApiEmitter(object):
             for item in values:
                 if name != self.discard:
                     dimensions = deepcopy(self.host_tags)
-                    dimensions.update({"device": item[0], "mountpoint": item[8]})
+                    dimensions.update({"device": item[0]})
+                    if len(item) >= 9:
+                         dimensions.update({"mountpoint": item[8]})
                     metric = {"name": name, "timestamp": timestamp, "value": item[4], "dimensions": dimensions}
                     metrics.append(metric)
         elif name == "metrics":
             # These are metrics sent in a format we know about from checks
             for item in values:
                 dimensions = deepcopy(self.host_tags)
-                for key in item[3].iterkeys():
-                    if key == "tags":
-                        dimensions.update(self.process_tags(item[key]))
+                for item2 in item[3]:
+                    if item2[0] == "tags":
+                        dimensions.update(self.process_tags(item2))
                     else:
-                        dimensions.update({key : item[key]})
-                metric = {"name": item[0], "timestamp": timestamp, "value": item[1], "dimensions": dimensions}
+                        dimensions.update({item2[0] : item2[1]})
+                metric = {"name": item[0], "timestamp": timestamp, "value": item[2], "dimensions": dimensions}
                 metrics.append(metric)
         else:
             # We don't know what this metric list is.  Just add it as dimensions
