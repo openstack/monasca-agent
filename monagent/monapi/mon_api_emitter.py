@@ -1,5 +1,4 @@
 import time
-import json
 from copy import deepcopy
 from monapi import MonAPI
 from config import _is_affirmative
@@ -36,16 +35,14 @@ class MonApiEmitter(object):
                 if _is_affirmative(self.aggregate_metrics):
                     metrics_list.extend(api_metric)
                 else:
-                    self.logger.debug("Sending metric to API: %s", str(api_metric))
                     api.create_or_update_metric(api_metric)
-                
+                self.logger.debug("Sending metric to API: %s", str(api_metric))
+               
                 #self.logger.debug('mon_api_http_emitter: postback response: ' + str(response.read()))
             except Exception as ex:
                 self.logger.exception("Error sending message to mon-api")
     
         if len(metrics_list) > 0:
-            for metric in metrics_list:
-                self.logger.debug("Sending metric to API: %s", str(metric))
             api.create_or_update_metric(metrics_list)
     
     def get_api_metric(self, agent_metric, project_id):
@@ -56,7 +53,7 @@ class MonApiEmitter(object):
         if name != self.discard:
             value = self.payload[agent_metric]
             if isinstance(value, int) or isinstance(value, float):
-                metric = json.dumps({"name": name, "timestamp": timestamp, "value": value, "dimensions": dimensions})
+                metric = {"name": name, "timestamp": timestamp, "value": value, "dimensions": dimensions}
                 metrics_list.append(metric)
             elif isinstance(value, dict):
                 metrics_list.extend(self.process_dict(name, timestamp, value))
@@ -76,14 +73,14 @@ class MonApiEmitter(object):
         if name == "ioStats" or name == "system_metrics":
             for key in values.iterkeys():
                 self.device_name = key
-                metrics.append(self.process_dict(key, timestamp, values[key]))
+                metrics.extend(self.process_dict(key, timestamp, values[key]))
         else:
             for key in values.iterkeys():
                 metric_name = self.normalize_name(key)
                 if metric_name != self.discard:
                     dimensions = deepcopy(self.host_tags)
                     dimensions.update({"device": self.device_name})
-                    metric = json.dumps({"name": metric_name, "timestamp": timestamp, "value": values[key], "dimensions": dimensions})
+                    metric = {"name": metric_name, "timestamp": timestamp, "value": values[key], "dimensions": dimensions}
                     metrics.append(metric)
         return metrics
 
@@ -94,7 +91,7 @@ class MonApiEmitter(object):
                 if name != self.discard:
                     dimensions = deepcopy(self.host_tags)
                     dimensions.update({"device": item[0], "mountpoint": item[8]})
-                    metric = json.dumps({"name": name, "timestamp": timestamp, "value": item[4], "dimensions": dimensions})
+                    metric = {"name": name, "timestamp": timestamp, "value": item[4], "dimensions": dimensions}
                     metrics.append(metric)
         elif name == "metrics":
             # These are metrics sent in a format we know about from checks
@@ -105,7 +102,7 @@ class MonApiEmitter(object):
                         dimensions.update(self.process_tags(item[key]))
                     else:
                         dimensions.update({key : item[key]})
-                metric = json.dumps({"name": item[0], "timestamp": timestamp, "value": item[1], "dimensions": dimensions})
+                metric = {"name": item[0], "timestamp": timestamp, "value": item[1], "dimensions": dimensions}
                 metrics.append(metric)
         else:
             # We don't know what this metric list is.  Just add it as dimensions
@@ -114,7 +111,7 @@ class MonApiEmitter(object):
             for item in values:
                 dimensions.update({"Value" + str(counter) : item})
                 counter+= 1
-            metric = json.dumps({"name": name, "timestamp": timestamp, "value": 0, "dimensions": dimensions})
+            metric = {"name": name, "timestamp": timestamp, "value": 0, "dimensions": dimensions}
             metrics.append(metric)
         return metrics
                 

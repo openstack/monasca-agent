@@ -23,6 +23,7 @@ class MonAPI(object):
     def create_or_update_metric(self, payload):
         try:
             data = json.dumps(payload)
+            print data
             response = requests.post(self.endpoint, data=data, headers=self.headers, verify=False)
             if response:
                 if response.status_code >= 200 and response.status_code <= 299:
@@ -30,7 +31,7 @@ class MonAPI(object):
                     self.logger.debug("Message sent successfully: {0}".format(str(data)))
                 elif response.status_code >= 400 and response.status_code <= 499:
                     # Good status from web service but some type of issue with the data
-                    self.logger.warn("Successful web service call but there were issues (Status: {0}, Message Content: {1})".format(response.status_code, str(payload)))
+                    self.logger.warn("Successful web service call but there were issues (Status: {0}, Status Message: {1}, Message Content: {1})".format(response.status_code, response.text, response.str(payload)))
                 else:
                     # Not a good status
                     self.response.raise_for_status()
