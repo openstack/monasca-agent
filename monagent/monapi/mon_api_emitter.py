@@ -97,12 +97,12 @@ class MonApiEmitter(object):
                     metrics.append(metric)
         elif name == "metrics":
             # These are metrics sent in a format we know about from checks
-            print "Metric Values: ", values
+            self.logger.debug("Metric Values: ", str(values))
             for item in values:
-                print "Metric Item: ", item
+                self.logger.debug("Metric Item: ", str(item))
                 dimensions = deepcopy(self.host_tags)
                 for item2 in item[3]:
-                    print "Metric Item2: ", item2
+                    self.logger.debug("Metric Item2: ", str(item2))
                     if item2[0] == "tags":
                         dimensions.update(self.process_tags(item2))
                     else:
