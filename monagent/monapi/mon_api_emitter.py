@@ -57,16 +57,10 @@ class MonApiEmitter(object):
                 metric = {"name": name, "timestamp": timestamp, "value": value, "dimensions": dimensions}
                 metrics_list.append(metric)
             elif isinstance(value, dict):
-                if name == "metrics":
-                    self.logger.debug("Metrics are a dict!!!!")
                 metrics_list.extend(self.process_dict(name, timestamp, value))
             elif isinstance(value, list):
-                if name == "metrics":
-                    self.logger.debug("Metrics are a list!!!!")
                 metrics_list.extend(self.process_list(name, timestamp, value))
             elif isinstance(value, tuple):
-                if name == "metrics":
-                    self.logger.debug("Metrics are a tuple!!!!")
                 metrics_list.extend(self.process_list(name, timestamp, value))
             elif isinstance(value, tuple):
                 metrics_list.extend(self.process_list(name, timestamp, value))
@@ -104,17 +98,17 @@ class MonApiEmitter(object):
                     dimensions.update({"device": item[0]})
                     if len(item) >= 9:
                          dimensions.update({"mountpoint": item[8]})
-                    metric = {"name": name, "timestamp": timestamp, "value": item[4], "dimensions": dimensions}
+                    metric = {"name": name, "timestamp": timestamp, "value": item[4].rstrip("%"), "dimensions": dimensions}
                     metrics.append(metric)
         elif name == "metrics":
             # These are metrics sent in a format we know about from checks
-            self.logger.debug("Metric Values: ", str(values))
+#            self.logger.debug("Metric Values: ", str(values))
             for item in values:
-                self.logger.debug("Metric Item: ", str(item))
+#                self.logger.debug("Metric Item: ", str(item))
                 dimensions = deepcopy(self.host_tags)
                 for name2 in item[3].iterkeys():
                      value2 = item[3][name2]
-                     self.logger.debug("Metric Item2: ", name2)
+#                     self.logger.debug("Metric Item2: ", name2)
                      if name2 == "tags":
                          dimensions.update(self.process_tags(value2))
                      else:
