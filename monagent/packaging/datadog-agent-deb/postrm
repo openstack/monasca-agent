@@ -2,7 +2,7 @@
 set -e
 
 if [ "$1" = purge ]; then
-    update-rc.d datadog-agent remove
+    update-rc.d mon-agent remove
     deluser dd-agent
 fi
 
