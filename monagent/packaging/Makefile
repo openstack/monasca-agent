@@ -42,6 +42,7 @@ source:
 	cp -r $(SRC)/compat $(ROOT)/
 	cp -r $(SRC)/conf.d $(ROOT)/
 	cp -r $(SRC)/resources $(ROOT)/
+	cp -r $(SRC)/monapi $(ROOT)/
 	cp -r $(SRC)/*.py $(ROOT)/
 	cp -r $(SRC)/LICENSE* $(ROOT)/
 	cp -r $(SRC)/datadog.conf.example $(ROOT)/
@@ -116,7 +117,7 @@ $(FPM_BUILD) -t rpm \
 -d "supervisor >= 3.0" \
 -d "sysstat" \
 -d "python-pycurl" \
--d "python-requests" \
+-d "python-requests (>= 0.8.2)" \
 -d "python-psutil" \
 --conflicts "datadog-agent" \
 --conflicts "mon-agent < 4.2.0" \
@@ -155,6 +156,8 @@ $(FPM_BUILD) -t deb \
 -d "adduser" \
 -d "sysstat" \
 -d "python-pycurl" \
+-d "python-requests (>= 0.8.2)" \
+-d "python-psutil" \
 --post-install datadog-agent-deb/postinst \
 --post-uninstall datadog-agent-deb/postrm \
 --pre-uninstall  datadog-agent-deb/prerm \
