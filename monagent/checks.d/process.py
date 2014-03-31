@@ -50,7 +50,12 @@ class ProcessCheck(AgentCheck):
                 else:
                     if not found:
                         try:
-                            if string in ' '.join(proc.cmdline):
+                            try:
+                                cmdline = proc.cmdline() # psutil >= 2.0
+                            except TypeError:
+                                cmdline = proc.cmdline  # psutil < 2.0
+
+                            if string in ' '.join(cmdline):
                                 found = True
                         except psutil.NoSuchProcess:
                             self.warning('Process disappeared while scanning')
@@ -109,9 +114,14 @@ class ProcessCheck(AgentCheck):
                 if extended_metrics_0_6_0:
                     mem = p.get_ext_memory_info()
                     real += mem.rss - mem.shared
-                    ctx_switches = p.get_num_ctx_switches()
-                    voluntary_ctx_switches += ctx_switches.voluntary
-                    involuntary_ctx_switches += ctx_switches.involuntary
+                    try:
+                        ctx_switches = p.get_num_ctx_switches()
+                        voluntary_ctx_switches += ctx_switches.voluntary
+                        involuntary_ctx_switches += ctx_switches.involuntary
+                    except NotImplementedError:
+                        # Handle old Kernels which don't provide this info.
+                        voluntary_ctx_switches = None
+                        involuntary_ctx_switches = None
                 else:
                     mem = p.get_memory_info()
 
@@ -189,4 +199,3 @@ class ProcessCheck(AgentCheck):
         for metric, value in metrics.iteritems():
             if value is not None:
                 self.gauge(metric, value, tags=tags)
-

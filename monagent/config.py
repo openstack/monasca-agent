@@ -18,13 +18,13 @@ from cStringIO import StringIO
 
 # project
 from util import get_os, yaml, yLoader, Platform
-from jmxfetch import JMXFetch
+from jmxfetch import JMXFetch, JMX_COLLECT_COMMAND
 from migration import migrate_old_style_configuration
 
 # CONSTANTS
 DATADOG_CONF = "datadog.conf"
 DEFAULT_CHECK_FREQUENCY = 15   # seconds
-DEFAULT_STATSD_FREQUENCY = 10  # seconds
+DEFAULT_STATSD_FREQUENCY = 2  # seconds
 DEFAULT_STATSD_BUCKET_SIZE = 10 #seconds
 PUP_STATSD_FREQUENCY = 2       # seconds
 PUP_STATSD_BUCKET_SIZE = 2       # seconds
@@ -63,7 +63,7 @@ def get_parsed_args():
 
 
 def get_version():
-    return "4.1.0"
+    return "4.2.0"
 
 def skip_leading_wsp(f):
     "Works on a file, returns a file-like object"
@@ -354,7 +354,8 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         if config.has_option('Main', 'use_mount'):
             agentConfig['use_mount'] = _is_affirmative(config.get('Main', 'use_mount'))
 
-        agentConfig['autorestart'] = False
+        if config.has_option('Main', 'autorestart'):
+            agentConfig['autorestart'] = _is_affirmative(config.get('Main', 'autorestart'))
 
         try:
             filter_device_re = config.get('Main', 'device_blacklist_re')
@@ -660,7 +661,7 @@ def load_check_directory(agentConfig):
     migrate_old_style_configuration(agentConfig, confd_path, get_config_path(None, os_name=get_os()))
 
     # Start JMXFetch if needed
-    JMXFetch.init(confd_path, agentConfig, get_logging_config(), DEFAULT_CHECK_FREQUENCY)
+    JMXFetch.init(confd_path, agentConfig, get_logging_config(), DEFAULT_CHECK_FREQUENCY, JMX_COLLECT_COMMAND)
 
     # For backwards-compatability with old style checks, we have to load every
     # checks.d module and check for a corresponding config OR check if the old

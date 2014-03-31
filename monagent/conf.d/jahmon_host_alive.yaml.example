@@ -1,0 +1,21 @@
+init_config:
+     # Specify the ssh_port, if not 22 (optional)
+#    ssh_port:       22
+
+     # ssh_timeout is a floating-point number of seconds (optional)
+#    ssh_timeout:    0.5
+
+     # ping_timeout is an integer number of seconds (optional)
+#    ping_timeout:   1
+
+# alive_test can be either "ssh" for an SSH banner test (port 22)
+#+ or "ping" for an ICMP ping test
+instances:
+#    - host_name:     host1.domain.net
+#      alive_test:    ssh
+
+#    - host_name:     host2.domain.net
+#      alive_test:    ping
+
+#    - host_name:     192.168.0.221
+#      alive_test:    ssh

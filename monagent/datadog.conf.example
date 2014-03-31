@@ -23,48 +23,13 @@ keystone_url: CHANGE_ME
 aggregate_metrics: True
 
 # Force the hostname to whatever you want.
-# hostname: my_server
+#hostname: mymachine.mydomain
 
 # Set the host's tags
-tags: DEV, TEST
+#tags: mytag0, mytag1
 
-# ========================================================================== #
-# Custom Emitters                                                            #
-# ========================================================================== #
-
-# Comma-separated list of emitters to be used in addition to the standard one
-#
-# Expected to be passed as a comma-separated list of colon-delimited
-# name/object pairs.
-#
-#custom_emitters: /Users/gary/cloudos/mon-agent/monagent/monapi/mon_api_emitter.py:MonApiEmitter
-#
-# If the name of the emitter function is not specified, 'emitter' is assumed.
-
-# ========================================================================== #
-# Logging
-# ========================================================================== #
-
-log_level: DEBUG
-
-collector_log_file: /var/log/mon-agent/collector.log
-forwarder_log_file: /var/log/mon-agent/forwarder.log
-#dogstatsd_log_file: /var/log/mon-agent/dogstatsd.log
-# pup_log_file:       /var/log/mon-agent/pup.log
-
-# if syslog is enabled but a host and port are not set, a local domain socket
-# connection will be attempted
-#
-# log_to_syslog: yes
-# syslog_host:
-# syslog_port:
-disable_file_logging: True
-
-
-# These should be removed
-dd_url: https://app.datadoghq.com
-api_key: CHANGE_ME
-collect_ec2_tags: no
+# Collect AWS EC2 custom tags as agent tags
+# collect_ec2_tags: no
 
 # Set the threshold for accepting points to allow anything
 # with recent_point_threshold seconds
@@ -98,7 +63,7 @@ use_mount: no
 # Think of it as a fancy status page or a toe dip into the world of
 # datadog. It can be connected to on the port below.
 
-use_pup: no
+# use_pup: no
 # pup_port: 17125
 # pup_interface: localhost
 # pup_url: http://localhost:17125
@@ -157,17 +122,6 @@ use_pup: no
 #ganglia_port: 8651
 
 # -------------------------------------------------------------------------- #
-#   Cassandra                                                                #
-# -------------------------------------------------------------------------- #
-#cassandra_host: localhost
-#cassandra_nodetool: /usr/bin/nodetool
-## If you're using Cassandra 0.8 or higher:
-# cassandra_port: 7199
-## If you're using Cassandra 0.7 or lower:
-#cassandra_port: 8080
-
-
-# -------------------------------------------------------------------------- #
 #   Nagios                                                                   #
 # -------------------------------------------------------------------------- #
 
@@ -222,4 +176,34 @@ use_pup: no
 #     metric timestamp value key0=val0 key1=val1 ...
 #
 
+# ========================================================================== #
+# Custom Emitters                                                            #
+# ========================================================================== #
 
+# Comma-separated list of emitters to be used in addition to the standard one
+#
+# Expected to be passed as a comma-separated list of colon-delimited
+# name/object pairs.
+#
+# custom_emitters: /usr/local/my-code/emitters/rabbitmq.py:RabbitMQEmitter
+#
+# If the name of the emitter function is not specified, 'emitter' is assumed.
+
+
+# ========================================================================== #
+# Logging
+# ========================================================================== #
+
+# log_level: INFO
+
+# collector_log_file: /var/log/datadog/collector.log
+# forwarder_log_file: /var/log/datadog/forwarder.log
+# dogstatsd_log_file: /var/log/datadog/dogstatsd.log
+# pup_log_file:       /var/log/datadog/pup.log
+
+# if syslog is enabled but a host and port are not set, a local domain socket
+# connection will be attempted
+#
+# log_to_syslog: yes
+# syslog_host:
+# syslog_port:

@@ -1,0 +1,9 @@
+init_config:
+
+instances:
+#    -   username: username
+#        password: password
+#        url: https://path/to/haproxy
+#        status_check: False
+#        collect_aggregates_only: True
+#        collect_status_metrics: False
