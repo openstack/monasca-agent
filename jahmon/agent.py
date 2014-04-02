@@ -37,10 +37,10 @@ from daemon import Daemon, AgentSupervisor
 from emitter import http_emitter
 from util import Watchdog, PidFile, EC2, get_os
 from jmxfetch import JMXFetch
-from monapi.mon_api_emitter import MonApiEmitter
+from jahmon.mon_api_emitter import JahmonApiEmitter
 
 # Constants
-PID_NAME = "mon-agent"
+PID_NAME = "jahmon-agent"
 WATCHDOG_MULTIPLIER = 10
 RESTART_INTERVAL = 4 * 24 * 60 * 60 # Defaults to 4 days
 START_COMMANDS = ['start', 'restart', 'foreground']

@@ -4,12 +4,12 @@ set -e
 
 case "$1" in
     configure)
-        update-rc.d mon-agent defaults
-        adduser --system dd-agent --disabled-login --shell /bin/sh --no-create-home --quiet
-        usermod -d /usr/share/datadog/agent dd-agent
-        chown root:root /etc/init.d/mon-agent
-        chown -R dd-agent:root /etc/dd-agent
-        chown -R dd-agent:root /var/log/datadog
+        update-rc.d jahmon-agent defaults
+        adduser --system jahmon-agent --disabled-login --shell /bin/sh --no-create-home --quiet
+        usermod -d /usr/share/datadog/agent jahmon-agent
+        chown root:root /etc/init.d/jahmon-agent
+        chown -R jahmon-agent:root /etc/dd-agent
+        chown -R jahmon-agent:root /var/log/datadog
         chown -R root:root /usr/share/datadog
         chown -h root:root /usr/bin/dogstatsd
         chown -h root:root /usr/bin/dd-agent
@@ -18,9 +18,9 @@ case "$1" in
         set +e
 
         if which invoke-rc.d >/dev/null 2>&1; then
-            invoke-rc.d mon-agent restart
+            invoke-rc.d jahmon-agent restart
         else
-            /etc/init.d/mon-agent restart
+            /etc/init.d/jahmon-agent restart
         fi
 
         RETVAL=$?

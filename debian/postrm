@@ -2,10 +2,10 @@
 set -e
 
 if [ "$1" = purge ]; then
-    update-rc.d mon-agent remove
-    deluser mon-agent
-    [ -h /usr/bin/mon-agent ] && rm /usr/bin/mon-agent
-    [ -h /etc/mon-agent/config.py ] && rm /etc/mon-agent/config.py
+    update-rc.d jahmon-agent remove
+    deluser jahmon-agent
+    [ -h /usr/bin/jahmon-agent ] && rm /usr/bin/jahmon-agent
+    [ -h /etc/jahmon-agent/config.py ] && rm /etc/jahmon-agent/config.py
     [ -h /usr/bin/dogstatsd ] && rm /usr/bin/dogstatsd
 
 fi

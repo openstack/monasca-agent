@@ -1,0 +1,8 @@
+#! /bin/sh
+
+if which invoke-rc.d >/dev/null 2>&1; then
+    invoke-rc.d jahmon-agent stop || true
+else
+    /etc/init.d/jahmon-agent stop || true
+fi
+

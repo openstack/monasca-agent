@@ -83,8 +83,8 @@ install_full: source
 
 install_base_rpm: install_base
 	mkdir -p $(BUILD)/etc/init.d
-	cp datadog-agent-base-rpm/datadog-agent-redhat $(BUILD)/etc/init.d/mon-agent
-	chmod 755 $(BUILD)/etc/init.d/mon-agent
+	cp datadog-agent-base-rpm/datadog-agent-redhat $(BUILD)/etc/init.d/jahmon-agent
+	chmod 755 $(BUILD)/etc/init.d/jahmon-agent
 
 install_full_rpm: install_base_rpm install_full
 	mkdir -p $(BUILD)/etc/dd-agent
@@ -95,7 +95,7 @@ install_full_rpm: install_base_rpm install_full
 datadog_agent_base_rpm: clean install_base_rpm
 	FPM_EDITOR="echo '' >>" \
 $(FPM_BUILD) -t rpm \
--n mon-agent-base \
+-n jahmon-agent-base \
 -d "python(abi) >= 2.4" \
 -d "python-uuid" \
 -d "python-requests" \
@@ -111,7 +111,7 @@ $(FPM_BUILD) -t rpm \
 datadog_agent_rpm: clean install_full_rpm
 	FPM_EDITOR="echo ''>>"  \
 $(FPM_BUILD) -t rpm \
--n "mon-agent" \
+-n "jahmon-agent" \
 -d "python(abi) >= 2.6" \
 -d "python-tornado >= 2.2" \
 -d "supervisor >= 3.0" \
@@ -120,7 +120,7 @@ $(FPM_BUILD) -t rpm \
 -d "python-requests (>= 0.8.2)" \
 -d "python-psutil" \
 --conflicts "datadog-agent" \
---conflicts "mon-agent < 4.2.0" \
+--conflicts "jahmon-agent < 4.2.0" \
 --replaces "datadog-agent-base < 3.4.0" \
 --replaces "datadog-agent-lib  < $(VERSION)" \
 --pre-install	    datadog-agent-rpm/preinst \
@@ -138,8 +138,8 @@ $(FPM_BUILD) -t rpm \
 
 install_deb: install_base install_full
 	mkdir -p $(BUILD)/etc/init.d
-	cp datadog-agent-deb/mon-agent.init $(BUILD)/etc/init.d/mon-agent
-	chmod 755 $(BUILD)/etc/init.d/mon-agent
+	cp datadog-agent-deb/jahmon-agent.init $(BUILD)/etc/init.d/mon-agent
+	chmod 755 $(BUILD)/etc/init.d/jahmon-agent
 	# Install supervisor config.
 	cp datadog-agent-deb/supervisor.conf $(BUILD)/etc/dd-agent/supervisor.conf
 
@@ -147,9 +147,9 @@ install_deb: install_base install_full
 # Make the datadog agent debian package that includes supervisor, the forwarder
 # etc.
 datadog_agent_deb: clean install_deb
-	FPM_EDITOR="echo 'Replaces: mon-agent (<= $(VERSION)), datadog-agent, datadog-agent-base (<= $(VERSION)), datadog-agent-lib' >>" \
+	FPM_EDITOR="echo 'Replaces: jahmon-agent (<= $(VERSION)), datadog-agent, datadog-agent-base (<= $(VERSION)), datadog-agent-lib' >>" \
 $(FPM_BUILD) -t deb \
--n mon-agent \
+-n jahmon-agent \
 -d "python (>= 2.6)" \
 -d "python-tornado (>= 2.3)" \
 -d "supervisor (>= 3.0)" \
@@ -181,7 +181,7 @@ rpm:
 	cp *.rpm ../dist
 
 installdeb:
-	dpkg -i --force-confdef --force-confnew `ls -t ../artifacts/mon-agent_*.deb | head -1`
+	dpkg -i --force-confdef --force-confnew `ls -t ../artifacts/jahmon-agent_*.deb | head -1`
 
 deb_repo:
 	rm Packages.gz
