@@ -138,7 +138,7 @@ $(FPM_BUILD) -t rpm \
 
 install_deb: install_base install_full
 	mkdir -p $(BUILD)/etc/init.d
-	cp datadog-agent-deb/jahmon-agent.init $(BUILD)/etc/init.d/mon-agent
+	cp datadog-agent-deb/jahmon-agent.init $(BUILD)/etc/init.d/jahmon-agent
 	chmod 755 $(BUILD)/etc/init.d/jahmon-agent
 	# Install supervisor config.
 	cp datadog-agent-deb/supervisor.conf $(BUILD)/etc/dd-agent/supervisor.conf
