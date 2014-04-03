@@ -1,9 +1,9 @@
 import time
 from copy import deepcopy
-from monapi import MonAPI
+from jahmonapi import JahmonAPI
 from config import _is_affirmative
 
-class MonApiEmitter(object):
+class JahmonApiEmitter(object):
 
     def __init__(self, payload, logger, config):
         self.logger = logger
@@ -25,7 +25,7 @@ class MonApiEmitter(object):
     def sendToAPI(self):
         api = MonAPI(self.mon_api_url, self.use_keystone, self.keystone_url, self.project_id, self.user_id, self.password, self.logger)
     
-        self.logger.debug('mon_api_http_emitter: attempting postback to ' + self.mon_api_url)
+        self.logger.debug('jahmon_api_http_emitter: attempting postback to ' + self.mon_api_url)
         metrics_list = []
         self.logger.debug("Payload", self.payload)
         for agent_metric in self.payload:
@@ -39,7 +39,7 @@ class MonApiEmitter(object):
                     api.create_or_update_metric(api_metric)
                 self.logger.debug("Sending metric to API: %s", str(api_metric))
                
-                #self.logger.debug('mon_api_http_emitter: postback response: ' + str(response.read()))
+                #self.logger.debug('jahmon_api_http_emitter: postback response: ' + str(response.read()))
             except Exception as ex:
                 self.logger.exception("Error sending message to mon-api")
     

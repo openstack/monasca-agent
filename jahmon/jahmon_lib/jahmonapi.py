@@ -2,7 +2,7 @@ import requests
 from keystone import Keystone
 from util import json, md5
 
-class MonAPI(object):
+class JahmonAPI(object):
 
     def __init__(self, mon_api_url, use_keystone, keystone_url, project_id, user_id, password, logger):
         """

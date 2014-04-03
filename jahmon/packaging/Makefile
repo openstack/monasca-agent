@@ -42,7 +42,7 @@ source:
 	cp -r $(SRC)/compat $(ROOT)/
 	cp -r $(SRC)/conf.d $(ROOT)/
 	cp -r $(SRC)/resources $(ROOT)/
-	cp -r $(SRC)/monapi $(ROOT)/
+	cp -r $(SRC)/jahmon_lib $(ROOT)/
 	cp -r $(SRC)/*.py $(ROOT)/
 	cp -r $(SRC)/LICENSE* $(ROOT)/
 	cp -r $(SRC)/datadog.conf.example $(ROOT)/
