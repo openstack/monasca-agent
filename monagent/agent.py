@@ -37,10 +37,10 @@ from daemon import Daemon, AgentSupervisor
 from emitter import http_emitter
 from util import Watchdog, PidFile, EC2, get_os
 from jmxfetch import JMXFetch
-from jahmon_lib.jahmon_api_emitter import JahmonApiEmitter
+from mon_lib.mon_api_emitter import MonApiEmitter
 
 # Constants
-PID_NAME = "jahmon-agent"
+PID_NAME = "mon-agent"
 WATCHDOG_MULTIPLIER = 10
 RESTART_INTERVAL = 4 * 24 * 60 * 60 # Defaults to 4 days
 START_COMMANDS = ['start', 'restart', 'foreground']
@@ -171,7 +171,7 @@ class Agent(Daemon):
         if _is_affirmative(agentConfig.get("send_to_datadog")):
             emitters.append(http_emitter)
         elif _is_affirmative(agentConfig.get("send_to_mon_api")):
-            emitters.append(JahmonApiEmitter)
+            emitters.append(MonApiEmitter)
         return emitters
 
     def _get_watchdog(self, check_freq, agentConfig):

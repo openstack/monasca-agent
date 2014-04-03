@@ -4,33 +4,33 @@ set -e
 
 case "$1" in
     configure)
-        update-rc.d jahmon-agent defaults
-        adduser --system jahmon-agent --disabled-login --shell /bin/sh --no-create-home --quiet
-        usermod -d /usr/share/datadog/agent jahmon-agent
-        mkdir -p /var/log/jahmon-agent
-        mkdir -p /usr/share/pyshared/jahmon-agent/checks.d /usr/share/pyshared/jahmon-agent/conf.d
-        [ ! -e /etc/jahmon-agent/config.py ] && ln -s /usr/share/pyshared/jahmon-agent/config.py /etc/jahmon-agent/config.py
-        [ ! -e /usr/bin/jahmon-agent ] && ln -s /usr/share/pyshared/jahmon-agent/agent.py /usr/bin/jahmon-agent
-        [ ! -e /usr/bin/dogstatsd ] && ln -s /usr/share/pyshared/jahmon-agent/dogstatsd.py /usr/bin/dogstatsd
-        [ ! -e /usr/bin/dd-forwarder ] && ln -s /usr/share/pyshared/jahmon-agent/ddagent.py /usr/bin/dd-forwarder
-        [ ! -d /etc/dd-agent ] && ln -s /etc/jahmon-agent /etc/dd-agent
-        chmod +x /usr/share/pyshared/jahmon-agent/agent.py
-        chmod +x /usr/share/pyshared/jahmon-agent/dogstatsd.py
-        chmod +x /usr/share/pyshared/jahmon-agent/ddagent.py
-        chown root:root /etc/init.d/jahmon-agent
-        chown -R jahmon-agent:root /etc/jahmon-agent
-        chown -R jahmon-agent:root /var/log/jahmon-agent
-        chown -R root:root /usr/share/pyshared/jahmon-agent/
+        update-rc.d mon-agent defaults
+        adduser --system mon-agent --disabled-login --shell /bin/sh --no-create-home --quiet
+        usermod -d /usr/share/datadog/agent mon-agent
+        mkdir -p /var/log/mon-agent
+        mkdir -p /usr/share/pyshared/mon-agent/checks.d /usr/share/pyshared/mon-agent/conf.d
+        [ ! -e /etc/mon-agent/config.py ] && ln -s /usr/share/pyshared/mon-agent/config.py /etc/mon-agent/config.py
+        [ ! -e /usr/bin/mon-agent ] && ln -s /usr/share/pyshared/mon-agent/agent.py /usr/bin/mon-agent
+        [ ! -e /usr/bin/dogstatsd ] && ln -s /usr/share/pyshared/mon-agent/dogstatsd.py /usr/bin/dogstatsd
+        [ ! -e /usr/bin/dd-forwarder ] && ln -s /usr/share/pyshared/mon-agent/ddagent.py /usr/bin/dd-forwarder
+        [ ! -d /etc/dd-agent ] && ln -s /etc/mon-agent /etc/dd-agent
+        chmod +x /usr/share/pyshared/mon-agent/agent.py
+        chmod +x /usr/share/pyshared/mon-agent/dogstatsd.py
+        chmod +x /usr/share/pyshared/mon-agent/ddagent.py
+        chown root:root /etc/init.d/mon-agent
+        chown -R mon-agent:root /etc/mon-agent
+        chown -R mon-agent:root /var/log/mon-agent
+        chown -R root:root /usr/share/pyshared/mon-agent/
         chown -h root:root /usr/bin/dogstatsd
-        chown -h root:root /usr/bin/jahmon-agent
+        chown -h root:root /usr/bin/mon-agent
 #        chown -h root:root /usr/bin/dd-forwarder
 
         set +e
 
         if which invoke-rc.d >/dev/null 2>&1; then
-            invoke-rc.d jahmon-agent restart
+            invoke-rc.d mon-agent restart
         else
-            /etc/init.d/jahmon-agent restart
+            /etc/init.d/mon-agent restart
         fi
 
         RETVAL=$?

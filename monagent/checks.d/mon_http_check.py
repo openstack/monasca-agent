@@ -46,25 +46,25 @@ class HTTPCheck(AgentCheck):
         except socket.timeout, e:
             length = int((time.time() - start) * 1000)
             self.log.info("%s is DOWN, error: %s. Connection failed after %s ms" % (addr, str(e), length))
-            self.gauge('jahmon_http_status', 1, tags=tags_list)
+            self.gauge('mon_http_status', 1, tags=tags_list)
             return
 
         except HttpLib2Error, e:
             length = int((time.time() - start) * 1000)
             self.log.info("%s is DOWN, error: %s. Connection failed after %s ms" % (addr, str(e), length))
-            self.gauge('jahmon_http_status', 1, tags=tags_list)
+            self.gauge('mon_http_status', 1, tags=tags_list)
             return
 
         except socket.error, e:
             length = int((time.time() - start) * 1000)
             self.log.info("%s is DOWN, error: %s. Connection failed after %s ms" % (addr, repr(e), length))
-            self.gauge('jahmon_http_status', 1, tags=tags_list)
+            self.gauge('mon_http_status', 1, tags=tags_list)
             return
 
         except Exception, e:
             length = int((time.time() - start) * 1000)
             self.log.error("Unhandled exception %s. Connection failed after %s ms" % (str(e), length))
-            self.gauge('jahmon_http_status', 1, tags=tags_list)
+            self.gauge('mon_http_status', 1, tags=tags_list)
             raise
 
         if response_time:
@@ -72,7 +72,7 @@ class HTTPCheck(AgentCheck):
            running_time = time.time() - start
            tags_rt = tags
            tags_rt.append('url:%s' % addr)
-           self.gauge('jahmon_http_response_time', running_time, tags=tags_rt)
+           self.gauge('mon_http_response_time', running_time, tags=tags_rt)
 
         # Add a 'detail' tag if requested
         if include_content:
@@ -80,16 +80,16 @@ class HTTPCheck(AgentCheck):
 
         if int(resp.status) >= 400:
             self.log.info("%s is DOWN, error code: %s" % (addr, str(resp.status)))
-            self.gauge('jahmon_http_status', 1, tags=tags_list)
+            self.gauge('mon_http_status', 1, tags=tags_list)
 
         if pattern is not None:
             if re.search(pattern, content, re.DOTALL):
                 self.log.debug("Pattern match successful")
             else:
                 self.log.info("Pattern match failed! '%s' not in '%s'" % (pattern, content))
-                self.gauge('jahmon_http_status', 1, tags=tags_list)
+                self.gauge('mon_http_status', 1, tags=tags_list)
                 return
 
         self.log.debug("%s is UP" % addr)
-        self.gauge('jahmon_http_status', 0, tags=tags_list)
+        self.gauge('mon_http_status', 0, tags=tags_list)
 
