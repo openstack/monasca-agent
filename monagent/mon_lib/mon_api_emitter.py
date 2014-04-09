@@ -68,8 +68,6 @@ class MonApiEmitter(object):
                 metrics_list.extend(self.process_list(name, timestamp, value))
             elif isinstance(value, tuple):
                 metrics_list.extend(self.process_list(name, timestamp, value))
-            elif isinstance(value, tuple):
-                metrics_list.extend(self.process_list(name, timestamp, value))
             elif isinstance(value, int) or isinstance(value, float):
                 metric = {"name": self.normalizer.normalize_name(name), "timestamp": timestamp, "value": value, "dimensions": dimensions}
                 metrics_list.append(metric)
@@ -89,6 +87,9 @@ class MonApiEmitter(object):
         if name == "ioStats":
             for key in values.iterkeys():
                 return self.process_dict(key, timestamp, values[key])
+        elif name == "series":
+            # These are metrics sent in a format we know about from dogstatsd
+            return self.process_list(name, timestamp, values)
         else:
             for key in values.iterkeys():
                 metric_name = self.normalizer.normalize_name(key)
