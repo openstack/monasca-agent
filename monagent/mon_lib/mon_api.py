@@ -1,5 +1,5 @@
 import requests
-from keystone import Keystone
+from mon_keystone import Keystone
 from util import json, md5
 
 class MonAPI(object):
@@ -24,7 +24,7 @@ class MonAPI(object):
         try:
             data = json.dumps(payload)
             print data
-            response = requests.post(self.endpoint, data=data, headers=self.headers, verify=False)
+            response = requests.post(self.endpoint, data=data, headers=self.headers)
             if response:
                 if response.status_code >= 200 and response.status_code <= 299:
                     # Good status from web service

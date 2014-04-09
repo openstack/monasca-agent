@@ -32,15 +32,15 @@ if int(sys.version_info[1]) <= 3:
 # Custom modules
 from checks.collector import Collector
 from checks.check_status import CollectorStatus
-from config import get_config, get_system_stats, get_parsed_args, load_check_directory, get_confd_path, check_yaml, get_logging_config, _is_affirmative
+from config import get_config, get_system_stats, get_parsed_args, load_check_directory, get_confd_path, check_yaml, get_logging_config
 from daemon import Daemon, AgentSupervisor
 from emitter import http_emitter
 from util import Watchdog, PidFile, EC2, get_os
 from jmxfetch import JMXFetch
-from mon_lib.mon_api_emitter import MonApiEmitter
+
 
 # Constants
-PID_NAME = "mon-agent"
+PID_NAME = "dd-agent"
 WATCHDOG_MULTIPLIER = 10
 RESTART_INTERVAL = 4 * 24 * 60 * 60 # Defaults to 4 days
 START_COMMANDS = ['start', 'restart', 'foreground']
@@ -167,12 +167,7 @@ class Agent(Daemon):
         sys.exit(0)
 
     def _get_emitters(self, agentConfig):
-        emitters = []
-        if _is_affirmative(agentConfig.get("send_to_datadog")):
-            emitters.append(http_emitter)
-        elif _is_affirmative(agentConfig.get("send_to_mon_api")):
-            emitters.append(MonApiEmitter)
-        return emitters
+        return [http_emitter]
 
     def _get_watchdog(self, check_freq, agentConfig):
         watchdog = None
