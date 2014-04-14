@@ -1,3 +1,0 @@
-etc/mon-agent/supervisor.conf etc/mon-agent
-monagent/conf.d/*.example etc/mon-agent/conf.d
-monagent/checks.d/*.py etc/mon-agent/checks.d

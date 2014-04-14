@@ -1,5 +1,0 @@
-pep8
-python-memcache
-python-yaml
-python-simplejson
-python-psutil
