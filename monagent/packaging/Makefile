@@ -70,7 +70,7 @@ install_base: source
 	ln -sf ../share/datadog/agent/agent.py      $(BUILD)/usr/bin/dd-agent
 	chmod 755 $(BUILD)/usr/bin/dogstatsd
 	chmod 755 $(BUILD)/usr/bin/dd-agent
-	chmod 755 $(BUILD)/var/log/datadog
+	chmod 755 $(BUILD)/var/log/mon-agent
 
 install_full: source
 	# Install the forwarder.
