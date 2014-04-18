@@ -21,6 +21,8 @@ keystone_url: CHANGE_ME
 # Aggregate Metrics?: Send single message or message for each metric
 # True or False
 aggregate_metrics: True
+# If use_dd is set to no, then use_pup must be set to yes
+use_dd: no
 
 # Force the hostname to whatever you want.
 #hostname: mymachine.mydomain
@@ -63,10 +65,10 @@ use_mount: no
 # Think of it as a fancy status page or a toe dip into the world of
 # datadog. It can be connected to on the port below.
 
-# use_pup: no
-# pup_port: 17125
-# pup_interface: localhost
-# pup_url: http://localhost:17125
+use_pup: yes
+pup_port: 17125
+pup_interface: localhost
+pup_url: http://localhost:17125
 
 # ========================================================================== #
 # DogStatsd configuration                                                    #
@@ -76,7 +78,7 @@ use_mount: no
 # usage information, check out http://api.datadoghq.com
 
 #  Make sure your client is sending to the same port.
-# dogstatsd_port : 8125
+dogstatsd_port : 8125
 
 # By default dogstatsd will post aggregate metrics to the Agent (which handles
 # errors/timeouts/retries/etc). To send directly to the datadog api, set this
@@ -185,7 +187,7 @@ use_mount: no
 # Expected to be passed as a comma-separated list of colon-delimited
 # name/object pairs.
 #
-# custom_emitters: /usr/local/my-code/emitters/rabbitmq.py:RabbitMQEmitter
+custom_emitters: mon_lib/mon_api_emitter:MonApiEmitter
 #
 # If the name of the emitter function is not specified, 'emitter' is assumed.
 
@@ -194,12 +196,12 @@ use_mount: no
 # Logging
 # ========================================================================== #
 
-# log_level: INFO
+log_level: DEBUG
 
-# collector_log_file: /var/log/datadog/collector.log
-# forwarder_log_file: /var/log/datadog/forwarder.log
-# dogstatsd_log_file: /var/log/datadog/dogstatsd.log
-# pup_log_file:       /var/log/datadog/pup.log
+collector_log_file: /var/log/mon-agent/collector.log
+forwarder_log_file: /var/log/mon-agent/forwarder.log
+dogstatsd_log_file: /var/log/mon-agent/dogstatsd.log
+pup_log_file:       /var/log/mon-agent/pup.log
 
 # if syslog is enabled but a host and port are not set, a local domain socket
 # connection will be attempted
