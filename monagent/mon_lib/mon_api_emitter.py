@@ -37,7 +37,6 @@ class MonApiEmitter(object):
         self.logger.debug("Payload", self.payload)
         for agent_metric in self.payload:
             try:
-                self.logger.debug("Agent Metric to Process: " + str(agent_metric))
                 api_metric = self.get_api_metric(agent_metric, self.project_id)
                 if _is_affirmative(self.aggregate_metrics):
                     metrics_list.extend(api_metric)
@@ -59,14 +58,13 @@ class MonApiEmitter(object):
         name = self.normalizer.normalize_name(agent_metric)
         if name != self.discard:
             value = self.payload[agent_metric]
+            self.logger.debug("Agent Metric Name Received: " + str(name) + "\nAgent Metric Value Received: " + str(value))
             if isinstance(value, str):
                 metric = {"name": self.normalizer.normalize_name(name), "timestamp": timestamp, "value": self.normalizer.encode(value), "dimensions": dimensions}
                 metrics_list.append(metric)
             elif isinstance(value, dict):
                 metrics_list.extend(self.process_dict(name, timestamp, value))
             elif isinstance(value, list):
-                metrics_list.extend(self.process_list(name, timestamp, value))
-            elif isinstance(value, tuple):
                 metrics_list.extend(self.process_list(name, timestamp, value))
             elif isinstance(value, tuple):
                 metrics_list.extend(self.process_list(name, timestamp, value))
@@ -116,13 +114,16 @@ class MonApiEmitter(object):
                 dimensions = deepcopy(self.host_tags)
                 for name2 in item[3].iterkeys():
                      value2 = item[3][name2]
-                     if name2 == "type" or name2 == "interval" or value2 == None:
+                     if name2 == self.discard or name2 == "type" or name2 == "interval" or value2 == None:
                          continue
                      if name2 == "tags":
                          dimensions.update(self.process_tags(value2))
                      else:
                          dimensions.update({self.normalizer.encode(name2) : self.normalizer.encode(value2)})
-                metric = {"name": self.normalizer.normalize_name(item[0]), "timestamp": timestamp, "value": item[2], "dimensions": dimensions}
+                metric_name = self.normalizer.normalize_name(item[0])
+                if metric_name == self.discard:
+                    continue
+                metric = {"name": metric_name, "timestamp": timestamp, "value": item[2], "dimensions": dimensions}
                 metrics.append(metric)
         elif name == "series":
             # These are metrics sent in a format we know about from dogstatsd
@@ -144,11 +145,12 @@ class MonApiEmitter(object):
                          metric_name = self.normalizer.normalize_name(value2)
                      else:
                          dimensions.update({self.normalizer.encode(name2) : self.normalizer.encode(value2)})
-                for point in points:
-                    metric_timestamp = point[0]
-                    metric_value = point[1]
-                    metric = {"name": metric_name, "timestamp": metric_timestamp, "value": metric_value, "dimensions": dimensions}
-                    metrics.append(metric)
+                if metric_name != self.discard:
+                    for point in points:
+                        metric_timestamp = point[0]
+                        metric_value = point[1]
+                        metric = {"name": metric_name, "timestamp": metric_timestamp, "value": metric_value, "dimensions": dimensions}
+                        metrics.append(metric)
         else:
             # We don't know what this metric list is.  Just add it as dimensions
             counter = 0
@@ -164,17 +166,18 @@ class MonApiEmitter(object):
     def process_tags(self, tags):
         # This will process tag strings in the format "name:value" and put them in a dictionary to be added as dimensions
         processed_tags = {}
-        index = 0
         # Metrics tags are a list of strings
         for tag in tags:
             if(tag.find(':') != -1):
-                tag_parts = tag.split(':')
-                name = tag_parts[0].strip()
-                value = tag_parts[1].strip()
-                processed_tags.update({self.normalizer.encode(name) : self.normalizer.encode(value)})
+                tag_parts = tag.split(':',1)
+                name = self.normalizer.encode(tag_parts[0].strip())
+                value = self.normalizer.encode(tag_parts[1].strip())
+                if name == 'detail':
+                    chars = ['\\', '"']
+                    value = value.translate(None, ''.join(chars)).lstrip('{')
+                processed_tags.update({name : value})
             else:
-                processed_tags.update({"tag" + str(index) : self.normalizer.encode(tag)})
-                index += 1
+                processed_tags.update({self.normalizer.encode(tag) : self.normalizer.encode(tag)})
         return processed_tags
 
     def get_standard_dimensions(self):

@@ -8,6 +8,7 @@
     "cpuUser" : "cpu_user_perc",
     "cpuWait" : "cpu_iowait_perc",
     "diskUsage" : "disk_usage",
+    "datadog.dogstatsd.packet.count": "DISCARD",
     "events": "DISCARD",
     "host-tags": "DISCARD",
     "internalHostname" : "DISCARD",
@@ -54,5 +55,14 @@
     "system.net.packets_out.count": "net_packets_out",
     "system.net.packets_in.error": "net_errors_in",
     "system.net.packets_out.error": "net_errors_out",
+    "system.processes.threads": "DISCARD",
+    "system.processes.mem.rss": "DISCARD",
+    "system.processes.iowrite_count": "DISCARD",
+    "system.processes.ioread_count": "DISCARD",
+    "system.processes.number": "process_pid_count",
+    "system.processes.ioread_bytes": "DISCARD",
+    "system.processes.iowrite_bytes": "DISCARD",
+    "system.processes.cpu.pct": "DISCARD",
+    "system.processes.mem.vms": "DISCARD",
     "uuid": "DISCARD"
 }
