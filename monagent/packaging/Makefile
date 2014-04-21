@@ -59,7 +59,7 @@ install_base: source
 	mkdir -p $(BUILD)/etc/dd-agent/conf.d
 	mkdir -p $(BUILD)/etc/dd-agent/checks.d
 	mkdir -p $(BUILD)/usr/bin
-	mkdir -p $(BUILD)/var/log/datadog
+	mkdir -p $(BUILD)/var/log/mon-agent
 	# Install the common source & config.
 	cp -r $(ROOT)/*		 $(BUILD)/usr/share/datadog/agent/
 	cp    $(ROOT)/datadog.conf.example $(BUILD)/etc/dd-agent
