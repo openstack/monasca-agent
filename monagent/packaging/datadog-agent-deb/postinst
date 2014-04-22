@@ -9,7 +9,7 @@ case "$1" in
         usermod -d /usr/share/datadog/agent mon-agent
         chown root:root /etc/init.d/mon-agent
         chown -R mon-agent:root /etc/dd-agent
-        chown -R mon-agent:root /var/log/datadog
+        chown -R mon-agent:root /var/log/mon-agent
         chown -R root:root /usr/share/datadog
         chown -h root:root /usr/bin/dogstatsd
         chown -h root:root /usr/bin/dd-agent
