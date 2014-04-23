@@ -20,6 +20,7 @@ class MonApiEmitter(object):
         self.keystone_url = config['keystone_url']
         self.aggregate_metrics = config['aggregate_metrics']
         self.discard = "DISCARD"
+        self.logger.debug("Payload ==> ", str(payload))
         self.payload = payload
         self.device_name = ""
         self.normalizer = MonNormalizer(logger, config['mon_mapping_file'])
@@ -34,7 +35,6 @@ class MonApiEmitter(object):
     
         self.logger.debug('mon_api_http_emitter: attempting postback to ' + self.mon_api_url)
         metrics_list = []
-        self.logger.debug("Payload", self.payload)
         for agent_metric in self.payload:
             try:
                 api_metric = self.get_api_metric(agent_metric, self.project_id)
@@ -43,7 +43,10 @@ class MonApiEmitter(object):
                 else:
                     api.create_or_update_metric(api_metric)
 
-                self.logger.debug("Sending metric to API: %s", str(api_metric))
+                if len(api_metric) > 0:
+                    self.logger.debug("Sending metric to API: %s", str(api_metric))
+                else:
+                    self.logger.debug("Discarding metric: %s", str(agent_metric))
 
             except Exception as ex:
                 self.logger.exception("Error sending message to mon-api")
@@ -58,7 +61,8 @@ class MonApiEmitter(object):
         name = self.normalizer.normalize_name(agent_metric)
         if name != self.discard:
             value = self.payload[agent_metric]
-            self.logger.debug("Agent Metric Name Received: " + str(name) + "\nAgent Metric Value Received: " + str(value))
+            self.logger.debug("Agent Metric Name Received: " + str(name))
+            self.logger.debug("Agent Metric Value Received: " + str(value))
             if isinstance(value, str):
                 metric = {"name": self.normalizer.normalize_name(name), "timestamp": timestamp, "value": self.normalizer.encode(value), "dimensions": dimensions}
                 metrics_list.append(metric)
@@ -181,16 +185,14 @@ class MonApiEmitter(object):
         return processed_tags
 
     def get_standard_dimensions(self):
-        dimensions = {}
+        dimension_list = {}
         if "internalHostname" in self.payload:
-            dimensions.update({"hostname": self.normalizer.encode(self.payload["internalHostname"])})
-        if "host-tags" in self.payload:
-            self.logger.debug("Host-Tags" + str(self.payload["host-tags"]))
-            host_tags = self.payload["host-tags"]
-            if host_tags and "system" in host_tags:
-                taglist = host_tags["system"]
-                for tag in taglist:
-                    tags = tag.split(',')
-                    dimensions.update(self.process_tags(tags))
-        return dimensions
+            dimension_list.update({"hostname": self.normalizer.encode(self.payload["internalHostname"])})
+        if "dimensions" in self.config:
+            dimension_string = self.config["dimensions"]
+            if dimension_string:
+                self.logger.debug("Dimensions: " + str(dimension_string))
+                dimensions = dimension_string.split(',')
+                dimension_list.update(self.process_tags(dimensions))
+        return dimension_list
 
