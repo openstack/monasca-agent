@@ -99,11 +99,10 @@ class Agent(Daemon):
 
         agentConfig = self._set_agent_config_hostname(config)
         systemStats = get_system_stats()
-        emitters = self._get_emitters(agentConfig)
         # Load the checks.d checks
         checksd = load_check_directory(agentConfig)
 
-        self.collector = Collector(agentConfig, emitters, systemStats)
+        self.collector = Collector(agentConfig, http_emitter, systemStats)
 
         # Configure the watchdog.
         check_frequency = int(agentConfig['check_freq'])
@@ -165,9 +164,6 @@ class Agent(Daemon):
         # as a daemon.
         log.info("Exiting. Bye bye.")
         sys.exit(0)
-
-    def _get_emitters(self, agentConfig):
-        return [http_emitter]
 
     def _get_watchdog(self, check_freq, agentConfig):
         watchdog = None

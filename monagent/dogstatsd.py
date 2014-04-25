@@ -335,7 +335,7 @@ class Dogstatsd(Daemon):
         return DogstatsdStatus.print_latest_status()
 
 
-def init(config_path=None, use_watchdog=False, use_forwarder=False):
+def init(config_path=None, use_watchdog=False):
     """Configure the server and the reporting thread.
     """
     c = get_config(parse_args=False, cfg_path=config_path)
@@ -350,9 +350,7 @@ def init(config_path=None, use_watchdog=False, use_forwarder=False):
     forward_to_port = c.get('statsd_forward_port')
     event_chunk_size = c.get('event_chunk_size')
 
-    target = c['dd_url']
-    if use_forwarder:
-        target = c['dogstatsd_target']
+    target = c['dogstatsd_target']
 
     hostname = get_hostname(c)
 
@@ -379,11 +377,9 @@ def init(config_path=None, use_watchdog=False, use_forwarder=False):
 def main(config_path=None):
     """ The main entry point for the unix version of dogstatsd. """
     parser = optparse.OptionParser("%prog [start|stop|restart|status]")
-    parser.add_option('-u', '--use-local-forwarder', action='store_true',
-                        dest="use_forwarder", default=False)
     opts, args = parser.parse_args()
 
-    reporter, server, cnf = init(config_path, use_watchdog=True, use_forwarder=opts.use_forwarder)
+    reporter, server, cnf = init(config_path, use_watchdog=True)
     pid_file = PidFile('dogstatsd')
     daemon = Dogstatsd(pid_file.get_path(), server, reporter,
             cnf.get('autorestart', False))

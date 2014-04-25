@@ -37,9 +37,7 @@ class AgentSvc(win32serviceutil.ServiceFramework):
 
         # Setup the correct options so the agent will use the forwarder
         opts, args = Values({
-            'dd_url': None,
             'clean': False,
-            'use_forwarder': True,
             'disabled_dd': False
         }), []
         agentConfig = get_config(parse_args=False, options=opts)
@@ -179,7 +177,7 @@ class DogstatsdProcess(multiprocessing.Process):
 
     def run(self):
         log.debug("Windows Service - Starting Dogstatsd server")
-        self.reporter, self.server, _ = dogstatsd.init(use_forwarder=True)
+        self.reporter, self.server, _ = dogstatsd.init()
         self.reporter.start()
         self.server.start()
 

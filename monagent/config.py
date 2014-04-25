@@ -38,14 +38,8 @@ class PathNotFound(Exception):
 
 def get_parsed_args():
     parser = OptionParser()
-    parser.add_option('-d', '--dd_url', action='store', default=None,
-                        dest='dd_url')
     parser.add_option('-c', '--clean', action='store_true', default=False,
                         dest='clean')
-    parser.add_option('-u', '--use-local-forwarder', action='store_true',
-                        default=False, dest='use_forwarder')
-    parser.add_option('-n', '--disable-dd', action='store_true', default=False,
-                        dest="disable_dd")
     parser.add_option('-v', '--verbose', action='store_true', default=False,
                         dest='verbose',
                       help='Print out stacktraces for errors in checks')
@@ -54,10 +48,7 @@ def get_parsed_args():
         options, args = parser.parse_args()
     except SystemExit:
         # Ignore parse errors
-        options, args = Values({'dd_url': None,
-                                'clean': False,
-                                'disable_dd':False,
-                                'use_forwarder': False}), []
+        options, args = Values({'clean': False}), []
     return options, args
 
 
@@ -228,25 +219,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
 
         # FIXME unnecessarily complex
 
-        if config.has_option('Main', 'use_dd'):
-            agentConfig['use_dd'] = config.get('Main', 'use_dd').lower() in ("yes", "true")
-        else:
-            agentConfig['use_dd'] = True
-
-        agentConfig['use_forwarder'] = False
-        if options is not None and options.use_forwarder:
-            listen_port = 17123
-            if config.has_option('Main', 'listen_port'):
-                listen_port = int(config.get('Main', 'listen_port'))
-            agentConfig['dd_url'] = "http://localhost:" + str(listen_port)
-            agentConfig['use_forwarder'] = True
-        elif options is not None and not options.disable_dd and options.dd_url:
-            agentConfig['dd_url'] = options.dd_url
-        else:
-            agentConfig['dd_url'] = config.get('Main', 'dd_url')
-        if agentConfig['dd_url'].endswith('/'):
-            agentConfig['dd_url'] = agentConfig['dd_url'][:-1]
-
         # Extra checks.d path
         # the linux directory is set by default
         if config.has_option('Main', 'additional_checksd'):
@@ -334,12 +306,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         # normalize 'yes'/'no' to boolean
         dogstatsd_defaults['dogstatsd_normalize'] = _is_affirmative(dogstatsd_defaults['dogstatsd_normalize'])
 
-        # optionally send dogstatsd data directly to the agent.
-        if config.has_option('Main', 'dogstatsd_use_ddurl'):
-            use_ddurl = _is_affirmative(config.get('Main', 'dogstatsd_use_ddurl'))
-            if use_ddurl:
-                agentConfig['dogstatsd_target'] = agentConfig['dd_url']
-
         # Optional config
         # FIXME not the prettiest code ever...
         if config.has_option('Main', 'use_mount'):
@@ -390,7 +356,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         if config.has_option("Main", "collect_ec2_tags"):
             agentConfig["collect_ec2_tags"] = _is_affirmative(config.get("Main", "collect_ec2_tags"))
 
-        agentConfig['MonApi'] = get_mon_api_config(config)
+        agentConfig['Api'] = get_mon_api_config(config)
 
     except ConfigParser.NoSectionError, e:
         sys.stderr.write('Config file not found or incorrectly formatted.\n')
@@ -964,33 +930,33 @@ def get_mon_api_config(config):
     mon_api_config['aggregate_metrics'] = True
     mon_api_config['mapping_file'] = ''
 
-    if config.has_section("MonApi"):
+    if config.has_section("Api"):
 
-        if config.has_option("MonApi", "use_mon_api"):
-            mon_api_config["use_mon_api"] = config.getboolean("MonApi", "use_mon_api")
+        if config.has_option("Api", "use_mon_api"):
+            mon_api_config["use_mon_api"] = config.getboolean("Api", "use_mon_api")
 
-        if config.has_option("MonApi", "url"):
-            mon_api_config["url"] = config.get("MonApi", "url")
+        if config.has_option("Api", "url"):
+            mon_api_config["url"] = config.get("Api", "url")
 
-        if config.has_option("MonApi", "project_id"):
-            mon_api_config["project_id"] = config.get("MonApi", "project_id")
+        if config.has_option("Api", "project_id"):
+            mon_api_config["project_id"] = config.get("Api", "project_id")
 
-        if config.has_option("MonApi", "username"):
-            mon_api_config["username"] = config.get("MonApi", "username")
+        if config.has_option("Api", "username"):
+            mon_api_config["username"] = config.get("Api", "username")
 
-        if config.has_option("MonApi", "password"):
-            mon_api_config["password"] = config.get("MonApi", "password")
+        if config.has_option("Api", "password"):
+            mon_api_config["password"] = config.get("Api", "password")
 
-        if config.has_option("MonApi", "use_keystone"):
-            mon_api_config["use_keystone"] = config.getboolean("MonApi", "use_keystone")
+        if config.has_option("Api", "use_keystone"):
+            mon_api_config["use_keystone"] = config.getboolean("Api", "use_keystone")
 
-        if config.has_option("MonApi", "keystone_url"):
-            mon_api_config["keystone_url"] = config.get("MonApi", "keystone_url")
+        if config.has_option("Api", "keystone_url"):
+            mon_api_config["keystone_url"] = config.get("Api", "keystone_url")
 
-        if config.has_option("MonApi", "aggregate_metrics"):
-            mon_api_config["aggregate_metrics"] = config.getboolean("MonApi", "aggregate_metrics")
+        if config.has_option("Api", "aggregate_metrics"):
+            mon_api_config["aggregate_metrics"] = config.getboolean("Api", "aggregate_metrics")
 
-        if config.has_option("MonApi", "mapping_file"):
-            mon_api_config["mapping_file"] = config.get("MonApi", "mapping_file")
+        if config.has_option("Api", "mapping_file"):
+            mon_api_config["mapping_file"] = config.get("Api", "mapping_file")
 
     return mon_api_config

@@ -1,4 +1,4 @@
-[MonApi]
+[Api]
 # Monitoring API URL: URL for the monitoring API
 # Example: https://region-a.geo-1.monitoring.hpcloudsvc.com/v1.1/metrics
 url: CHANGE_ME
@@ -105,16 +105,6 @@ dogstatsd_port : 8125
 # interesting for datadog. To filter out a particular pattern of devices
 # from collection, configure a regex here:
 # device_blacklist_re: .*\/dev\/mapper\/lxc-box.*
-
-# -------------------------------------------------------------------------- #
-#   Ganglia                                                                  #
-# -------------------------------------------------------------------------- #
-
-# Ganglia host where gmetad is running
-#ganglia_host: localhost
-
-# Ganglia port where gmetad is running
-#ganglia_port: 8651
 
 # -------------------------------------------------------------------------- #
 #   Nagios                                                                   #
