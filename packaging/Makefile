@@ -37,9 +37,7 @@ source:
 	cp -r $(SRC)/monagent/checks $(ROOT)/
 	cp -r $(SRC)/monagent/dogstream $(ROOT)/
 	cp -r $(SRC)/monagent/pup $(ROOT)/
-	cp -r $(SRC)/monagent/yaml $(ROOT)/
 	cp -r $(SRC)/monagent/checks.d $(ROOT)/
-	cp -r $(SRC)/monagent/compat $(ROOT)/
 	cp -r $(SRC)/conf.d $(ROOT)/
 	cp -r $(SRC)/monagent/resources $(ROOT)/
 	cp -r $(SRC)/monagent/mon_lib $(ROOT)/

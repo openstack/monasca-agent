@@ -39,10 +39,7 @@ try:
 except ImportError:
     from yaml import Loader as yLoader
 
-try:
-    from collections import namedtuple
-except ImportError:
-    from compat.namedtuple import namedtuple
+from collections import namedtuple
 
 import logging
 log = logging.getLogger(__name__)

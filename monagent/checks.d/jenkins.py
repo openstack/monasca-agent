@@ -1,12 +1,8 @@
 import os
 import time
 
-try:
-    from collections import defaultdict
-except ImportError:
-    from compat.defaultdict import defaultdict
+from collections import defaultdict
 
-from datetime import datetime
 from glob import glob
 
 try:
