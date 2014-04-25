@@ -23,9 +23,7 @@ import sys
 import threading
 import zlib
 from Queue import Queue, Full
-from subprocess import Popen
-from hashlib import md5
-from datetime import datetime, timedelta
+from datetime import timedelta
 import signal
 from socket import gaierror, error as socket_error
 
@@ -38,8 +36,8 @@ from tornado.escape import json_decode
 from tornado.options import define, parse_command_line, options
 
 # agent import
+from api import MonAPI
 from util import Watchdog, get_uuid, get_hostname, json, get_tornado_ioloop
-from emitter import http_emitter
 from config import get_config
 from checks.check_status import ForwarderStatus
 from transaction import Transaction, TransactionManager
@@ -49,7 +47,6 @@ log = logging.getLogger('forwarder')
 log.setLevel(get_logging_config()['log_level'] or logging.INFO)
 
 PUP_ENDPOINT = "pup_url"
-DD_ENDPOINT  = "dd_url"
 
 TRANSACTION_FLUSH_INTERVAL = 5000 # Every 5 seconds
 WATCHDOG_INTERVAL_MULTIPLIER = 10 # 10x flush interval
@@ -142,24 +139,11 @@ class MetricTransaction(Transaction):
         return cls._trManager
 
     @classmethod
-    def set_endpoints(cls):
-
-        if 'use_pup' in cls._application._agentConfig:
-            if cls._application._agentConfig['use_pup']:
-                cls._endpoints.append(PUP_ENDPOINT)
-        # Only send data to Datadog if an API KEY exists
-        # i.e. user is also Datadog user
-        try:
-            is_dd_user = 'api_key' in cls._application._agentConfig\
-                and 'use_dd' in cls._application._agentConfig\
-                and cls._application._agentConfig['use_dd']\
-                and cls._application._agentConfig.get('api_key') is not None\
-                and cls._application._agentConfig.get('api_key', "pup") not in ("", "pup")
-            if is_dd_user:
-                log.warn("You are a Datadog user so we will send data to https://app.datadoghq.com")
-                cls._endpoints.append(DD_ENDPOINT)
-        except Exception:
-            log.info("Not a Datadog user")
+    def set_endpoints(cls, endpoint):
+        # todo we only have one endpoint option, generalize it better
+        # the immediate use case for two endpoints could be our own monitoring boxes, they could send to
+        # the main api and mini-mon api
+        cls._endpoints.append(endpoint)
 
     def __init__(self, data, headers):
         self._data = data
@@ -180,85 +164,16 @@ class MetricTransaction(Transaction):
     def __sizeof__(self):
         return sys.getsizeof(self._data)
 
-    def get_url(self, endpoint):
-        api_key = self._application._agentConfig.get('api_key')
-        if api_key:
-            return self._application._agentConfig[endpoint] + '/intake?api_key=%s' % api_key
-        return self._application._agentConfig[endpoint] + '/intake'
-
     def flush(self):
-        for endpoint in self._endpoints:
-            url = self.get_url(endpoint)
-            log.debug("Sending metrics to endpoint %s at %s" % (endpoint, url))
-
-            # Getting proxy settings
-            proxy_settings = self._application._agentConfig.get('proxy_settings', None)
-
-            tornado_client_params = {
-                'url': url,
-                'method': 'POST',
-                'body': self._data,
-                'headers': self._headers,
-                'validate_cert': not self._application.skip_ssl_validation,
-            }
-
-            force_use_curl = False
-
-            if proxy_settings is not None and endpoint != PUP_ENDPOINT:
-
-                log.debug("Configuring tornado to use proxy settings: %s:****@%s:%s" % (proxy_settings['user'],
-                    proxy_settings['host'], proxy_settings['port']))
-                tornado_client_params['proxy_host'] = proxy_settings['host']
-                tornado_client_params['proxy_port'] = proxy_settings['port']
-                tornado_client_params['proxy_username'] = proxy_settings['user']
-                tornado_client_params['proxy_password'] = proxy_settings['password']
-                force_use_curl = True
-
-            if not self._application.use_simple_http_client or force_use_curl:
-                ssl_certificate = self._application._agentConfig.get('ssl_certificate', None)
-                tornado_client_params['ca_certs'] = ssl_certificate
-
-            req = tornado.httpclient.HTTPRequest(**tornado_client_params)
-                
-            if not self._application.use_simple_http_client or force_use_curl:
-                log.debug("Using CurlAsyncHTTPClient")
-                tornado.httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
-            else:
-                log.debug("Using SimpleHTTPClient")
-            http = tornado.httpclient.AsyncHTTPClient()
-            
-
-            # The success of this metric transaction should only depend on
-            # whether or not it's successfully sent to datadoghq. If it fails
-            # getting sent to pup, it's not a big deal.
-            callback = lambda(x): None
-            if len(self._endpoints) <= 1 or endpoint == DD_ENDPOINT:
-                callback = self.on_response
-
-            http.fetch(req, callback=callback)
-
-    def on_response(self, response):
-        if response.error:
-            log.error("Response: %s" % response)
+        try:
+            for endpoint in self._endpoints:
+                endpoint.post_metrics(self.data)
+        except Exception:
+            log.exception('Error flushing metrics to remote endpoints')
             self._trManager.tr_error(self)
         else:
             self._trManager.tr_success(self)
-
         self._trManager.flush_next()
-
-
-class APIMetricTransaction(MetricTransaction):
-
-    def get_url(self, endpoint):
-        config = self._application._agentConfig
-        api_key = config['api_key']
-        url = config[endpoint] + '/api/v1/series/?api_key=' + api_key
-        if endpoint == PUP_ENDPOINT:
-            url = config[endpoint] + '/api/v1/series'
-        return url
-
-    def get_data(self):
-        return self._data
 
 
 class StatusHandler(tornado.web.RequestHandler):
@@ -296,30 +211,16 @@ class AgentInputHandler(tornado.web.RequestHandler):
 
         self.write("Transaction: %s" % tr.get_id())
 
-class ApiInputHandler(tornado.web.RequestHandler):
 
-    def post(self):
-        """Read the message and forward it to the intake"""
-
-        # read message
-        msg = self.request.body
-        headers = self.request.headers
-
-        if msg is not None:
-            # Setup a transaction for this message
-            tr = APIMetricTransaction(msg, headers)
-        else:
-            raise tornado.web.HTTPError(500)
-
-
-class Application(tornado.web.Application):
+class Forwarder(tornado.web.Application):
 
     def __init__(self, port, agentConfig, watchdog=True, skip_ssl_validation=False, use_simple_http_client=False):
         self._port = int(port)
         self._agentConfig = agentConfig
         self._metrics = {}
         MetricTransaction.set_application(self)
-        MetricTransaction.set_endpoints()
+        api_endpoint = MonAPI(agentConfig)
+        MetricTransaction.set_endpoints(api_endpoint)
         self._tr_manager = TransactionManager(MAX_WAIT_FOR_REPLAY,
             MAX_QUEUE_SIZE, THROTTLING_DELAY)
         MetricTransaction.set_tr_manager(self._tr_manager)
@@ -375,7 +276,7 @@ class Application(tornado.web.Application):
     def run(self):
         handlers = [
             (r"/intake/?", AgentInputHandler),
-            (r"/api/v1/series/?", ApiInputHandler),
+            (r"/api/v1/series/?", AgentInputHandler),
             (r"/status/?", StatusHandler),
         ]
 
@@ -442,7 +343,7 @@ class Application(tornado.web.Application):
     def stop(self):
         self.mloop.stop()
 
-def init(skip_ssl_validation=False, use_simple_http_client=False):
+def init_forwarder(skip_ssl_validation=False, use_simple_http_client=False):
     agentConfig = get_config(parse_args = False)
 
     port = agentConfig.get('listen_port', 17123)
@@ -451,7 +352,7 @@ def init(skip_ssl_validation=False, use_simple_http_client=False):
     else:
         port = int(port)
 
-    app = Application(port, agentConfig, skip_ssl_validation=skip_ssl_validation, use_simple_http_client=use_simple_http_client)
+    app = Forwarder(port, agentConfig, skip_ssl_validation=skip_ssl_validation, use_simple_http_client=use_simple_http_client)
 
     def sigterm_handler(signum, frame):
         log.info("caught sigterm. stopping")
@@ -477,7 +378,7 @@ def main():
 
     # If we don't have any arguments, run the server.
     if not args:
-        app = init(skip_ssl_validation, use_simple_http_client=use_simple_http_client)
+        app = init_forwarder(skip_ssl_validation, use_simple_http_client=use_simple_http_client)
         try:
             app.run()
         finally:

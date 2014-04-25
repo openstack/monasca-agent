@@ -17,7 +17,7 @@ def post_headers(agentConfig, payload):
 def http_emitter(message, log, agentConfig):
     "Send payload"
 
-    log.debug('http_emitter: attempting postback to ' + agentConfig['dd_url'])
+    log.debug('http_emitter: attempting postback to ' + agentConfig['forwarder_url'])
 
     # Post back the data
     payload = json.dumps(message)
@@ -30,7 +30,7 @@ def http_emitter(message, log, agentConfig):
     if not apiKey:
         raise Exception("The http emitter requires an api key")
 
-    url = "%s/intake?api_key=%s" % (agentConfig['dd_url'], apiKey)
+    url = "%s/intake?api_key=%s" % (agentConfig['forwarder_url'], apiKey)
     headers = post_headers(agentConfig, zipped)
 
     proxy_settings = agentConfig.get('proxy_settings', None)

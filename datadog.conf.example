@@ -20,6 +20,8 @@ aggregate_metrics: True
 
 [Main]
 
+agent_url : http://localhost:17123
+
 # Force the hostname to whatever you want.
 #hostname: mymachine.mydomain
 
@@ -51,19 +53,6 @@ use_mount: no
 # non_local_traffic: no
 
 # ========================================================================== #
-# Pup configuration
-# ========================================================================== #
-
-# Pup is a small server that displays metric data collected by the Agent.
-# Think of it as a fancy status page or a toe dip into the world of
-# datadog. It can be connected to on the port below.
-
-use_pup: yes
-pup_port: 17125
-pup_interface: localhost
-pup_url: http://localhost:17125
-
-# ========================================================================== #
 # DogStatsd configuration                                                    #
 # ========================================================================== #
 
@@ -72,11 +61,6 @@ pup_url: http://localhost:17125
 
 #  Make sure your client is sending to the same port.
 dogstatsd_port : 8125
-
-# By default dogstatsd will post aggregate metrics to the Agent (which handles
-# errors/timeouts/retries/etc). To send directly to the datadog api, set this
-# to https://app.datadoghq.com.
-# dogstatsd_target : http://localhost:17123
 
 ## The dogstatsd flush period.
 # dogstatsd_interval : 10
@@ -184,7 +168,6 @@ log_level: DEBUG
 collector_log_file: /var/log/mon-agent/collector.log
 forwarder_log_file: /var/log/mon-agent/forwarder.log
 dogstatsd_log_file: /var/log/mon-agent/dogstatsd.log
-pup_log_file:       /var/log/mon-agent/pup.log
 
 # if syslog is enabled but a host and port are not set, a local domain socket
 # connection will be attempted

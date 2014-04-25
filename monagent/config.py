@@ -25,8 +25,6 @@ DATADOG_CONF = "datadog.conf"
 DEFAULT_CHECK_FREQUENCY = 15   # seconds
 DEFAULT_STATSD_FREQUENCY = 2  # seconds
 DEFAULT_STATSD_BUCKET_SIZE = 10 #seconds
-PUP_STATSD_FREQUENCY = 2       # seconds
-PUP_STATSD_BUCKET_SIZE = 2       # seconds
 LOGGING_MAX_BYTES = 5 * 1024 * 1024
 
 log = logging.getLogger(__name__)
@@ -186,7 +184,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         'dogstatsd_agregator_bucket_size': DEFAULT_STATSD_BUCKET_SIZE,
         'dogstatsd_normalize': 'yes',
         'dogstatsd_port': 8125,
-        'dogstatsd_target': 'http://localhost:17123',
+        'forwarder_url': 'http://localhost:17123',
         'hostname': None,
         'listen_port': None,
         'tags': None,
@@ -227,35 +225,11 @@ def get_config(parse_args=True, cfg_path=None, options=None):
             common_path = _windows_commondata_path()
             agentConfig['additional_checksd'] = os.path.join(common_path, 'Datadog', 'checks.d')
 
-        # Whether also to send to Pup
-        if config.has_option('Main', 'use_pup'):
-            agentConfig['use_pup'] = config.get('Main', 'use_pup').lower() in ("yes", "true")
-        else:
-            agentConfig['use_pup'] = False
-
         # Concerns only Windows
         if config.has_option('Main', 'use_web_info_page'):
             agentConfig['use_web_info_page'] = config.get('Main', 'use_web_info_page').lower() in ("yes", "true")
         else:
             agentConfig['use_web_info_page'] = True
-
-        if agentConfig['use_pup'] or agentConfig['use_web_info_page']:
-            if config.has_option('Main', 'pup_url'):
-                agentConfig['pup_url'] = config.get('Main', 'pup_url')
-            else:
-                agentConfig['pup_url'] = 'http://localhost:17125'
-
-            if config.has_option('Main', 'pup_port'):
-                agentConfig['pup_port'] = int(config.get('Main', 'pup_port'))
-
-        # Increases the frequency of statsd metrics when only sending to Pup
-        if not agentConfig['use_dd'] and agentConfig['use_pup']:
-            dogstatsd_interval = PUP_STATSD_FREQUENCY
-            dogstatsd_agregator_bucket_size = PUP_STATSD_BUCKET_SIZE
-
-        if not agentConfig['use_dd'] and not agentConfig['use_pup']:
-            sys.stderr.write("Please specify at least one endpoint to send metrics to. This can be done in datadog.conf.")
-            exit(2)
 
         # Which API key to use
         agentConfig['api_key'] = config.get('Main', 'api_key')
@@ -279,7 +253,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         # Dogstatsd config
         dogstatsd_defaults = {
             'dogstatsd_port': 8125,
-            'dogstatsd_target': 'http://localhost:17123',
             'dogstatsd_interval': dogstatsd_interval,
             'dogstatsd_agregator_bucket_size': dogstatsd_agregator_bucket_size,
             'dogstatsd_normalize': 'yes',
@@ -750,7 +723,6 @@ def get_logging_config(cfg_path=None):
             'collector_log_file': '/var/log/datadog/collector.log',
             'forwarder_log_file': '/var/log/datadog/forwarder.log',
             'dogstatsd_log_file': '/var/log/datadog/dogstatsd.log',
-            'pup_log_file': '/var/log/datadog/pup.log',
             'jmxfetch_log_file': '/var/log/datadog/jmxfetch.log',
             'log_to_event_viewer': False,
             'log_to_syslog': True,

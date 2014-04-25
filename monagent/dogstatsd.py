@@ -350,7 +350,7 @@ def init(config_path=None, use_watchdog=False):
     forward_to_port = c.get('statsd_forward_port')
     event_chunk_size = c.get('event_chunk_size')
 
-    target = c['dogstatsd_target']
+    target = c['forwarder_url']
 
     hostname = get_hostname(c)
 
