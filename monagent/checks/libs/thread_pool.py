@@ -89,9 +89,10 @@ class Pool(object):
     def get_nworkers(self):
         return len([w for w in self._workers if w.running])
 
-    def apply(self, func, args=(), kwds=dict()):
+    def apply(self, func, args=(), kwds=None):
         """Equivalent of the apply() builtin function. It blocks till
         the result is ready."""
+        if not kwds: kwds = dict()
         return self.apply_async(func, args, kwds).get()
 
     def map(self, func, iterable, chunksize=None):
@@ -131,7 +132,7 @@ class Pool(object):
         self._create_sequences(func, iterable, chunksize, collector)
         return iter(collector)
     
-    def apply_async(self, func, args=(), kwds=dict(), callback=None):
+    def apply_async(self, func, args=(), kwds=None, callback=None):
         """A variant of the apply() method which returns an
         ApplyResult object.
 
@@ -140,6 +141,7 @@ class Pool(object):
         callback is applied to it (unless the call failed). callback
         should complete immediately since otherwise the thread which
         handles the results will get blocked."""
+        if not kwds: kwds = dict()
         assert not self._closed # No lock here. We assume it's atomic...
         apply_result = ApplyResult(callback=callback)
         job = Job(func, args, kwds, apply_result)

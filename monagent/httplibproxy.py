@@ -308,7 +308,7 @@ class HTTPMessage(mimetools.Message):
                 elif tell:
                     self.fp.seek(startofline)
                 else:
-                    self.status = self.status + '; bad seek'
+                    self.status += '; bad seek'
                 break
 
 class HTTPResponse:
@@ -891,8 +891,9 @@ class HTTPConnection:
 
         self._send_output()
 
-    def request(self, method, url, body=None, headers={}):
+    def request(self, method, url, body=None, headers=None):
         """Send a complete request to the server."""
+        if not headers: headers = {}
 
         try:
             self._send_request(method, url, body, headers)
@@ -1300,7 +1301,6 @@ class InvalidURL(HTTPException):
 
 class UnknownProtocol(HTTPException):
     def __init__(self, version):
-        self.args = version,
         self.version = version
 
 class UnknownTransferEncoding(HTTPException):
@@ -1311,7 +1311,6 @@ class UnimplementedFileMode(HTTPException):
 
 class IncompleteRead(HTTPException):
     def __init__(self, partial):
-        self.args = partial,
         self.partial = partial
 
 class ImproperConnectionState(HTTPException):
@@ -1328,7 +1327,6 @@ class ResponseNotReady(ImproperConnectionState):
 
 class BadStatusLine(HTTPException):
     def __init__(self, line):
-        self.args = line,
         self.line = line
 
 # for backwards compatibility
@@ -1414,7 +1412,7 @@ def test():
     opts, args = getopt.getopt(sys.argv[1:], 'd')
     dl = 0
     for o, a in opts:
-        if o == '-d': dl = dl + 1
+        if o == '-d': dl += 1
     host = 'www.python.org'
     selector = '/'
     if args[0:]: host = args[0]

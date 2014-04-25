@@ -17,7 +17,7 @@ class MonNormalizer(Singleton):
         self.mapping_file_path = mapping_file_path
         self.metric_map = self.__get_metric_map()
 
-        if self.metric_map == None:
+        if self.metric_map is None:
             raise Exception
 
     def normalize_name(self, key):

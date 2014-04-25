@@ -880,16 +880,15 @@ def initialize_logging(logger_name):
     log = logging.getLogger(__name__)
 
 def get_mon_api_config(config):
-    mon_api_config = {}
-    mon_api_config['is_enabled'] = False
-    mon_api_config['url'] = ''
-    mon_api_config['project_id'] = ''
-    mon_api_config['username'] = ''
-    mon_api_config['password'] = False
-    mon_api_config['use_keystone'] = False
-    mon_api_config['keystone_url'] = ''
-    mon_api_config['aggregate_metrics'] = True
-    mon_api_config['mapping_file'] = ''
+    mon_api_config = {'is_enabled': False,
+                      'url': '',
+                      'project_id': '',
+                      'username': '',
+                      'password': False,
+                      'use_keystone': False,
+                      'keystone_url': '',
+                      'aggregate_metrics': True,
+                      'mapping_file': ''}
 
     if config.has_section("Api"):
 

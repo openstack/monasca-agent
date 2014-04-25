@@ -120,7 +120,7 @@ class ResourcePlugin(object):
                     self.log.error("Error while applying %s on %s" % (agg_fun, str(arglist)))
                     raise e
 
-            i = i + 1
+            i += 1
 
         return result
 

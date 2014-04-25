@@ -31,7 +31,7 @@ class Transaction(object):
         self._id = new_id
 
     def inc_error_count(self):
-        self._error_count = self._error_count + 1
+        self._error_count += 1
 
     def get_error_count(self):
         return self._error_count 
@@ -97,7 +97,7 @@ class TransactionManager(object):
             (time.time(), self._total_count, (self._total_size/1024)))
 
     def get_tr_id(self):
-        self._counter =  self._counter + 1
+        self._counter += 1
         return self._counter
 
     def append(self,tr):
@@ -117,7 +117,7 @@ class TransactionManager(object):
             for tr2 in new_trs:
                 if (self._total_size + tr_size) > self._MAX_QUEUE_SIZE:
                     self._transactions.remove(tr2)
-                    self._total_count = self._total_count - 1
+                    self._total_count -= 1
                     self._total_size = self._total_size - tr2.get_size()
                     log.warn("Removed transaction %s from queue" % tr2.get_id())
 

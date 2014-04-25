@@ -1,4 +1,5 @@
 from checks import AgentCheck
+from collections import namedtuple
 import time
 from Queue import Queue, Empty
 from checks.libs.thread_pool import Pool
@@ -12,14 +13,9 @@ DEFAULT_SIZE_POOL = 6
 MAX_LOOP_ITERATIONS = 1000
 FAILURE = "FAILURE"
 
-class Status:
-    DOWN = "DOWN"
-    UP = "UP"
-
-class EventType:
-    DOWN = "servicecheck.state_change.down"
-    UP = "servicecheck.state_change.up"
-
+up_down = namedtuple('up_down', ['UP', 'DOWN'])
+Status = up_down('UP', 'DOWN')
+EventType = up_down("servicecheck.state_change.up", "servicecheck.state_change.down")
 
 class ServicesCheck(AgentCheck):
     SOURCE_TYPE_NAME = 'servicecheck'

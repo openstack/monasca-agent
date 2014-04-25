@@ -107,7 +107,7 @@ def process_list(name, timestamp, values, host_tags, logger):
             dimensions = deepcopy(host_tags)
             for name2 in item[3].iterkeys():
                  value2 = item[3][name2]
-                 if name2 == discard or name2 == "type" or name2 == "interval" or value2 == None:
+                 if name2 == discard or name2 == "type" or name2 == "interval" or value2 is None:
                      continue
                  if name2 == "tags":
                      dimensions.update(process_tags(value2))
@@ -128,7 +128,7 @@ def process_list(name, timestamp, values, host_tags, logger):
             points = []
             for name2 in item.iterkeys():
                  value2 = item[name2]
-                 if name2 == "type" or name2 == "interval" or value2 == None:
+                 if name2 == "type" or name2 == "interval" or value2 is None:
                      continue
                  if name2 == "points":
                      points = value2

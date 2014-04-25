@@ -218,7 +218,7 @@ class Memcache(AgentCheck):
                 'tags': tags
             })
 
-            index = index + 1
+            index += 1
             instance = agentConfig.get("memcache_instance_%s" % index, None)
 
         if len(all_instances) == 0:

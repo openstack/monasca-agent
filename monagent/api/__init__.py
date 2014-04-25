@@ -34,10 +34,10 @@ class MonAPI(object):
             log.debug(data)
             response = requests.post(self.endpoint, data=data, headers=self.headers)
             if response:
-                if response.status_code >= 200 and response.status_code <= 299:
+                if 200 <= response.status_code <= 299:
                     # Good status from web service
                     log.debug("Message sent successfully: {0}".format(str(data)))
-                elif response.status_code >= 400 and response.status_code <= 499:
+                elif 400 <= response.status_code <= 499:
                     # Good status from web service but some type of issue with the data
                     log.warn("Successful web service call but there were issues (Status: {0}, Status Message: {1}, Message Content: {1})".format(response.status_code, response.text, response.str(payload)))
                 else:

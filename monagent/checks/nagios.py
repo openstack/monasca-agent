@@ -79,7 +79,7 @@ class Nagios(object):
         """
         # first isolate the timestamp and the event type
         try:
-            self._line_parsed = self._line_parsed + 1
+            self._line_parsed += 1
 
             m  = self.re_line_reg.match(line)
             if m is None:

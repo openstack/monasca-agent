@@ -89,7 +89,7 @@ class Lighttpd(AgentCheck):
 
                 # Special case: kBytes => bytes
                 if metric == 'Total kBytes':
-                    value = value * 1024
+                    value *= 1024
 
                 # Send metric as a gauge, if applicable
                 if metric in self.GAUGES:
