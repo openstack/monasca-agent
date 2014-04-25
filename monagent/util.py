@@ -193,12 +193,6 @@ def get_hostname(config=None):
             if unix_hostname and is_valid_hostname(unix_hostname):
                 hostname = unix_hostname
 
-    # if we have an ec2 default hostname, see if there's an instance-id available
-    if hostname is not None and True in [hostname.lower().startswith(p) for p in [u'ip-', u'domu']]:
-        instanceid = EC2.get_instance_id()
-        if instanceid:
-            hostname = instanceid
-
     # fall back on socket.gethostname(), socket.getfqdn() is too unreliable
     if hostname is None:
         try:
@@ -283,92 +277,6 @@ class GCE(object):
         except Exception:
             return None
 
-
-
-class EC2(object):
-    """Retrieve EC2 metadata
-    """
-    URL = "http://169.254.169.254/latest/meta-data"
-    TIMEOUT = 0.1 # second
-    metadata = {}
-
-    @staticmethod
-    def get_tags():
-        socket_to = None
-        try:
-            socket_to = socket.getdefaulttimeout()
-            socket.setdefaulttimeout(EC2.TIMEOUT)
-        except Exception:
-            pass
-
-        try:
-            iam_role = urllib2.urlopen(EC2.URL + "/iam/security-credentials").read().strip()
-            iam_params = json.loads(urllib2.urlopen(EC2.URL + "/iam/security-credentials" + "/" + unicode(iam_role)).read().strip())
-            from checks.libs.boto.ec2.connection import EC2Connection
-            connection = EC2Connection(aws_access_key_id=iam_params['AccessKeyId'], aws_secret_access_key=iam_params['SecretAccessKey'], security_token=iam_params['Token'])
-            instance_object = connection.get_only_instances([EC2.metadata['instance-id']])[0]
-
-            EC2_tags = [u"%s:%s" % (tag_key, tag_value) for tag_key, tag_value in instance_object.tags.iteritems()]
-
-        except Exception:
-            log.exception("Problem retrieving custom EC2 tags")
-            EC2_tags = []
-
-        try:
-            if socket_to is None:
-                socket_to = 3
-            socket.setdefaulttimeout(socket_to)
-        except Exception:
-            pass
-
-        return EC2_tags
-
-
-    @staticmethod
-    def get_metadata():
-        """Use the ec2 http service to introspect the instance. This adds latency if not running on EC2
-        """
-        # >>> import urllib2
-        # >>> urllib2.urlopen('http://169.254.169.254/latest/', timeout=1).read()
-        # 'meta-data\nuser-data'
-        # >>> urllib2.urlopen('http://169.254.169.254/latest/meta-data', timeout=1).read()
-        # 'ami-id\nami-launch-index\nami-manifest-path\nhostname\ninstance-id\nlocal-ipv4\npublic-keys/\nreservation-id\nsecurity-groups'
-        # >>> urllib2.urlopen('http://169.254.169.254/latest/meta-data/instance-id', timeout=1).read()
-        # 'i-deadbeef'
-
-        # Every call may add TIMEOUT seconds in latency so don't abuse this call
-        # python 2.4 does not support an explicit timeout argument so force it here
-        # Rather than monkey-patching urllib2, just lower the timeout globally for these calls
-        socket_to = None
-        try:
-            socket_to = socket.getdefaulttimeout()
-            socket.setdefaulttimeout(EC2.TIMEOUT)
-        except Exception:
-            pass
-
-        for k in ('instance-id', 'hostname', 'local-hostname', 'public-hostname', 'ami-id', 'local-ipv4', 'public-keys', 'public-ipv4', 'reservation-id', 'security-groups'):
-            try:
-                v = urllib2.urlopen(EC2.URL + "/" + unicode(k)).read().strip()
-                assert type(v) in (types.StringType, types.UnicodeType) and len(v) > 0, "%s is not a string" % v
-                EC2.metadata[k] = v
-            except Exception:
-                pass
-
-        try:
-            if socket_to is None:
-                socket_to = 3
-            socket.setdefaulttimeout(socket_to)
-        except Exception:
-            pass
-
-        return EC2.metadata
-
-    @staticmethod
-    def get_instance_id():
-        try:
-            return EC2.get_metadata().get("instance-id", None)
-        except Exception:
-            return None
 
 
 class Watchdog(object):

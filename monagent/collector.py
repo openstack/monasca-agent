@@ -35,7 +35,7 @@ from checks.check_status import CollectorStatus
 from config import get_config, get_system_stats, get_parsed_args, load_check_directory, get_confd_path, check_yaml, get_logging_config
 from daemon import Daemon, AgentSupervisor
 from emitter import http_emitter
-from util import Watchdog, PidFile, EC2, get_os
+from util import Watchdog, PidFile, get_os
 from jmxfetch import JMXFetch
 
 
@@ -95,9 +95,8 @@ class Agent(Daemon):
 
         # Intialize the collector.
         if not config:
-            config = get_config(parse_args=True)
+            agentconfig = get_config(parse_args=True)
 
-        agentConfig = self._set_agent_config_hostname(config)
         systemStats = get_system_stats()
         # Load the checks.d checks
         checksd = load_check_directory(agentConfig)
@@ -172,19 +171,6 @@ class Agent(Daemon):
                 max_mem_mb=agentConfig.get('limit_memory_consumption', None))
             watchdog.reset()
         return watchdog
-
-    def _set_agent_config_hostname(self, agentConfig):
-        # Try to fetch instance Id from EC2 if not hostname has been set
-        # in the config file.
-        # DEPRECATED
-        if agentConfig.get('hostname') is None and agentConfig.get('use_ec2_instance_id'):
-            instanceId = EC2.get_instance_id()
-            if instanceId is not None:
-                log.info("Running on EC2, instanceId: %s" % instanceId)
-                agentConfig['hostname'] = instanceId
-            else:
-                log.info('Not running on EC2, using hostname to identify this server')
-        return agentConfig
 
     def _should_restart(self):
         if time.time() - self.agent_start > self.restart_interval:

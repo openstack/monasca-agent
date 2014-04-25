@@ -10,7 +10,7 @@ import socket
 
 import modules
 
-from util import get_os, get_uuid, md5, Timer, get_hostname, EC2, GCE
+from util import get_os, get_uuid, md5, Timer, get_hostname, GCE
 from config import get_version, get_system_stats
 
 import checks.system.unix as u
@@ -371,9 +371,6 @@ class Collector(object):
             if self.agentConfig['tags'] is not None:
                 host_tags.extend([unicode(tag.strip()) for tag in self.agentConfig['tags'].split(",")])
 
-            if self.agentConfig['collect_ec2_tags']:
-                host_tags.extend(EC2.get_tags())
-
             if host_tags:
                 payload['host-tags']['system'] = host_tags
 
@@ -388,11 +385,7 @@ class Collector(object):
         return payload
 
     def _get_metadata(self):
-        metadata = EC2.get_metadata()
-        if metadata.get('hostname'):
-            metadata['ec2-hostname'] = metadata.get('hostname')
-            del metadata['hostname']
-
+        metadata = {}
         if self.agentConfig.get('hostname'):
             metadata['agent-hostname'] = self.agentConfig.get('hostname')
         else:

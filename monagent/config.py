@@ -190,7 +190,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         'hostname': None,
         'listen_port': None,
         'tags': None,
-        'use_ec2_instance_id': False,  # DEPRECATED
         'version': get_version(),
         'watchdog': True,
         'additional_checksd': '/etc/dd-agent/checks.d/',
@@ -265,12 +264,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         agentConfig['non_local_traffic'] = False
         if config.has_option('Main', 'non_local_traffic'):
             agentConfig['non_local_traffic'] = config.get('Main', 'non_local_traffic').lower() in ("yes", "true")
-
-        # DEPRECATED
-        if config.has_option('Main', 'use_ec2_instance_id'):
-            use_ec2_instance_id = config.get('Main', 'use_ec2_instance_id')
-            # translate yes into True, the rest into False
-            agentConfig['use_ec2_instance_id'] = (use_ec2_instance_id.lower() == 'yes')
 
         if config.has_option('Main', 'check_freq'):
             try:
@@ -351,10 +344,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
 
         if config.has_option("Main", "skip_ssl_validation"):
             agentConfig["skip_ssl_validation"] = _is_affirmative(config.get("Main", "skip_ssl_validation"))
-
-        agentConfig["collect_ec2_tags"] = False
-        if config.has_option("Main", "collect_ec2_tags"):
-            agentConfig["collect_ec2_tags"] = _is_affirmative(config.get("Main", "collect_ec2_tags"))
 
         agentConfig['Api'] = get_mon_api_config(config)
 
