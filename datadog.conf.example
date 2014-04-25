@@ -1,17 +1,13 @@
-[Main]
-
-# ========================================================================== #
-# Monitoring Agent
-# ========================================================================== #
+[MonApi]
 # Monitoring API URL: URL for the monitoring API
 # Example: https://region-a.geo-1.monitoring.hpcloudsvc.com/v1.1/metrics
-mon_api_url: CHANGE_ME
+url: CHANGE_ME
 # Monitoring API Project Id: Project Id for the monitoring API
-mon_api_project_id: CHANGE_ME
+project_id: CHANGE_ME
 # Monitoring API Username: Username for the monitoring API
-mon_api_username: CHANGE_ME
+username: CHANGE_ME
 # Monitoring API Password: Password for the monitoring API
-mon_api_password: CHANGE_ME
+password: CHANGE_ME
 # Use Keystone for Authentication?: Use Keystone for authentication
 # True or False
 use_keystone: True
@@ -21,8 +17,8 @@ keystone_url: CHANGE_ME
 # Aggregate Metrics?: Send single message or message for each metric
 # True or False
 aggregate_metrics: True
-# If use_dd is set to no, then use_pup must be set to yes
-use_dd: no
+
+[Main]
 
 # Force the hostname to whatever you want.
 #hostname: mymachine.mydomain

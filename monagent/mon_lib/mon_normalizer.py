@@ -1,15 +1,24 @@
 from util import json
 import os
 
-class MonNormalizer(object):
+class _Singleton(type):
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+class Singleton(_Singleton('SingletonMeta', (object,), {})): pass
+
+class MonNormalizer(Singleton):
 
     def __init__(self, logger, mapping_file_path):
         self.logger = logger
         self.mapping_file_path = mapping_file_path
         self.metric_map = self.__get_metric_map()
 
-    def is_initialized(self):
-        return self.metric_map != None
+        if self.metric_map == None:
+            raise Exception
 
     def normalize_name(self, key):
         name = key

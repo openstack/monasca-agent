@@ -4,13 +4,20 @@ from util import json, md5
 
 class MonAPI(object):
 
-    def __init__(self, mon_api_url, use_keystone, keystone_url, project_id, user_id, password, logger):
+    def __init__(self, mon_api_config, logger):
         """
         Initialize Mon api connection.
         """
         self.logger = logger
+        mon_api_url = mon_api_config['url']
+        use_keystone = mon_api_config['use_keystone']
+        keystone_url = mon_api_config['keystone_url']
+        project_id = mon_api_config['project_id']
+        user_id = mon_api_config['username']
+        password = mon_api_config['password']
         self.endpoint = mon_api_url
-        if use_keystone.upper() == "TRUE":
+
+        if use_keystone:
             self.keystone = Keystone(keystone_url)
             self.token = self.keystone.get_token_password_auth(user_id, password, project_id)
             self.headers = {'content-type': 'application/json',
@@ -20,10 +27,10 @@ class MonAPI(object):
                             'X-Tenant-Id': project_id}
 
 
-    def create_or_update_metric(self, payload):
+    def post_metrics(self, payload):
         try:
             data = json.dumps(payload)
-            print data
+            self.logger.debug(data)
             response = requests.post(self.endpoint, data=data, headers=self.headers)
             if response:
                 if response.status_code >= 200 and response.status_code <= 299:

@@ -390,6 +390,8 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         if config.has_option("Main", "collect_ec2_tags"):
             agentConfig["collect_ec2_tags"] = _is_affirmative(config.get("Main", "collect_ec2_tags"))
 
+        agentConfig['MonApi'] = get_mon_api_config(config)
+
     except ConfigParser.NoSectionError, e:
         sys.stderr.write('Config file not found or incorrectly formatted.\n')
         sys.exit(2)
@@ -949,3 +951,46 @@ def initialize_logging(logger_name):
     # re-get the log after logging is initialized
     global log
     log = logging.getLogger(__name__)
+
+def get_mon_api_config(config):
+    mon_api_config = {}
+    mon_api_config['is_enabled'] = False
+    mon_api_config['url'] = ''
+    mon_api_config['project_id'] = ''
+    mon_api_config['username'] = ''
+    mon_api_config['password'] = False
+    mon_api_config['use_keystone'] = False
+    mon_api_config['keystone_url'] = ''
+    mon_api_config['aggregate_metrics'] = True
+    mon_api_config['mapping_file'] = ''
+
+    if config.has_section("MonApi"):
+
+        if config.has_option("MonApi", "use_mon_api"):
+            mon_api_config["use_mon_api"] = config.getboolean("MonApi", "use_mon_api")
+
+        if config.has_option("MonApi", "url"):
+            mon_api_config["url"] = config.get("MonApi", "url")
+
+        if config.has_option("MonApi", "project_id"):
+            mon_api_config["project_id"] = config.get("MonApi", "project_id")
+
+        if config.has_option("MonApi", "username"):
+            mon_api_config["username"] = config.get("MonApi", "username")
+
+        if config.has_option("MonApi", "password"):
+            mon_api_config["password"] = config.get("MonApi", "password")
+
+        if config.has_option("MonApi", "use_keystone"):
+            mon_api_config["use_keystone"] = config.getboolean("MonApi", "use_keystone")
+
+        if config.has_option("MonApi", "keystone_url"):
+            mon_api_config["keystone_url"] = config.get("MonApi", "keystone_url")
+
+        if config.has_option("MonApi", "aggregate_metrics"):
+            mon_api_config["aggregate_metrics"] = config.getboolean("MonApi", "aggregate_metrics")
+
+        if config.has_option("MonApi", "mapping_file"):
+            mon_api_config["mapping_file"] = config.get("MonApi", "mapping_file")
+
+    return mon_api_config
