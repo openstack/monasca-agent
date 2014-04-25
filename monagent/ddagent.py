@@ -26,9 +26,11 @@ from Queue import Queue, Full
 from subprocess import Popen
 from hashlib import md5
 from datetime import datetime, timedelta
+import signal
 from socket import gaierror, error as socket_error
 
 # Tornado
+import tornado.httpclient
 import tornado.httpserver
 import tornado.ioloop
 import tornado.web
@@ -333,6 +335,16 @@ class Application(tornado.web.Application):
             self._watchdog = Watchdog(watchdog_timeout,
                 max_mem_mb=agentConfig.get('limit_memory_consumption', None))
 
+    def _postMetrics(self):
+
+        if len(self._metrics) > 0:
+            self._metrics['uuid'] = get_uuid()
+            self._metrics['internalHostname'] = get_hostname(self._agentConfig)
+            self._metrics['apiKey'] = self._agentConfig['api_key']
+            MetricTransaction(json.dumps(self._metrics),
+                              headers={'Content-Type': 'application/json'})
+            self._metrics = {}
+
     def log_request(self, handler):
         """ Override the tornado logging method.
         If everything goes well, log level is DEBUG.
@@ -359,16 +371,6 @@ class Application(tornado.web.Application):
             metrics[name].append([host, device, ts, value])
         else:
             metrics[name] = [[host, device, ts, value]]
-
-    def _postMetrics(self):
-
-        if len(self._metrics) > 0:
-            self._metrics['uuid'] = get_uuid()
-            self._metrics['internalHostname'] = get_hostname(self._agentConfig)
-            self._metrics['apiKey'] = self._agentConfig['api_key']
-            MetricTransaction(json.dumps(self._metrics),
-                headers={'Content-Type': 'application/json'})
-            self._metrics = {}
 
     def run(self):
         handlers = [
@@ -466,7 +468,6 @@ def init(skip_ssl_validation=False, use_simple_http_client=False):
         log.info("caught sigterm. stopping")
         app.stop()
 
-    import signal
     signal.signal(signal.SIGTERM, sigterm_handler)
     signal.signal(signal.SIGINT, sigterm_handler)
 
@@ -487,7 +488,6 @@ def main():
 
     # If we don't have any arguments, run the server.
     if not args:
-        import tornado.httpclient
         app = init(skip_ssl_validation, use_simple_http_client=use_simple_http_client)
         try:
             app.run()
