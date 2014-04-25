@@ -1,5 +1,5 @@
 import requests
-from mon_keystone import Keystone
+from keystone import Keystone
 from util import json, md5
 
 class MonAPI(object):
