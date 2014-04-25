@@ -5,7 +5,7 @@
 # Constants
 #============
 
-BUILD=build/package
+BUILD=../build/package
 SRC=../
 ROOT=root
 BUILD_NUMBER ?= 0
@@ -34,19 +34,18 @@ clean:
 # root directory.
 source:
 	mkdir -p $(ROOT)
-	cp -r $(SRC)/checks $(ROOT)/
-	cp -r $(SRC)/dogstream $(ROOT)/
-	cp -r $(SRC)/pup $(ROOT)/
-	cp -r $(SRC)/yaml $(ROOT)/
-	cp -r $(SRC)/checks.d $(ROOT)/
-	cp -r $(SRC)/compat $(ROOT)/
+	cp -r $(SRC)/monagent/checks $(ROOT)/
+	cp -r $(SRC)/monagent/dogstream $(ROOT)/
+	cp -r $(SRC)/monagent/pup $(ROOT)/
+	cp -r $(SRC)/monagent/yaml $(ROOT)/
+	cp -r $(SRC)/monagent/checks.d $(ROOT)/
+	cp -r $(SRC)/monagent/compat $(ROOT)/
 	cp -r $(SRC)/conf.d $(ROOT)/
-	cp -r $(SRC)/resources $(ROOT)/
-	cp -r $(SRC)/mon_lib $(ROOT)/
-	cp -r $(SRC)/*.py $(ROOT)/
+	cp -r $(SRC)/monagent/resources $(ROOT)/
+	cp -r $(SRC)/monagent/mon_lib $(ROOT)/
+	cp -r $(SRC)/monagent/*.py $(ROOT)/
 	cp -r $(SRC)/LICENSE* $(ROOT)/
 	cp -r $(SRC)/datadog.conf.example $(ROOT)/
-	cp -r $(SRC)/datadog-cert.pem $(ROOT)/
 	find $(ROOT) -name "*.pyc" -exec rm {} \;
 
 
