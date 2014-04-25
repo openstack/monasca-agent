@@ -25,27 +25,11 @@ except ImportError:
 
 VALID_HOSTNAME_RFC_1123_PATTERN = re.compile(r"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$")
 MAX_HOSTNAME_LEN = 255
-# Import json for the agent. Try simplejson first, then the stdlib version and
-# if all else fails, use minjson which we bundle with the agent.
-def generate_minjson_adapter():
-    import minjson
-    class json(object):
-        @staticmethod
-        def dumps(data):
-            return minjson.write(data)
-
-        @staticmethod
-        def loads(data):
-            return minjson.safeRead(data)
-    return json
-
+# Import json for the agent. Try simplejson first, then the stdlib version
 try:
     import simplejson as json
 except ImportError:
-    try:
-        import json
-    except ImportError:
-        json = generate_minjson_adapter()
+    import json
 
 
 

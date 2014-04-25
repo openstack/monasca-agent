@@ -44,9 +44,6 @@ use_mount: no
 # Change port the Agent is listening to
 # listen_port: 17123
 
-# Start a graphite listener on this port
-# graphite_listen_port: 17124
-
 # Additional directory to look for Datadog checks
 # additional_checksd: /etc/dd-agent/checks.d/
 

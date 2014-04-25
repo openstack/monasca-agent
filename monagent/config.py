@@ -19,7 +19,6 @@ from cStringIO import StringIO
 # project
 from util import get_os, yaml, yLoader, Platform
 from jmxfetch import JMXFetch, JMX_COLLECT_COMMAND
-from migration import migrate_old_style_configuration
 
 # CONSTANTS
 DATADOG_CONF = "datadog.conf"
@@ -197,7 +196,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         'dogstatsd_normalize': 'yes',
         'dogstatsd_port': 8125,
         'dogstatsd_target': 'http://localhost:17123',
-        'graphite_listen_port': None,
         'hostname': None,
         'listen_port': None,
         'tags': None,
@@ -312,13 +310,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         if config.has_option('Main', 'watchdog'):
             if config.get('Main', 'watchdog').lower() in ('no', 'false'):
                 agentConfig['watchdog'] = False
-
-        # Optional graphite listener
-        if config.has_option('Main', 'graphite_listen_port'):
-            agentConfig['graphite_listen_port'] = \
-                int(config.get('Main', 'graphite_listen_port'))
-        else:
-            agentConfig['graphite_listen_port'] = None
 
         # Dogstatsd config
         dogstatsd_defaults = {
@@ -656,9 +647,6 @@ def load_check_directory(agentConfig):
     except PathNotFound, e:
         log.error("No conf.d folder found at '%s' or in the directory where the Agent is currently deployed.\n" % e.args[0])
         sys.exit(3)
-
-    # Migrate datadog.conf integration configurations that are not supported anymore
-    migrate_old_style_configuration(agentConfig, confd_path, get_config_path(None, os_name=get_os()))
 
     # Start JMXFetch if needed
     JMXFetch.init(confd_path, agentConfig, get_logging_config(), DEFAULT_CHECK_FREQUENCY, JMX_COLLECT_COMMAND)

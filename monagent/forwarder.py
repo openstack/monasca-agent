@@ -431,17 +431,6 @@ class Application(tornado.web.Application):
         tr_sched = tornado.ioloop.PeriodicCallback(flush_trs,TRANSACTION_FLUSH_INTERVAL,
             io_loop = self.mloop)
 
-        # Register optional Graphite listener
-        gport = self._agentConfig.get("graphite_listen_port", None)
-        if gport is not None:
-            log.info("Starting graphite listener on port %s" % gport)
-            from graphite import GraphiteServer
-            gs = GraphiteServer(self, get_hostname(self._agentConfig), io_loop=self.mloop)
-            if non_local_traffic is True:
-                gs.listen(gport)
-            else:
-                gs.listen(gport, address = "localhost")
-
         # Start everything
         if self._watchdog:
             self._watchdog.reset()

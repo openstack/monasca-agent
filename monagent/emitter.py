@@ -3,22 +3,7 @@ import sys
 from pprint import pformat as pp
 from util import json, md5, get_os
 from config import get_ssl_certificate
-
-def get_http_library(proxy_settings, use_forwarder):
-    #There is a bug in the https proxy connection in urllib2 on python < 2.6.3
-    if use_forwarder:
-        # We are using the forwarder, so it's local trafic. We don't use the proxy
-        import urllib2
-
-    elif proxy_settings is None or int(sys.version_info[1]) >= 7\
-        or (int(sys.version_info[1]) == 6 and int(sys.version_info[2]) >= 3):
-        # Python version >= 2.6.3
-        import urllib2
-
-    else:
-        # Python version < 2.6.3
-        import urllib2proxy as urllib2
-    return urllib2 
+import urllib2
 
 def post_headers(agentConfig, payload):
     return {
@@ -49,7 +34,6 @@ def http_emitter(message, log, agentConfig):
     headers = post_headers(agentConfig, zipped)
 
     proxy_settings = agentConfig.get('proxy_settings', None)
-    urllib2 = get_http_library(proxy_settings, agentConfig['use_forwarder'])
 
     try:
         request = urllib2.Request(url, zipped, headers)
