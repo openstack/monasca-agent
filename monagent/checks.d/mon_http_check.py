@@ -5,7 +5,7 @@ import socket
 import time
 import json
 import re
-from checks.libs.httplib2 import Http, HttpLib2Error
+from httplib2 import Http, HttpLib2Error
 
 class HTTPCheck(AgentCheck):
 
