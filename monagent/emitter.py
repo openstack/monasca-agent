@@ -6,7 +6,6 @@ def post_headers(agentConfig, payload):
     return {
         'User-Agent': 'Datadog Agent/%s' % agentConfig['version'],
         'Content-Type': 'application/json',
-        'Content-Encoding': 'deflate',
         'Accept': 'text/html, */*',
         'Content-MD5': md5(payload).hexdigest()
     }
@@ -18,15 +17,12 @@ def http_emitter(message, log, agentConfig):
 
     # Post back the data
     payload = json.dumps(message)
-    zipped = zlib.compress(payload)
-
-    log.debug("payload_size=%d, compressed_size=%d, compression_ratio=%.3f" % (len(payload), len(zipped), float(len(payload))/float(len(zipped))))
 
     url = "%s/intake" % agentConfig['forwarder_url']
-    headers = post_headers(agentConfig, zipped)
+    headers = post_headers(agentConfig, payload)
 
     try:
-        request = urllib2.Request(url, zipped, headers)
+        request = urllib2.Request(url, payload, headers)
         # Do the request, log any errors
         opener = urllib2.build_opener()
         if opener is not None:
