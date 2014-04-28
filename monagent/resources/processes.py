@@ -1,11 +1,7 @@
-
-
+from collections import namedtuple
 import subprocess
-import sys
-import traceback
 
 from resources import ResourcePlugin, SnapshotDescriptor, SnapshotField, agg
-from util import namedtuple
 
 class Processes(ResourcePlugin):
 

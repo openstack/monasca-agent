@@ -1,6 +1,7 @@
+import json
 import urllib2
 import re
-from util import json, headers
+from util import headers
 import sys
 from checks import AgentCheck
 from checks.utils import add_basic_auth

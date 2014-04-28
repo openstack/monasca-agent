@@ -1,3 +1,4 @@
+import json
 import urllib2
 import urllib
 import httplib
@@ -5,7 +6,7 @@ import socket
 import os
 import re
 from urlparse import urlsplit, urljoin
-from util import json, headers
+from util import headers
 from checks import AgentCheck
 
 DEFAULT_MAX_CONTAINERS = 20

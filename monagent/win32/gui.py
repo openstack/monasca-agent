@@ -5,6 +5,10 @@
 # Licensed under the terms of the CECILL License
 # Modified for Datadog
 
+import yamltry:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
 import sys
 import os
 import os.path as osp
@@ -27,7 +31,6 @@ from spyderlib.widgets.sourcecode.codeeditor import CodeEditor
 
 
 # Datadog
-from util import yaml, yLoader
 from util import get_os
 from config import (get_confd_path, get_config_path, get_config, 
     _windows_commondata_path)
@@ -433,7 +436,7 @@ def save_file(properties):
     
 def check_yaml_syntax(content):
     try:
-        yaml.load(content, Loader=yLoader)
+        yaml.load(content, Loader=Loader)
     except Exception, e:
         warning_popup("Unable to parse yaml: \n %s" % str(e))
         raise

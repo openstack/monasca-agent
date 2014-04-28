@@ -1,7 +1,7 @@
+import json
 import logging
 import requests
 from keystone import Keystone
-from util import json, md5
 from normalizer import MonNormalizer
 from emitter import *
 

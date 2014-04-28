@@ -1,5 +1,6 @@
 import urllib2
-from util import json, headers
+import json
+from util import headers
 
 from checks import AgentCheck
 

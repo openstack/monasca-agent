@@ -1,5 +1,4 @@
-from util import json
-import os
+import json
 
 class _Singleton(type):
     _instances = {}

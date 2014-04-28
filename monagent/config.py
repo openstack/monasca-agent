@@ -15,9 +15,14 @@ import re
 import imp
 from optparse import OptionParser, Values
 from cStringIO import StringIO
+import yaml
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
 
 # project
-from util import get_os, yaml, yLoader, Platform
+from util import get_os, Platform
 from jmxfetch import JMXFetch, JMX_COLLECT_COMMAND
 
 # CONSTANTS
@@ -505,7 +510,7 @@ def check_yaml(conf_path):
     f = open(conf_path)
     check_name = os.path.basename(conf_path).split('.')[0]
     try:
-        check_config = yaml.load(f.read(), Loader=yLoader)
+        check_config = yaml.load(f.read(), Loader=Loader)
         assert 'init_config' in check_config, "No 'init_config' section found"
         assert 'instances' in check_config, "No 'instances' section found"
 

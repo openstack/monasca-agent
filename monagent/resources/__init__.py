@@ -1,8 +1,7 @@
 
+from collections import namedtuple
 from datetime import datetime, timedelta
 import time
-
-from util import namedtuple
 
 
 class agg(object):

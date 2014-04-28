@@ -1,6 +1,5 @@
+import json
 import requests
-
-from util import json, md5
 
 class Keystone(object):
 

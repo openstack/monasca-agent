@@ -17,7 +17,7 @@ import time
 # project
 import config
 from collections import defaultdict
-from util import get_os, yaml, yLoader
+import yaml
 
 # 3rd party
 import ntplib

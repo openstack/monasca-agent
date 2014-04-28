@@ -1,16 +1,12 @@
 # Core modules
-import os
-import re
 import logging
-import subprocess
 import sys
 import time
-import datetime
 import socket
 
 import modules
 
-from util import get_os, get_uuid, md5, Timer, get_hostname, GCE
+from util import get_os, get_uuid, Timer, get_hostname, GCE
 from config import get_version, get_system_stats
 
 import checks.system.unix as u

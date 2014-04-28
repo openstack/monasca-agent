@@ -1,3 +1,4 @@
+import json
 import socket
 import subprocess
 import sys
@@ -5,7 +6,7 @@ import time
 import urlparse
 import urllib2
 
-from util import json, headers
+from util import headers
 from checks import AgentCheck
 from checks.utils import add_basic_auth
 

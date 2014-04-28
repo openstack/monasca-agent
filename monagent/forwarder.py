@@ -17,8 +17,8 @@ from config import get_logging_config
 import os; os.umask(022)
 
 # Standard imports
+import json
 import logging
-import os
 import sys
 import threading
 import zlib
@@ -37,7 +37,7 @@ from tornado.options import define, parse_command_line, options
 
 # agent import
 from api import MonAPI
-from util import Watchdog, get_uuid, get_hostname, json, get_tornado_ioloop
+from util import Watchdog, get_uuid, get_hostname, get_tornado_ioloop
 from config import get_config
 from checks.check_status import ForwarderStatus
 from transaction import Transaction, TransactionManager

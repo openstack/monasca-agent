@@ -496,7 +496,11 @@ class AgentCheck(object):
         """
         A method used for testing your check without running the agent.
         """
-        from util import yaml, yLoader
+        import yaml
+        try:
+            from yaml import CLoader as Loader
+        except ImportError:
+            from yaml import Loader
         if path_to_yaml:
             check_name = os.path.basename(path_to_yaml).split('.')[0]
             try:
@@ -506,7 +510,7 @@ class AgentCheck(object):
             yaml_text = f.read()
             f.close()
 
-        config = yaml.load(yaml_text, Loader=yLoader)
+        config = yaml.load(yaml_text, Loader=Loader)
         check = cls(check_name, config.get('init_config') or {}, agentConfig or {})
 
         return check, config.get('instances', [])

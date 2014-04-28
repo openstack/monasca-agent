@@ -1,5 +1,5 @@
-import zlib
-from util import json, md5, get_os
+from hashlib import md5
+import json
 import urllib2
 
 def post_headers(agentConfig, payload):

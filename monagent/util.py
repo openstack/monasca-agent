@@ -17,29 +17,9 @@ try:
     from tornado import ioloop, version_info as tornado_version
 except ImportError:
     pass # We are likely running the agent without the forwarder and tornado is not installed
-try:
-    from hashlib import md5
-except ImportError:
-    from md5 import md5
-
 
 VALID_HOSTNAME_RFC_1123_PATTERN = re.compile(r"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$")
 MAX_HOSTNAME_LEN = 255
-# Import json for the agent. Try simplejson first, then the stdlib version
-try:
-    import simplejson as json
-except ImportError:
-    import json
-
-
-
-import yaml
-try:
-    from yaml import CLoader as yLoader
-except ImportError:
-    from yaml import Loader as yLoader
-
-from collections import namedtuple
 
 import logging
 log = logging.getLogger(__name__)

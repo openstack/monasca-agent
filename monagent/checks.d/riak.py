@@ -1,8 +1,8 @@
+from hashlib import md5
+import json
 import time
 
 from checks import AgentCheck
-from util import md5
-from util import json
 
 from httplib2 import Http, HttpLib2Error
 import socket

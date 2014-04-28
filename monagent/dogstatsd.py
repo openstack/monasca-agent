@@ -12,6 +12,7 @@ os.umask(022)
 
 # stdlib
 import httplib as http_client
+import json
 import logging
 import optparse
 import re
@@ -28,7 +29,7 @@ from aggregator import MetricsBucketAggregator
 from checks.check_status import DogstatsdStatus
 from config import get_config
 from daemon import Daemon, AgentSupervisor
-from util import json, PidFile, get_hostname, plural, get_uuid, chunks
+from util import PidFile, get_hostname, plural, get_uuid, chunks
 
 log = logging.getLogger('dogstatsd')
 
