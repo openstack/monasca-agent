@@ -167,7 +167,7 @@ class MetricTransaction(Transaction):
     def flush(self):
         try:
             for endpoint in self._endpoints:
-                endpoint.post_metrics(self.data)
+                endpoint.post_metrics(self._data)
         except Exception:
             log.exception('Error flushing metrics to remote endpoints')
             self._trManager.tr_error(self)
@@ -200,7 +200,7 @@ class AgentInputHandler(tornado.web.RequestHandler):
         """Read the message and forward it to the intake"""
 
         # read message
-        msg = self.request.body
+        msg = tornado.escape.json_decode(self.request.body)
         headers = self.request.headers
 
         if msg is not None:
@@ -242,7 +242,7 @@ class Forwarder(tornado.web.Application):
             self._metrics['uuid'] = get_uuid()
             self._metrics['internalHostname'] = get_hostname(self._agentConfig)
             self._metrics['apiKey'] = self._agentConfig['api_key']
-            MetricTransaction(json.dumps(self._metrics),
+            MetricTransaction(self._metrics,
                               headers={'Content-Type': 'application/json'})
             self._metrics = {}
 

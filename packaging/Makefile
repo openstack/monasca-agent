@@ -157,6 +157,7 @@ $(FPM_BUILD) -t deb \
 -d "python-psutil" \
 -d "python-httplib2" \
 -d "python-ntplib" \
+-d "python-yaml" \
 --post-install datadog-agent-deb/postinst \
 --post-uninstall datadog-agent-deb/postrm \
 --pre-uninstall  datadog-agent-deb/prerm \

@@ -1,46 +1,13 @@
 import calendar
 import datetime
+import logging
 from copy import deepcopy
-from mon_lib.mon_api import MonAPI
-from mon_lib.mon_normalizer import MonNormalizer
+from normalizer import MonNormalizer
 
 discard = "DISCARD"
-        
-def emitter(payload, logger, config):
-    logger.debug("Starting the mon_api.emitter")
-    logger.debug("Payload ==> ", str(payload))
-    config = config
-    mon_api_config = config['MonApi']
-    mon_api_url = mon_api_config['url']
-    aggregate_metrics = mon_api_config['aggregate_metrics']
-    mapping_file_path = mon_api_config['mapping_file']
-    MonNormalizer(logger, mapping_file_path)
-    host_tags = get_standard_dimensions(payload, config, logger)
+log = logging.getLogger(__name__)
 
-    api = MonAPI(mon_api_config, logger)
-
-    logger.debug('mon_api_http_emitter: attempting postback to ' + mon_api_url)
-    metrics_list = []
-    for agent_metric in payload:
-        try:
-            api_metric = get_api_metric(agent_metric, payload, host_tags, logger)
-            if aggregate_metrics:
-                metrics_list.extend(api_metric)
-            else:
-                api.post_metrics(api_metric)
-
-            if len(api_metric) > 0:
-                logger.debug("Sending metric to API: %s", str(api_metric))
-            else:
-                logger.debug("Discarding metric: %s", str(agent_metric))
-
-        except Exception as ex:
-            logger.exception("Error sending message to mon-api")
-
-    if len(metrics_list) > 0:
-        api.post_metrics(metrics_list)
-
-def get_api_metric(agent_metric, payload, host_tags, logger):
+def get_api_metric(agent_metric, payload, host_tags, log):
     normalizer = MonNormalizer()
     timestamp = get_timestamp(payload)
     metrics_list = []
@@ -48,17 +15,17 @@ def get_api_metric(agent_metric, payload, host_tags, logger):
     name = MonNormalizer().normalize_name(agent_metric)
     if name != discard:
         value = payload[agent_metric]
-        logger.debug("Agent Metric Name Received: " + str(name))
-        logger.debug("Agent Metric Value Received: " + str(value))
+        log.debug("Agent Metric Name Received: " + str(name))
+        log.debug("Agent Metric Value Received: " + str(value))
         if isinstance(value, str):
             metric = {"name": normalizer.normalize_name(name), "timestamp": timestamp, "value": normalizer.encode(value), "dimensions": dimensions}
             metrics_list.append(metric)
         elif isinstance(value, dict):
             metrics_list.extend(process_dict(name, timestamp, value, host_tags))
         elif isinstance(value, list):
-            metrics_list.extend(process_list(name, timestamp, value, host_tags, logger))
+            metrics_list.extend(process_list(name, timestamp, value, host_tags, log))
         elif isinstance(value, tuple):
-            metrics_list.extend(process_list(name, timestamp, value, host_tags, logger))
+            metrics_list.extend(process_list(name, timestamp, value, host_tags, log))
         elif isinstance(value, int) or isinstance(value, float):
             metric = {"name": normalizer.normalize_name(name), "timestamp": timestamp, "value": value, "dimensions": dimensions}
             metrics_list.append(metric)
@@ -89,7 +56,7 @@ def process_dict(name, timestamp, values, host_tags):
                 metrics.append(metric)
     return metrics
 
-def process_list(name, timestamp, values, host_tags, logger):
+def process_list(name, timestamp, values, host_tags, log):
     metrics = []
     normalizer = MonNormalizer()
     if name == "disk_usage" or name == "inodes":
@@ -148,7 +115,7 @@ def process_list(name, timestamp, values, host_tags, logger):
         # We don't know what this metric list is.  Just add it as dimensions
         counter = 0
         dimensions = deepcopy(host_tags)
-        logger.info("Found an unknown metric...")
+        log.info("Found an unknown metric...")
         for item in values:
             dimensions.update({"Value" + str(counter) : item})
             counter+= 1
@@ -174,15 +141,13 @@ def process_tags(tags):
             processed_tags.update({normalizer.encode(tag) : normalizer.encode(tag)})
     return processed_tags
 
-def get_standard_dimensions(payload, config, logger):
+def get_standard_dimensions(payload, dimensions_str, log):
     normalizer = MonNormalizer()
     dimension_list = {}
     if "internalHostname" in payload:
         dimension_list.update({"hostname": normalizer.encode(payload["internalHostname"])})
-    if "dimensions" in config:
-        dimension_string = config["dimensions"]
-        if dimension_string:
-            logger.debug("Dimensions: " + str(dimension_string))
+    if dimensions_str is not None:
+            log.debug("Dimensions: " + str(dimension_string))
             dimensions = dimension_string.split(',')
             dimension_list.update(process_tags(dimensions))
     return dimension_list

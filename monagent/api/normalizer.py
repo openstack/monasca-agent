@@ -15,7 +15,7 @@ class MonNormalizer(Singleton):
     def __init__(self, logger, mapping_file_path):
         self.logger = logger
         self.mapping_file_path = mapping_file_path
-        self.metric_map = self.__get_metric_map()
+        self.metric_map = self._get_metric_map()
 
         if self.metric_map is None:
             raise Exception
@@ -34,8 +34,9 @@ class MonNormalizer(Singleton):
             return_str = string.encode('ascii','ignore')
         return return_str
 
-    def __get_metric_map(self):
+    def _get_metric_map(self):
         json_data = None
+        self.logger.debug(self.mapping_file_path)
         try:
             json_data = open(self.mapping_file_path, 'r')
             data = json.loads(json_data.read())
