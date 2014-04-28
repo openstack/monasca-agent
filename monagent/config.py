@@ -114,6 +114,8 @@ def _unix_config_path():
     path = os.path.join('/etc/dd-agent', DATADOG_CONF)
     if os.path.exists(path):
         return path
+    elif os.path.exists('./%s' % DATADOG_CONF):
+        return './%s' % DATADOG_CONF
     raise PathNotFound(path)
 
 
@@ -230,9 +232,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
             agentConfig['use_web_info_page'] = config.get('Main', 'use_web_info_page').lower() in ("yes", "true")
         else:
             agentConfig['use_web_info_page'] = True
-
-        # Which API key to use
-        agentConfig['api_key'] = config.get('Main', 'api_key')
 
         # local traffic only? Default to no
         agentConfig['non_local_traffic'] = False

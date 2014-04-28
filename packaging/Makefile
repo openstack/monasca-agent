@@ -36,11 +36,10 @@ source:
 	mkdir -p $(ROOT)
 	cp -r $(SRC)/monagent/checks $(ROOT)/
 	cp -r $(SRC)/monagent/dogstream $(ROOT)/
-	cp -r $(SRC)/monagent/pup $(ROOT)/
 	cp -r $(SRC)/monagent/checks.d $(ROOT)/
 	cp -r $(SRC)/conf.d $(ROOT)/
 	cp -r $(SRC)/monagent/resources $(ROOT)/
-	cp -r $(SRC)/monagent/mon_lib $(ROOT)/
+	cp -r $(SRC)/monagent/api $(ROOT)/
 	cp -r $(SRC)/monagent/*.py $(ROOT)/
 	cp -r $(SRC)/LICENSE* $(ROOT)/
 	cp -r $(SRC)/datadog.conf.example $(ROOT)/
@@ -61,10 +60,10 @@ install_base: source
 	cp -r $(ROOT)/*		 $(BUILD)/usr/share/datadog/agent/
 	cp    $(ROOT)/datadog.conf.example $(BUILD)/etc/dd-agent
 	cp -r $(ROOT)/conf.d/* $(BUILD)/etc/dd-agent/conf.d/
-	cp -r $(ROOT)/mon_lib/mon_mapping.json $(BUILD)/etc/dd-agent/
+	cp -r $(ROOT)/api/mapping.json $(BUILD)/etc/dd-agent/
 	# Install the common executables.
 	ln -sf ../share/datadog/agent/dogstatsd.py  $(BUILD)/usr/bin/dogstatsd
-	ln -sf ../share/datadog/agent/agent.py      $(BUILD)/usr/bin/dd-agent
+	ln -sf ../share/datadog/agent/collector.py      $(BUILD)/usr/bin/dd-agent
 	chmod 755 $(BUILD)/usr/bin/dogstatsd
 	chmod 755 $(BUILD)/usr/bin/dd-agent
 	chmod 755 $(BUILD)/var/log/mon-agent
@@ -72,7 +71,7 @@ install_base: source
 install_full: source
 	# Install the forwarder.
 	mkdir -p $(BUILD)/usr/bin
-	ln -sf ../share/datadog/agent/ddagent.py $(BUILD)/usr/bin/dd-forwarder
+	ln -sf ../share/datadog/agent/forwarder.py $(BUILD)/usr/bin/dd-forwarder
 	chmod 755 $(BUILD)/usr/bin/dd-forwarder
 
 # =====================

@@ -219,7 +219,7 @@ class Forwarder(tornado.web.Application):
         self._agentConfig = agentConfig
         self._metrics = {}
         MetricTransaction.set_application(self)
-        api_endpoint = MonAPI(agentConfig)
+        api_endpoint = MonAPI(agentConfig['Api'])
         MetricTransaction.set_endpoints(api_endpoint)
         self._tr_manager = TransactionManager(MAX_WAIT_FOR_REPLAY,
             MAX_QUEUE_SIZE, THROTTLING_DELAY)
