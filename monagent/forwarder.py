@@ -17,7 +17,6 @@ from config import get_logging_config
 import os; os.umask(022)
 
 # Standard imports
-import json
 import logging
 import sys
 import threading
@@ -45,8 +44,6 @@ import modules
 
 log = logging.getLogger('forwarder')
 log.setLevel(get_logging_config()['log_level'] or logging.INFO)
-
-PUP_ENDPOINT = "pup_url"
 
 TRANSACTION_FLUSH_INTERVAL = 5000 # Every 5 seconds
 WATCHDOG_INTERVAL_MULTIPLIER = 10 # 10x flush interval

@@ -111,12 +111,7 @@ def cast_metric_val(val):
     return val
 
 def is_valid_hostname(hostname):
-    if hostname.lower() in set([
-        'localhost',
-        'localhost.localdomain',
-        'localhost6.localdomain6',
-        'ip6-localhost',
-    ]):
+    if hostname.lower() in {'localhost', 'localhost.localdomain', 'localhost6.localdomain6', 'ip6-localhost'}:
         log.warning("Hostname: %s is local" % hostname)
         return False
     if len(hostname) > MAX_HOSTNAME_LEN:

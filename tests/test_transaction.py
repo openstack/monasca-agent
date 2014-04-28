@@ -15,7 +15,7 @@ class memTransaction(Transaction):
         self.is_flushable = False
 
     def flush(self):
-        self._flush_count = self._flush_count + 1
+        self._flush_count += 1
         if self.is_flushable:
             self._trManager.tr_success(self)
         else:
