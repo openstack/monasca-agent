@@ -95,7 +95,7 @@ class Agent(Daemon):
 
         # Intialize the collector.
         if not config:
-            agentconfig = get_config(parse_args=True)
+            agentConfig = get_config(parse_args=True)
 
         systemStats = get_system_stats()
         # Load the checks.d checks

@@ -185,7 +185,6 @@ class Collector(object):
 
         # Run old-style checks
         dogstreamData = self._dogstream.check(self.agentConfig)
-        ddforwarderData = self._ddforwarder.check(self.agentConfig)
 
 
         # dogstream
@@ -200,11 +199,7 @@ class Collector(object):
 
             payload.update(dogstreamData)
 
-        # metrics about the forwarder
-        if ddforwarderData:
-            payload['datadog'] = ddforwarderData
-
-        # Process the event checks. 
+        # Process the event checks.
         for event_check in self._event_checks:
             event_data = event_check.check(log, self.agentConfig)
             if event_data:
@@ -226,10 +221,7 @@ class Collector(object):
                     payload['resources'][resources_check.RESOURCE_KEY] = res_value
      
             if has_resource:
-                payload['resources']['meta'] = {
-                            'api_key': self.agentConfig['api_key'],
-                            'host': payload['internalHostname'],
-                        }
+                payload['resources']['meta'] = {'host': payload['internalHostname']}
 
         # newer-style checks (not checks.d style)
         for metrics_check in self._metrics_checks:
@@ -341,7 +333,6 @@ class Collector(object):
             'os' : self.os,
             'python': sys.version,
             'agentVersion' : self.agentConfig['version'],
-            'apiKey': self.agentConfig['api_key'],
             'events': {},
             'metrics': [],
             'resources': {},
@@ -354,8 +345,7 @@ class Collector(object):
         if start_event and self._is_first_run():
             payload['systemStats'] = self.agentConfig.get('system_stats', {})
             # Also post an event in the newsfeed
-            payload['events']['System'] = [{'api_key': self.agentConfig['api_key'],
-                                 'host': payload['internalHostname'],
+            payload['events']['System'] = [{'host': payload['internalHostname'],
                                  'timestamp': now,
                                  'event_type':'Agent Startup',
                                  'msg_text': 'Version %s' % get_version()

@@ -332,10 +332,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
 
     # Storing proxy settings in the agentConfig
     agentConfig['proxy_settings'] = get_proxy(agentConfig)
-    if agentConfig.get('ca_certs', None) is None:
-        agentConfig['ssl_certificate'] = get_ssl_certificate(get_os(), 'datadog-cert.pem')
-    else:
-        agentConfig['ssl_certificate'] = agentConfig['ca_certs']
 
     return agentConfig
 
@@ -504,30 +500,6 @@ def get_win32service_file(osname, filename):
 
     return None
 
-
-def get_ssl_certificate(osname, filename):
-    # The SSL certificate is needed by tornado in case of connection through a proxy
-    if osname == 'windows':
-        if hasattr(sys, 'frozen'):
-            # we're frozen - from py2exe
-            prog_path = os.path.dirname(sys.executable)
-            path = os.path.join(prog_path, filename)
-        else:
-            cur_path = os.path.dirname(__file__)
-            path = os.path.join(cur_path, filename)
-        if os.path.exists(path):
-            log.debug("Certificate file found at %s" % str(path))
-            return path
-
-    else:
-        cur_path = os.path.dirname(os.path.realpath(__file__))
-        path = os.path.join(cur_path, filename)
-        if os.path.exists(path):
-            return path
-
-
-    log.info("Certificate file NOT found at %s" % str(path))
-    return None
 
 def check_yaml(conf_path):
     f = open(conf_path)

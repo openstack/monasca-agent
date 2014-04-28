@@ -722,7 +722,6 @@ class Processes(Check):
             processes.append(map(lambda s: s.strip(), line))
         
         return { 'processes':   processes,
-                 'apiKey':      agentConfig['api_key'],
                  'host':        get_hostname(agentConfig) }
             
 class Cpu(Check):
@@ -922,7 +921,7 @@ if __name__ == '__main__':
     mem = Memory(log)
     proc = Processes(log)
 
-    config = {"api_key": "666", "device_blacklist_re":re.compile('.*disk0.*')}
+    config = {"device_blacklist_re":re.compile('.*disk0.*')}
     while True:
         print("=" * 10)
         print("--- IO ---")
