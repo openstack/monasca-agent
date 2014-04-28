@@ -10,7 +10,7 @@ SRC=../
 ROOT=root
 BUILD_NUMBER ?= 0
 
-VERSION=`PYTHONPATH=$(SRC) python -c "from config import get_version; print get_version()"`
+VERSION=`PYTHONPATH=$(SRC)/monagent python -c "from config import get_version; print get_version()"`
 
 FPM_BUILD=fpm --epoch 1 -s dir -e -C $(BUILD) \
 -a all -m "HP Cloud Monitoring <hpcs-mon@hp.com>" \
@@ -155,6 +155,8 @@ $(FPM_BUILD) -t deb \
 -d "python-pycurl" \
 -d "python-requests (>= 0.8.2)" \
 -d "python-psutil" \
+-d "python-httplib2" \
+-d "python-ntplib" \
 --post-install datadog-agent-deb/postinst \
 --post-uninstall datadog-agent-deb/postrm \
 --pre-uninstall  datadog-agent-deb/prerm \

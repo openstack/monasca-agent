@@ -94,21 +94,21 @@ class Agent(Daemon):
         CollectorStatus().persist()
 
         # Intialize the collector.
-        if not config:
-            agentConfig = get_config(parse_args=True)
+        if config is None:
+            config = get_config(parse_args=True)
 
         systemStats = get_system_stats()
         # Load the checks.d checks
-        checksd = load_check_directory(agentConfig)
+        checksd = load_check_directory(config)
 
-        self.collector = Collector(agentConfig, http_emitter, systemStats)
+        self.collector = Collector(config, http_emitter, systemStats)
 
         # Configure the watchdog.
-        check_frequency = int(agentConfig['check_freq'])
-        watchdog = self._get_watchdog(check_frequency, agentConfig)
+        check_frequency = int(config['check_freq'])
+        watchdog = self._get_watchdog(check_frequency, config)
 
         # Initialize the auto-restarter
-        self.restart_interval = int(agentConfig.get('restart_interval', RESTART_INTERVAL))
+        self.restart_interval = int(config.get('restart_interval', RESTART_INTERVAL))
         self.agent_start = time.time()
 
         # Run the main loop.
@@ -116,7 +116,7 @@ class Agent(Daemon):
             
             # enable profiler if needed
             profiled = False
-            if agentConfig.get('profile', False) and agentConfig.get('profile').lower() == 'yes':
+            if config.get('profile', False) and config.get('profile').lower() == 'yes':
                 try:
                     import cProfile
                     profiler = cProfile.Profile()
@@ -130,7 +130,7 @@ class Agent(Daemon):
             self.collector.run(checksd=checksd, start_event=self.start_event)
 
             # disable profiler and printout stats to stdout
-            if agentConfig.get('profile', False) and agentConfig.get('profile').lower() == 'yes' and profiled:
+            if config.get('profile', False) and config.get('profile').lower() == 'yes' and profiled:
                 try:
                     profiler.disable()
                     import pstats

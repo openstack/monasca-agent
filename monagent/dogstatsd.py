@@ -54,7 +54,7 @@ class Reporter(threading.Thread):
     server.
     """
 
-    def __init__(self, interval, metrics_aggregator, api_host, api_key=None, use_watchdog=False, event_chunk_size=None):
+    def __init__(self, interval, metrics_aggregator, api_host, use_watchdog=False, event_chunk_size=None):
         threading.Thread.__init__(self)
         self.interval = int(interval)
         self.finished = threading.Event()
@@ -67,7 +67,6 @@ class Reporter(threading.Thread):
             from util import Watchdog
             self.watchdog = Watchdog(WATCHDOG_TIMEOUT)
 
-        self.api_key = api_key
         self.api_host = api_host
         self.event_chunk_size = event_chunk_size or EVENT_CHUNK_SIZE
 
@@ -151,8 +150,6 @@ class Reporter(threading.Thread):
         method = 'POST'
 
         params = {}
-        if self.api_key:
-            params['api_key'] = self.api_key
         url = '/api/v1/series?%s' % urlencode(params)
 
         start_time = time()
@@ -182,7 +179,6 @@ class Reporter(threading.Thread):
 
         for chunk in chunks(events, event_chunk_size):
             payload = {
-                'apiKey': self.api_key,
                 'events': {
                     'api': chunk
                 },
@@ -190,8 +186,6 @@ class Reporter(threading.Thread):
                 'internalHostname': get_hostname()
             }
             params = {}
-            if self.api_key:
-                params['api_key'] = self.api_key
             url = '/intake?%s' % urlencode(params)
 
             status = None
@@ -344,7 +338,6 @@ def init(config_path=None, use_watchdog=False):
     port      = c['dogstatsd_port']
     interval  = int(c['dogstatsd_interval'])
     aggregator_interval  = int(c['dogstatsd_agregator_bucket_size'])
-    api_key   = c['api_key']
     non_local_traffic = c['non_local_traffic']
     forward_to_host = c.get('statsd_forward_host')
     forward_to_port = c.get('statsd_forward_port')
@@ -361,7 +354,7 @@ def init(config_path=None, use_watchdog=False):
     aggregator = MetricsBucketAggregator(hostname, aggregator_interval, recent_point_threshold=c.get('recent_point_threshold', None))
 
     # Start the reporting thread.
-    reporter = Reporter(interval, aggregator, target, api_key, use_watchdog, event_chunk_size)
+    reporter = Reporter(interval, aggregator, target, use_watchdog, event_chunk_size)
 
     # Start the server on an IPv4 stack
     # Default to loopback
