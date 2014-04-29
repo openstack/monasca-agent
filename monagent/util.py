@@ -6,7 +6,6 @@ import subprocess
 import sys
 import math
 import time
-import types
 import urllib2
 import uuid
 import tempfile
@@ -71,7 +70,7 @@ def get_os():
 def headers(agentConfig):
     # Build the request headers
     return {
-        'User-Agent': 'Datadog Agent/%s' % agentConfig['version'],
+        'User-Agent': 'Mon Agent/%s' % agentConfig['version'],
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'text/html, */*',
     }
@@ -134,7 +133,7 @@ def get_hostname(config=None):
 
     Tries, in order:
 
-      * agent config (datadog.conf, "hostname:")
+      * agent config (agent.conf, "hostname:")
       * 'hostname -f' (on unix)
       * socket.gethostname()
     """
@@ -182,8 +181,8 @@ def get_hostname(config=None):
             hostname = socket_hostname
 
     if hostname is None:
-        log.critical('Unable to reliably determine host name. You can define one in datadog.conf or in your hosts file')
-        raise Exception('Unable to reliably determine host name. You can define one in datadog.conf or in your hosts file')
+        log.critical('Unable to reliably determine host name. You can define one in agent.conf or in your hosts file')
+        raise Exception('Unable to reliably determine host name. You can define one in agent.conf or in your hosts file')
     else:
         return hostname
 
@@ -305,7 +304,7 @@ class Watchdog(object):
 class PidFile(object):
     """ A small helper class for pidfiles. """
 
-    PID_DIR = '/var/run/dd-agent'
+    PID_DIR = '/var/run/mon-agent'
 
 
     def __init__(self, program, pid_dir=None):

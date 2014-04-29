@@ -26,7 +26,7 @@ from util import get_os, Platform
 from jmxfetch import JMXFetch, JMX_COLLECT_COMMAND
 
 # CONSTANTS
-DATADOG_CONF = "datadog.conf"
+AGENT_CONF = "agent.conf"
 DEFAULT_CHECK_FREQUENCY = 15  # seconds
 DEFAULT_STATSD_FREQUENCY = 2  # seconds
 DEFAULT_STATSD_BUCKET_SIZE = 10  # seconds
@@ -86,7 +86,7 @@ def _windows_commondata_path():
 
 def _windows_config_path():
     common_data = _windows_commondata_path()
-    path = os.path.join(common_data, 'Datadog', DATADOG_CONF)
+    path = os.path.join(common_data, 'Datadog', AGENT_CONF)
     if os.path.exists(path):
         return path
     raise PathNotFound(path)
@@ -116,16 +116,16 @@ def _windows_checksd_path():
 
 
 def _unix_config_path():
-    path = os.path.join('/etc/dd-agent', DATADOG_CONF)
+    path = os.path.join('/etc/mon-agent', AGENT_CONF)
     if os.path.exists(path):
         return path
-    elif os.path.exists('./%s' % DATADOG_CONF):
-        return './%s' % DATADOG_CONF
+    elif os.path.exists('./%s' % AGENT_CONF):
+        return './%s' % AGENT_CONF
     raise PathNotFound(path)
 
 
 def _unix_confd_path():
-    path = os.path.join('/etc/dd-agent', 'conf.d')
+    path = os.path.join('/etc/mon-agent', 'conf.d')
     if os.path.exists(path):
         return path
     raise PathNotFound(path)
@@ -172,8 +172,8 @@ def get_config_path(cfg_path=None, os_name=None):
     # Check if there's a config stored in the current agent directory
     path = os.path.realpath(__file__)
     path = os.path.dirname(path)
-    if os.path.exists(os.path.join(path, DATADOG_CONF)):
-        return os.path.join(path, DATADOG_CONF)
+    if os.path.exists(os.path.join(path, AGENT_CONF)):
+        return os.path.join(path, AGENT_CONF)
 
     # If all searches fail, exit the agent with an error
     sys.stderr.write("Please supply a configuration file at %s or in the directory where the Agent is currently deployed.\n" % bad_path)
@@ -197,7 +197,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         'tags': None,
         'version': get_version(),
         'watchdog': True,
-        'additional_checksd': '/etc/dd-agent/checks.d/',
+        'additional_checksd': '/etc/mon-agent/checks.d/',
     }
 
     dogstatsd_interval = DEFAULT_STATSD_FREQUENCY

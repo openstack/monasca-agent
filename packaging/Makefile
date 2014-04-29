@@ -42,7 +42,7 @@ source:
 	cp -r $(SRC)/monagent/api $(ROOT)/
 	cp -r $(SRC)/monagent/*.py $(ROOT)/
 	cp -r $(SRC)/LICENSE* $(ROOT)/
-	cp -r $(SRC)/datadog.conf.example $(ROOT)/
+	cp -r $(SRC)/agent.conf.example $(ROOT)/
 	find $(ROOT) -name "*.pyc" -exec rm {} \;
 
 
@@ -63,7 +63,7 @@ install_full: source
 	ln -sf ../share/mon/agent/collector_daemon.py      $(BUILD)/usr/bin/mon-collector
 	chmod 755 $(BUILD)/usr/bin/dogstatsd
 	chmod 755 $(BUILD)/usr/bin/mon-forwarder
-	chmod 755 $(BUILD)/var/log/mon-collector
+	chmod 755 $(BUILD)/usr/bin/mon-collector
 
 # =====================
 # DEBIAN

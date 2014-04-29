@@ -6,14 +6,14 @@ case "$1" in
     configure)
         update-rc.d mon-agent defaults
         adduser --system mon-agent --disabled-login --shell /bin/sh --no-create-home --quiet
-        usermod -d /usr/share/datadog/agent mon-agent
+        usermod -d /usr/share/mon/agent mon-agent
         chown root:root /etc/init.d/mon-agent
-        chown -R mon-agent:root /etc/dd-agent
+        chown -R mon-agent:root /etc/mon-agent
         chown -R mon-agent:root /var/log/mon-agent
-        chown -R root:root /usr/share/datadog
+        chown -R root:root /usr/share/mon/agent
         chown -h root:root /usr/bin/dogstatsd
-        chown -h root:root /usr/bin/dd-agent
-        chown -h root:root /usr/bin/dd-forwarder
+        chown -h root:root /usr/bin/mon-collector
+        chown -h root:root /usr/bin/mon-forwarder
 
         set +e
 
@@ -26,7 +26,7 @@ case "$1" in
         RETVAL=$?
         if [ $RETVAL -ne 0 ]; then
           if [ $RETVAL -eq 3 ]; then
-            # No datadog.conf file is present. The user is probably following
+            # No agent.conf file is present. The user is probably following
             # the step-by-step instructions and will add the config file next.
             exit 0
           else

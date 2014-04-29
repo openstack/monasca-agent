@@ -28,7 +28,7 @@ import glob
 # Check we're not using an old version of Python. We need 2.4 above because some modules (like subprocess)
 # were only introduced in 2.4.
 if int(sys.version_info[1]) <= 3:
-    sys.stderr.write("Datadog Agent requires python 2.4 or later.\n")
+    sys.stderr.write("Mon Agent requires python 2.4 or later.\n")
     sys.exit(2)
 
 # Custom modules
@@ -42,7 +42,7 @@ from jmxfetch import JMXFetch
 
 
 # Constants
-PID_NAME = "dd-agent"
+PID_NAME = "mon-agent"
 WATCHDOG_MULTIPLIER = 10
 RESTART_INTERVAL = 4 * 24 * 60 * 60  # Defaults to 4 days
 START_COMMANDS = ['start', 'restart', 'foreground']
@@ -213,7 +213,7 @@ def main():
         sys.stderr.write("Unknown command: %s\n" % command)
         return 3
 
-    pid_file = PidFile('dd-agent')
+    pid_file = PidFile('mon-agent')
 
     if options.clean:
         pid_file.clean()
