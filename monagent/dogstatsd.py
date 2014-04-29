@@ -43,11 +43,14 @@ FLUSH_LOGGING_INITIAL = 10
 FLUSH_LOGGING_COUNT = 5
 EVENT_CHUNK_SIZE = 50
 
+
 def serialize_metrics(metrics):
-    return json.dumps({"series" : metrics})
+    return json.dumps({"series": metrics})
+
 
 def serialize_event(event):
     return json.dumps(event)
+
 
 class Reporter(threading.Thread):
     """
@@ -204,6 +207,7 @@ class Reporter(threading.Thread):
 
             finally:
                 conn.close()
+
 
 class Server(object):
     """

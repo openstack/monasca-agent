@@ -51,8 +51,7 @@ class WMICheck(AgentCheck):
                 search = f.values()[0]
                 if SEARCH_WILDCARD in search:
                     search = search.replace(SEARCH_WILDCARD, '%')
-                    wql = "SELECT * FROM %s WHERE %s LIKE '%s'" \
-                                                % (wmi_class, prop, search)
+                    wql = "SELECT * FROM %s WHERE %s LIKE '%s'" % (wmi_class, prop, search)
                     results = w.query(wql)
                 else:
                     results = getattr(w, wmi_class)(**f)

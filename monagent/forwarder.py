@@ -47,16 +47,16 @@ import modules
 log = logging.getLogger('forwarder')
 log.setLevel(get_logging_config()['log_level'] or logging.INFO)
 
-TRANSACTION_FLUSH_INTERVAL = 5000 # Every 5 seconds
-WATCHDOG_INTERVAL_MULTIPLIER = 10 # 10x flush interval
+TRANSACTION_FLUSH_INTERVAL = 5000  # Every 5 seconds
+WATCHDOG_INTERVAL_MULTIPLIER = 10  # 10x flush interval
 
 # Maximum delay before replaying a transaction
 MAX_WAIT_FOR_REPLAY = timedelta(seconds=90)
 
 # Maximum queue size in bytes (when this is reached, old messages are dropped)
-MAX_QUEUE_SIZE = 30 * 1024 * 1024 # 30MB
+MAX_QUEUE_SIZE = 30 * 1024 * 1024  # 30MB
 
-THROTTLING_DELAY = timedelta(microseconds=1000000/2) # 2 msg/second
+THROTTLING_DELAY = timedelta(microseconds=1000000/2)  # 2 msg/second
 
 class EmitterThread(threading.Thread):
 
@@ -84,6 +84,7 @@ class EmitterThread(threading.Thread):
             self.__queue.put((data, headers), block=False)
         except Full:
             self.__logger.warn('Dropping packet for %r due to backlog', self.__name)
+
 
 class EmitterManager(object):
     """Track custom emitters"""
@@ -116,6 +117,7 @@ class EmitterManager(object):
         for emitterThread in self.emitterThreads:
             logging.info('Queueing for emitter %r', emitterThread.name)
             emitterThread.enqueue(data, headers)
+
 
 class MetricTransaction(Transaction):
 

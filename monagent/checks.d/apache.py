@@ -45,7 +45,7 @@ class Apache(AgentCheck):
         # Loop through and extract the numerical values
         for line in response.split('\n'):
             values = line.split(': ')
-            if len(values) == 2: # match
+            if len(values) == 2:  # match
                 metric, value = values
                 try:
                     value = float(value)

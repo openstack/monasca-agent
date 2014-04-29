@@ -65,9 +65,9 @@ class WrapNagios(AgentCheck):
 
         try:
             proc = subprocess.Popen(instance['check_command'].split(" "),
-                env={"PATH": extra_path},
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+                                    env={"PATH": extra_path},
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
             output = proc.communicate()
             # The check detail is all the text before the pipe
             detail = output[0].split('|')[0]
@@ -77,8 +77,8 @@ class WrapNagios(AgentCheck):
         except OSError:
             # Return an UNKNOWN code (3) if I have landed here
             self.gauge(instance['service_name'], 3, tags=tags)
-            self.log.info(instance['check_command'].split(" ")[0]
-            + " is missing or unreadable")
+            self.log.info(instance['check_command'].split(" ")[0] +
+                          " is missing or unreadable")
             return
 
         last_run_data[instance['service_name']] = time.time()

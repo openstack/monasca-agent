@@ -27,12 +27,10 @@ SUPERVISORD_LEVELS = [
 ]
 
 # mapping between datadog and supervisord log levels
-ALERT_TYPES_MAPPING = {
-    "CRIT": "error",
-    "ERRO": "error",
-    "WARN": "warning",
-    "INFO": "info",
-    }
+ALERT_TYPES_MAPPING = {"CRIT": "error",
+                       "ERRO": "error",
+                       "WARN": "warning",
+                       "INFO": "info"}
 
 # regex to extract the 'program' supervisord is managing from the text
 program_matcher = re.compile("^\w+:? '?(?P<program>\w+)'?")

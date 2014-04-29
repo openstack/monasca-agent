@@ -58,8 +58,7 @@ class HostAlive(AgentCheck):
         ping_command = ping_prefix + host
 
         try:
-            ping = subprocess.check_output(ping_command.split(" "),
-                stderr=subprocess.STDOUT)
+            ping = subprocess.check_output(ping_command.split(" "), stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError:
             return False
 
@@ -81,8 +80,8 @@ class HostAlive(AgentCheck):
 
         if instance['alive_test'] == 'ssh':
             success = self._test_ssh(instance['host_name'],
-                self.init_config.get('ssh_port'),
-                self.init_config.get('ssh_timeout'))
+                      self.init_config.get('ssh_port'),
+                      self.init_config.get('ssh_timeout'))
         elif instance['alive_test'] == 'ping':
             success = self._test_ping(instance['host_name'],
                 self.init_config.get('ping_timeout'))

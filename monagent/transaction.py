@@ -46,7 +46,7 @@ class Transaction(object):
     def get_next_flush(self):
         return self._next_flush
 
-    def compute_next_flush(self,max_delay):
+    def compute_next_flush(self, max_delay):
         # Transactions are replayed, try to send them faster for newer transactions
         # Send them every MAX_WAIT_FOR_REPLAY at most
         td = timedelta(seconds=self._error_count * 20)
@@ -56,7 +56,7 @@ class Transaction(object):
         newdate = datetime.now() + td
         self._next_flush = newdate.replace(microsecond=0)
 
-    def time_to_flush(self,now = datetime.now()):
+    def time_to_flush(self, now=datetime.now()):
         return self._next_flush < now
 
     def flush(self):
@@ -72,10 +72,10 @@ class TransactionManager(object):
         self._MAX_QUEUE_SIZE = max_queue_size
         self._THROTTLING_DELAY = throttling_delay
 
-        self._flush_without_ioloop = False # useful for tests
+        self._flush_without_ioloop = False  # useful for tests
 
-        self._transactions = [] #List of all non commited transactions
-        self._total_count = 0 # Maintain size/count not to recompute it everytime
+        self._transactions = []  # List of all non commited transactions
+        self._total_count = 0  # Maintain size/count not to recompute it everytime
         self._total_size = 0 
         self._flush_count = 0
         self._transactions_received = 0
@@ -85,8 +85,8 @@ class TransactionManager(object):
         #  if this overlaps
         self._counter = 0
 
-        self._trs_to_flush = None # Current transactions being flushed
-        self._last_flush = datetime.now() # Last flush (for throttling)
+        self._trs_to_flush = None  # Current transactions being flushed
+        self._last_flush = datetime.now()  # Last flush (for throttling)
 
         # Track an initial status message.
         ForwarderStatus().persist()
@@ -102,7 +102,7 @@ class TransactionManager(object):
         self._counter += 1
         return self._counter
 
-    def append(self,tr):
+    def append(self, tr):
 
         # Give the transaction an id
         tr.set_id(self.get_tr_id())
@@ -111,11 +111,11 @@ class TransactionManager(object):
         tr_size = tr.get_size()
 
         log.debug("New transaction to add, total size of queue would be: %s KB" % 
-            ((self._total_size + tr_size)/ 1024))
+                  ((self._total_size + tr_size)/1024))
 
         if (self._total_size + tr_size) > self._MAX_QUEUE_SIZE:
             log.warn("Queue is too big, removing old transactions...")
-            new_trs = sorted(self._transactions,key=attrgetter('_next_flush'), reverse = True)
+            new_trs = sorted(self._transactions, key=attrgetter('_next_flush'), reverse=True)
             for tr2 in new_trs:
                 if (self._total_size + tr_size) > self._MAX_QUEUE_SIZE:
                     self._transactions.remove(tr2)
@@ -125,7 +125,7 @@ class TransactionManager(object):
 
         # Done
         self._transactions.append(tr)
-        self._total_count +=  1
+        self._total_count += 1
         self._transactions_received += 1
         self._total_size = self._total_size + tr_size
 

@@ -67,7 +67,7 @@ class Couchbase(AgentCheck):
         if tags is None:
             tags = []
         tags.append('instance:%s' % server)
-        instance['is_recent_python'] = sys.version_info >= (2,6,0)
+        instance['is_recent_python'] = sys.version_info >= (2, 6, 0)
         data = self.get_data(server, instance)
         self._create_metrics(data, tags=list(set(tags)))
 

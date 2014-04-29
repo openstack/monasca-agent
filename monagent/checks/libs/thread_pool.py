@@ -63,8 +63,6 @@ class PoolWorker(threading.Thread):
         self.running = False
 
 
-
-
 class Pool(object):
     """
     The Pool class represents a pool of worker threads. It has methods

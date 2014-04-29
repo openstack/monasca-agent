@@ -27,7 +27,7 @@ class Varnish(AgentCheck):
             else:
                 # Unsupported data type, ignore
                 self._reset()
-                return # don't save
+                return  # don't save
 
             # reset for next stat element
             self._reset()

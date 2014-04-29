@@ -49,13 +49,11 @@ DATADOG_SERVICE = "DatadogAgent"
 STATUS_PAGE_URL = "http://localhost:17125/status"
 AGENT_LOG_FILE = osp.join(_windows_commondata_path(), 'Datadog', 'logs', 'ddagent.log')
 
-HUMAN_SERVICE_STATUS = {
-    win32service.SERVICE_RUNNING : 'Service is running',
-    win32service.SERVICE_START_PENDING : 'Service is starting',
-    win32service.SERVICE_STOP_PENDING : 'Service is stopping',
-    win32service.SERVICE_STOPPED : 'Service is stopped',
-    "Unknown" : "Cannot get service status",
-}
+HUMAN_SERVICE_STATUS = {win32service.SERVICE_RUNNING: 'Service is running',
+                        win32service.SERVICE_START_PENDING: 'Service is starting',
+                        win32service.SERVICE_STOP_PENDING: 'Service is stopping',
+                        win32service.SERVICE_STOPPED: 'Service is stopped',
+                        "Unknown": "Cannot get service status"}
 
 REFRESH_PERIOD = 5000
 
@@ -73,6 +71,7 @@ SYSTEM_TRAY_MENU = [
     (STATUS_PAGE, lambda: webbrowser.open(STATUS_PAGE_URL)),
     (EXIT_MANAGER, lambda: sys.exit(0)),
 ]
+
 
 def get_checks():
     checks = {}
@@ -95,6 +94,7 @@ def get_checks():
 
     return checks_list
 
+
 class EditorFile(object):
     def __init__(self, file_path, description):
         self.file_path = file_path
@@ -112,6 +112,7 @@ class EditorFile(object):
         except Exception, e:
             warning_popup("Unable to save file: \n %s" % str(e))
             raise
+
 
 class LogFile(EditorFile):
     def __init__(self):
@@ -150,6 +151,7 @@ class DatadogConf(EditorFile):
             else:
                 self.check_api_key(editor)
 
+
 class AgentCheck(EditorFile):
     def __init__(self, filename, ext, conf_d_directory):
         file_path = osp.join(conf_d_directory, filename)
@@ -175,6 +177,7 @@ class AgentCheck(EditorFile):
     def save(self, content):
         check_yaml_syntax(content)
         EditorFile.save(self, content)
+
 
 class PropertiesWidget(QWidget):
     def __init__(self, parent):

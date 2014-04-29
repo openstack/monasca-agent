@@ -36,7 +36,7 @@ class MonNormalizer(Singleton):
     def encode(string):
         return_str = string
         if isinstance(string, basestring):
-            return_str = string.encode('ascii','ignore')
+            return_str = string.encode('ascii', 'ignore')
         return return_str
 
     def _get_metric_map(self):

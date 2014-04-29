@@ -23,7 +23,7 @@ from win32.common import handle_exe_click
 from jmxfetch import JMXFetch
 
 log = logging.getLogger(__name__)
-RESTART_INTERVAL = 24 * 60 * 60 # Defaults to 1 day
+RESTART_INTERVAL = 24 * 60 * 60  # Defaults to 1 day
 
 class AgentSvc(win32serviceutil.ServiceFramework):
     _svc_name_ = "DatadogAgent"
@@ -65,10 +65,9 @@ class AgentSvc(win32serviceutil.ServiceFramework):
 
     def SvcDoRun(self):
         import servicemanager
-        servicemanager.LogMsg(
-                servicemanager.EVENTLOG_INFORMATION_TYPE, 
-                servicemanager.PYS_SERVICE_STARTED,
-                (self._svc_name_, ''))
+        servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,
+                              servicemanager.PYS_SERVICE_STARTED,
+                              (self._svc_name_, ''))
         self.start_ts = time.time()
 
         # Start all services.

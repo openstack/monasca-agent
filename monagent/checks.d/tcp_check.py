@@ -29,7 +29,7 @@ class TCPCheck(ServicesCheck):
             raise BadConfException("A valid url must be specified")
 
         # IPv6 address format: 2001:db8:85a3:8d3:1319:8a2e:370:7348
-        if len(split) == 8: # It may then be a IP V6 address, we check that
+        if len(split) == 8:  # It may then be a IP V6 address, we check that
             for block in split:
                 if len(block) != 4:
                     raise BadConfException("%s is not a correct IPv6 address." % url)
@@ -111,7 +111,6 @@ class TCPCheck(ServicesCheck):
             source_type = "%s.%s" % (ServicesCheck.SOURCE_TYPE_NAME, name)
         else:
             source_type = "%s.%s" % (ServicesCheck.SOURCE_TYPE_NAME, instance_source_type_name)
-
 
         # Get the handles you want to notify
         notify = instance.get('notify', self.init_config.get('notify', []))

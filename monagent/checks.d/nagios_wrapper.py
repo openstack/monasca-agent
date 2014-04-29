@@ -23,10 +23,8 @@ class WrapNagios(AgentCheck):
         """ Determine whether or not to skip a check depending on
             the checks's check_interval, if specified, and the last
             time the check was run """
-        if (instance['service_name'] in last_run_data
-            and 'check_interval' in instance):
-            if (time.time() < last_run_data[instance['service_name']]
-                + instance['check_interval']):
+        if (instance['service_name'] in last_run_data and 'check_interval' in instance):
+            if (time.time() < last_run_data[instance['service_name']] + instance['check_interval']):
                 return True
         else:
             return False
@@ -51,8 +49,7 @@ class WrapNagios(AgentCheck):
 
         if last_run_path.endswith('/') is False:
             last_run_path += '/'
-        last_run_file = (last_run_path + 'nagios_wrapper_'
-            + hashlib.md5(instance['service_name']).hexdigest() + '.pck')
+        last_run_file = (last_run_path + 'nagios_wrapper_' + hashlib.md5(instance['service_name']).hexdigest() + '.pck')
 
         # Load last-run data from shared memory file
         last_run_data = {}
@@ -67,9 +64,9 @@ class WrapNagios(AgentCheck):
 
         try:
             proc = subprocess.Popen(instance['check_command'].split(" "),
-                env={"PATH": extra_path},
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+                                    env={"PATH": extra_path},
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
             output = proc.communicate()
             # The check detail is all the text before the pipe
             detail = output[0].split('|')[0]

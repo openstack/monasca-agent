@@ -70,11 +70,11 @@ class HTTPCheck(AgentCheck):
             raise
 
         if response_time:
-           # Stop the timer as early as possible
-           running_time = time.time() - start
-           tags_rt = tags
-           tags_rt.append('url:%s' % addr)
-           self.gauge('mon_http_response_time', running_time, tags=tags_rt)
+            # Stop the timer as early as possible
+            running_time = time.time() - start
+            tags_rt = tags
+            tags_rt.append('url:%s' % addr)
+            self.gauge('mon_http_response_time', running_time, tags=tags_rt)
 
         # Add a 'detail' tag if requested
         if include_content:

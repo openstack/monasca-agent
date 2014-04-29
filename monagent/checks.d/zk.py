@@ -30,6 +30,7 @@ import socket
 import struct
 from StringIO import StringIO
 
+
 class Zookeeper(AgentCheck):
     version_pattern = re.compile(r'Zookeeper version: ([^.]+)\.([^.]+)\.([^-]+)', flags=re.I)
 

@@ -83,7 +83,7 @@ class Disk(Check):
                     elif Platform.is_freebsd(platform_name):
                         # Filesystem 1K-blocks Used Avail Capacity iused ifree %iused Mounted
                         # Inodes are in position 5, 6 and we need to compute the total
-                        parts[1] = int(parts[5]) + int(parts[6]) # Total
+                        parts[1] = int(parts[5]) + int(parts[6])  # Total
                         parts[2] = int(parts[5])  # Used
                         parts[3] = int(parts[6])  # Available
                     else:

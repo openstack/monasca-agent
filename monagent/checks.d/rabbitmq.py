@@ -26,8 +26,6 @@ NODE_ATTRIBUTES = ['fd_used',
 
 ATTRIBUTES = {QUEUE_TYPE: QUEUE_ATTRIBUTES, NODE_TYPE: NODE_ATTRIBUTES}
 
-
-
 TAGS_MAP = {
     QUEUE_TYPE: {'node': 'node',
                  'name': 'queue',
@@ -37,6 +35,7 @@ TAGS_MAP = {
 }
 
 METRIC_SUFFIX = {QUEUE_TYPE: "queue", NODE_TYPE: "node"}
+
 
 class RabbitMQ(AgentCheck):
     """This check is for gathering statistics from the RabbitMQ

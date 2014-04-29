@@ -44,11 +44,12 @@ from jmxfetch import JMXFetch
 # Constants
 PID_NAME = "dd-agent"
 WATCHDOG_MULTIPLIER = 10
-RESTART_INTERVAL = 4 * 24 * 60 * 60 # Defaults to 4 days
+RESTART_INTERVAL = 4 * 24 * 60 * 60  # Defaults to 4 days
 START_COMMANDS = ['start', 'restart', 'foreground']
 
 # Globals
 log = logging.getLogger('collector')
+
 
 class Agent(Daemon):
     """

@@ -68,8 +68,7 @@ def get_module(name):
 def load(config_string, default_name=None):
     """Given a module name and an object expected to be contained within,
     return said object"""
-    (module_name, object_name) = \
-            (config_string.rsplit(':', 1) + [default_name])[:2]
+    (module_name, object_name) = (config_string.rsplit(':', 1) + [default_name])[:2]
     module = get_module(module_name)
     if object_name:
         return getattr(module, object_name)

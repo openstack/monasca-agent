@@ -1,5 +1,6 @@
 from checks import AgentCheck
 
+
 class Gearman(AgentCheck):
 
     @staticmethod
@@ -42,8 +43,8 @@ class Gearman(AgentCheck):
         self.gauge("gearman.queued", queued, tags=tags)
         self.gauge("gearman.workers", workers, tags=tags)
 
-        self.log.debug("running %d, queued %d, unique tasks %d, workers: %d"
-        % (running, queued, unique_tasks, workers))
+        self.log.debug("running %d, queued %d, unique tasks %d, workers: %d" %
+                       (running, queued, unique_tasks, workers))
 
     def _get_conf(self, instance):
         host = instance.get('server', None)

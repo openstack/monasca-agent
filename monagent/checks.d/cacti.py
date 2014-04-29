@@ -83,8 +83,7 @@ class Cacti(AgentCheck):
         if whitelist:
             if not os.path.isfile(whitelist) or not os.access(whitelist, os.R_OK):
                 # Don't run the check if the whitelist is unavailable
-                self.log.exception("Unable to read whitelist file at %s" \
-                    % (whitelist))
+                self.log.exception("Unable to read whitelist file at %s" % whitelist)
 
             wl = open(whitelist)
             for line in wl:

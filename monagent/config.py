@@ -27,13 +27,14 @@ from jmxfetch import JMXFetch, JMX_COLLECT_COMMAND
 
 # CONSTANTS
 DATADOG_CONF = "datadog.conf"
-DEFAULT_CHECK_FREQUENCY = 15   # seconds
+DEFAULT_CHECK_FREQUENCY = 15  # seconds
 DEFAULT_STATSD_FREQUENCY = 2  # seconds
-DEFAULT_STATSD_BUCKET_SIZE = 10 #seconds
+DEFAULT_STATSD_BUCKET_SIZE = 10  # seconds
 LOGGING_MAX_BYTES = 5 * 1024 * 1024
 
 log = logging.getLogger(__name__)
 windows_file_handler_added = False
+
 
 class PathNotFound(Exception):
     pass
@@ -41,10 +42,8 @@ class PathNotFound(Exception):
 
 def get_parsed_args():
     parser = OptionParser()
-    parser.add_option('-c', '--clean', action='store_true', default=False,
-                        dest='clean')
-    parser.add_option('-v', '--verbose', action='store_true', default=False,
-                        dest='verbose',
+    parser.add_option('-c', '--clean', action='store_true', default=False, dest='clean')
+    parser.add_option('-v', '--verbose', action='store_true', default=False, dest='verbose',
                       help='Print out stacktraces for errors in checks')
 
     try:
@@ -57,6 +56,7 @@ def get_parsed_args():
 
 def get_version():
     return "4.3.0"
+
 
 def skip_leading_wsp(f):
     "Works on a file, returns a file-like object"
@@ -75,9 +75,9 @@ def _windows_commondata_path():
 
     _SHGetFolderPath = windll.shell32.SHGetFolderPathW
     _SHGetFolderPath.argtypes = [wintypes.HWND,
-                                ctypes.c_int,
-                                wintypes.HANDLE,
-                                wintypes.DWORD, wintypes.LPCWSTR]
+                                 ctypes.c_int,
+                                 wintypes.HANDLE,
+                                 wintypes.DWORD, wintypes.LPCWSTR]
 
     path_buf = wintypes.create_unicode_buffer(wintypes.MAX_PATH)
     result = _SHGetFolderPath(0, CSIDL_COMMON_APPDATA, 0, 0, path_buf)

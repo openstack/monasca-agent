@@ -58,7 +58,6 @@ class Gauge(Metric):
         self.last_sample_time = time()
         self.timestamp = timestamp
 
-
     def flush(self, timestamp, interval):
         if self.value is not None:
             res = [self.formatter(
@@ -75,6 +74,7 @@ class Gauge(Metric):
             return res
 
         return []
+
 
 class BucketGauge(Gauge):
     """ A metric that tracks a value at particular points in time.
@@ -100,6 +100,7 @@ class BucketGauge(Gauge):
             return res
 
         return []
+
 
 class Counter(Metric):
     """ A metric that tracks a counter value. """
@@ -288,6 +289,7 @@ class Rate(Metric):
             )]
         finally:
             self.samples = self.samples[-1:]
+
 
 class Aggregator(object):
     """

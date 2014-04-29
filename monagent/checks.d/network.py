@@ -30,18 +30,18 @@ class Network(AgentCheck):
     }
 
     NETSTAT_GAUGE = {
-        ('udp4', 'connections') : 'system.net.udp4.connections',
-        ('udp6', 'connections') : 'system.net.udp6.connections',
-        ('tcp4', 'established') : 'system.net.tcp4.established',
-        ('tcp4', 'opening') : 'system.net.tcp4.opening',
-        ('tcp4', 'closing') : 'system.net.tcp4.closing',
-        ('tcp4', 'listening') : 'system.net.tcp4.listening',
-        ('tcp4', 'time_wait') : 'system.net.tcp4.time_wait',
-        ('tcp6', 'established') : 'system.net.tcp6.established',
-        ('tcp6', 'opening') : 'system.net.tcp6.opening',
-        ('tcp6', 'closing') : 'system.net.tcp6.closing',
-        ('tcp6', 'listening') : 'system.net.tcp6.listening',
-        ('tcp6', 'time_wait') : 'system.net.tcp6.time_wait',
+        ('udp4', 'connections'): 'system.net.udp4.connections',
+        ('udp6', 'connections'): 'system.net.udp6.connections',
+        ('tcp4', 'established'): 'system.net.tcp4.established',
+        ('tcp4', 'opening'): 'system.net.tcp4.opening',
+        ('tcp4', 'closing'): 'system.net.tcp4.closing',
+        ('tcp4', 'listening'): 'system.net.tcp4.listening',
+        ('tcp4', 'time_wait'): 'system.net.tcp4.time_wait',
+        ('tcp6', 'established'): 'system.net.tcp6.established',
+        ('tcp6', 'opening'): 'system.net.tcp6.opening',
+        ('tcp6', 'closing'): 'system.net.tcp6.closing',
+        ('tcp6', 'listening'): 'system.net.tcp6.listening',
+        ('tcp6', 'time_wait'): 'system.net.tcp6.time_wait',
     }
 
     def __init__(self, name, init_config, agentConfig, instances=None):

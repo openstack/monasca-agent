@@ -51,7 +51,7 @@ class ProcessCheck(AgentCheck):
                     if not found:
                         try:
                             try:
-                                cmdline = proc.cmdline() # psutil >= 2.0
+                                cmdline = proc.cmdline()  # psutil >= 2.0
                             except TypeError:
                                 cmdline = proc.cmdline  # psutil < 2.0
 

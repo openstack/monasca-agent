@@ -28,7 +28,8 @@ def get_api_metric(agent_metric, payload, host_tags, log):
         elif isinstance(value, tuple):
             metrics_list.extend(process_list(name, timestamp, value, host_tags, log))
         elif isinstance(value, int) or isinstance(value, float):
-            metric = {"name": normalizer.normalize_name(name), "timestamp": timestamp, "value": value, "dimensions": dimensions}
+            metric = {"name": normalizer.normalize_name(name), "timestamp": timestamp,
+                      "value": value, "dimensions": dimensions}
             metrics_list.append(metric)
     return metrics_list
 
@@ -69,7 +70,7 @@ def process_list(name, timestamp, values, host_tags, log):
                 dimensions = deepcopy(host_tags)
                 dimensions.update({"device": encode(item[0])})
                 if len(item) >= 9:
-                     dimensions.update({"mountpoint": normalizer.encode(item[8])})
+                    dimensions.update({"mountpoint": normalizer.encode(item[8])})
                 metric = {"name": name, "timestamp": timestamp, "value": normalizer.encode(item[4].rstrip("%")), "dimensions": dimensions}
                 metrics.append(metric)
     elif name == "metrics":
@@ -77,13 +78,13 @@ def process_list(name, timestamp, values, host_tags, log):
         for item in values:
             dimensions = deepcopy(host_tags)
             for name2 in item[3].iterkeys():
-                 value2 = item[3][name2]
-                 if name2 == discard or name2 == "type" or name2 == "interval" or value2 is None:
-                     continue
-                 if name2 == "tags":
-                     dimensions.update(process_tags(value2))
-                 else:
-                     dimensions.update({normalizer.encode(name2) : normalizer.encode(value2)})
+                value2 = item[3][name2]
+                if name2 == discard or name2 == "type" or name2 == "interval" or value2 is None:
+                    continue
+                if name2 == "tags":
+                    dimensions.update(process_tags(value2))
+                else:
+                    dimensions.update({normalizer.encode(name2): normalizer.encode(value2)})
             metric_name = normalizer.normalize_name(item[0])
             if metric_name == discard:
                 continue

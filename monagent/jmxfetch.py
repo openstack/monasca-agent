@@ -50,7 +50,10 @@ PYTHON_JMX_STATUS_FILE = 'jmx_status_python.yaml'
 
 LINK_TO_DOC = "See http://docs.datadoghq.com/integrations/java/ for more information"
 
-class InvalidJMXConfiguration(Exception): pass
+
+class InvalidJMXConfiguration(Exception):
+    pass
+
 
 class JMXFetch(object):
 
@@ -59,7 +62,7 @@ class JMXFetch(object):
 
     @classmethod
     def init(cls, confd_path, agentConfig, logging_config,
-        default_check_frequency, command=None, checks_list=None, reporter=None):
+             default_check_frequency, command=None, checks_list=None, reporter=None):
         try:
             command = command or JMX_COLLECT_COMMAND
             jmx_checks, invalid_checks, java_bin_path, java_options = JMXFetch.should_run(confd_path, checks_list)

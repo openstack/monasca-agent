@@ -1,7 +1,8 @@
 from checks import AgentCheck, CheckException
 
 
-class ShouldRestartException(Exception): pass
+class ShouldRestartException(Exception):
+    pass
 
 
 class PostgreSql(AgentCheck):
@@ -13,7 +14,7 @@ class PostgreSql(AgentCheck):
     
     # turning columns into tags
     DB_METRICS = {
-        'descriptors': [ ('datname', 'db')],
+        'descriptors': [('datname', 'db')],
         'metrics': {'numbackends': ('postgresql.connections', GAUGE),
                     'xact_commit': ('postgresql.commits', RATE),
                     'xact_rollback': ('postgresql.rollbacks', RATE),
@@ -35,27 +36,23 @@ SELECT datname,
     }
 
     NEWER_92_METRICS = {
-        'deadlocks'         : ('postgresql.deadlocks', GAUGE),
-        'temp_bytes'        : ('postgresql.temp_bytes', RATE),
-        'temp_files'        : ('postgresql.temp_files', RATE),
+        'deadlocks': ('postgresql.deadlocks', GAUGE),
+        'temp_bytes': ('postgresql.temp_bytes', RATE),
+        'temp_files': ('postgresql.temp_files', RATE),
     }
 
     REL_METRICS = {
-        'descriptors': [
-            ('relname', 'table')
-        ],
-        'metrics': {
-            'seq_scan'          : ('postgresql.seq_scans', RATE),
-            'seq_tup_read'      : ('postgresql.seq_rows_read', RATE),
-            'idx_scan'          : ('postgresql.index_scans', RATE),
-            'idx_tup_fetch'     : ('postgresql.index_rows_fetched', RATE),
-            'n_tup_ins'         : ('postgresql.rows_inserted', RATE),
-            'n_tup_upd'         : ('postgresql.rows_updated', RATE),
-            'n_tup_del'         : ('postgresql.rows_deleted', RATE),
-            'n_tup_hot_upd'     : ('postgresql.rows_hot_updated', RATE),
-            'n_live_tup'        : ('postgresql.live_rows', GAUGE),
-            'n_dead_tup'        : ('postgresql.dead_rows', GAUGE),
-        },
+        'descriptors': [('relname', 'table')],
+        'metrics': {'seq_scan': ('postgresql.seq_scans', RATE),
+                    'seq_tup_read': ('postgresql.seq_rows_read', RATE),
+                    'idx_scan': ('postgresql.index_scans', RATE),
+                    'idx_tup_fetch': ('postgresql.index_rows_fetched', RATE),
+                    'n_tup_ins': ('postgresql.rows_inserted', RATE),
+                    'n_tup_upd': ('postgresql.rows_updated', RATE),
+                    'n_tup_del': ('postgresql.rows_deleted', RATE),
+                    'n_tup_hot_upd': ('postgresql.rows_hot_updated', RATE),
+                    'n_live_tup': ('postgresql.live_rows', GAUGE),
+                    'n_dead_tup': ('postgresql.dead_rows', GAUGE)},
         'query': """
 SELECT relname,
        %s
@@ -70,9 +67,9 @@ SELECT relname,
             ('indexrelname', 'index')
         ],
         'metrics': {
-            'idx_scan'          : ('postgresql.index_scans', RATE),
-            'idx_tup_read'      : ('postgresql.index_rows_read', RATE),
-            'idx_tup_fetch'     : ('postgresql.index_rows_fetched', RATE),
+            'idx_scan': ('postgresql.index_scans', RATE),
+            'idx_tup_read': ('postgresql.index_rows_read', RATE),
+            'idx_tup_fetch': ('postgresql.index_rows_fetched', RATE),
         },
         'query': """
 SELECT relname,
@@ -82,7 +79,6 @@ SELECT relname,
  WHERE relname = ANY(%s)""",
         'relation': True,
     }
-
 
     def __init__(self, name, init_config, agentConfig):
         AgentCheck.__init__(self, name, init_config, agentConfig)

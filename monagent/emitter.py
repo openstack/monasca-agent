@@ -12,7 +12,6 @@ def post_headers(agentConfig, payload):
     }
 
 
-
 def http_emitter(message, log, agentConfig):
     "Send payload"
 

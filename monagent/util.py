@@ -26,16 +26,19 @@ log = logging.getLogger(__name__)
 
 NumericTypes = (float, int, long)
 
+
 def plural(count):
     if count == 1:
         return ""
     return "s"
+
 
 def get_tornado_ioloop():
     if tornado_version[0] == 3:
         return ioloop.IOLoop.current()
     else:
         return ioloop.IOLoop.instance()
+
 
 def get_uuid():
     # Generate a unique name that will stay constant between
@@ -110,6 +113,7 @@ def cast_metric_val(val):
         raise ValueError
     return val
 
+
 def is_valid_hostname(hostname):
     if hostname.lower() in {'localhost', 'localhost.localdomain', 'localhost6.localdomain6', 'ip6-localhost'}:
         log.warning("Hostname: %s is local" % hostname)
@@ -182,6 +186,7 @@ def get_hostname(config=None):
         raise Exception('Unable to reliably determine host name. You can define one in datadog.conf or in your hosts file')
     else:
         return hostname
+
 
 class GCE(object):
     URL = "http://169.254.169.254/computeMetadata/v1/?recursive=true"
