@@ -1,4 +1,4 @@
-# Builds the datadog agent distributions using fpm.
+# Builds the agent distributions using fpm.
 
 
 #============
@@ -28,7 +28,7 @@ FPM_BUILD=fpm --epoch 1 -s dir -e -C $(BUILD) \
 clean:
 	rm -rf $(ROOT)
 	rm -rf build
-	rm -f *.deb *.rpm
+	rm -f *.deb
 
 # Copy the code + static files we want to deploy to our
 # root directory.
@@ -48,103 +48,39 @@ source:
 
 # Layout all of the files common to both versions of the Agent in
 # the build directory.
-install_base: source
+install_full: source
 	mkdir -p $(BUILD)
-	mkdir -p $(BUILD)/usr/share/datadog/agent
-	mkdir -p $(BUILD)/etc/dd-agent
-	mkdir -p $(BUILD)/etc/dd-agent/conf.d
-	mkdir -p $(BUILD)/etc/dd-agent/checks.d
+	mkdir -p $(BUILD)/usr/share/mon/agent
+	mkdir -p $(BUILD)/etc/mon-agent
+	mkdir -p $(BUILD)/etc/mon-agent/conf.d
 	mkdir -p $(BUILD)/usr/bin
 	mkdir -p $(BUILD)/var/log/mon-agent
-	# Install the common source & config.
-	cp -r $(ROOT)/*		 $(BUILD)/usr/share/datadog/agent/
-	cp    $(ROOT)/datadog.conf.example $(BUILD)/etc/dd-agent
-	cp -r $(ROOT)/conf.d/* $(BUILD)/etc/dd-agent/conf.d/
-	cp -r $(ROOT)/api/mapping.json $(BUILD)/etc/dd-agent/
+	# Install the source to usr/share
+	cp -r $(ROOT)/*		 $(BUILD)/usr/share/mon/agent/
 	# Install the common executables.
-	ln -sf ../share/datadog/agent/dogstatsd.py  $(BUILD)/usr/bin/dogstatsd
-	ln -sf ../share/datadog/agent/collector.py      $(BUILD)/usr/bin/dd-agent
+	ln -sf ../share/mon/agent/dogstatsd.py  $(BUILD)/usr/bin/dogstatsd
+	ln -sf ../share/mon/agent/forwarder.py $(BUILD)/usr/bin/mon-forwarder
+	ln -sf ../share/mon/agent/collector_daemon.py      $(BUILD)/usr/bin/mon-collector
 	chmod 755 $(BUILD)/usr/bin/dogstatsd
-	chmod 755 $(BUILD)/usr/bin/dd-agent
-	chmod 755 $(BUILD)/var/log/mon-agent
-
-install_full: source
-	# Install the forwarder.
-	mkdir -p $(BUILD)/usr/bin
-	ln -sf ../share/datadog/agent/forwarder.py $(BUILD)/usr/bin/dd-forwarder
-	chmod 755 $(BUILD)/usr/bin/dd-forwarder
-
-# =====================
-# RPM
-# =====================
-
-install_base_rpm: install_base
-	mkdir -p $(BUILD)/etc/init.d
-	cp datadog-agent-base-rpm/datadog-agent-redhat $(BUILD)/etc/init.d/mon-agent
-	chmod 755 $(BUILD)/etc/init.d/mon-agent
-
-install_full_rpm: install_base_rpm install_full
-	mkdir -p $(BUILD)/etc/dd-agent
-	mkdir -p $(BUILD)/usr/share/datadog/agent
-	cp datadog-agent-rpm/supervisor.conf $(BUILD)/etc/dd-agent/supervisor.conf
-	cp datadog-agent-rpm/setup-supervisor.py $(BUILD)/usr/share/datadog/agent
-
-datadog_agent_base_rpm: clean install_base_rpm
-	FPM_EDITOR="echo '' >>" \
-$(FPM_BUILD) -t rpm \
--n mon-agent-base \
--d "python(abi) >= 2.4" \
--d "python-uuid" \
--d "python-requests" \
--d "sysstat" \
---replaces "datadog-agent-lib < $(VERSION)" \
---pre-install    datadog-agent-base-rpm/pre_install \
---post-install   datadog-agent-base-rpm/post_install \
---pre-uninstall  datadog-agent-base-rpm/pre_uninstall \
---post-uninstall datadog-agent-base-rpm/post_uninstall \
---posttrans datadog-agent-base-rpm/posttrans \
-.
-
-datadog_agent_rpm: clean install_full_rpm
-	FPM_EDITOR="echo ''>>"  \
-$(FPM_BUILD) -t rpm \
--n "mon-agent" \
--d "python(abi) >= 2.6" \
--d "python-tornado >= 2.2" \
--d "supervisor >= 3.0" \
--d "sysstat" \
--d "python-pycurl" \
--d "python-requests (>= 0.8.2)" \
--d "python-psutil" \
---conflicts "datadog-agent" \
---conflicts "mon-agent < 4.2.0" \
---replaces "datadog-agent-base < 3.4.0" \
---replaces "datadog-agent-lib  < $(VERSION)" \
---pre-install	    datadog-agent-rpm/preinst \
---post-install	    datadog-agent-rpm/postinst \
---pre-uninstall	    datadog-agent-rpm/prerm \
---post-uninstall    datadog-agent-rpm/postrm \
---posttrans	        datadog-agent-rpm/posttrans \
---config-files "/etc/dd-agent/supervisor.conf" \
-.
-
+	chmod 755 $(BUILD)/usr/bin/mon-forwarder
+	chmod 755 $(BUILD)/var/log/mon-collector
 
 # =====================
 # DEBIAN
 # =====================
 
-install_deb: install_base install_full
+install_deb: install_full
 	mkdir -p $(BUILD)/etc/init.d
-	cp datadog-agent-deb/mon-agent.init $(BUILD)/etc/init.d/mon-agent
+	cp mon-agent-deb/mon-agent.init $(BUILD)/etc/init.d/mon-agent
 	chmod 755 $(BUILD)/etc/init.d/mon-agent
 	# Install supervisor config.
-	cp datadog-agent-deb/supervisor.conf $(BUILD)/etc/dd-agent/supervisor.conf
+	cp mon-agent-deb/supervisor.conf $(BUILD)/etc/mon-agent/supervisor.conf
 
 
-# Make the datadog agent debian package that includes supervisor, the forwarder
+# Make the mon agent debian package that includes supervisor, the forwarder
 # etc.
-datadog_agent_deb: clean install_deb
-	FPM_EDITOR="echo 'Replaces: mon-agent (<= $(VERSION)), datadog-agent, datadog-agent-base (<= $(VERSION)), datadog-agent-lib' >>" \
+mon_agent_deb: clean install_deb
+	FPM_EDITOR="echo 'Replaces: mon-agent (<= $(VERSION)), mon-agent, mon-agent-base (<= $(VERSION)), mon-agent-lib' >>" \
 $(FPM_BUILD) -t deb \
 -n mon-agent \
 -d "python (>= 2.6)" \
@@ -158,9 +94,9 @@ $(FPM_BUILD) -t deb \
 -d "python-httplib2" \
 -d "python-ntplib" \
 -d "python-yaml" \
---post-install datadog-agent-deb/postinst \
---post-uninstall datadog-agent-deb/postrm \
---pre-uninstall  datadog-agent-deb/prerm \
+--post-install mon-agent-deb/postinst \
+--post-uninstall mon-agent-deb/postrm \
+--pre-uninstall  mon-agent-deb/prerm \
 .
 
 
@@ -170,15 +106,8 @@ $(FPM_BUILD) -t deb \
 
 deb:
 	mkdir -p ../artifacts
-	make datadog_agent_deb
+	make mon_agent_deb
 	cp *.deb ../artifacts
-
-rpm:
-	mkdir -p ../dist
-	make datadog_agent_base_rpm
-	cp *.rpm ../dist
-	make datadog_agent_rpm
-	cp *.rpm ../dist
 
 installdeb:
 	dpkg -i --force-confdef --force-confnew `ls -t ../artifacts/mon-agent_*.deb | head -1`
@@ -189,6 +118,5 @@ deb_repo:
 
 tmp:
 	cp ../artifacts/*.deb /tmp/shared || true
-	cp ../dist/*.rpm /tmp/shared || true
 
-all: clean deb rpm
+all: clean deb

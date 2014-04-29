@@ -307,7 +307,7 @@ def main():
             print "You have to specify one of the following command:" 
             for command, desc in JMX_LIST_COMMANDS.iteritems():
                 print "      - %s [OPTIONAL: LIST OF CHECKS]: %s" % (command, desc)
-            print "Example: sudo /etc/init.d/datadog-agent jmx list_matching_attributes tomcat jmx solr"
+            print "Example: sudo /etc/init.d/mon-agent jmx list_matching_attributes tomcat jmx solr"
             print "\n"
 
         else:

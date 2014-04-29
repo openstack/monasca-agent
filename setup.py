@@ -1,4 +1,3 @@
-import platform
 import sys
 from config import *
 from jmxfetch import JMX_FETCH_JAR_NAME
@@ -77,11 +76,9 @@ if sys.platform == 'win32':
         def __init__(self, **kw):
             self.__dict__.update(kw) 
             self.version = get_version()
-            self.company_name = 'Datadog, Inc.'
-            self.copyright = 'Copyright 2013 Datadog, Inc.'
             self.cmdline_style = 'pywin32'
 
-    agent_svc = Target(name='Datadog Agent', modules='win32.agent', dest_base='ddagent')
+    agent_svc = Target(name='Mon Agent', modules='win32.agent', dest_base='ddagent')
 
     extra_args = {
         'options': {
@@ -97,7 +94,7 @@ if sys.platform == 'win32':
         'windows': [{'script': 'win32\gui.py',
                      'dest_base': "agent-manager",
                      'uac_info': "requireAdministrator", # The manager needs to be administrator to stop/start the service
-                     'icon_resources': [(1, r"packaging\datadog-agent\win32\install_files\dd_agent_win_256.ico")],
+                     'icon_resources': [(1, r"packaging\mon-agent\win32\install_files\dd_agent_win_256.ico")],
                      }],
         'data_files': [
             ("Microsoft.VC90.CRT", glob(r'C:\Python27\redist\*.*')),
@@ -109,12 +106,9 @@ if sys.platform == 'win32':
     }
 
 setup(
-    name='datadog-agent',
+    name='mon-agent',
     version=get_version(),
     description="DevOps' best friend",
-    author='DataDog',
-    author_email='dev@datadoghq.com',
-    url='http://www.datadoghq.com',
     install_requires=install_requires,
     setup_requires=setup_requires,
     packages=find_packages(exclude=['ez_setup']),
