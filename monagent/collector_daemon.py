@@ -51,7 +51,7 @@ START_COMMANDS = ['start', 'restart', 'foreground']
 log = logging.getLogger('collector')
 
 
-class Agent(Daemon):
+class CollectorDaemon(Daemon):
     """
     The agent class is a daemon that runs the collector in a background process.
     """
@@ -218,7 +218,7 @@ def main():
     if options.clean:
         pid_file.clean()
 
-    agent = Agent(pid_file.get_path(), autorestart)
+    agent = CollectorDaemon(pid_file.get_path(), autorestart)
 
     if command in START_COMMANDS:
         log.info('Agent version %s' % get_version())
