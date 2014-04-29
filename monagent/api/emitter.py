@@ -19,7 +19,7 @@ def get_api_metric(agent_metric, payload, host_tags, log):
         log.debug("Agent Metric Name Received: " + str(name))
         log.debug("Agent Metric Value Received: " + str(value))
         if isinstance(value, str):
-            metric = {"name": normalizer.normalize_name(name), "timestamp": timestamp, "value": encode(value), "dimensions": dimensions}
+            metric = {"name": normalizer.normalize_name(name), "timestamp": timestamp, "value": normalizer.encode(value), "dimensions": dimensions}
             metrics_list.append(metric)
         elif isinstance(value, dict):
             metrics_list.extend(process_dict(name, timestamp, value, host_tags))
@@ -68,7 +68,7 @@ def process_list(name, timestamp, values, host_tags, log):
         for item in values:
             if name != discard:
                 dimensions = deepcopy(host_tags)
-                dimensions.update({"device": encode(item[0])})
+                dimensions.update({"device": normalizer.encode(item[0])})
                 if len(item) >= 9:
                     dimensions.update({"mountpoint": normalizer.encode(item[8])})
                 metric = {"name": name, "timestamp": timestamp, "value": normalizer.encode(item[4].rstrip("%")), "dimensions": dimensions}
@@ -109,7 +109,7 @@ def process_list(name, timestamp, values, host_tags, log):
                  elif name2 == "metric":
                      metric_name = normalizer.normalize_name(value2)
                  else:
-                     dimensions.update({normalizer.encode(name2) : normalizer.encode(value2)})
+                     dimensions.update({normalizer.encode(name2): normalizer.encode(value2)})
             if metric_name != discard:
                 for point in points:
                     metric_timestamp = point[0]
@@ -144,7 +144,7 @@ def process_tags(tags):
                 value = value.translate(None, ''.join(chars)).lstrip('{')
             processed_tags.update({name : value})
         else:
-            processed_tags.update({encode(tag) : encode(tag)})
+            processed_tags.update({normalizer.encode(tag): normalizer.encode(tag)})
     return processed_tags
 
 
