@@ -1,13 +1,7 @@
 init_config:
 
-# To notify on every service, set a list of notified uses here.
-#
-#    notify:
-#        - user1@example.com
-#        - pagerduty
-
 instances:
-#    -   name: My first service
+#    -   name: Some Service Name
 #        url: http://some.url.example.com
 #        timeout: 1
 
@@ -16,12 +10,14 @@ instances:
 #        username: user
 #        password: pass
 
-         # The (optional) window and threshold parameters allow you to trigger
-         # alerts only if the check fails x times within the last y attempts
-         # where x is the threshold and y is the window.
+         # The (optional) match_pattern parameter will instruct the check
+         # to match the HTTP response body against a regular-expression-
+         # compatible pattern.  If the pattern matches the check will
+         # return 0 for OK.  Otherwise, it will return 1 for an error and
+         # include the response body as a 'detail' tag, as long as
+         # 'include_content' below is set to 'true'
 
-#        threshold: 3
-#        window: 5
+#        match_pattern: '.*OK.*OK.*OK.*OK.*OK'
 
          # The (optional) include_content parameter will instruct the check
          # to include the first 200 characters of the HTTP response body
@@ -60,15 +56,4 @@ instances:
 #           X-Auth-Token: SOME-AUTH-TOKEN
 
 #        tags:
-#            - url:http://alternative.host.example.com
 #            - env:production
-
-
-#    -   name: My second service
-#        url: https://another.url.example.com
-
-         # For service-specific notifications, you can optionally specify
-         # a list of users to notify within the service configuration.
-#        notify:
-#           - user2@example.com
-#           - pagerduty
