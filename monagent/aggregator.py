@@ -354,7 +354,8 @@ class Aggregator(object):
 
         return name, value, metric_type, tags, sample_rate
 
-    def _unescape_event_text(self, string):
+    @staticmethod
+    def _unescape_event_text(string):
         return string.replace('\\n', '\n')
 
     def parse_event_packet(self, packet):

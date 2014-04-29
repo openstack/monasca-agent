@@ -59,7 +59,8 @@ class Check(object):
         except Exception:
             self.logger.exception("Trying to install laconic log filter and failed")
 
-    def normalize(self, metric, prefix=None):
+    @staticmethod
+    def normalize(metric, prefix=None):
         """Turn a metric into a well-formed metric name
         prefix.b.c
         """
@@ -78,7 +79,8 @@ class Check(object):
         else:
             return name
 
-    def normalize_device_name(self, device_name):
+    @staticmethod
+    def normalize_device_name(device_name):
         return device_name.strip().lower().replace(' ', '_')
 
     def counter(self, metric):
@@ -485,7 +487,8 @@ class AgentCheck(object):
         """
         raise NotImplementedError()
 
-    def stop(self):
+    @staticmethod
+    def stop():
         """
         To be executed when the agent is being stopped to clean ressources
         """
@@ -515,7 +518,8 @@ class AgentCheck(object):
 
         return check, config.get('instances', [])
 
-    def normalize(self, metric, prefix=None):
+    @staticmethod
+    def normalize(metric, prefix=None):
         """
         Turn a metric into a well-formed metric name
         prefix.b.c

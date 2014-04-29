@@ -88,7 +88,8 @@ class MongoDb(AgentCheck):
         AgentCheck.__init__(self, name, init_config, agentConfig)
         self._last_state_by_server = {}
 
-    def get_library_versions(self):
+    @staticmethod
+    def get_library_versions():
         try:
             import pymongo
             version = pymongo.version

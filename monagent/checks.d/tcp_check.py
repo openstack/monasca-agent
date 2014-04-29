@@ -6,7 +6,8 @@ class BadConfException(Exception): pass
 
 class TCPCheck(ServicesCheck):
 
-    def _load_conf(self, instance):
+    @staticmethod
+    def _load_conf(instance):
         # Fetches the conf
 
         port = instance.get('port', None)

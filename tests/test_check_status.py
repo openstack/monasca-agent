@@ -6,7 +6,8 @@ import nose.tools as nt
 
 class DummyAgentCheck(AgentCheck):
 
-    def check(self, instance):
+    @staticmethod
+    def check(instance):
         if not instance['pass']:
             raise Exception("failure")
 

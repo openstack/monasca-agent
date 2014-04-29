@@ -253,7 +253,8 @@ class Dogstream(object):
             self._error_count += 1
             self.logger.error("Parser error: %s out of %s" % (self._error_count, self._line_count))
 
-    def _default_line_parser(self, logger, line):
+    @staticmethod
+    def _default_line_parser(logger, line):
         original_line = line
         sep = ' '
         metric, _, line = partition(line.strip(), sep)

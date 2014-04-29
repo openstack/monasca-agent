@@ -73,7 +73,8 @@ class Win32EventLog(AgentCheck):
         # Update the last time checked
         self.last_ts[instance_key] = datetime.utcnow()
 
-    def _instance_key(self, instance):
+    @staticmethod
+    def _instance_key(instance):
         ''' Generate a unique key per instance for use with keeping track of
             state for each instance.
         '''
@@ -105,7 +106,8 @@ class EventLogQuery(object):
             wql = self._add_message_filter(msg_filter, wql)
         return wql
 
-    def _add_filter(self, name, vals, q):
+    @staticmethod
+    def _add_filter(name, vals, q):
         if not vals:
             return q
         # A query like (X = Y) does not work, unless there are multiple
@@ -120,7 +122,8 @@ class EventLogQuery(object):
             ))
         return q
 
-    def _add_message_filter(self, msg_filter, q):
+    @staticmethod
+    def _add_message_filter(msg_filter, q):
         ''' Filter on the message text using a LIKE query. If the filter starts
             with '-' then we'll assume that it's a NOT LIKE filter.
         '''
@@ -131,7 +134,8 @@ class EventLogQuery(object):
             q += '\nAND Message LIKE "%s"' % msg_filter
         return q
 
-    def _dt_to_wmi(self, dt):
+    @staticmethod
+    def _dt_to_wmi(dt):
         ''' A wrapper around wmi.from_time to get a WMI-formatted time from a
             time struct.
         '''
@@ -139,7 +143,8 @@ class EventLogQuery(object):
             hours=dt.hour, minutes=dt.minute, seconds=dt.second, microseconds=0,
             timezone=0)
 
-    def _convert_event_types(self, types):
+    @staticmethod
+    def _convert_event_types(types):
         ''' Detect if we are running on <= Server 2003. If so, we should convert
             the EventType values to integers
         '''
@@ -174,7 +179,8 @@ class LogEvent(object):
             return True
         return False
 
-    def _wmi_to_ts(self, wmi_ts):
+    @staticmethod
+    def _wmi_to_ts(wmi_ts):
         ''' Convert a wmi formatted timestamp into an epoch using wmi.to_time().
         '''
         year, month, day, hour, minute, second, microsecond, tz = \
@@ -183,7 +189,8 @@ class LogEvent(object):
             second=second, microsecond=microsecond)
         return int(calendar.timegm(dt.timetuple()))
 
-    def _msg_title(self, event):
+    @staticmethod
+    def _msg_title(event):
         return '%s/%s' % (event.Logfile, event.SourceName)
 
     def _msg_text(self, event):
@@ -199,7 +206,8 @@ class LogEvent(object):
 
         return msg_text
 
-    def _alert_type(self, event):
+    @staticmethod
+    def _alert_type(event):
         event_type = event.Type
         # Convert to a Datadog alert type
         if event_type == 'Warning':
@@ -208,5 +216,6 @@ class LogEvent(object):
             return 'error'
         return 'info'
 
-    def _aggregation_key(self, event):
+    @staticmethod
+    def _aggregation_key(event):
         return event.SourceName

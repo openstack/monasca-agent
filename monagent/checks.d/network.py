@@ -107,7 +107,8 @@ class Network(AgentCheck):
         self.log.debug("tracked %s network metrics for interface %s" % (count, iface))
 
 
-    def _parse_value(self, v):
+    @staticmethod
+    def _parse_value(v):
         if v == "-":
             return 0
         else:

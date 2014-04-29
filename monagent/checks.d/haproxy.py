@@ -218,7 +218,8 @@ class HAProxy(AgentCheck):
                 # Store this host status so we can check against it later
                 self.host_status[url][key] = data['status']
 
-    def _create_event(self, status, hostname, lastchg, service_name):
+    @staticmethod
+    def _create_event(status, hostname, lastchg, service_name):
         if status == "DOWN":
             alert_type = "error"
             title = "HAProxy %s front-end reported %s %s" % (service_name, hostname, status)

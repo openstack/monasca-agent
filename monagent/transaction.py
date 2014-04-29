@@ -14,6 +14,7 @@ log = logging.getLogger(__name__)
 FLUSH_LOGGING_PERIOD = 20
 FLUSH_LOGGING_INITIAL = 5
 
+
 class Transaction(object):
 
     def __init__(self):
@@ -60,6 +61,7 @@ class Transaction(object):
 
     def flush(self):
         raise NotImplementedError("To be implemented in a subclass")
+
 
 class TransactionManager(object):
     """Holds any transaction derived object list and make sure they

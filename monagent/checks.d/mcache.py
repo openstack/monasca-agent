@@ -83,7 +83,8 @@ class Memcache(AgentCheck):
         "total_connections"
     ]
 
-    def get_library_versions(self):
+    @staticmethod
+    def get_library_versions():
         try:
             import memcache
             version = memcache.__version__

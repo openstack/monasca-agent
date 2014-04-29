@@ -69,7 +69,8 @@ class Redis(AgentCheck):
         AgentCheck.__init__(self, name, init_config, agentConfig)
         self.connections = {}
 
-    def get_library_versions(self):
+    @staticmethod
+    def get_library_versions():
         try:
             import redis
             version = redis.__version__
@@ -95,7 +96,8 @@ class Redis(AgentCheck):
             self.log.exception("Cannot parse dictionary string: %s" % string)
             return default
 
-    def _generate_instance_key(self, instance):
+    @staticmethod
+    def _generate_instance_key(instance):
         if 'unix_socket_path' in instance:
             return (instance.get('unix_socket_path'), instance.get('db'))
         else:

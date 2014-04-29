@@ -5,7 +5,8 @@
 # Licensed under the terms of the CECILL License
 # Modified for Datadog
 
-import yamltry:
+import yaml
+try:
     from yaml import CLoader as Loader
 except ImportError:
     from yaml import Loader

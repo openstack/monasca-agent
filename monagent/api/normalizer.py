@@ -27,7 +27,8 @@ class MonNormalizer(Singleton):
             name = self.encode(name)
         return name
 
-    def encode(self, string):
+    @staticmethod
+    def encode(string):
         return_str = string
         if isinstance(string, basestring):
             return_str = string.encode('ascii','ignore')

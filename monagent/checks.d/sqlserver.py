@@ -35,12 +35,14 @@ class SQLServer(AgentCheck):
         # Cache connections
         self.connections = {}
 
-    def _conn_key(self, host, username, password, database):
+    @staticmethod
+    def _conn_key(host, username, password, database):
         ''' Return a key to use for the connection cache
         '''
         return '%s:%s:%s:%s' % (host, username, password, database)
 
-    def _conn_string(self, host, username, password, database):
+    @staticmethod
+    def _conn_string(host, username, password, database):
         ''' Return a connection string to use with adodbapi
         '''
         conn_str = 'Provider=SQLOLEDB;Data Source=%s;Initial Catalog=%s;' \

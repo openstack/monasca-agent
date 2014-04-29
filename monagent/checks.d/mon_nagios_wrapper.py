@@ -19,7 +19,8 @@ class WrapNagios(AgentCheck):
     def __init__(self, name, init_config, agentConfig, instances=None):
         AgentCheck.__init__(self, name, init_config, agentConfig, instances)
 
-    def _do_skip_check(self, instance, last_run_data):
+    @staticmethod
+    def _do_skip_check(instance, last_run_data):
         """ Determine whether or not to skip a check depending on
             the checks's check_interval, if specified, and the last
             time the check was run """

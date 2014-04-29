@@ -113,7 +113,8 @@ class Cpu(Check):
 
         return self.get_metrics()
 
-    def _average_metric(self, wmi_class, wmi_prop):
+    @staticmethod
+    def _average_metric(wmi_class, wmi_prop):
         ''' Sum all of the values of a metric from a WMI class object, excluding
             the value for "_Total"
         '''

@@ -9,7 +9,8 @@ from httplib2 import Http, HttpLib2Error
 
 class HTTPCheck(AgentCheck):
 
-    def _load_conf(self, instance):
+    @staticmethod
+    def _load_conf(instance):
         # Fetches the conf
         tags = instance.get('tags', [])
         username = instance.get('username', None)

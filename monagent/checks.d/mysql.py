@@ -48,7 +48,8 @@ class MySql(AgentCheck):
         self.mysql_version = {}
         self.greater_502 = {}
 
-    def get_library_versions(self):
+    @staticmethod
+    def get_library_versions():
         try:
             import MySQLdb
             version = MySQLdb.__version__
@@ -71,7 +72,8 @@ class MySql(AgentCheck):
         self._collect_metrics(host, db, tags, options)
         self._collect_system_metrics(host, db, tags)
 
-    def _get_config(self, instance):
+    @staticmethod
+    def _get_config(instance):
         host = instance.get('server', '')
         user = instance.get('user', '')
         port = int(instance.get('port', 0))

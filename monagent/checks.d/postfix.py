@@ -24,7 +24,8 @@ class PostfixCheck(AgentCheck):
 
         self._get_queue_count(directory, queues, tags)
 
-    def _get_config(self, instance):
+    @staticmethod
+    def _get_config(instance):
         directory = instance.get('directory', None)
         queues = instance.get('queues', None)
         tags = instance.get('tags', [])

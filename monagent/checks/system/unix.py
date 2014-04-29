@@ -78,22 +78,22 @@ class Disk(Check):
                         # Inodes are in position 5, 6 and we need to compute the total
                         # Total
                         parts[1] = int(parts[5]) + int(parts[6]) # Total
-                        parts[2] = int(parts[5]) # Used
-                        parts[3] = int(parts[6]) # Available
+                        parts[2] = int(parts[5])  # Used
+                        parts[3] = int(parts[6])  # Available
                     elif Platform.is_freebsd(platform_name):
                         # Filesystem 1K-blocks Used Avail Capacity iused ifree %iused Mounted
                         # Inodes are in position 5, 6 and we need to compute the total
                         parts[1] = int(parts[5]) + int(parts[6]) # Total
-                        parts[2] = int(parts[5]) # Used
-                        parts[3] = int(parts[6]) # Available
+                        parts[2] = int(parts[5])  # Used
+                        parts[3] = int(parts[6])  # Available
                     else:
-                        parts[1] = int(parts[1]) # Total
-                        parts[2] = int(parts[2]) # Used
-                        parts[3] = int(parts[3]) # Available
+                        parts[1] = int(parts[1])  # Total
+                        parts[2] = int(parts[2])  # Used
+                        parts[3] = int(parts[3])  # Available
                 else:
-                    parts[1] = int(parts[1]) # Total
-                    parts[2] = int(parts[2]) # Used
-                    parts[3] = int(parts[3]) # Available
+                    parts[1] = int(parts[1])  # Total
+                    parts[2] = int(parts[2])  # Used
+                    parts[3] = int(parts[3])  # Available
             except IndexError:
                 self.logger.exception("Cannot parse %s" % (parts,))
 
@@ -219,7 +219,8 @@ class IO(Check):
 
         return ioStats
     
-    def _parse_darwin(self, output):
+    @staticmethod
+    def _parse_darwin(output):
         lines = [l.split() for l in output.split("\n") if len(l) > 0]
         disks = lines[0]
         lastline = lines[-1]
@@ -231,7 +232,8 @@ class IO(Check):
             }
         return io
     
-    def xlate(self, metric_name, os_name):
+    @staticmethod
+    def xlate(metric_name, os_name):
         """Standardize on linux metric names"""
         if os_name == "sunos":
             names = {

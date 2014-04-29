@@ -7,6 +7,7 @@ from normalizer import MonNormalizer
 discard = "DISCARD"
 log = logging.getLogger(__name__)
 
+
 def get_api_metric(agent_metric, payload, host_tags, log):
     normalizer = MonNormalizer()
     timestamp = get_timestamp(payload)
@@ -18,7 +19,7 @@ def get_api_metric(agent_metric, payload, host_tags, log):
         log.debug("Agent Metric Name Received: " + str(name))
         log.debug("Agent Metric Value Received: " + str(value))
         if isinstance(value, str):
-            metric = {"name": normalizer.normalize_name(name), "timestamp": timestamp, "value": normalizer.encode(value), "dimensions": dimensions}
+            metric = {"name": normalizer.normalize_name(name), "timestamp": timestamp, "value": encode(value), "dimensions": dimensions}
             metrics_list.append(metric)
         elif isinstance(value, dict):
             metrics_list.extend(process_dict(name, timestamp, value, host_tags))
@@ -31,6 +32,7 @@ def get_api_metric(agent_metric, payload, host_tags, log):
             metrics_list.append(metric)
     return metrics_list
 
+
 def get_timestamp(message):
     if "collection_timestamp" in message:
         timestamp = message["collection_timestamp"]
@@ -39,6 +41,7 @@ def get_timestamp(message):
     else:
         timestamp = calendar.timegm(datetime.datetime.utcnow().utctimetuple())
     return timestamp
+
 
 def process_dict(name, timestamp, values, host_tags):
     metrics = []
@@ -56,6 +59,7 @@ def process_dict(name, timestamp, values, host_tags):
                 metrics.append(metric)
     return metrics
 
+
 def process_list(name, timestamp, values, host_tags, log):
     metrics = []
     normalizer = MonNormalizer()
@@ -63,7 +67,7 @@ def process_list(name, timestamp, values, host_tags, log):
         for item in values:
             if name != discard:
                 dimensions = deepcopy(host_tags)
-                dimensions.update({"device": normalizer.encode(item[0])})
+                dimensions.update({"device": encode(item[0])})
                 if len(item) >= 9:
                      dimensions.update({"mountpoint": normalizer.encode(item[8])})
                 metric = {"name": name, "timestamp": timestamp, "value": normalizer.encode(item[4].rstrip("%")), "dimensions": dimensions}
@@ -123,6 +127,7 @@ def process_list(name, timestamp, values, host_tags, log):
         metrics.append(metric)
     return metrics
 
+
 def process_tags(tags):
     # This will process tag strings in the format "name:value" and put them in a dictionary to be added as dimensions
     normalizer = MonNormalizer()
@@ -138,8 +143,9 @@ def process_tags(tags):
                 value = value.translate(None, ''.join(chars)).lstrip('{')
             processed_tags.update({name : value})
         else:
-            processed_tags.update({normalizer.encode(tag) : normalizer.encode(tag)})
+            processed_tags.update({encode(tag) : encode(tag)})
     return processed_tags
+
 
 def get_standard_dimensions(payload, dimensions_str, log):
     normalizer = MonNormalizer()

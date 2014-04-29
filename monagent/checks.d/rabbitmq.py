@@ -60,7 +60,8 @@ class RabbitMQ(AgentCheck):
         AgentCheck.__init__(self, name, init_config, agentConfig, instances)
         self.already_alerted = []
 
-    def _get_config(self, instance):
+    @staticmethod
+    def _get_config(instance):
         # make sure 'rabbitmq_api_url; is present
         if 'rabbitmq_api_url' not in instance:
             raise Exception('Missing "rabbitmq_api_url" in RabbitMQ config.')
@@ -102,7 +103,8 @@ class RabbitMQ(AgentCheck):
         self.get_stats(instance, base_url, QUEUE_TYPE, max_detailed[QUEUE_TYPE], specified[QUEUE_TYPE])
         self.get_stats(instance, base_url, NODE_TYPE, max_detailed[NODE_TYPE], specified[NODE_TYPE])
 
-    def _get_data(self, url):
+    @staticmethod
+    def _get_data(url):
         try:
             data = json.loads(urllib2.urlopen(url).read())
         except urllib2.URLError, e:

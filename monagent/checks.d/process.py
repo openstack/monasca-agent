@@ -19,7 +19,8 @@ class ProcessCheck(AgentCheck):
         'system.processes.involuntary_ctx_switches',
         )
 
-    def is_psutil_version_later_than(self, v):
+    @staticmethod
+    def is_psutil_version_later_than(v):
         try:
             import psutil
             vers = psutil.version_info

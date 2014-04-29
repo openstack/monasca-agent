@@ -91,7 +91,8 @@ SELECT relname,
         self.dbs = {}
         self.versions = {}
 
-    def get_library_versions(self):
+    @staticmethod
+    def get_library_versions():
         try:
             import psycopg2
             version = psycopg2.__version__

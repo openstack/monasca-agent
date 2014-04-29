@@ -30,7 +30,8 @@ class Cacti(AgentCheck):
         AgentCheck.__init__(self, name, init_config, agentConfig)
         self.last_ts = {}
 
-    def get_library_versions(self):
+    @staticmethod
+    def get_library_versions():
         try:
             import rrdtool
             version = rrdtool.__version__
@@ -91,8 +92,8 @@ class Cacti(AgentCheck):
 
         return patterns
 
-
-    def _get_config(self, instance):
+    @staticmethod
+    def _get_config(instance):
         required = ['mysql_host', 'mysql_user', 'rrd_path']
         for param in required:
             if not instance.get(param):
@@ -219,7 +220,8 @@ class Cacti(AgentCheck):
 
         return res
 
-    def _format_metric_name(self, m_name, cfunc):
+    @staticmethod
+    def _format_metric_name(m_name, cfunc):
         ''' Format a cacti metric name into a Datadog-friendly name '''
         try:
             aggr = CFUNC_TO_AGGR[cfunc]
@@ -234,7 +236,8 @@ class Cacti(AgentCheck):
         except KeyError:
             return "cacti.%s.%s" % (m_name.lower(), aggr)
 
-    def _transform_metric(self, m_name, val):
+    @staticmethod
+    def _transform_metric(m_name, val):
         ''' Add any special case transformations here '''
         # Report memory in MB
         if m_name[0:11] in ('system.mem.', 'system.disk'):

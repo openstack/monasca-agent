@@ -308,7 +308,8 @@ class PidFile(object):
         self.pid_dir = pid_dir or self.get_default_pid_dir()
         self.pid_path = os.path.join(self.pid_dir, self.pid_file)
 
-    def get_default_pid_dir(self):
+    @staticmethod
+    def get_default_pid_dir():
         if get_os() != 'windows':
             return PidFile.PID_DIR
 
@@ -367,7 +368,8 @@ class LaconicFilter(logging.Filter):
         logging.Filter.__init__(self, name)
         self.hashed_messages = {}
 
-    def hash(self, msg):
+    @staticmethod
+    def hash(msg):
         return md5(msg).hexdigest()
 
     def filter(self, record):
@@ -390,7 +392,8 @@ class Timer(object):
     def __init__(self):
         self.start()
 
-    def _now(self):
+    @staticmethod
+    def _now():
         return time.time()
 
     def start(self):

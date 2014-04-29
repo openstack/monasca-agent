@@ -31,7 +31,8 @@ class GUnicornCheck(AgentCheck):
     IDLE_TAGS = ["state:idle"]
     WORKING_TAGS = ["state:working"]
 
-    def get_library_versions(self):
+    @staticmethod
+    def get_library_versions():
         try:
             import psutil
             version = psutil.__version__
@@ -106,7 +107,8 @@ class GUnicornCheck(AgentCheck):
 
         return working, idle
 
-    def _get_master_proc_by_name(self, name):
+    @staticmethod
+    def _get_master_proc_by_name(name):
         """ Return a psutil process for the master gunicorn process with the given name. """
         master_name = GUnicornCheck._get_master_proc_name(name)
         master_procs = [p for p in psutil.process_iter() if p.cmdline and p.cmdline[0] == master_name]

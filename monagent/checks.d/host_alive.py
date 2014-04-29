@@ -44,7 +44,8 @@ class HostAlive(AgentCheck):
         else:
             return False
 
-    def _test_ping(self, host, timeout=None):
+    @staticmethod
+    def _test_ping(host, timeout=None):
         """ Attempt to ping the host """
         ping_prefix = "ping -c 1 -q "
         if timeout is not None:

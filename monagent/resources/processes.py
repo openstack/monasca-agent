@@ -8,7 +8,8 @@ class Processes(ResourcePlugin):
     RESOURCE_KEY   = "processes"
     FLUSH_INTERVAL = 1 # in minutes
 
-    def describe_snapshot(self):
+    @staticmethod
+    def describe_snapshot():
         return SnapshotDescriptor(1,
                 SnapshotField("user",'str',aggregator=agg.append,temporal_aggregator=agg.append),
                 SnapshotField("pct_cpu",'float'),

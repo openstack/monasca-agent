@@ -2,7 +2,8 @@ from checks import AgentCheck
 
 class Gearman(AgentCheck):
 
-    def get_library_versions(self):
+    @staticmethod
+    def get_library_versions():
         try:
             import gearman
             version = gearman.__version__

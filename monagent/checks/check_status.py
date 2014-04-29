@@ -138,8 +138,8 @@ class AgentStatus(object):
         return "\n".join(lines)
 
     @classmethod
-    def _title_lines(self):
-        name_line = "%s (v %s)" % (self.NAME, config.get_version())
+    def _title_lines(cls):
+        name_line = "%s (v %s)" % (cls.NAME, config.get_version())
         lines = [
             "=" * len(name_line),
             "%s" % name_line,

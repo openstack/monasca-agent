@@ -230,7 +230,8 @@ class ResourcePlugin(object):
                 ])
             return ret
             
-    def describe_snapshot(self):
+    @staticmethod
+    def describe_snapshot():
         """Register the snapshot details for this plugin:
            - What a line is made of
            - How to aggregate it
@@ -283,10 +284,12 @@ class ResourcePlugin(object):
 
         self._current_snapshot = None
 
-    def flush_snapshots(self,snapshot_group):
+    @staticmethod
+    def flush_snapshots(snapshot_group):
         raise Exception("To be implemented (by calling _flush_snapshot) in a plugin")
 
-    def check(self):
+    @staticmethod
+    def check():
         raise Exception("To be implemented in a plugin")
 
     def pop_snapshots(self):

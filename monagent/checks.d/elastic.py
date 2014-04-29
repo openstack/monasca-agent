@@ -285,7 +285,8 @@ class ElasticSearch(AgentCheck):
 
         raise NodeNotFound()
 
-    def _host_matches_node(self, primary_addrs):
+    @staticmethod
+    def _host_matches_node(primary_addrs):
         """ For < 0.19, check if the current host matches the IP given in the
             cluster nodes check `/_cluster/nodes`. Uses `ip addr` on Linux and
             `ifconfig` on Mac

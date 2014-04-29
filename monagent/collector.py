@@ -164,7 +164,8 @@ class Agent(Daemon):
         log.info("Exiting. Bye bye.")
         sys.exit(0)
 
-    def _get_watchdog(self, check_freq, agentConfig):
+    @staticmethod
+    def _get_watchdog(check_freq, agentConfig):
         watchdog = None
         if agentConfig.get("watchdog", True):
             watchdog = Watchdog(check_freq * WATCHDOG_MULTIPLIER,
