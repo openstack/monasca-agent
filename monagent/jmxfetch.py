@@ -18,13 +18,13 @@ from util import PidFile, get_os
 log = logging.getLogger(__name__)
 
 JAVA_LOGGING_LEVEL = {
-    logging.CRITICAL : "FATAL",
-    logging.DEBUG : "DEBUG",
-    logging.ERROR : "ERROR",
-    logging.FATAL : "FATAL",
-    logging.INFO : "INFO",
-    logging.WARN : "WARN",
-    logging.WARNING : "WARN",
+    logging.CRITICAL: "FATAL",
+    logging.DEBUG: "DEBUG",
+    logging.ERROR: "ERROR",
+    logging.FATAL: "FATAL",
+    logging.INFO: "INFO",
+    logging.WARN: "WARN",
+    logging.WARNING: "WARN",
 }
 
 JMX_FETCH_JAR_NAME = "jmxfetch-0.3.0-jar-with-dependencies.jar"

@@ -2,7 +2,10 @@ from checks.services_checks import ServicesCheck, Status, EventType
 import socket
 import time
 
-class BadConfException(Exception): pass
+
+class BadConfException(Exception):
+    pass
+
 
 class TCPCheck(ServicesCheck):
 
@@ -22,7 +25,7 @@ class TCPCheck(ServicesCheck):
         try:
             url = instance.get('host', None)
             split = url.split(":")
-        except Exception: # Would be raised if url is not a string
+        except Exception:  # Would be raised if url is not a string
             raise BadConfException("A valid url must be specified")
 
         # IPv6 address format: 2001:db8:85a3:8d3:1319:8a2e:370:7348

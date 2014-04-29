@@ -11,10 +11,12 @@ from checks import AgentCheck
 from checks.utils import add_basic_auth
 
 
-class NodeNotFound(Exception): pass
+class NodeNotFound(Exception):
+    pass
+
 
 class ElasticSearch(AgentCheck):
-    METRICS = { # Metrics that are common to all Elasticsearch versions
+    METRICS = {  # Metrics that are common to all Elasticsearch versions
         "elasticsearch.docs.count": ("gauge", "indices.docs.count"),
         "elasticsearch.docs.deleted": ("gauge", "indices.docs.deleted"),
         "elasticsearch.store.size": ("gauge", "indices.store.size_in_bytes"),

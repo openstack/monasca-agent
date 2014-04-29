@@ -1,5 +1,5 @@
 # set up logging before importing any other components
-from config import initialize_logging;
+from config import initialize_logging
 from monagent.pup import pup
 
 initialize_logging('collector')

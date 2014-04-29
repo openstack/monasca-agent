@@ -11,6 +11,7 @@ Created on Apr 8, 2014
 @author: Gary Hessler
 '''
 
+
 class DSDGenerator(object):
     '''
     Class to generate Dogstatsd metrics
@@ -37,12 +38,13 @@ class DSDGenerator(object):
                 statsd.increment('Teraflops', 5)
                 statsd.gauge('NumOfTeraflops', random.uniform(1.0, 10.0), tags=['Origin:Dev', 'Environment:Test'])
                 statsd.histogram('file.upload.size', random.randrange(1, 100), tags=['Version:1.0'])
-                statsd.event("SO MUCH SNOW", "Started yesterday and it won't stop !!", alert_type = "error", tags = ["priority:urgent", "result:endoftheworld"])
+                statsd.event("SO MUCH SNOW", "Started yesterday and it won't stop !!", alert_type="error",
+                             tags=["priority: urgent", "result: endoftheworld"])
                 print("Completed iteration " + str(index) + ".  Sleeping for " + str(self.delay) + " seconds...")
                 time.sleep(self.delay)
         except:
             print "Error sending statsd messages..."
-            raise;
+            raise
         
 
 def read_config():
@@ -63,6 +65,7 @@ def read_config():
             print("exception on %s!" % option)
             config_options[option] = None
     return config_options
+
 
 def main():
     config = read_config()

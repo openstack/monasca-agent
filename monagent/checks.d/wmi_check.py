@@ -15,6 +15,7 @@ from checks import AgentCheck
 UP_METRIC = 'Up'
 SEARCH_WILDCARD = '*'
 
+
 class WMICheck(AgentCheck):
     def __init__(self, name, init_config, agentConfig):
         AgentCheck.__init__(self, name, init_config, agentConfig)

@@ -1,5 +1,6 @@
 import traceback
 
+
 def shell():
     from config import get_version
 

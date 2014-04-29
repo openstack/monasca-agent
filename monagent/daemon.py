@@ -21,6 +21,7 @@ import signal
 
 log = logging.getLogger(__name__)
 
+
 class AgentSupervisor(object):
     ''' A simple supervisor to keep a restart a child on expected auto-restarts
     '''

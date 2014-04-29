@@ -4,6 +4,7 @@ import socket
 import time
 from httplib2 import Http, HttpLib2Error
 
+
 class HTTPCheck(ServicesCheck):
 
     @staticmethod
@@ -13,7 +14,7 @@ class HTTPCheck(ServicesCheck):
         username = instance.get('username', None)
         password = instance.get('password', None)
         timeout = int(instance.get('timeout', 10))
-        headers = instance.get('headers',{})
+        headers = instance.get('headers', {})
         url = instance.get('url', None)
         response_time = instance.get('collect_response_time', False)
         if url is None:

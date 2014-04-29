@@ -5,6 +5,7 @@ import re
 import time
 from checks import AgentCheck
 
+
 class Redis(AgentCheck):
     db_key_pattern = re.compile(r'^db\d+')
     subkeys = ['keys', 'expires']

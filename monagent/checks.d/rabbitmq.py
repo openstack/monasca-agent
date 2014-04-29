@@ -10,46 +10,33 @@ QUEUE_TYPE = 'queues'
 NODE_TYPE = 'nodes'
 MAX_DETAILED_QUEUES = 200
 MAX_DETAILED_NODES = 100
-ALERT_THRESHOLD = 0.9 # Post an event in the stream when the number of queues or nodes to collect is above 90% of the limit
-QUEUE_ATTRIBUTES = [ 
-        'active_consumers',
-        'consumers',
-        'memory',
-        'messages',
-        'messages_ready',
-        'messages_unacknowledged'
-    ]
+# Post an event in the stream when the number of queues or nodes to collect is above 90% of the limit
+ALERT_THRESHOLD = 0.9
+QUEUE_ATTRIBUTES = ['active_consumers',
+                    'consumers',
+                    'memory',
+                    'messages',
+                    'messages_ready',
+                    'messages_unacknowledged']
 
-NODE_ATTRIBUTES = [
-                'fd_used',
-                'mem_used',
-                'run_queue',
-                'sockets_used',
-    ]
+NODE_ATTRIBUTES = ['fd_used',
+                   'mem_used',
+                   'run_queue',
+                   'sockets_used']
 
-ATTRIBUTES = {
-    QUEUE_TYPE: QUEUE_ATTRIBUTES,
-    NODE_TYPE: NODE_ATTRIBUTES,
-}
+ATTRIBUTES = {QUEUE_TYPE: QUEUE_ATTRIBUTES, NODE_TYPE: NODE_ATTRIBUTES}
 
 
 
 TAGS_MAP = {
-    QUEUE_TYPE: {
-                'node':'node',
-                'name':'queue',
-                'vhost':'vhost',
-                'policy':'policy',
-            },
-    NODE_TYPE: {
-                'name':'node',
-    }
+    QUEUE_TYPE: {'node': 'node',
+                 'name': 'queue',
+                 'vhost': 'vhost',
+                 'policy': 'policy'},
+    NODE_TYPE: {'name': 'node'}
 }
 
-METRIC_SUFFIX = {
-    QUEUE_TYPE: "queue",
-    NODE_TYPE: "node",
-}
+METRIC_SUFFIX = {QUEUE_TYPE: "queue", NODE_TYPE: "node"}
 
 class RabbitMQ(AgentCheck):
     """This check is for gathering statistics from the RabbitMQ

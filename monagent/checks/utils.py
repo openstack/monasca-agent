@@ -7,6 +7,7 @@ SEEK_END = 2
 from stat import *
 import binascii
 
+
 def median(vals):
     vals = sorted(vals)
     if not vals:
@@ -32,7 +33,7 @@ class TailFile(object):
 
     CRC_SIZE = 16
 
-    def __init__(self,logger,path,callback):
+    def __init__(self, logger, path, callback):
         self._path = path
         self._f = None
         self._inode = None
@@ -106,12 +107,12 @@ class TailFile(object):
                 pos = self._f.tell()
                 line = self._f.readline()
                 if line:
-                    line = line.strip(chr(0)) # a truncate may have create holes in the file
+                    line = line.strip(chr(0))  # a truncate may have create holes in the file
                     if self._callback(line.rstrip("\n")):
                         if line_by_line:
                             yield True
                             pos = self._f.tell()
-                            self._open_file(move_end=False,pos=pos)
+                            self._open_file(move_end=False, pos=pos)
                         else:
                             continue
                     else:

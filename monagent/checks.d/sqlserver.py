@@ -7,6 +7,7 @@ import traceback
 ALL_INSTANCES = 'ALL'
 VALID_METRIC_TYPES = ('gauge', 'rate', 'histogram')
 
+
 class SQLServer(AgentCheck):
     METRICS = [
         ('sqlserver.buffer.cache_hit_ratio', 'gauge', 'Buffer cache hit ratio'),

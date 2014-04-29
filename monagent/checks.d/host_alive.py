@@ -11,7 +11,6 @@ from checks import AgentCheck
 class HostAlive(AgentCheck):
     """Inherit Agentcheck class to test if a host is alive or not"""
 
-
     def __init__(self, name, init_config, agentConfig, instances=None):
         AgentCheck.__init__(self, name, init_config, agentConfig, instances)
 

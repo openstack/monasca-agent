@@ -20,6 +20,7 @@ except ImportError:
     raise Exception('Missing python dependency: kazoo (https://github.com/python-zk/kazoo)')
 import random
 
+
 class KafkaCheck(AgentCheck):
     def check(self, instance):
         consumer_groups = self.read_config(instance, 'consumer_groups',

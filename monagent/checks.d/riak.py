@@ -7,6 +7,7 @@ from checks import AgentCheck
 from httplib2 import Http, HttpLib2Error
 import socket
 
+
 class Riak(AgentCheck):
 
     keys = [

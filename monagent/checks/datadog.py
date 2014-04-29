@@ -6,7 +6,7 @@ import traceback
 import re
 import time
 from datetime import datetime
-from itertools import groupby # >= python 2.4
+from itertools import groupby  # >= python 2.4
 
 from checks import LaconicFilter
 
@@ -21,13 +21,16 @@ else:
         else:
             return s[0:pos], sep, s[pos + len(sep):]
 
+
 def point_sorter(p):
     # Sort and group by timestamp, metric name, host_name, device_name
-    return (p[1], p[0], p[3].get('host_name', None), p[3].get('device_name', None))
+    return p[1], p[0], p[3].get('host_name', None), p[3].get('device_name', None)
+
 
 class EventDefaults(object):
-    EVENT_TYPE   = 'dogstream_event'
+    EVENT_TYPE = 'dogstream_event'
     EVENT_OBJECT = 'dogstream_event:default'
+
 
 class Dogstreams(object):
     @classmethod
@@ -95,6 +98,7 @@ class Dogstreams(object):
                 self.logger.exception("Error in parsing %s" % (dogstream.log_path))
         return output
 
+
 class Dogstream(object):
 
     @classmethod
@@ -143,7 +147,7 @@ class Dogstream(object):
 
         self._gen = None
         self._values = None
-        self._freq = 15 # Will get updated on each check()
+        self._freq = 15  # Will get updated on each check()
         self._error_count = 0L
         self._line_count = 0L
         self.parser_state = {}
@@ -156,12 +160,14 @@ class Dogstream(object):
 
             # Build our tail -f
             if self._gen is None:
-                self._gen = TailFile(self.logger, self.log_path, self._line_parser).tail(line_by_line=False, move_end=move_end)
+                self._gen = TailFile(self.logger, self.log_path, self._line_parser).tail(line_by_line=False,
+                                                                                         move_end=move_end)
 
             # read until the end of file
             try:
                 self._gen.next()
-                self.logger.debug("Done dogstream check for file %s, found %s metric points" % (self.log_path, len(self._values)))
+                self.logger.debug("Done dogstream check for file %s, found %s metric points" % (self.log_path,
+                                                                                                len(self._values)))
             except StopIteration, e:
                 self.logger.exception(e)
                 self.logger.warn("Can't tail %s file" % self.log_path)
@@ -245,7 +251,7 @@ class Dogstream(object):
 
                 if invalid_reasons:
                     self.logger.debug('Invalid parsed values %s (%s): "%s"',
-                        repr(datum), ', '.join(invalid_reasons), line)
+                                      repr(datum), ', '.join(invalid_reasons), line)
                 else:
                     self._values.append((metric, ts, value, attrs))
         except Exception, e:
@@ -298,7 +304,7 @@ class Dogstream(object):
                 val = vals[0]
             elif len(vals) > 1:
                 val = vals[-1]
-            else: # len(vals) == 0
+            else:  # len(vals) == 0
                 continue
 
             metric_type = str(attributes.get('metric_type', '')).lower()
@@ -314,20 +320,22 @@ class Dogstream(object):
         else:
             return {}
 
-class InvalidDataTemplate(Exception): pass
+
+class InvalidDataTemplate(Exception):
+    pass
+
 
 class NagiosPerfData(object):
-    perfdata_field = '' # Should be overriden by subclasses
+    perfdata_field = ''  # Should be overriden by subclasses
     metric_prefix = 'nagios'
     pair_pattern = re.compile(r"".join([
-            r"'?(?P<label>[^=']+)'?=",
-            r"(?P<value>[-0-9.]+)",
-            r"(?P<unit>s|us|ms|%|B|KB|MB|GB|TB|c)?",
-            r"(;(?P<warn>@?[-0-9.~]*:?[-0-9.~]*))?",
-            r"(;(?P<crit>@?[-0-9.~]*:?[-0-9.~]*))?",
-            r"(;(?P<min>[-0-9.]*))?",
-            r"(;(?P<max>[-0-9.]*))?",
-        ]))
+                              r"'?(?P<label>[^=']+)'?=",
+                              r"(?P<value>[-0-9.]+)",
+                              r"(?P<unit>s|us|ms|%|B|KB|MB|GB|TB|c)?",
+                              r"(;(?P<warn>@?[-0-9.~]*:?[-0-9.~]*))?",
+                              r"(;(?P<crit>@?[-0-9.~]*:?[-0-9.~]*))?",
+                              r"(;(?P<min>[-0-9.]*))?",
+                              r"(;(?P<max>[-0-9.]*))?"]))
 
     @classmethod
     def init(cls, logger, config):
@@ -355,8 +363,7 @@ class NagiosPerfData(object):
             regex = re.sub(r'\$([^\$]*)\$', r'(?P<\1>[^\$]*)', regex)
             return re.compile(regex)
         except Exception, e:
-            raise InvalidDataTemplate("%s (%s)"% (file_template, e))
-
+            raise InvalidDataTemplate("%s (%s)" % (file_template, e))
 
     @staticmethod
     def underscorize(s):
@@ -512,7 +519,7 @@ def testDogStream():
     dogstream = Dogstream(logger)
 
     while True:
-        events = dogstream.check({'api_key':'my_apikey', 'dogstream_log': sys.argv[1]}, move_end=True)
+        events = dogstream.check({'api_key': 'my_apikey', 'dogstream_log': sys.argv[1]}, move_end=True)
         for e in events:
             print "Event:", e
         time.sleep(5)

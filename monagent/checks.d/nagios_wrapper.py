@@ -15,7 +15,6 @@ from checks import AgentCheck
 class WrapNagios(AgentCheck):
     """Inherit Agentcheck class to process Nagios checks"""
 
-
     def __init__(self, name, init_config, agentConfig, instances=None):
         AgentCheck.__init__(self, name, init_config, agentConfig, instances)
 

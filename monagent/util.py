@@ -16,7 +16,7 @@ import re
 try:
     from tornado import ioloop, version_info as tornado_version
 except ImportError:
-    pass # We are likely running the agent without the forwarder and tornado is not installed
+    pass  # We are likely running the agent without the forwarder and tornado is not installed
 
 VALID_HOSTNAME_RFC_1123_PATTERN = re.compile(r"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$")
 MAX_HOSTNAME_LEN = 255

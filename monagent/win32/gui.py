@@ -14,7 +14,7 @@ import sys
 import os
 import os.path as osp
 import webbrowser
-import thread # To manage the windows process asynchronously
+import thread  # To manage the windows process asynchronously
 
 import win32serviceutil
 import win32service

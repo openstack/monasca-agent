@@ -20,11 +20,16 @@
 # The methods of a Pool object use all these concepts and expose
 # them to their caller in a very simple way.
 
-import sys, threading, Queue, traceback
+import Queue
+import sys
+import threading
+import traceback
 
 
 ## Item pushed on the work queue to tell the worker threads to terminate
 SENTINEL = "QUIT"
+
+
 def is_sentinel(obj):
     """Predicate to determine whether an item from the queue is the
     signal to stop"""
@@ -319,7 +324,7 @@ class ApplyResult(object):
 
     The result objects returns by the Pool::*_async() methods are of
     this type"""
-    def __init__(self, collector = None, callback = None):
+    def __init__(self, collector=None, callback=None):
         """
         \param collector when not None, the notify_ready() method of
         the collector will be called when the result from the Job is
@@ -338,7 +343,7 @@ class ApplyResult(object):
             collector.register_result(self)
             self._collector = collector
 
-    def get(self, timeout = None):
+    def get(self, timeout=None):
         """
         Returns the result when it arrives. If timeout is not None and
         the result does not arrive within timeout seconds then

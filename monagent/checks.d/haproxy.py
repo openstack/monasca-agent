@@ -12,10 +12,12 @@ from collections import defaultdict
 STATS_URL = "/;csv;norefresh"
 EVENT_TYPE = SOURCE_TYPE_NAME = 'haproxy'
 
+
 class Services(object):
     BACKEND = 'BACKEND'
     FRONTEND = 'FRONTEND'
     ALL = (BACKEND, FRONTEND)
+
 
 class HAProxy(AgentCheck):
     def __init__(self, name, init_config, agentConfig):

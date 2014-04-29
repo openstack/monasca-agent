@@ -14,15 +14,15 @@ class Gearman(AgentCheck):
 
         return {"gearman": version}
 
-    def _get_client(self,host,port):
+    def _get_client(self, host, port):
         try:
             import gearman
         except ImportError:
-            raise Exception("Cannot import Gearman module. Check the instructions to install this module at https://app.datadoghq.com/account/settings#integrations/gearman")
+            raise Exception("Cannot import Gearman module. Check the instructions to install" +
+                            "this module at https://app.datadoghq.com/account/settings#integrations/gearman")
 
         self.log.debug("Connecting to gearman at address %s:%s" % (host, port))
-        return gearman.GearmanAdminClient(["%s:%s" %
-            (host, port)])
+        return gearman.GearmanAdminClient(["%s:%s" % (host, port)])
 
     def _get_metrics(self, client, tags):
         data = client.get_status()

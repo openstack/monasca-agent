@@ -11,9 +11,11 @@
 '''
 
 # set up logging before importing any other components
-from config import get_version, initialize_logging; initialize_logging('collector')
+from config import get_version, initialize_logging
+initialize_logging('collector')
 
-import os; os.umask(022)
+import os
+os.umask(022)
 
 # Core modules
 import logging

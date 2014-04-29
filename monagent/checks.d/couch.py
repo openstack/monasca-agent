@@ -4,6 +4,7 @@ from util import headers
 
 from checks import AgentCheck
 
+
 class CouchDb(AgentCheck):
     """Extracts stats from CouchDB via its REST API
     http://wiki.apache.org/couchdb/Runtime_Statistics
@@ -24,7 +25,6 @@ class CouchDb(AgentCheck):
                     metric_tags.append('db:%s' % db_name)
                     self.gauge(metric_name, val, tags=metric_tags, device_name=db_name)
 
-        
     def _get_stats(self, url):
         "Hit a given URL and return the parsed json"
         self.log.debug('Fetching Couchdb stats at url: %s' % url)

@@ -25,6 +25,7 @@ CACTI_TO_DD = {
     'ping': 'system.ping.latency'
 }
 
+
 class Cacti(AgentCheck):
     def __init__(self, name, init_config, agentConfig):
         AgentCheck.__init__(self, name, init_config, agentConfig)

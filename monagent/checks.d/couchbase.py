@@ -9,6 +9,8 @@ from checks.utils import add_basic_auth
 #Constants
 COUCHBASE_STATS_PATH = '/pools/nodes'
 DEFAULT_TIMEOUT = 10
+
+
 class Couchbase(AgentCheck):
     """Extracts stats from Couchbase via its REST API
     http://docs.couchbase.com/couchbase-manual-2.0/#using-the-rest-api

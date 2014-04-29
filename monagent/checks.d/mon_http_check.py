@@ -7,6 +7,7 @@ import json
 import re
 from httplib2 import Http, HttpLib2Error
 
+
 class HTTPCheck(AgentCheck):
 
     @staticmethod
@@ -16,7 +17,7 @@ class HTTPCheck(AgentCheck):
         username = instance.get('username', None)
         password = instance.get('password', None)
         timeout = int(instance.get('timeout', 10))
-        headers = instance.get('headers',{})
+        headers = instance.get('headers', {})
         url = instance.get('url', None)
         response_time = instance.get('collect_response_time', False)
         pattern = instance.get('match_pattern', None)

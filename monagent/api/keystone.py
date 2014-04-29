@@ -1,6 +1,7 @@
 import json
 import requests
 
+
 class Keystone(object):
 
     password_auth = {

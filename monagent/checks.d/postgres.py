@@ -1,6 +1,8 @@
 from checks import AgentCheck, CheckException
 
+
 class ShouldRestartException(Exception): pass
+
 
 class PostgreSql(AgentCheck):
     """Collects per-database, and optionally per-relation metrics
@@ -11,21 +13,17 @@ class PostgreSql(AgentCheck):
     
     # turning columns into tags
     DB_METRICS = {
-        'descriptors': [
-            ('datname', 'db')
-        ],
-        'metrics': {
-            'numbackends'       : ('postgresql.connections', GAUGE),
-            'xact_commit'       : ('postgresql.commits', RATE),
-            'xact_rollback'     : ('postgresql.rollbacks', RATE),
-            'blks_read'         : ('postgresql.disk_read', RATE),
-            'blks_hit'          : ('postgresql.buffer_hit', RATE),
-            'tup_returned'      : ('postgresql.rows_returned', RATE),
-            'tup_fetched'       : ('postgresql.rows_fetched', RATE),
-            'tup_inserted'      : ('postgresql.rows_inserted', RATE),
-            'tup_updated'       : ('postgresql.rows_updated', RATE),
-            'tup_deleted'       : ('postgresql.rows_deleted', RATE),
-        },
+        'descriptors': [ ('datname', 'db')],
+        'metrics': {'numbackends': ('postgresql.connections', GAUGE),
+                    'xact_commit': ('postgresql.commits', RATE),
+                    'xact_rollback': ('postgresql.rollbacks', RATE),
+                    'blks_read': ('postgresql.disk_read', RATE),
+                    'blks_hit': ('postgresql.buffer_hit', RATE),
+                    'tup_returned': ('postgresql.rows_returned', RATE),
+                    'tup_fetched': ('postgresql.rows_fetched', RATE),
+                    'tup_inserted': ('postgresql.rows_inserted', RATE),
+                    'tup_updated': ('postgresql.rows_updated', RATE),
+                    'tup_deleted': ('postgresql.rows_deleted', RATE)},
         'query': """
 SELECT datname,
        %s

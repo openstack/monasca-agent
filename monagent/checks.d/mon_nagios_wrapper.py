@@ -15,7 +15,6 @@ from checks import AgentCheck
 class WrapNagios(AgentCheck):
     """Inherit Agentcheck class to process Nagios checks"""
 
-
     def __init__(self, name, init_config, agentConfig, instances=None):
         AgentCheck.__init__(self, name, init_config, agentConfig, instances)
 
@@ -24,10 +23,8 @@ class WrapNagios(AgentCheck):
         """ Determine whether or not to skip a check depending on
             the checks's check_interval, if specified, and the last
             time the check was run """
-        if (instance['service_name'] in last_run_data
-            and 'check_interval' in instance):
-            if (time.time() < last_run_data[instance['service_name']]
-                + instance['check_interval']):
+        if (instance['service_name'] in last_run_data and 'check_interval' in instance):
+            if (time.time() < last_run_data[instance['service_name']] + instance['check_interval']):
                 return True
         else:
             return False

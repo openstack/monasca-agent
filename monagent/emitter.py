@@ -2,6 +2,7 @@ from hashlib import md5
 import json
 import urllib2
 
+
 def post_headers(agentConfig, payload):
     return {
         'User-Agent': 'Datadog Agent/%s' % agentConfig['version'],
@@ -9,6 +10,8 @@ def post_headers(agentConfig, payload):
         'Accept': 'text/html, */*',
         'Content-MD5': md5(payload).hexdigest()
     }
+
+
 
 def http_emitter(message, log, agentConfig):
     "Send payload"
