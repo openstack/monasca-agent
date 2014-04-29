@@ -1,5 +1,0 @@
-init_config:
-
-instances:
-    -   name: default
-        jenkins_home: /var/lib/jenkins
