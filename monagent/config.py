@@ -683,12 +683,12 @@ def get_log_date_format():
 
 def get_log_format(logger_name):
     if get_os() != 'windows':
-        return '%%(asctime)s | %%(levelname)s | dd.%s | %%(name)s(%%(filename)s:%%(lineno)s) | %%(message)s' % logger_name
+        return '%%(asctime)s | %%(levelname)s | %s | %%(name)s(%%(filename)s:%%(lineno)s) | %%(message)s' % logger_name
     return '%(asctime)s | %(levelname)s | %(name)s(%(filename)s:%(lineno)s) | %(message)s'
 
 
 def get_syslog_format(logger_name):
-    return 'dd.%s[%%(process)d]: %%(levelname)s (%%(filename)s:%%(lineno)s): %%(message)s' % logger_name
+    return '%s[%%(process)d]: %%(levelname)s (%%(filename)s:%%(lineno)s): %%(message)s' % logger_name
 
 
 def get_logging_config(cfg_path=None):
@@ -706,11 +706,11 @@ def get_logging_config(cfg_path=None):
             'syslog_port': None,
         }
     else:
-        windows_log_location = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'ddagent.log')
-        jmxfetch_log_file = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'jmxfetch.log')
+        windows_log_location = os.path.join(_windows_commondata_path(), 'Mon', 'logs', 'agent.log')
+        jmxfetch_log_file = os.path.join(_windows_commondata_path(), 'Mon', 'logs', 'jmxfetch.log')
         logging_config = {
             'log_level': None,
-            'ddagent_log_file': windows_log_location,
+            'agent_log_file': windows_log_location,
             'jmxfetch_log_file': jmxfetch_log_file,
             'log_to_event_viewer': False,
             'log_to_syslog': False,
@@ -790,7 +790,7 @@ def initialize_logging(logger_name):
 
         # set up file loggers
         if get_os() == 'windows' and not windows_file_handler_added:
-            logger_name = 'ddagent'
+            logger_name = 'agent'
             windows_file_handler_added = True
 
         log_file = logging_config.get('%s_log_file' % logger_name)

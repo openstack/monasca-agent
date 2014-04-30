@@ -25,10 +25,6 @@ def http_emitter(message, log, agentConfig):
 
     try:
         request = urllib2.Request(url, payload, headers)
-        # Do the request, log any errors
-        opener = urllib2.build_opener()
-        if opener is not None:
-            urllib2.install_opener(opener)
         response = urllib2.urlopen(request)
         try:
             log.debug('http_emitter: postback response: ' + str(response.read()))
