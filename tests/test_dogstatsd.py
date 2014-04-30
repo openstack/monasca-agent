@@ -5,7 +5,7 @@ import time
 import unittest
 import nose.tools as nt
 
-from dogstatsd import MetricsAggregator
+from aggregator import MetricsAggregator
 
 
 class TestUnitDogStatsd(unittest.TestCase):

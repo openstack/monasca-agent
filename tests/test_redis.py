@@ -10,6 +10,7 @@ import pprint
 import redis
 
 from tests.common import load_check
+from nose.plugins.skip import SkipTest
 logger = logging.getLogger()
 
 MAX_WAIT = 20
@@ -17,6 +18,7 @@ NOAUTH_PORT = 16379
 AUTH_PORT = 26379
 DEFAULT_PORT = 6379
 MISSING_KEY_TOLERANCE= 0.5
+
 
 class TestRedis(unittest.TestCase):
 
@@ -52,6 +54,7 @@ class TestRedis(unittest.TestCase):
             self.redis_auth.terminate()
 
     def test_redis_auth(self):
+        raise SkipTest("Requires Redis installed")
         # Test connection with password
         if not self.is_travis():
             # correct password
@@ -85,6 +88,7 @@ class TestRedis(unittest.TestCase):
                 assert len(metrics) == 0, "Should have failed with bad password; got %s instead" % metrics
 
     def test_redis_default(self):
+        raise SkipTest("Requires Redis installed")
         # Base test, uses the noauth instance
         if self.is_travis():
             port = DEFAULT_PORT

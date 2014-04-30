@@ -1,6 +1,7 @@
 import unittest
 import logging
 from nose.plugins.attrib import attr
+from nose.plugins.skip import SkipTest
 
 from tests.common import get_check
 
@@ -72,6 +73,7 @@ class WinEventLogTest(unittest.TestCase):
 
     @attr('windows')
     def test_windows_event_log(self):
+        raise SkipTest("Requires win32evtlog module")
         import win32evtlog
         check, instances = get_check('win32_event_log', CONFIG)
 

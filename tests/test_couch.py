@@ -1,10 +1,12 @@
 import unittest
 from tests.common import load_check
+from nose.plugins.skip import SkipTest
+
 
 class CouchDBTestCase(unittest.TestCase):
 
     def testMetrics(self):
-
+        raise SkipTest('Require CouchDB')
         config = {
             'instances': [{
                 'server': 'http://localhost:5984',

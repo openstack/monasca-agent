@@ -3,7 +3,6 @@ from common import get_check
 import unittest
 import os
 import logging
-import subprocess
 import shutil
 
 log = logging.getLogger()

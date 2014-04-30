@@ -2,11 +2,12 @@ import unittest
 import time
 import threading
 from aggregator import MetricsAggregator
-from dogstatsd import Dogstatsd, init, Server
+from dogstatsd import Server
 from util import PidFile
 import os
 from config import get_logging_config
 from jmxfetch import JMXFetch
+from nose.plugins.skip import SkipTest
 
 STATSD_PORT = 8121
 class DummyReporter(threading.Thread):
@@ -51,6 +52,7 @@ class JMXTestCase(unittest.TestCase):
 
 
     def testCustomJMXMetric(self):
+        raise SkipTest('Requires JMX be setup')
         count = 0
         while self.reporter.metrics is None:
             time.sleep(1)

@@ -1,9 +1,9 @@
 import unittest
 from datetime import timedelta, datetime
-import time
 
 from transaction import Transaction, TransactionManager
-from ddagent import MAX_WAIT_FOR_REPLAY, MAX_QUEUE_SIZE, THROTTLING_DELAY
+from forwarder import  MAX_QUEUE_SIZE, THROTTLING_DELAY
+
 
 class memTransaction(Transaction):
     def __init__(self, size, manager):
@@ -22,6 +22,7 @@ class memTransaction(Transaction):
             self._trManager.tr_error(self)
 
         self._trManager.flush_next()
+
 
 class TestTransaction(unittest.TestCase):
 

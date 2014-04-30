@@ -6,10 +6,11 @@ import os
 import binascii
 import re
 import logging
-import subprocess
 import shutil
+from nose.plugins.skip import SkipTest
 
 log = logging.getLogger()
+
 
 class TestPostfix(unittest.TestCase):
     #
@@ -50,6 +51,7 @@ class TestPostfix(unittest.TestCase):
         return re.sub(pattern, '\n', text)
 
     def test_checks(self):
+        raise SkipTest('Requires root access to postfix')
         self.config = self.stripHeredoc("""init_config:
 
         instances:

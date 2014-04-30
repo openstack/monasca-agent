@@ -8,6 +8,7 @@ import socket
 import pymongo
 
 from tests.common import load_check
+from nose.plugins.skip import SkipTest
 
 PORT1 = 37017
 PORT2 = 37018
@@ -73,6 +74,7 @@ class TestMongo(unittest.TestCase):
             logging.getLogger().exception("Cannot terminate mongod instances")
 
     def testMongoCheck(self):
+        raise SkipTest('Requires MongoDB')
         self.config = {
             'instances': [{
                 'server': "mongodb://localhost:%s/test" % PORT1
@@ -130,6 +132,7 @@ class TestMongo(unittest.TestCase):
                 self.assertTrue( metric_val_checks[metric_name]( m[2] ) )
 
     def testMongoOldConfig(self):
+        raise SkipTest('Requires MongoDB')
         self.agentConfig1 = {
             'mongodb_server': "mongodb://localhost:%s/test" % PORT1,
             'version': '0.1',

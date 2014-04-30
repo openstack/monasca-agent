@@ -8,6 +8,8 @@ import os
 from config import get_logging_config
 from jmxfetch import JMXFetch
 
+from nose.plugins.skip import SkipTest
+
 STATSD_PORT = 8129
 class DummyReporter(threading.Thread):
     def __init__(self, metrics_aggregator):
@@ -51,6 +53,7 @@ class JMXTestCase(unittest.TestCase):
 
 
     def testCustomJMXMetric(self):
+        raise SkipTest('Requires running JMX')
         count = 0
         while self.reporter.metrics is None:
             time.sleep(1)

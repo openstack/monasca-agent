@@ -13,7 +13,6 @@ class TestConfig(unittest.TestCase):
         """
         agentConfig = get_config(cfg_path=os.path.join(os.path.dirname(os.path.realpath(__file__)), "badconfig.conf"))
         self.assertEquals(agentConfig["api_key"], "1234")
-        self.assertEquals(agentConfig["nagios_log"], "/var/log/nagios3/nagios.log")
 
     def testGoodPidFie(self):
         """Verify that the pid file succeeds and fails appropriately"""
@@ -33,22 +32,6 @@ class TestConfig(unittest.TestCase):
         # clean up
         self.assertEquals(p.clean(), True)
         self.assertEquals(os.path.exists(expected_path), False)
-
-    def testBadPidFile(self):
-        pid_dir = "/does-not-exist"
-
-        p = PidFile('test', pid_dir)
-        path = p.get_path()
-        self.assertEquals(path, "/tmp/test.pid")
-
-        pid = "666"
-        pid_f = open(path, 'w')
-        pid_f.write(pid)
-        pid_f.close()
-
-        self.assertEquals(p.get_pid(), 666)
-        self.assertEquals(p.clean(), True)
-        self.assertEquals(os.path.exists(path), False)
 
     def testHostname(self):
         valid_hostnames = [

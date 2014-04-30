@@ -6,14 +6,16 @@ import tempfile
 import os
 import logging
 
-from util import get_hostname
 from tests.common import load_check, kill_subprocess
 from nose.plugins.attrib import attr
+from nose.plugins.skip import SkipTest
+
 logging.basicConfig()
 
 MAX_WAIT = 30
 HAPROXY_CFG = os.path.realpath(os.path.join(os.path.dirname(__file__), "haproxy.cfg"))
 HAPROXY_OPEN_CFG = os.path.realpath(os.path.join(os.path.dirname(__file__), "haproxy-open.cfg"))
+
 
 class HaproxyTestCase(unittest.TestCase):
     def _wait(self, url):
@@ -63,6 +65,7 @@ class HaproxyTestCase(unittest.TestCase):
 
     @attr('haproxy')
     def testCheck(self):
+        raise SkipTest('Requires Haproxy')
         config = {
             'init_config': {},
             'instances': [{
@@ -128,6 +131,7 @@ class HaproxyTestCase(unittest.TestCase):
 
     @attr('haproxy')
     def testOpenConfig(self):
+        raise SkipTest('Requires Haproxy')
         # No passwords this time
         config = {
             'init_config': {},

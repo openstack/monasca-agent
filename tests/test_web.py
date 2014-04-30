@@ -1,8 +1,11 @@
 import unittest
 import logging
+
 logger = logging.getLogger(__file__)
 
 from tests.common import get_check
+from nose.plugins.skip import SkipTest
+
 
 class TestWeb(unittest.TestCase):
 
@@ -48,6 +51,7 @@ instances:
 """
 
     def testApache(self):
+        raise SkipTest("Requires running apache")
         a, instances = get_check('apache', self.apache_config)
 
         a.check(instances[0])
@@ -67,6 +71,7 @@ instances:
         assert instances[0]['apache_status_url'] == config['apache_status_url']
 
     def testNginx(self):
+        raise SkipTest("Requires running Lighthttpd")
         nginx, instances = get_check('nginx', self.nginx_config)
         nginx.check(instances[0])
         r = nginx.get_metrics()
@@ -89,6 +94,7 @@ instances:
             assert ':'.join(config.values()[i].split(':')[:-1]) == instance['nginx_status_url']
 
     def testLighttpd(self):
+        raise SkipTest("Requires running Lighthttpd")
         l, instances = get_check('lighttpd', self.lighttpd_config)
 
         l.check(instances[0])

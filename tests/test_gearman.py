@@ -1,9 +1,11 @@
 import unittest
 from tests.common import load_check
+from nose.plugins.skip import SkipTest
 
 class GearmanTestCase(unittest.TestCase):
 
     def testMetrics(self):
+        raise SkipTest('Requires Gearman')
 
         config = {
             'instances': [{

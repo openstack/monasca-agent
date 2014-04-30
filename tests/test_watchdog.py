@@ -5,9 +5,8 @@ import sys
 from random import random, randrange
 import urllib as url
 import time
-from nose.plugins.skip import SkipTest
 sys.path.append(os.getcwd())
-from ddagent import Application
+from collector_daemon import CollectorDaemon
 
 from util import Watchdog
 
@@ -113,14 +112,14 @@ class PseudoAgent(object):
 
     @staticmethod
     def slow_tornado():
-        a = Application(12345, {})
+        a = CollectorDaemon(12345, {})
         a._watchdog = Watchdog(4)
         a._tr_manager = MockTxManager()
         a.run()
 
     @staticmethod
     def fast_tornado():
-        a = Application(12345, {})
+        a = CollectorDaemon(12345, {})
         a._watchdog = Watchdog(6)
         a._tr_manager = MockTxManager()
         a.run()
@@ -129,7 +128,7 @@ class PseudoAgent(object):
     def use_lots_of_memory():
         # Skip this step on travis
         if os.environ.get('TRAVIS', False): return
-        a = Application(12345, {})
+        a = CollectorDaemon(12345, {})
         a._watchdog = Watchdog(30, 50)
         a._tr_manager = MemoryHogTxManager()
         a.run()

@@ -1,6 +1,7 @@
 import unittest
 import logging
 from nose.plugins.attrib import attr
+from nose.plugins.skip import SkipTest
 
 from tests.common import get_check
 
@@ -16,9 +17,11 @@ instances:
             - mytag2
 """
 
+
 class IISTestCase(unittest.TestCase):
     @attr('windows')
     def testIIS(self):
+        raise SkipTest('Requires IIS and wmi')
         check, instances = get_check('iis', CONFIG)
         check.check(instances[0])
         metrics = check.get_metrics()

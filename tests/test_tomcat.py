@@ -7,8 +7,11 @@ from util import PidFile
 import os
 from config import get_logging_config
 from jmxfetch import JMXFetch
+from nose.plugins.skip import SkipTest
 
 STATSD_PORT = 8126
+
+
 class DummyReporter(threading.Thread):
     def __init__(self, metrics_aggregator):
         threading.Thread.__init__(self)
@@ -51,6 +54,7 @@ class JMXTestCase(unittest.TestCase):
         JMXFetch.stop()
 
     def testTomcatMetrics(self):
+        raise SkipTest('Requires working JMX')
         count = 0
         while self.reporter.metrics is None:
             time.sleep(1)

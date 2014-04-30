@@ -4,6 +4,7 @@ import time
 from subprocess import Popen, PIPE
 
 from tests.common import load_check
+from nose.plugins.skip import SkipTest
 
 
 class TestMemCache(unittest.TestCase):
@@ -26,6 +27,7 @@ class TestMemCache(unittest.TestCase):
         return int(output.strip())
 
     def testConnectionLeaks(self):
+        raise SkipTest('Requires mcache')
         for i in range(3):
             # Count open connections to localhost:11211, should be 0
             self.assertEquals(self._countConnections(11211), 0)
@@ -35,6 +37,7 @@ class TestMemCache(unittest.TestCase):
             self.assertEquals(self._countConnections(11211), 0)
 
     def testMetrics(self):
+        raise SkipTest('Requires mcache')
         for instance in self.conf['instances']:
             self.c.check(instance)
             # Sleep for 1 second so the rate interval >=1
@@ -50,6 +53,7 @@ class TestMemCache(unittest.TestCase):
         self.assertEquals(len([t for t in r if t[3].get('tags') == ["instance:mythirdtag"]]), 21, r)
 
     def testTagging(self):
+        raise SkipTest('Requires mcache')
         instance = {
             'url': 'localhost',
             'port': 11211,
@@ -87,6 +91,7 @@ class TestMemCache(unittest.TestCase):
         self.assertRaises(Exception, self.c.check, new_conf['instances'][0])
 
     def testMemoryLeak(self):
+        raise SkipTest('Requires mcache')
         for instance in self.conf['instances']:
             self.c.check(instance)
         self.c.get_metrics()
