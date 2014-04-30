@@ -6,11 +6,8 @@ The Check class is being deprecated so don't write new checks with it.
 
 import logging
 import re
-import socket
 import time
-import types
 import os
-import sys
 import traceback
 from pprint import pprint
 

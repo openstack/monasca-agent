@@ -146,20 +146,6 @@ dogstatsd_port : 8125
 #
 
 # ========================================================================== #
-# Custom Emitters                                                            #
-# ========================================================================== #
-
-# Comma-separated list of emitters to be used in addition to the standard one
-#
-# Expected to be passed as a comma-separated list of colon-delimited
-# name/object pairs.
-#
-custom_emitters: mon_lib/mon_api_emitter:MonApiEmitter
-#
-# If the name of the emitter function is not specified, 'emitter' is assumed.
-
-
-# ========================================================================== #
 # Logging
 # ========================================================================== #
 
