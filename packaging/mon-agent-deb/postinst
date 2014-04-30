@@ -28,6 +28,7 @@ case "$1" in
           if [ $RETVAL -eq 3 ]; then
             # No agent.conf file is present. The user is probably following
             # the step-by-step instructions and will add the config file next.
+            echo "No /etc/mon-agent/agent.conf found, exiting"
             exit 0
           else
             exit $?
