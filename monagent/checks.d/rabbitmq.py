@@ -1,55 +1,41 @@
+import json
 import urllib2
 import urlparse
 import time
 
 from checks import AgentCheck
-from util import json
 
 EVENT_TYPE = SOURCE_TYPE_NAME = 'rabbitmq'
 QUEUE_TYPE = 'queues'
 NODE_TYPE = 'nodes'
 MAX_DETAILED_QUEUES = 200
 MAX_DETAILED_NODES = 100
-ALERT_THRESHOLD = 0.9 # Post an event in the stream when the number of queues or nodes to collect is above 90% of the limit
-QUEUE_ATTRIBUTES = [ 
-        'active_consumers',
-        'consumers',
-        'memory',
-        'messages',
-        'messages_ready',
-        'messages_unacknowledged'
-    ]
+# Post an event in the stream when the number of queues or nodes to collect is above 90% of the limit
+ALERT_THRESHOLD = 0.9
+QUEUE_ATTRIBUTES = ['active_consumers',
+                    'consumers',
+                    'memory',
+                    'messages',
+                    'messages_ready',
+                    'messages_unacknowledged']
 
-NODE_ATTRIBUTES = [
-                'fd_used',
-                'mem_used',
-                'run_queue',
-                'sockets_used',
-    ]
+NODE_ATTRIBUTES = ['fd_used',
+                   'mem_used',
+                   'run_queue',
+                   'sockets_used']
 
-ATTRIBUTES = {
-    QUEUE_TYPE: QUEUE_ATTRIBUTES,
-    NODE_TYPE: NODE_ATTRIBUTES,
-}
-
-
+ATTRIBUTES = {QUEUE_TYPE: QUEUE_ATTRIBUTES, NODE_TYPE: NODE_ATTRIBUTES}
 
 TAGS_MAP = {
-    QUEUE_TYPE: {
-                'node':'node',
-                'name':'queue',
-                'vhost':'vhost',
-                'policy':'policy',
-            },
-    NODE_TYPE: {
-                'name':'node',
-    }
+    QUEUE_TYPE: {'node': 'node',
+                 'name': 'queue',
+                 'vhost': 'vhost',
+                 'policy': 'policy'},
+    NODE_TYPE: {'name': 'node'}
 }
 
-METRIC_SUFFIX = {
-    QUEUE_TYPE: "queue",
-    NODE_TYPE: "node",
-}
+METRIC_SUFFIX = {QUEUE_TYPE: "queue", NODE_TYPE: "node"}
+
 
 class RabbitMQ(AgentCheck):
     """This check is for gathering statistics from the RabbitMQ
@@ -60,7 +46,8 @@ class RabbitMQ(AgentCheck):
         AgentCheck.__init__(self, name, init_config, agentConfig, instances)
         self.already_alerted = []
 
-    def _get_config(self, instance):
+    @staticmethod
+    def _get_config(instance):
         # make sure 'rabbitmq_api_url; is present
         if 'rabbitmq_api_url' not in instance:
             raise Exception('Missing "rabbitmq_api_url" in RabbitMQ config.')
@@ -102,7 +89,8 @@ class RabbitMQ(AgentCheck):
         self.get_stats(instance, base_url, QUEUE_TYPE, max_detailed[QUEUE_TYPE], specified[QUEUE_TYPE])
         self.get_stats(instance, base_url, NODE_TYPE, max_detailed[NODE_TYPE], specified[NODE_TYPE])
 
-    def _get_data(self, url):
+    @staticmethod
+    def _get_data(url):
         try:
             data = json.loads(urllib2.urlopen(url).read())
         except urllib2.URLError, e:

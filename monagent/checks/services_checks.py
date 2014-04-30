@@ -1,10 +1,9 @@
 from checks import AgentCheck
+from collections import namedtuple
 import time
 from Queue import Queue, Empty
 from checks.libs.thread_pool import Pool
 import threading
-
-
 
 
 TIMEOUT = 180
@@ -12,13 +11,9 @@ DEFAULT_SIZE_POOL = 6
 MAX_LOOP_ITERATIONS = 1000
 FAILURE = "FAILURE"
 
-class Status:
-    DOWN = "DOWN"
-    UP = "UP"
-
-class EventType:
-    DOWN = "servicecheck.state_change.down"
-    UP = "servicecheck.state_change.up"
+up_down = namedtuple('up_down', ['UP', 'DOWN'])
+Status = up_down('UP', 'DOWN')
+EventType = up_down("servicecheck.state_change.up", "servicecheck.state_change.down")
 
 
 class ServicesCheck(AgentCheck):
@@ -85,7 +80,8 @@ class ServicesCheck(AgentCheck):
     def check(self, instance):
         if not self.pool_started:
             self.start_pool()
-        if threading.activeCount() > 5 * self.pool_size + 5: # On Windows the agent runs on multiple threads so we need to have an offset of 5 in case the pool_size is 1 
+        # On Windows the agent runs on multiple threads so we need to have an offset of 5 in case the pool_size is 1
+        if threading.activeCount() > 5 * self.pool_size + 5:
             raise Exception("Thread number (%s) is exploding. Skipping this check" % threading.activeCount())
         self._process_results()
         self._clean()
@@ -100,7 +96,6 @@ class ServicesCheck(AgentCheck):
             self.pool.apply_async(self._process, args=(instance,))
         else:
             self.log.error("Instance: %s skipped because it's already running." % name)
-
 
     def _process(self, instance):
         name = instance.get('name', None)
@@ -144,8 +139,6 @@ class ServicesCheck(AgentCheck):
                 self.log.warning("Maximum window size (256) exceeded, defaulting it to 256")
                 window = 256
 
-
-
             threshold = queue_instance.get('threshold', 1)
 
             if len(self.statuses[name]) > window:
@@ -171,7 +164,6 @@ class ServicesCheck(AgentCheck):
     def _check(self, instance):
         """This function should be implemented by inherited classes"""
         raise NotImplementedError
-
 
     def _clean(self):
         now = time.time()

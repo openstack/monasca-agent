@@ -83,7 +83,8 @@ class Memcache(AgentCheck):
         "total_connections"
     ]
 
-    def get_library_versions(self):
+    @staticmethod
+    def get_library_versions():
         try:
             import memcache
             version = memcache.__version__
@@ -218,7 +219,7 @@ class Memcache(AgentCheck):
                 'tags': tags
             })
 
-            index = index + 1
+            index += 1
             instance = agentConfig.get("memcache_instance_%s" % index, None)
 
         if len(all_instances) == 0:

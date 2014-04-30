@@ -1,8 +1,10 @@
 from checks import AgentCheck
 
+
 class Gearman(AgentCheck):
 
-    def get_library_versions(self):
+    @staticmethod
+    def get_library_versions():
         try:
             import gearman
             version = gearman.__version__
@@ -13,15 +15,15 @@ class Gearman(AgentCheck):
 
         return {"gearman": version}
 
-    def _get_client(self,host,port):
+    def _get_client(self, host, port):
         try:
             import gearman
         except ImportError:
-            raise Exception("Cannot import Gearman module. Check the instructions to install this module at https://app.datadoghq.com/account/settings#integrations/gearman")
+            raise Exception("Cannot import Gearman module. Check the instructions to install" +
+                            "this module at https://app.datadoghq.com/account/settings#integrations/gearman")
 
         self.log.debug("Connecting to gearman at address %s:%s" % (host, port))
-        return gearman.GearmanAdminClient(["%s:%s" %
-            (host, port)])
+        return gearman.GearmanAdminClient(["%s:%s" % (host, port)])
 
     def _get_metrics(self, client, tags):
         data = client.get_status()
@@ -41,8 +43,8 @@ class Gearman(AgentCheck):
         self.gauge("gearman.queued", queued, tags=tags)
         self.gauge("gearman.workers", workers, tags=tags)
 
-        self.log.debug("running %d, queued %d, unique tasks %d, workers: %d"
-        % (running, queued, unique_tasks, workers))
+        self.log.debug("running %d, queued %d, unique tasks %d, workers: %d" %
+                       (running, queued, unique_tasks, workers))
 
     def _get_conf(self, instance):
         host = instance.get('server', None)

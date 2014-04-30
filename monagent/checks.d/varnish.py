@@ -1,8 +1,9 @@
-import xml.parsers.expat # python 2.4 compatible
+import xml.parsers.expat  # python 2.4 compatible
 import re
 import subprocess
 
 from checks import AgentCheck
+
 
 class Varnish(AgentCheck):
     # XML parsing bits, a.k.a. Kafka in Code
@@ -26,7 +27,7 @@ class Varnish(AgentCheck):
             else:
                 # Unsupported data type, ignore
                 self._reset()
-                return # don't save
+                return  # don't save
 
             # reset for next stat element
             self._reset()

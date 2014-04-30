@@ -6,7 +6,7 @@ import traceback
 import re
 import time
 from datetime import datetime
-from itertools import groupby # >= python 2.4
+from itertools import groupby  # >= python 2.4
 
 from checks import LaconicFilter
 
@@ -21,13 +21,16 @@ else:
         else:
             return s[0:pos], sep, s[pos + len(sep):]
 
+
 def point_sorter(p):
     # Sort and group by timestamp, metric name, host_name, device_name
-    return (p[1], p[0], p[3].get('host_name', None), p[3].get('device_name', None))
+    return p[1], p[0], p[3].get('host_name', None), p[3].get('device_name', None)
+
 
 class EventDefaults(object):
-    EVENT_TYPE   = 'dogstream_event'
+    EVENT_TYPE = 'dogstream_event'
     EVENT_OBJECT = 'dogstream_event:default'
+
 
 class Dogstreams(object):
     @classmethod
@@ -95,6 +98,7 @@ class Dogstreams(object):
                 self.logger.exception("Error in parsing %s" % (dogstream.log_path))
         return output
 
+
 class Dogstream(object):
 
     @classmethod
@@ -143,7 +147,7 @@ class Dogstream(object):
 
         self._gen = None
         self._values = None
-        self._freq = 15 # Will get updated on each check()
+        self._freq = 15  # Will get updated on each check()
         self._error_count = 0L
         self._line_count = 0L
         self.parser_state = {}
@@ -156,12 +160,14 @@ class Dogstream(object):
 
             # Build our tail -f
             if self._gen is None:
-                self._gen = TailFile(self.logger, self.log_path, self._line_parser).tail(line_by_line=False, move_end=move_end)
+                self._gen = TailFile(self.logger, self.log_path, self._line_parser).tail(line_by_line=False,
+                                                                                         move_end=move_end)
 
             # read until the end of file
             try:
                 self._gen.next()
-                self.logger.debug("Done dogstream check for file %s, found %s metric points" % (self.log_path, len(self._values)))
+                self.logger.debug("Done dogstream check for file %s, found %s metric points" % (self.log_path,
+                                                                                                len(self._values)))
             except StopIteration, e:
                 self.logger.exception(e)
                 self.logger.warn("Can't tail %s file" % self.log_path)
@@ -245,7 +251,7 @@ class Dogstream(object):
 
                 if invalid_reasons:
                     self.logger.debug('Invalid parsed values %s (%s): "%s"',
-                        repr(datum), ', '.join(invalid_reasons), line)
+                                      repr(datum), ', '.join(invalid_reasons), line)
                 else:
                     self._values.append((metric, ts, value, attrs))
         except Exception, e:
@@ -253,7 +259,8 @@ class Dogstream(object):
             self._error_count += 1
             self.logger.error("Parser error: %s out of %s" % (self._error_count, self._line_count))
 
-    def _default_line_parser(self, logger, line):
+    @staticmethod
+    def _default_line_parser(logger, line):
         original_line = line
         sep = ' '
         metric, _, line = partition(line.strip(), sep)
@@ -297,7 +304,7 @@ class Dogstream(object):
                 val = vals[0]
             elif len(vals) > 1:
                 val = vals[-1]
-            else: # len(vals) == 0
+            else:  # len(vals) == 0
                 continue
 
             metric_type = str(attributes.get('metric_type', '')).lower()
@@ -313,20 +320,22 @@ class Dogstream(object):
         else:
             return {}
 
-class InvalidDataTemplate(Exception): pass
+
+class InvalidDataTemplate(Exception):
+    pass
+
 
 class NagiosPerfData(object):
-    perfdata_field = '' # Should be overriden by subclasses
+    perfdata_field = ''  # Should be overriden by subclasses
     metric_prefix = 'nagios'
     pair_pattern = re.compile(r"".join([
-            r"'?(?P<label>[^=']+)'?=",
-            r"(?P<value>[-0-9.]+)",
-            r"(?P<unit>s|us|ms|%|B|KB|MB|GB|TB|c)?",
-            r"(;(?P<warn>@?[-0-9.~]*:?[-0-9.~]*))?",
-            r"(;(?P<crit>@?[-0-9.~]*:?[-0-9.~]*))?",
-            r"(;(?P<min>[-0-9.]*))?",
-            r"(;(?P<max>[-0-9.]*))?",
-        ]))
+                              r"'?(?P<label>[^=']+)'?=",
+                              r"(?P<value>[-0-9.]+)",
+                              r"(?P<unit>s|us|ms|%|B|KB|MB|GB|TB|c)?",
+                              r"(;(?P<warn>@?[-0-9.~]*:?[-0-9.~]*))?",
+                              r"(;(?P<crit>@?[-0-9.~]*:?[-0-9.~]*))?",
+                              r"(;(?P<min>[-0-9.]*))?",
+                              r"(;(?P<max>[-0-9.]*))?"]))
 
     @classmethod
     def init(cls, logger, config):
@@ -354,8 +363,7 @@ class NagiosPerfData(object):
             regex = re.sub(r'\$([^\$]*)\$', r'(?P<\1>[^\$]*)', regex)
             return re.compile(regex)
         except Exception, e:
-            raise InvalidDataTemplate("%s (%s)"% (file_template, e))
-
+            raise InvalidDataTemplate("%s (%s)" % (file_template, e))
 
     @staticmethod
     def underscorize(s):
@@ -502,69 +510,6 @@ class NagiosServicePerfData(NagiosPerfData):
         return metric
 
 
-# Allow a smooth uninstall of previous version
-class RollupLP: pass
-
-
-class DdForwarder(object):
-
-    QUEUE_SIZE  = "queue_size"
-    QUEUE_COUNT = "queue_count"
-
-    RE_QUEUE_STAT = re.compile(r"\[.*\] Queue size: at (.*), (\d+) transaction\(s\), (\d+) KB")
-
-    def __init__(self, logger, config):
-        self.log_path = config.get('ddforwarder_log', '/var/log/ddforwarder.log')
-        self.logger = logger
-        self._gen = None
-
-    def _init_metrics(self):
-        self.metrics = {}
-
-    def _add_metric(self, name, value, ts):
-
-        if self.metrics.has_key(name):
-            self.metrics[name].append((ts, value))
-        else:
-            self.metrics[name] = [(ts, value)]
-
-    def _parse_line(self, line):
-
-        try:
-            m = self.RE_QUEUE_STAT.match(line)
-            if m is not None:
-                ts, count, size = m.groups()
-                self._add_metric(self.QUEUE_SIZE, size, round(float(ts)))
-                self._add_metric(self.QUEUE_COUNT, count, round(float(ts)))
-        except Exception, e:
-            self.logger.exception(e)
-
-    def check(self, agentConfig, move_end=True):
-
-        if self.log_path and os.path.isfile(self.log_path):
-
-            #reset metric points
-            self._init_metrics()
-
-            # Build our tail -f
-            if self._gen is None:
-                self._gen = TailFile(self.logger, self.log_path, self._parse_line).tail(line_by_line=False,
-                    move_end=move_end)
-
-            # read until the end of file
-            try:
-                self._gen.next()
-                self.logger.debug("Done ddforwarder check for file %s" % self.log_path)
-            except StopIteration, e:
-                self.logger.exception(e)
-                self.logger.warn("Can't tail %s file" % self.log_path)
-
-            return { 'ddforwarder': self.metrics }
-        else:
-            self.logger.debug("Can't tail datadog forwarder log file: %s" % self.log_path)
-            return {}
-
-
 def testDogStream():
     import logging
 
@@ -574,25 +519,10 @@ def testDogStream():
     dogstream = Dogstream(logger)
 
     while True:
-        events = dogstream.check({'api_key':'my_apikey', 'dogstream_log': sys.argv[1]}, move_end=True)
+        events = dogstream.check({'api_key': 'my_apikey', 'dogstream_log': sys.argv[1]}, move_end=True)
         for e in events:
             print "Event:", e
         time.sleep(5)
-
-def testddForwarder():
-    import logging
-
-    logger = logging.getLogger("ddagent.checks.datadog")
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(logging.StreamHandler())
-
-    config = {'api_key':'my_apikey', 'ddforwarder_log': sys.argv[1]}
-    dd = DdForwarder(logger, config)
-    m = dd.check(config, move_end=False)
-    while True:
-        print m
-        time.sleep(5)
-        m = dd.check(config)
 
 
 if __name__ == '__main__':

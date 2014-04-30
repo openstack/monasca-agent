@@ -6,7 +6,6 @@ import subprocess
 import sys
 import math
 import time
-import types
 import urllib2
 import uuid
 import tempfile
@@ -16,65 +15,29 @@ import re
 try:
     from tornado import ioloop, version_info as tornado_version
 except ImportError:
-    pass # We are likely running the agent without the forwarder and tornado is not installed
-try:
-    from hashlib import md5
-except ImportError:
-    from md5 import md5
-
+    pass  # We are likely running the agent without the forwarder and tornado is not installed
 
 VALID_HOSTNAME_RFC_1123_PATTERN = re.compile(r"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$")
 MAX_HOSTNAME_LEN = 255
-# Import json for the agent. Try simplejson first, then the stdlib version and
-# if all else fails, use minjson which we bundle with the agent.
-def generate_minjson_adapter():
-    import minjson
-    class json(object):
-        @staticmethod
-        def dumps(data):
-            return minjson.write(data)
-
-        @staticmethod
-        def loads(data):
-            return minjson.safeRead(data)
-    return json
-
-try:
-    import simplejson as json
-except ImportError:
-    try:
-        import json
-    except ImportError:
-        json = generate_minjson_adapter()
-
-
-
-import yaml
-try:
-    from yaml import CLoader as yLoader
-except ImportError:
-    from yaml import Loader as yLoader
-
-try:
-    from collections import namedtuple
-except ImportError:
-    from compat.namedtuple import namedtuple
 
 import logging
 log = logging.getLogger(__name__)
 
 NumericTypes = (float, int, long)
 
+
 def plural(count):
     if count == 1:
         return ""
     return "s"
+
 
 def get_tornado_ioloop():
     if tornado_version[0] == 3:
         return ioloop.IOLoop.current()
     else:
         return ioloop.IOLoop.instance()
+
 
 def get_uuid():
     # Generate a unique name that will stay constant between
@@ -107,7 +70,7 @@ def get_os():
 def headers(agentConfig):
     # Build the request headers
     return {
-        'User-Agent': 'Datadog Agent/%s' % agentConfig['version'],
+        'User-Agent': 'Mon Agent/%s' % agentConfig['version'],
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'text/html, */*',
     }
@@ -149,13 +112,9 @@ def cast_metric_val(val):
         raise ValueError
     return val
 
+
 def is_valid_hostname(hostname):
-    if hostname.lower() in set([
-        'localhost',
-        'localhost.localdomain',
-        'localhost6.localdomain6',
-        'ip6-localhost',
-    ]):
+    if hostname.lower() in {'localhost', 'localhost.localdomain', 'localhost6.localdomain6', 'ip6-localhost'}:
         log.warning("Hostname: %s is local" % hostname)
         return False
     if len(hostname) > MAX_HOSTNAME_LEN:
@@ -174,7 +133,7 @@ def get_hostname(config=None):
 
     Tries, in order:
 
-      * agent config (datadog.conf, "hostname:")
+      * agent config (agent.conf, "hostname:")
       * 'hostname -f' (on unix)
       * socket.gethostname()
     """
@@ -212,12 +171,6 @@ def get_hostname(config=None):
             if unix_hostname and is_valid_hostname(unix_hostname):
                 hostname = unix_hostname
 
-    # if we have an ec2 default hostname, see if there's an instance-id available
-    if hostname is not None and True in [hostname.lower().startswith(p) for p in [u'ip-', u'domu']]:
-        instanceid = EC2.get_instance_id()
-        if instanceid:
-            hostname = instanceid
-
     # fall back on socket.gethostname(), socket.getfqdn() is too unreliable
     if hostname is None:
         try:
@@ -228,10 +181,11 @@ def get_hostname(config=None):
             hostname = socket_hostname
 
     if hostname is None:
-        log.critical('Unable to reliably determine host name. You can define one in datadog.conf or in your hosts file')
-        raise Exception('Unable to reliably determine host name. You can define one in datadog.conf or in your hosts file')
+        log.critical('Unable to reliably determine host name. You can define one in agent.conf or in your hosts file')
+        raise Exception('Unable to reliably determine host name. You can define one in agent.conf or in your hosts file')
     else:
         return hostname
+
 
 class GCE(object):
     URL = "http://169.254.169.254/computeMetadata/v1/?recursive=true"
@@ -304,92 +258,6 @@ class GCE(object):
 
 
 
-class EC2(object):
-    """Retrieve EC2 metadata
-    """
-    URL = "http://169.254.169.254/latest/meta-data"
-    TIMEOUT = 0.1 # second
-    metadata = {}
-
-    @staticmethod
-    def get_tags():
-        socket_to = None
-        try:
-            socket_to = socket.getdefaulttimeout()
-            socket.setdefaulttimeout(EC2.TIMEOUT)
-        except Exception:
-            pass
-
-        try:
-            iam_role = urllib2.urlopen(EC2.URL + "/iam/security-credentials").read().strip()
-            iam_params = json.loads(urllib2.urlopen(EC2.URL + "/iam/security-credentials" + "/" + unicode(iam_role)).read().strip())
-            from checks.libs.boto.ec2.connection import EC2Connection
-            connection = EC2Connection(aws_access_key_id=iam_params['AccessKeyId'], aws_secret_access_key=iam_params['SecretAccessKey'], security_token=iam_params['Token'])
-            instance_object = connection.get_only_instances([EC2.metadata['instance-id']])[0]
-
-            EC2_tags = [u"%s:%s" % (tag_key, tag_value) for tag_key, tag_value in instance_object.tags.iteritems()]
-
-        except Exception:
-            log.exception("Problem retrieving custom EC2 tags")
-            EC2_tags = []
-
-        try:
-            if socket_to is None:
-                socket_to = 3
-            socket.setdefaulttimeout(socket_to)
-        except Exception:
-            pass
-
-        return EC2_tags
-
-
-    @staticmethod
-    def get_metadata():
-        """Use the ec2 http service to introspect the instance. This adds latency if not running on EC2
-        """
-        # >>> import urllib2
-        # >>> urllib2.urlopen('http://169.254.169.254/latest/', timeout=1).read()
-        # 'meta-data\nuser-data'
-        # >>> urllib2.urlopen('http://169.254.169.254/latest/meta-data', timeout=1).read()
-        # 'ami-id\nami-launch-index\nami-manifest-path\nhostname\ninstance-id\nlocal-ipv4\npublic-keys/\nreservation-id\nsecurity-groups'
-        # >>> urllib2.urlopen('http://169.254.169.254/latest/meta-data/instance-id', timeout=1).read()
-        # 'i-deadbeef'
-
-        # Every call may add TIMEOUT seconds in latency so don't abuse this call
-        # python 2.4 does not support an explicit timeout argument so force it here
-        # Rather than monkey-patching urllib2, just lower the timeout globally for these calls
-        socket_to = None
-        try:
-            socket_to = socket.getdefaulttimeout()
-            socket.setdefaulttimeout(EC2.TIMEOUT)
-        except Exception:
-            pass
-
-        for k in ('instance-id', 'hostname', 'local-hostname', 'public-hostname', 'ami-id', 'local-ipv4', 'public-keys', 'public-ipv4', 'reservation-id', 'security-groups'):
-            try:
-                v = urllib2.urlopen(EC2.URL + "/" + unicode(k)).read().strip()
-                assert type(v) in (types.StringType, types.UnicodeType) and len(v) > 0, "%s is not a string" % v
-                EC2.metadata[k] = v
-            except Exception:
-                pass
-
-        try:
-            if socket_to is None:
-                socket_to = 3
-            socket.setdefaulttimeout(socket_to)
-        except Exception:
-            pass
-
-        return EC2.metadata
-
-    @staticmethod
-    def get_instance_id():
-        try:
-            return EC2.get_metadata().get("instance-id", None)
-        except Exception:
-            return None
-
-
 class Watchdog(object):
     """Simple signal-based watchdog that will scuttle the current process
     if it has not been reset every N seconds, or if the processes exceeds
@@ -436,7 +304,7 @@ class Watchdog(object):
 class PidFile(object):
     """ A small helper class for pidfiles. """
 
-    PID_DIR = '/var/run/dd-agent'
+    PID_DIR = '/var/run/mon-agent'
 
 
     def __init__(self, program, pid_dir=None):
@@ -444,7 +312,8 @@ class PidFile(object):
         self.pid_dir = pid_dir or self.get_default_pid_dir()
         self.pid_path = os.path.join(self.pid_dir, self.pid_file)
 
-    def get_default_pid_dir(self):
+    @staticmethod
+    def get_default_pid_dir():
         if get_os() != 'windows':
             return PidFile.PID_DIR
 
@@ -503,7 +372,8 @@ class LaconicFilter(logging.Filter):
         logging.Filter.__init__(self, name)
         self.hashed_messages = {}
 
-    def hash(self, msg):
+    @staticmethod
+    def hash(msg):
         return md5(msg).hexdigest()
 
     def filter(self, record):
@@ -526,7 +396,8 @@ class Timer(object):
     def __init__(self):
         self.start()
 
-    def _now(self):
+    @staticmethod
+    def _now():
         return time.time()
 
     def start(self):

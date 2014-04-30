@@ -8,6 +8,7 @@ except Exception:
 
 from checks import AgentCheck
 
+
 class IIS(AgentCheck):
     METRICS = [
         ('iis.uptime', 'gauge', 'ServiceUptime'),

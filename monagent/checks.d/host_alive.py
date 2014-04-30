@@ -11,7 +11,6 @@ from checks import AgentCheck
 class HostAlive(AgentCheck):
     """Inherit Agentcheck class to test if a host is alive or not"""
 
-
     def __init__(self, name, init_config, agentConfig, instances=None):
         AgentCheck.__init__(self, name, init_config, agentConfig, instances)
 
@@ -44,7 +43,8 @@ class HostAlive(AgentCheck):
         else:
             return False
 
-    def _test_ping(self, host, timeout=None):
+    @staticmethod
+    def _test_ping(host, timeout=None):
         """ Attempt to ping the host """
         ping_prefix = "ping -c 1 -q "
         if timeout is not None:
@@ -58,8 +58,7 @@ class HostAlive(AgentCheck):
         ping_command = ping_prefix + host
 
         try:
-            ping = subprocess.check_output(ping_command.split(" "),
-                stderr=subprocess.STDOUT)
+            ping = subprocess.check_output(ping_command.split(" "), stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError:
             return False
 
@@ -81,8 +80,8 @@ class HostAlive(AgentCheck):
 
         if instance['alive_test'] == 'ssh':
             success = self._test_ssh(instance['host_name'],
-                self.init_config.get('ssh_port'),
-                self.init_config.get('ssh_timeout'))
+                      self.init_config.get('ssh_port'),
+                      self.init_config.get('ssh_timeout'))
         elif instance['alive_test'] == 'ping':
             success = self._test_ping(instance['host_name'],
                 self.init_config.get('ping_timeout'))

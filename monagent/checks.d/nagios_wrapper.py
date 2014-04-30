@@ -15,18 +15,16 @@ from checks import AgentCheck
 class WrapNagios(AgentCheck):
     """Inherit Agentcheck class to process Nagios checks"""
 
-
     def __init__(self, name, init_config, agentConfig, instances=None):
         AgentCheck.__init__(self, name, init_config, agentConfig, instances)
 
-    def _do_skip_check(self, instance, last_run_data):
+    @staticmethod
+    def _do_skip_check(instance, last_run_data):
         """ Determine whether or not to skip a check depending on
             the checks's check_interval, if specified, and the last
             time the check was run """
-        if (instance['service_name'] in last_run_data
-            and 'check_interval' in instance):
-            if (time.time() < last_run_data[instance['service_name']]
-                + instance['check_interval']):
+        if instance['service_name'] in last_run_data and 'check_interval' in instance:
+            if time.time() < last_run_data[instance['service_name']] + instance['check_interval']:
                 return True
         else:
             return False
@@ -51,12 +49,11 @@ class WrapNagios(AgentCheck):
 
         if last_run_path.endswith('/') is False:
             last_run_path += '/'
-        last_run_file = (last_run_path + 'nagios_wrapper_'
-            + hashlib.md5(instance['service_name']).hexdigest() + '.pck')
+        last_run_file = (last_run_path + 'nagios_wrapper_' + hashlib.md5(instance['service_name']).hexdigest() + '.pck')
 
         # Load last-run data from shared memory file
         last_run_data = {}
-        if (os.path.isfile(last_run_file)):
+        if os.path.isfile(last_run_file):
             file_r = open(last_run_file, "r")
             last_run_data = pickle.load(file_r)
             file_r.close()
@@ -67,9 +64,9 @@ class WrapNagios(AgentCheck):
 
         try:
             proc = subprocess.Popen(instance['check_command'].split(" "),
-                env={"PATH": extra_path},
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+                                    env={"PATH": extra_path},
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
             output = proc.communicate()
             # The check detail is all the text before the pipe
             detail = output[0].split('|')[0]
@@ -79,8 +76,7 @@ class WrapNagios(AgentCheck):
         except OSError:
             # Return an UNKNOWN code (3) if I have landed here
             self.gauge(instance['service_name'], 3, tags=tags)
-            self.log.info(instance['check_command'].split(" ")[0]
-            + " is missing or unreadable")
+            self.log.info(instance['check_command'].split(" ")[0] + " is missing or unreadable")
             return
 
         last_run_data[instance['service_name']] = time.time()
@@ -90,4 +86,3 @@ class WrapNagios(AgentCheck):
         file_w = open(last_run_file, "w")
         pickle.dump(last_run_data, file_w)
         file_w.close()
-

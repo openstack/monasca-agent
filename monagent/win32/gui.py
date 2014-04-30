@@ -5,11 +5,16 @@
 # Licensed under the terms of the CECILL License
 # Modified for Datadog
 
+import yaml
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
 import sys
 import os
 import os.path as osp
 import webbrowser
-import thread # To manage the windows process asynchronously
+import thread  # To manage the windows process asynchronously
 
 import win32serviceutil
 import win32service
@@ -27,7 +32,6 @@ from spyderlib.widgets.sourcecode.codeeditor import CodeEditor
 
 
 # Datadog
-from util import yaml, yLoader
 from util import get_os
 from config import (get_confd_path, get_config_path, get_config, 
     _windows_commondata_path)
@@ -45,13 +49,11 @@ DATADOG_SERVICE = "DatadogAgent"
 STATUS_PAGE_URL = "http://localhost:17125/status"
 AGENT_LOG_FILE = osp.join(_windows_commondata_path(), 'Datadog', 'logs', 'ddagent.log')
 
-HUMAN_SERVICE_STATUS = {
-    win32service.SERVICE_RUNNING : 'Service is running',
-    win32service.SERVICE_START_PENDING : 'Service is starting',
-    win32service.SERVICE_STOP_PENDING : 'Service is stopping',
-    win32service.SERVICE_STOPPED : 'Service is stopped',
-    "Unknown" : "Cannot get service status",
-}
+HUMAN_SERVICE_STATUS = {win32service.SERVICE_RUNNING: 'Service is running',
+                        win32service.SERVICE_START_PENDING: 'Service is starting',
+                        win32service.SERVICE_STOP_PENDING: 'Service is stopping',
+                        win32service.SERVICE_STOPPED: 'Service is stopped',
+                        "Unknown": "Cannot get service status"}
 
 REFRESH_PERIOD = 5000
 
@@ -69,6 +71,7 @@ SYSTEM_TRAY_MENU = [
     (STATUS_PAGE, lambda: webbrowser.open(STATUS_PAGE_URL)),
     (EXIT_MANAGER, lambda: sys.exit(0)),
 ]
+
 
 def get_checks():
     checks = {}
@@ -91,6 +94,7 @@ def get_checks():
 
     return checks_list
 
+
 class EditorFile(object):
     def __init__(self, file_path, description):
         self.file_path = file_path
@@ -108,6 +112,7 @@ class EditorFile(object):
         except Exception, e:
             warning_popup("Unable to save file: \n %s" % str(e))
             raise
+
 
 class LogFile(EditorFile):
     def __init__(self):
@@ -146,6 +151,7 @@ class DatadogConf(EditorFile):
             else:
                 self.check_api_key(editor)
 
+
 class AgentCheck(EditorFile):
     def __init__(self, filename, ext, conf_d_directory):
         file_path = osp.join(conf_d_directory, filename)
@@ -171,6 +177,7 @@ class AgentCheck(EditorFile):
     def save(self, content):
         check_yaml_syntax(content)
         EditorFile.save(self, content)
+
 
 class PropertiesWidget(QWidget):
     def __init__(self, parent):
@@ -433,7 +440,7 @@ def save_file(properties):
     
 def check_yaml_syntax(content):
     try:
-        yaml.load(content, Loader=yLoader)
+        yaml.load(content, Loader=Loader)
     except Exception, e:
         warning_popup("Unable to parse yaml: \n %s" % str(e))
         raise
@@ -462,17 +469,17 @@ def get_service_status():
         return "Unknown"
 
 def is_service_running(status = None):
-    if status == None:
+    if status is None:
         status = get_service_status()
     return status == win32service.SERVICE_RUNNING
 
 def is_service_pending(status = None):
-    if status == None:
+    if status is None:
         status = get_service_status()
     return status in [win32service.SERVICE_STOP_PENDING, win32service.SERVICE_START_PENDING]
 
 def is_service_stopped(status = None):
-    if status == None:
+    if status is None:
         status = get_service_status()
     return status == win32service.SERVICE_STOPPED
 

@@ -7,6 +7,7 @@ import traceback
 ALL_INSTANCES = 'ALL'
 VALID_METRIC_TYPES = ('gauge', 'rate', 'histogram')
 
+
 class SQLServer(AgentCheck):
     METRICS = [
         ('sqlserver.buffer.cache_hit_ratio', 'gauge', 'Buffer cache hit ratio'),
@@ -27,24 +28,24 @@ class SQLServer(AgentCheck):
         # Load any custom metrics from conf.d/sqlserver.yaml
         for row in init_config.get('custom_metrics', []):
             if row['type'] not in VALID_METRIC_TYPES:
-                self.log.error('%s has an invalid metric type: %s' \
-                    % (row['name'], row['type']))
-            self.METRICS.append( (row['name'], row['type'], row['counter_name'],
-                row.get('instance_name', ''), row.get('tag_by', None)) )
+                self.log.error('%s has an invalid metric type: %s' % (row['name'], row['type']))
+            self.METRICS.append((row['name'], row['type'], row['counter_name'],
+                                row.get('instance_name', ''), row.get('tag_by', None)))
 
         # Cache connections
         self.connections = {}
 
-    def _conn_key(self, host, username, password, database):
+    @staticmethod
+    def _conn_key(host, username, password, database):
         ''' Return a key to use for the connection cache
         '''
         return '%s:%s:%s:%s' % (host, username, password, database)
 
-    def _conn_string(self, host, username, password, database):
+    @staticmethod
+    def _conn_string(host, username, password, database):
         ''' Return a connection string to use with adodbapi
         '''
-        conn_str = 'Provider=SQLOLEDB;Data Source=%s;Initial Catalog=%s;' \
-                        % (host, database)
+        conn_str = 'Provider=SQLOLEDB;Data Source=%s;Initial Catalog=%s;' % (host, database)
         if username:
             conn_str += 'User ID=%s;' % (username)
         if password:

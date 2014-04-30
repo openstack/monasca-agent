@@ -1,5 +1,6 @@
 import ctypes
 
+
 def handle_exe_click(name):
     ''' When the executables are clicked directly in the UI, we must let the 
     user know that they have to install the program as a service instead of

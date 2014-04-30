@@ -1,4 +1,9 @@
 # std
+import yaml
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
 import os
 import logging
 import glob
@@ -8,18 +13,18 @@ import tempfile
 import time
 
 # datadog
-from util import PidFile, yaml, yLoader, get_os
+from util import PidFile, get_os
 
 log = logging.getLogger(__name__)
 
 JAVA_LOGGING_LEVEL = {
-    logging.CRITICAL : "FATAL",
-    logging.DEBUG : "DEBUG",
-    logging.ERROR : "ERROR",
-    logging.FATAL : "FATAL",
-    logging.INFO : "INFO",
-    logging.WARN : "WARN",
-    logging.WARNING : "WARN",
+    logging.CRITICAL: "FATAL",
+    logging.DEBUG: "DEBUG",
+    logging.ERROR: "ERROR",
+    logging.FATAL: "FATAL",
+    logging.INFO: "INFO",
+    logging.WARN: "WARN",
+    logging.WARNING: "WARN",
 }
 
 JMX_FETCH_JAR_NAME = "jmxfetch-0.3.0-jar-with-dependencies.jar"
@@ -45,7 +50,10 @@ PYTHON_JMX_STATUS_FILE = 'jmx_status_python.yaml'
 
 LINK_TO_DOC = "See http://docs.datadoghq.com/integrations/java/ for more information"
 
-class InvalidJMXConfiguration(Exception): pass
+
+class InvalidJMXConfiguration(Exception):
+    pass
+
 
 class JMXFetch(object):
 
@@ -54,7 +62,7 @@ class JMXFetch(object):
 
     @classmethod
     def init(cls, confd_path, agentConfig, logging_config,
-        default_check_frequency, command=None, checks_list=None, reporter=None):
+             default_check_frequency, command=None, checks_list=None, reporter=None):
         try:
             command = command or JMX_COLLECT_COMMAND
             jmx_checks, invalid_checks, java_bin_path, java_options = JMXFetch.should_run(confd_path, checks_list)
@@ -122,7 +130,7 @@ class JMXFetch(object):
             if os.path.exists(conf):
                 f = open(conf)
                 try:
-                    check_config = yaml.load(f.read(), Loader=yLoader)
+                    check_config = yaml.load(f.read(), Loader=Loader)
                     assert check_config is not None
                     f.close()
                 except Exception:

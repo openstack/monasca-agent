@@ -12,6 +12,7 @@ os.umask(022)
 
 # stdlib
 import httplib as http_client
+import json
 import logging
 import optparse
 import re
@@ -28,7 +29,7 @@ from aggregator import MetricsBucketAggregator
 from checks.check_status import DogstatsdStatus
 from config import get_config
 from daemon import Daemon, AgentSupervisor
-from util import json, PidFile, get_hostname, plural, get_uuid, chunks
+from util import PidFile, get_hostname, plural, get_uuid, chunks
 
 log = logging.getLogger('dogstatsd')
 
@@ -42,11 +43,14 @@ FLUSH_LOGGING_INITIAL = 10
 FLUSH_LOGGING_COUNT = 5
 EVENT_CHUNK_SIZE = 50
 
+
 def serialize_metrics(metrics):
-    return json.dumps({"series" : metrics})
+    return json.dumps({"series": metrics})
+
 
 def serialize_event(event):
     return json.dumps(event)
+
 
 class Reporter(threading.Thread):
     """
@@ -54,7 +58,7 @@ class Reporter(threading.Thread):
     server.
     """
 
-    def __init__(self, interval, metrics_aggregator, api_host, api_key=None, use_watchdog=False, event_chunk_size=None):
+    def __init__(self, interval, metrics_aggregator, api_host, use_watchdog=False, event_chunk_size=None):
         threading.Thread.__init__(self)
         self.interval = int(interval)
         self.finished = threading.Event()
@@ -67,7 +71,6 @@ class Reporter(threading.Thread):
             from util import Watchdog
             self.watchdog = Watchdog(WATCHDOG_TIMEOUT)
 
-        self.api_key = api_key
         self.api_host = api_host
         self.event_chunk_size = event_chunk_size or EVENT_CHUNK_SIZE
 
@@ -151,8 +154,6 @@ class Reporter(threading.Thread):
         method = 'POST'
 
         params = {}
-        if self.api_key:
-            params['api_key'] = self.api_key
         url = '/api/v1/series?%s' % urlencode(params)
 
         start_time = time()
@@ -182,7 +183,6 @@ class Reporter(threading.Thread):
 
         for chunk in chunks(events, event_chunk_size):
             payload = {
-                'apiKey': self.api_key,
                 'events': {
                     'api': chunk
                 },
@@ -190,8 +190,6 @@ class Reporter(threading.Thread):
                 'internalHostname': get_hostname()
             }
             params = {}
-            if self.api_key:
-                params['api_key'] = self.api_key
             url = '/intake?%s' % urlencode(params)
 
             status = None
@@ -209,6 +207,7 @@ class Reporter(threading.Thread):
 
             finally:
                 conn.close()
+
 
 class Server(object):
     """
@@ -335,7 +334,7 @@ class Dogstatsd(Daemon):
         return DogstatsdStatus.print_latest_status()
 
 
-def init(config_path=None, use_watchdog=False, use_forwarder=False):
+def init(config_path=None, use_watchdog=False):
     """Configure the server and the reporting thread.
     """
     c = get_config(parse_args=False, cfg_path=config_path)
@@ -344,15 +343,12 @@ def init(config_path=None, use_watchdog=False, use_forwarder=False):
     port      = c['dogstatsd_port']
     interval  = int(c['dogstatsd_interval'])
     aggregator_interval  = int(c['dogstatsd_agregator_bucket_size'])
-    api_key   = c['api_key']
     non_local_traffic = c['non_local_traffic']
     forward_to_host = c.get('statsd_forward_host')
     forward_to_port = c.get('statsd_forward_port')
     event_chunk_size = c.get('event_chunk_size')
 
-    target = c['dd_url']
-    if use_forwarder:
-        target = c['dogstatsd_target']
+    target = c['forwarder_url']
 
     hostname = get_hostname(c)
 
@@ -363,7 +359,7 @@ def init(config_path=None, use_watchdog=False, use_forwarder=False):
     aggregator = MetricsBucketAggregator(hostname, aggregator_interval, recent_point_threshold=c.get('recent_point_threshold', None))
 
     # Start the reporting thread.
-    reporter = Reporter(interval, aggregator, target, api_key, use_watchdog, event_chunk_size)
+    reporter = Reporter(interval, aggregator, target, use_watchdog, event_chunk_size)
 
     # Start the server on an IPv4 stack
     # Default to loopback
@@ -379,11 +375,9 @@ def init(config_path=None, use_watchdog=False, use_forwarder=False):
 def main(config_path=None):
     """ The main entry point for the unix version of dogstatsd. """
     parser = optparse.OptionParser("%prog [start|stop|restart|status]")
-    parser.add_option('-u', '--use-local-forwarder', action='store_true',
-                        dest="use_forwarder", default=False)
     opts, args = parser.parse_args()
 
-    reporter, server, cnf = init(config_path, use_watchdog=True, use_forwarder=opts.use_forwarder)
+    reporter, server, cnf = init(config_path, use_watchdog=True)
     pid_file = PidFile('dogstatsd')
     daemon = Dogstatsd(pid_file.get_path(), server, reporter,
             cnf.get('autorestart', False))

@@ -15,7 +15,6 @@ import time
 # project
 from checks import Check, UnknownValue
 from util import get_hostname, Platform
-from compat import any
 
 
 # locale-resilient float converter
@@ -79,29 +78,28 @@ class Disk(Check):
                         # Inodes are in position 5, 6 and we need to compute the total
                         # Total
                         parts[1] = int(parts[5]) + int(parts[6]) # Total
-                        parts[2] = int(parts[5]) # Used
-                        parts[3] = int(parts[6]) # Available
+                        parts[2] = int(parts[5])  # Used
+                        parts[3] = int(parts[6])  # Available
                     elif Platform.is_freebsd(platform_name):
                         # Filesystem 1K-blocks Used Avail Capacity iused ifree %iused Mounted
                         # Inodes are in position 5, 6 and we need to compute the total
-                        parts[1] = int(parts[5]) + int(parts[6]) # Total
-                        parts[2] = int(parts[5]) # Used
-                        parts[3] = int(parts[6]) # Available
+                        parts[1] = int(parts[5]) + int(parts[6])  # Total
+                        parts[2] = int(parts[5])  # Used
+                        parts[3] = int(parts[6])  # Available
                     else:
-                        parts[1] = int(parts[1]) # Total
-                        parts[2] = int(parts[2]) # Used
-                        parts[3] = int(parts[3]) # Available
+                        parts[1] = int(parts[1])  # Total
+                        parts[2] = int(parts[2])  # Used
+                        parts[3] = int(parts[3])  # Available
                 else:
-                    parts[1] = int(parts[1]) # Total
-                    parts[2] = int(parts[2]) # Used
-                    parts[3] = int(parts[3]) # Available
+                    parts[1] = int(parts[1])  # Total
+                    parts[2] = int(parts[2])  # Used
+                    parts[3] = int(parts[3])  # Available
             except IndexError:
                 self.logger.exception("Cannot parse %s" % (parts,))
 
             usage_data.append(parts)
 
         return usage_data
-
 
     @staticmethod
     def _is_number(a_string):
@@ -179,8 +177,8 @@ class IO(Check):
     def __init__(self, logger):
         Check.__init__(self, logger)
         self.header_re = re.compile(r'([%\\/\-_a-zA-Z0-9]+)[\s+]?')
-        self.item_re   = re.compile(r'^([a-zA-Z0-9\/]+)')
-        self.value_re  = re.compile(r'\d+\.\d+')
+        self.item_re = re.compile(r'^([a-zA-Z0-9\/]+)')
+        self.value_re = re.compile(r'\d+\.\d+')
 
     def _parse_linux2(self, output):
         recentStats = output.split('Device:')[2].split('\n')
@@ -220,37 +218,35 @@ class IO(Check):
 
         return ioStats
     
-    def _parse_darwin(self, output):
+    @staticmethod
+    def _parse_darwin(output):
         lines = [l.split() for l in output.split("\n") if len(l) > 0]
         disks = lines[0]
         lastline = lines[-1]
         io = {}
         for idx, disk in enumerate(disks):
-            kb_t, tps, mb_s = map(float, lastline[(3 * idx):(3 * idx) + 3]) # 3 cols at a time
+            kb_t, tps, mb_s = map(float, lastline[(3 * idx):(3 * idx) + 3])  # 3 cols at a time
             io[disk] = {
                 'system.io.bytes_per_s': mb_s * 10**6,
             }
         return io
     
-    def xlate(self, metric_name, os_name):
+    @staticmethod
+    def xlate(metric_name, os_name):
         """Standardize on linux metric names"""
         if os_name == "sunos":
-            names = {
-                "wait": "await",
-                "svc_t": "svctm",
-                "%b": "%util",
-                "kr/s": "rkB/s",
-                "kw/s": "wkB/s",
-                "actv": "avgqu-sz",
-                }
+            names = {"wait": "await",
+                     "svc_t": "svctm",
+                     "%b": "%util",
+                     "kr/s": "rkB/s",
+                     "kw/s": "wkB/s",
+                     "actv": "avgqu-sz"}
         elif os_name == "freebsd":
-            names = {
-                "svc_t": "await",
-                "%b": "%util",
-                "kr/s": "rkB/s",
-                "kw/s": "wkB/s",
-                "wait": "avgqu-sz",
-                }
+            names = {"svc_t": "await",
+                     "%b": "%util",
+                     "kr/s": "rkB/s",
+                     "kw/s": "wkB/s",
+                     "wait": "avgqu-sz"}
         # translate if possible
         return names.get(metric_name, metric_name)
 
@@ -264,30 +260,30 @@ class IO(Check):
         try:
             if Platform.is_linux():
                 stdout = sp.Popen(['iostat', '-d', '1', '2', '-x', '-k'],
-                                          stdout=sp.PIPE,
-                                          close_fds=True).communicate()[0]
+                                  stdout=sp.PIPE,
+                                  close_fds=True).communicate()[0]
 
                 #                 Linux 2.6.32-343-ec2 (ip-10-35-95-10)   12/11/2012      _x86_64_        (2 CPU)  
                 #
-                # Device:         rrqm/s   wrqm/s     r/s     w/s    rkB/s    wkB/s avgrq-sz avgqu-sz   await  svctm  %util  
-                # sda1              0.00    17.61    0.26   32.63     4.23   201.04    12.48     0.16    4.81   0.53   1.73  
-                # sdb               0.00     2.68    0.19    3.84     5.79    26.07    15.82     0.02    4.93   0.22   0.09  
-                # sdg               0.00     0.13    2.29    3.84   100.53    30.61    42.78     0.05    8.41   0.88   0.54  
-                # sdf               0.00     0.13    2.30    3.84   100.54    30.61    42.78     0.06    9.12   0.90   0.55  
-                # md0               0.00     0.00    0.05    3.37     1.41    30.01    18.35     0.00    0.00   0.00   0.00  
+                # Device:     rrqm/s   wrqm/s     r/s     w/s    rkB/s    wkB/s avgrq-sz avgqu-sz   await  svctm  %util
+                # sda1          0.00    17.61    0.26   32.63     4.23   201.04    12.48     0.16    4.81   0.53   1.73
+                # sdb           0.00     2.68    0.19    3.84     5.79    26.07    15.82     0.02    4.93   0.22   0.09
+                # sdg           0.00     0.13    2.29    3.84   100.53    30.61    42.78     0.05    8.41   0.88   0.54
+                # sdf           0.00     0.13    2.30    3.84   100.54    30.61    42.78     0.06    9.12   0.90   0.55
+                # md0           0.00     0.00    0.05    3.37     1.41    30.01    18.35     0.00    0.00   0.00   0.00
                 #
-                # Device:         rrqm/s   wrqm/s     r/s     w/s    rkB/s    wkB/s avgrq-sz avgqu-sz   await  svctm  %util  
-                # sda1              0.00     0.00    0.00   10.89     0.00    43.56     8.00     0.03    2.73   2.73   2.97  
-                # sdb               0.00     0.00    0.00    2.97     0.00    11.88     8.00     0.00    0.00   0.00   0.00  
-                # sdg               0.00     0.00    0.00    0.00     0.00     0.00     0.00     0.00    0.00   0.00   0.00  
-                # sdf               0.00     0.00    0.00    0.00     0.00     0.00     0.00     0.00    0.00   0.00   0.00  
-                # md0               0.00     0.00    0.00    0.00     0.00     0.00     0.00     0.00    0.00   0.00   0.00
+                # Device:     rrqm/s   wrqm/s     r/s     w/s    rkB/s    wkB/s avgrq-sz avgqu-sz   await  svctm  %util
+                # sda1          0.00     0.00    0.00   10.89     0.00    43.56     8.00     0.03    2.73   2.73   2.97
+                # sdb           0.00     0.00    0.00    2.97     0.00    11.88     8.00     0.00    0.00   0.00   0.00
+                # sdg           0.00     0.00    0.00    0.00     0.00     0.00     0.00     0.00    0.00   0.00   0.00
+                # sdf           0.00     0.00    0.00    0.00     0.00     0.00     0.00     0.00    0.00   0.00   0.00
+                # md0           0.00     0.00    0.00    0.00     0.00     0.00     0.00     0.00    0.00   0.00   0.00
                 io.update(self._parse_linux2(stdout))
 
             elif sys.platform == "sunos5":
                 iostat = sp.Popen(["iostat", "-x", "-d", "1", "2"],
-                                          stdout=sp.PIPE,
-                                          close_fds=True).communicate()[0]
+                                  stdout=sp.PIPE,
+                                  close_fds=True).communicate()[0]
 
                 #                   extended device statistics <-- since boot
                 # device      r/s    w/s   kr/s   kw/s wait actv  svc_t  %w  %b
@@ -317,8 +313,8 @@ class IO(Check):
                         
             elif sys.platform.startswith("freebsd"):
                 iostat = sp.Popen(["iostat", "-x", "-d", "1", "2"],
-                                          stdout=sp.PIPE,
-                                          close_fds=True).communicate()[0]
+                                  stdout=sp.PIPE,
+                                  close_fds=True).communicate()[0]
 
                 # Be careful! 
                 # It looks like SunOS, but some columms (wait, svc_t) have different meaning
@@ -345,8 +341,8 @@ class IO(Check):
                         io[cols[0]][self.xlate(headers[i], "freebsd")] = cols[i]
             elif sys.platform == 'darwin':
                 iostat = sp.Popen(['iostat', '-d', '-c', '2', '-w', '1'], 
-                                          stdout=sp.PIPE,
-                                          close_fds=True).communicate()[0]
+                                  stdout=sp.PIPE,
+                                  close_fds=True).communicate()[0]
                 #          disk0           disk1          <-- number of disks
                 #    KB/t tps  MB/s     KB/t tps  MB/s  
                 #   21.11  23  0.47    20.01   0  0.00  
@@ -354,7 +350,6 @@ class IO(Check):
                 io = self._parse_darwin(iostat)
             else:
                 return False
-
 
             # If we filter devices, do it know.
             device_blacklist_re = agentConfig.get('device_blacklist_re', None)
@@ -384,14 +379,14 @@ class Load(Check):
                 self.logger.exception('Cannot extract load')
                 return False
             
-            uptime = uptime[0] # readlines() provides a list but we want a string
+            uptime = uptime[0]  # readlines() provides a list but we want a string
         
         elif sys.platform in ('darwin', 'sunos5') or sys.platform.startswith("freebsd"):
             # Get output from uptime
             try:
                 uptime = sp.Popen(['uptime'],
-                                          stdout=sp.PIPE,
-                                          close_fds=True).communicate()[0]
+                                  stdout=sp.PIPE,
+                                  close_fds=True).communicate()[0]
             except Exception:
                 self.logger.exception('Cannot extract load')
                 return False
@@ -416,6 +411,7 @@ class Load(Check):
                     'system.load.5': float(load[1]),
                     'system.load.15': float(load[2])}
 
+
 class Memory(Check):
     def __init__(self, logger):
         Check.__init__(self, logger)
@@ -434,8 +430,8 @@ class Memory(Check):
         if sys.platform == 'sunos5':
             try:
                 pgsz = sp.Popen(['pagesize'],
-                                        stdout=sp.PIPE,
-                                        close_fds=True).communicate()[0]
+                                stdout=sp.PIPE,
+                                close_fds=True).communicate()[0]
                 self.pagesize = int(pgsz.strip())
             except Exception:
                 # No page size available
@@ -494,7 +490,7 @@ class Memory(Check):
             # DirectMap4k:       10112 kB
             # DirectMap2M:     8243200 kB
             
-            regexp = re.compile(r'^(\w+):\s+([0-9]+)') # We run this several times so one-time compile now
+            regexp = re.compile(r'^(\w+):\s+([0-9]+)')  # We run this several times so one-time compile now
             meminfo = {}
 
             for line in lines:
@@ -529,9 +525,9 @@ class Memory(Check):
             # FIXME units are in MB, we should use bytes instead
             try:
                 memData['swapTotal'] = int(meminfo.get('SwapTotal', 0)) / 1024
-                memData['swapFree']  = int(meminfo.get('SwapFree', 0)) / 1024
+                memData['swapFree'] = int(meminfo.get('SwapFree', 0)) / 1024
 
-                memData['swapUsed'] =  memData['swapTotal'] - memData['swapFree']
+                memData['swapUsed'] = memData['swapTotal'] - memData['swapFree']
                 
                 if memData['swapTotal'] > 0:
                     memData['swapPctFree'] = float(memData['swapFree']) / float(memData['swapTotal'])
@@ -565,7 +561,10 @@ class Memory(Check):
                 physUsedPartIndex = 0
                 physFreePartIndex = 2
 
-            return {'physUsed' : physParts[physUsedPartIndex], 'physFree' : physParts[physFreePartIndex], 'swapUsed' : swapParts[1], 'swapFree' : swapParts[2]}
+            return {'physUsed': physParts[physUsedPartIndex],
+                    'physFree': physParts[physFreePartIndex],
+                    'swapUsed': swapParts[1],
+                    'swapFree': swapParts[2]}
             
         elif sys.platform.startswith("freebsd"):
             try:
@@ -623,7 +622,6 @@ class Memory(Check):
             except Exception:
                 self.logger.exception('Cannot compute stats from /proc/meminfo')
 
-
             # Swap
             try:
                 sysctl = sp.Popen(['swapinfo', '-m'], stdout=sp.PIPE, close_fds=True).communicate()[0]
@@ -642,23 +640,23 @@ class Memory(Check):
 
             try:
                 memData['swapTotal'] = 0
-                memData['swapFree']  = 0
+                memData['swapFree'] = 0
                 memData['swapUsed'] = 0
                 for line in lines[1:-1]:
                     line = line.split()
                     memData['swapTotal'] += int(line[1])
-                    memData['swapFree']  += int(line[3])
+                    memData['swapFree'] += int(line[3])
                     memData['swapUsed'] += int(line[2])
             except Exception:
                 self.logger.exception('Cannot compute stats from swapinfo')
             
-            return memData;
+            return memData
         elif sys.platform == 'sunos5':
             try:
                 memData = {}
                 kmem = sp.Popen(["kstat", "-c", "zone_memory_cap", "-p"],
-                                        stdout=sp.PIPE,
-                                        close_fds=True).communicate()[0]
+                                stdout=sp.PIPE,
+                                close_fds=True).communicate()[0]
 
                 # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:anon_alloc_fail   0
                 # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:anonpgin  0
@@ -685,11 +683,11 @@ class Memory(Check):
                 # extract rss, physcap, swap, swapcap, turn into MB
                 convert = lambda v: int(long(v))/2**20
                 memData["physTotal"] = convert(entries["physcap"])
-                memData["physUsed"]  = convert(entries["rss"])
-                memData["physFree"]  = memData["physTotal"] - memData["physUsed"]
+                memData["physUsed"] = convert(entries["rss"])
+                memData["physFree"] = memData["physTotal"] - memData["physUsed"]
                 memData["swapTotal"] = convert(entries["swapcap"])
-                memData["swapUsed"]  = convert(entries["swap"])
-                memData["swapFree"]  = memData["swapTotal"] - memData["swapUsed"]
+                memData["swapUsed"] = convert(entries["swap"])
+                memData["swapFree"] = memData["swapTotal"] - memData["swapUsed"]
 
                 if memData['swapTotal'] > 0:
                     memData['swapPctFree'] = float(memData['swapFree']) / float(memData['swapTotal'])
@@ -699,6 +697,7 @@ class Memory(Check):
                 return False
         else:
             return False
+
 
 class Processes(Check):
 
@@ -713,8 +712,8 @@ class Processes(Check):
         # Split out each process
         processLines = ps.split('\n')
         
-        del processLines[0] # Removes the headers
-        processLines.pop() # Removes a trailing empty line
+        del processLines[0]  # Removes the headers
+        processLines.pop()  # Removes a trailing empty line
         
         processes = []
         
@@ -722,10 +721,10 @@ class Processes(Check):
             line = line.split(None, 10)
             processes.append(map(lambda s: s.strip(), line))
         
-        return { 'processes':   processes,
-                 'apiKey':      agentConfig['api_key'],
-                 'host':        get_hostname(agentConfig) }
+        return {'processes':   processes,
+                 'host':        get_hostname(agentConfig)}
             
+
 class Cpu(Check):
 
     def check(self, agentConfig):
@@ -733,13 +732,12 @@ class Cpu(Check):
         When figures are not available, False is sent back.
         """
         def format_results(us, sy, wa, idle, st):
-            data = { 'cpuUser': us, 'cpuSystem': sy, 'cpuWait': wa, 'cpuIdle': idle, 'cpuStolen': st }
+            data = {'cpuUser': us, 'cpuSystem': sy, 'cpuWait': wa, 'cpuIdle': idle, 'cpuStolen': st}
             for key in data.keys():
                 if data[key] is None:
                     del data[key]
             return data
 
-                    
         def get_value(legend, data, name, filter_value=None):
             "Using the legend and a metric name, get the value or None from the data line"
             if name in legend:
@@ -776,19 +774,17 @@ class Cpu(Check):
             #
             lines = mpstat.split("\n")
             legend = [l for l in lines if "%usr" in l or "%user" in l]
-            avg =    [l for l in lines if "Average" in l]
+            avg = [l for l in lines if "Average" in l]
             if len(legend) == 1 and len(avg) == 1:
                 headers = [h for h in legend[0].split() if h not in ("AM", "PM")]
-                data    = avg[0].split()
+                data = avg[0].split()
 
                 # Userland
                 # Debian lenny says %user so we look for both 
                 # One of them will be 0
-                cpu_metrics = {
-                    "%usr":None, "%user":None, "%nice":None, 
-                    "%iowait":None, "%idle":None, "%sys":None,
-                     "%irq":None, "%soft":None, "%steal":None, 
-                }
+                cpu_metrics = {"%usr": None, "%user": None, "%nice": None,
+                               "%iowait": None, "%idle": None, "%sys": None,
+                               "%irq": None, "%soft": None, "%steal": None}
 
                 for cpu_m in cpu_metrics:
                     cpu_metrics[cpu_m] = get_value(headers, data, cpu_m, filter_value=110)
@@ -812,7 +808,7 @@ class Cpu(Check):
             
         elif sys.platform == 'darwin':
             # generate 3 seconds of data
-            # ['          disk0           disk1       cpu     load average', '    KB/t tps  MB/s     KB/t tps  MB/s  us sy id   1m   5m   15m', '   21.23  13  0.27    17.85   7  0.13  14  7 79  1.04 1.27 1.31', '    4.00   3  0.01     5.00   8  0.04  12 10 78  1.04 1.27 1.31', '']   
+            # ['          disk0           disk1       cpu     load average', '    KB/t tps  MB/s     KB/t tps  MB/s  us sy id   1m   5m   15m', '   21.23  13  0.27    17.85   7  0.13  14  7 79  1.04 1.27 1.31', '    4.00   3  0.01     5.00   8  0.04  12 10 78  1.04 1.27 1.31', '']
             iostats = sp.Popen(['iostat', '-C', '-w', '3', '-c', '2'], stdout=sp.PIPE, close_fds=True).communicate()[0]
             lines = [l for l in iostats.split("\n") if len(l) > 0]
             legend = [l for l in lines if "us" in l]
@@ -820,13 +816,14 @@ class Cpu(Check):
                 headers = legend[0].split()
                 data = lines[-1].split()
                 cpu_user = get_value(headers, data, "us")
-                cpu_sys  = get_value(headers, data, "sy")
+                cpu_sys = get_value(headers, data, "sy")
                 cpu_wait = 0
                 cpu_idle = get_value(headers, data, "id")
-                cpu_st   = 0
+                cpu_st = 0
                 return format_results(cpu_user, cpu_sys, cpu_wait, cpu_idle, cpu_st)
             else:
-                self.logger.warn("Expected to get at least 4 lines of data from iostat instead of just " + str(iostats[:max(80, len(iostats))]))
+                self.logger.warn("Expected to get at least 4 lines of data from iostat instead of just " +
+                                 str(iostats[: max(80, len(iostats))]))
                 return False
 
         elif sys.platform.startswith("freebsd"):
@@ -843,15 +840,16 @@ class Cpu(Check):
                 data = lines[-1].split()
                 cpu_user = get_value(headers, data, "us")
                 cpu_nice = get_value(headers, data, "ni")
-                cpu_sys  = get_value(headers, data, "sy")
+                cpu_sys = get_value(headers, data, "sy")
                 cpu_intr = get_value(headers, data, "in")
                 cpu_wait = 0
                 cpu_idle = get_value(headers, data, "id")
                 cpu_stol = 0
-                return format_results(cpu_user + cpu_nice, cpu_sys + cpu_intr, cpu_wait, cpu_idle, cpu_stol);
+                return format_results(cpu_user + cpu_nice, cpu_sys + cpu_intr, cpu_wait, cpu_idle, cpu_stol)
 
             else:
-                self.logger.warn("Expected to get at least 4 lines of data from iostat instead of just " + str(iostats[:max(80, len(iostats))]))
+                self.logger.warn("Expected to get at least 4 lines of data from iostat instead of just " +
+                                 str(iostats[:max(80, len(iostats))]))
                 return False
 
         elif sys.platform == 'sunos5':
@@ -879,7 +877,7 @@ class Cpu(Check):
                     d_lines = [l for l in lines if "SET" not in l]
                     user = [get_value(headers, l.split(), "usr") for l in d_lines]
                     kern = [get_value(headers, l.split(), "sys") for l in d_lines]
-                    wait = [get_value(headers, l.split(), "wt")  for l in d_lines]
+                    wait = [get_value(headers, l.split(), "wt") for l in d_lines]
                     idle = [get_value(headers, l.split(), "idl") for l in d_lines]
                     size = [get_value(headers, l.split(), "sze") for l in d_lines]
                     count = sum(size)
@@ -923,7 +921,7 @@ if __name__ == '__main__':
     mem = Memory(log)
     proc = Processes(log)
 
-    config = {"api_key": "666", "device_blacklist_re":re.compile('.*disk0.*')}
+    config = {"device_blacklist_re": re.compile('.*disk0.*')}
     while True:
         print("=" * 10)
         print("--- IO ---")

@@ -15,6 +15,7 @@ from checks import AgentCheck
 UP_METRIC = 'Up'
 SEARCH_WILDCARD = '*'
 
+
 class WMICheck(AgentCheck):
     def __init__(self, name, init_config, agentConfig):
         AgentCheck.__init__(self, name, init_config, agentConfig)
@@ -50,8 +51,7 @@ class WMICheck(AgentCheck):
                 search = f.values()[0]
                 if SEARCH_WILDCARD in search:
                     search = search.replace(SEARCH_WILDCARD, '%')
-                    wql = "SELECT * FROM %s WHERE %s LIKE '%s'" \
-                                                % (wmi_class, prop, search)
+                    wql = "SELECT * FROM %s WHERE %s LIKE '%s'" % (wmi_class, prop, search)
                     results = w.query(wql)
                 else:
                     results = getattr(w, wmi_class)(**f)

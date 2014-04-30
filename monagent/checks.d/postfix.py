@@ -2,6 +2,7 @@ import os
 
 from checks import AgentCheck
 
+
 class PostfixCheck(AgentCheck):
     """This check provides metrics on the number of messages in a given postfix queue
 
@@ -24,7 +25,8 @@ class PostfixCheck(AgentCheck):
 
         self._get_queue_count(directory, queues, tags)
 
-    def _get_config(self, instance):
+    @staticmethod
+    def _get_config(instance):
         directory = instance.get('directory', None)
         queues = instance.get('queues', None)
         tags = instance.get('tags', [])
@@ -59,7 +61,8 @@ class PostfixCheck(AgentCheck):
                     raise Exception('The dd-agent user does not have sudo access')
 
             # emit an individually tagged metric
-            self.gauge('postfix.queue.size', count, tags=tags + ['queue:%s' % queue, 'instance:%s' %  os.path.basename(directory)])
+            self.gauge('postfix.queue.size', count,
+                       tags=tags + ['queue:%s' % queue, 'instance:%s' % os.path.basename(directory)])
 
             # these can be retrieved in a single graph statement
             # for example:

@@ -1,3 +1,4 @@
+import json
 import urllib2
 import urllib
 import httplib
@@ -5,7 +6,7 @@ import socket
 import os
 import re
 from urlparse import urlsplit, urljoin
-from util import json, headers
+from util import headers
 from checks import AgentCheck
 
 DEFAULT_MAX_CONTAINERS = 20
@@ -63,6 +64,7 @@ DOCKER_TAGS = [
     "Command",
     "Image",
 ]
+
 
 class UnixHTTPConnection(httplib.HTTPConnection, object):
     """Class used in conjuction with UnixSocketHandler to make urllib2
@@ -149,10 +151,12 @@ class Docker(AgentCheck):
                     if key in stats:
                         getattr(self, metric_type)(dd_key, int(stats[key]), tags=container_tags)
 
-    def _make_tag(self, key, value):
+    @staticmethod
+    def _make_tag(key, value):
         return "%s:%s" % (key.lower(), value.strip())
 
-    def _is_container_included(self, instance, tags):
+    @staticmethod
+    def _is_container_included(instance, tags):
         def _is_tag_included(tag):
             for exclude_rule in instance.get("exclude") or []:
                 if re.match(exclude_rule, tag):
@@ -189,7 +193,8 @@ class Docker(AgentCheck):
         response = request.read()
         return json.loads(response)
 
-    def _find_cgroup(self, hierarchy):
+    @staticmethod
+    def _find_cgroup(hierarchy):
         """Finds the mount point for a specified cgroup hierarchy. Works with
         old style and new style mounts."""
         try:

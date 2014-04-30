@@ -8,9 +8,10 @@ from util import get_hostname
 # When running with pymongo < 2.0
 # Not the full spec for mongo URIs -- just extract username and password
 # http://www.mongodb.org/display/DOCS/connections6
-mongo_uri_re=re.compile(r'mongodb://(?P<username>[^:@]+):(?P<password>[^:@]+)@.*')
+mongo_uri_re = re.compile(r'mongodb://(?P<username>[^:@]+):(?P<password>[^:@]+)@.*')
 
 DEFAULT_TIMEOUT = 10
+
 
 class MongoDb(AgentCheck):
 
@@ -88,7 +89,8 @@ class MongoDb(AgentCheck):
         AgentCheck.__init__(self, name, init_config, agentConfig)
         self._last_state_by_server = {}
 
-    def get_library_versions(self):
+    @staticmethod
+    def get_library_versions():
         try:
             import pymongo
             version = pymongo.version

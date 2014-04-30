@@ -1,14 +1,14 @@
 # set up logging before importing any other components
-from config import initialize_logging; initialize_logging('collector')
+from config import initialize_logging
+from monagent.pup import pup
+
+initialize_logging('collector')
 
 import win32serviceutil
 import win32service
 import win32event
-import win32evtlogutil
 import sys
 import logging
-import tornado.httpclient
-import threading
 import modules
 import time
 import multiprocessing
@@ -19,14 +19,11 @@ from emitter import http_emitter
 from win32.common import handle_exe_click
 import dogstatsd
 from ddagent import Application
-from config import (get_config, set_win32_cert_path, get_system_stats,
-    load_check_directory, get_win32service_file)
 from win32.common import handle_exe_click
-from pup import pup
 from jmxfetch import JMXFetch
 
 log = logging.getLogger(__name__)
-RESTART_INTERVAL = 24 * 60 * 60 # Defaults to 1 day
+RESTART_INTERVAL = 24 * 60 * 60  # Defaults to 1 day
 
 class AgentSvc(win32serviceutil.ServiceFramework):
     _svc_name_ = "DatadogAgent"
@@ -40,9 +37,7 @@ class AgentSvc(win32serviceutil.ServiceFramework):
 
         # Setup the correct options so the agent will use the forwarder
         opts, args = Values({
-            'dd_url': None,
             'clean': False,
-            'use_forwarder': True,
             'disabled_dd': False
         }), []
         agentConfig = get_config(parse_args=False, options=opts)
@@ -70,10 +65,9 @@ class AgentSvc(win32serviceutil.ServiceFramework):
 
     def SvcDoRun(self):
         import servicemanager
-        servicemanager.LogMsg(
-                servicemanager.EVENTLOG_INFORMATION_TYPE, 
-                servicemanager.PYS_SERVICE_STARTED,
-                (self._svc_name_, ''))
+        servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,
+                              servicemanager.PYS_SERVICE_STARTED,
+                              (self._svc_name_, ''))
         self.start_ts = time.time()
 
         # Start all services.
@@ -182,7 +176,7 @@ class DogstatsdProcess(multiprocessing.Process):
 
     def run(self):
         log.debug("Windows Service - Starting Dogstatsd server")
-        self.reporter, self.server, _ = dogstatsd.init(use_forwarder=True)
+        self.reporter, self.server, _ = dogstatsd.init()
         self.reporter.start()
         self.server.start()
 

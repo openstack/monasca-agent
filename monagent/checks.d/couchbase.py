@@ -1,6 +1,7 @@
+import json
 import urllib2
 import re
-from util import json, headers
+from util import headers
 import sys
 from checks import AgentCheck
 from checks.utils import add_basic_auth
@@ -8,6 +9,8 @@ from checks.utils import add_basic_auth
 #Constants
 COUCHBASE_STATS_PATH = '/pools/nodes'
 DEFAULT_TIMEOUT = 10
+
+
 class Couchbase(AgentCheck):
     """Extracts stats from Couchbase via its REST API
     http://docs.couchbase.com/couchbase-manual-2.0/#using-the-rest-api
@@ -64,7 +67,7 @@ class Couchbase(AgentCheck):
         if tags is None:
             tags = []
         tags.append('instance:%s' % server)
-        instance['is_recent_python'] = sys.version_info >= (2,6,0)
+        instance['is_recent_python'] = sys.version_info >= (2, 6, 0)
         data = self.get_data(server, instance)
         self._create_metrics(data, tags=list(set(tags)))
 

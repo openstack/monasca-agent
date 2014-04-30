@@ -6,11 +6,8 @@ The Check class is being deprecated so don't write new checks with it.
 
 import logging
 import re
-import socket
 import time
-import types
 import os
-import sys
 import traceback
 from pprint import pprint
 
@@ -20,12 +17,22 @@ from checks import check_status
 
 log = logging.getLogger(__name__)
 
-# Konstants
-class CheckException(Exception): pass
-class Infinity(CheckException): pass
-class NaN(CheckException): pass
-class UnknownValue(CheckException): pass
 
+# Constants
+class CheckException(Exception):
+    pass
+
+
+class Infinity(CheckException):
+    pass
+
+
+class NaN(CheckException):
+    pass
+
+
+class UnknownValue(CheckException):
+    pass
 
 
 #==============================================================================
@@ -44,7 +51,6 @@ class Check(object):
 
     """
 
-
     def __init__(self, logger):
         # where to store samples, indexed by metric_name
         # metric_name: {("sorted", "tags"): [(ts, value), (ts, value)],
@@ -52,14 +58,15 @@ class Check(object):
         #               None: [(ts, value), (ts, value)]}
         #                 untagged values are indexed by None
         self._sample_store = {}
-        self._counters = {} # metric_name: bool
+        self._counters = {}  # metric_name: bool
         self.logger = logger
         try:
             self.logger.addFilter(LaconicFilter())
         except Exception:
             self.logger.exception("Trying to install laconic log filter and failed")
 
-    def normalize(self, metric, prefix=None):
+    @staticmethod
+    def normalize(metric, prefix=None):
         """Turn a metric into a well-formed metric name
         prefix.b.c
         """
@@ -78,7 +85,8 @@ class Check(object):
         else:
             return name
 
-    def normalize_device_name(self, device_name):
+    @staticmethod
+    def normalize_device_name(device_name):
         return device_name.strip().lower().replace(' ', '_')
 
     def counter(self, metric):
@@ -104,8 +112,7 @@ class Check(object):
         return metric in self._sample_store
 
     def is_gauge(self, metric):
-        return self.is_metric(metric) and \
-               not self.is_counter(metric)
+        return self.is_metric(metric) and not self.is_counter(metric)
 
     def get_metric_names(self):
         "Get all metric names"
@@ -146,9 +153,11 @@ class Check(object):
             if self._sample_store[metric].get(key) is None:
                 self._sample_store[metric][key] = [(timestamp, value, hostname, device_name)]
             else:
-                self._sample_store[metric][key] = self._sample_store[metric][key][-1:] + [(timestamp, value, hostname, device_name)]
+                self._sample_store[metric][key] = self._sample_store[metric][key][-1:] + \
+                                                  [(timestamp, value, hostname, device_name)]
         else:
-            raise CheckException("%s must be either gauge or counter, skipping sample at %s" % (metric, time.ctime(timestamp)))
+            raise CheckException("%s must be either gauge or counter, skipping sample at %s" %
+                                 (metric, time.ctime(timestamp)))
 
         if self.is_gauge(metric):
             # store[metric][tags] = (ts, val) - only 1 value allowed
@@ -180,7 +189,7 @@ class Check(object):
         "Get (timestamp-epoch-style, value)"
 
         # Get the proper tags
-        if tags is not None and type(tags) == type([]):
+        if tags is not None and isinstance(tags, list):
             tags.sort()
             tags = tuple(tags)
         key = (tags, device_name)
@@ -208,7 +217,7 @@ class Check(object):
     def get_sample(self, metric, tags=None, device_name=None, expire=True):
         "Return the last value for that metric"
         x = self.get_sample_with_timestamp(metric, tags, device_name, expire)
-        assert type(x) == types.TupleType and len(x) == 4, x
+        assert isinstance(x, tuple) and len(x) == 4, x
         return x[1]
 
     def get_samples_with_timestamps(self, expire=True):
@@ -260,6 +269,7 @@ class Check(object):
                 pass
         return metrics
 
+
 class AgentCheck(object):
 
     def __init__(self, name, init_config, agentConfig, instances=None):
@@ -273,14 +283,14 @@ class AgentCheck(object):
         """
         from aggregator import MetricsAggregator
 
-
         self.name = name
         self.init_config = init_config
         self.agentConfig = agentConfig
         self.hostname = get_hostname(agentConfig)
         self.log = logging.getLogger('%s.%s' % (__name__, name))
 
-        self.aggregator = MetricsAggregator(self.hostname, formatter=agent_formatter, recent_point_threshold=agentConfig.get('recent_point_threshold', None))
+        self.aggregator = MetricsAggregator(self.hostname, formatter=agent_formatter,
+                                            recent_point_threshold=agentConfig.get('recent_point_threshold', None))
 
         self.events = []
         self.instances = instances or []
@@ -461,18 +471,16 @@ class AgentCheck(object):
                 self.check(instance)
                 if self.has_warnings():
                     instance_status = check_status.InstanceStatus(i,
-                        check_status.STATUS_WARNING,
-                        warnings=self.get_warnings()
-                    )
+                                                                  check_status.STATUS_WARNING,
+                                                                  warnings=self.get_warnings())
                 else:
                     instance_status = check_status.InstanceStatus(i, check_status.STATUS_OK)
             except Exception, e:
                 self.log.exception("Check '%s' instance #%s failed" % (self.name, i))
                 instance_status = check_status.InstanceStatus(i,
-                    check_status.STATUS_ERROR,
-                    error=e,
-                    tb=traceback.format_exc()
-                )
+                                                              check_status.STATUS_ERROR,
+                                                              error=e,
+                                                              tb=traceback.format_exc())
             instance_statuses.append(instance_status)
         return instance_statuses
 
@@ -485,7 +493,8 @@ class AgentCheck(object):
         """
         raise NotImplementedError()
 
-    def stop(self):
+    @staticmethod
+    def stop():
         """
         To be executed when the agent is being stopped to clean ressources
         """
@@ -496,7 +505,11 @@ class AgentCheck(object):
         """
         A method used for testing your check without running the agent.
         """
-        from util import yaml, yLoader
+        import yaml
+        try:
+            from yaml import CLoader as Loader
+        except ImportError:
+            from yaml import Loader
         if path_to_yaml:
             check_name = os.path.basename(path_to_yaml).split('.')[0]
             try:
@@ -506,12 +519,13 @@ class AgentCheck(object):
             yaml_text = f.read()
             f.close()
 
-        config = yaml.load(yaml_text, Loader=yLoader)
+        config = yaml.load(yaml_text, Loader=Loader)
         check = cls(check_name, config.get('init_config') or {}, agentConfig or {})
 
         return check, config.get('instances', [])
 
-    def normalize(self, metric, prefix=None):
+    @staticmethod
+    def normalize(metric, prefix=None):
         """
         Turn a metric into a well-formed metric name
         prefix.b.c
@@ -545,6 +559,7 @@ class AgentCheck(object):
             return val
         else:
             return cast(val)
+
 
 def agent_formatter(metric, value, timestamp, tags, hostname, device_name=None,
                                                 metric_type=None, interval=None):

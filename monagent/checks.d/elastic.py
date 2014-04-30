@@ -1,3 +1,4 @@
+import json
 import socket
 import subprocess
 import sys
@@ -5,15 +6,17 @@ import time
 import urlparse
 import urllib2
 
-from util import json, headers
+from util import headers
 from checks import AgentCheck
 from checks.utils import add_basic_auth
 
 
-class NodeNotFound(Exception): pass
+class NodeNotFound(Exception):
+    pass
+
 
 class ElasticSearch(AgentCheck):
-    METRICS = { # Metrics that are common to all Elasticsearch versions
+    METRICS = {  # Metrics that are common to all Elasticsearch versions
         "elasticsearch.docs.count": ("gauge", "indices.docs.count"),
         "elasticsearch.docs.deleted": ("gauge", "indices.docs.deleted"),
         "elasticsearch.store.size": ("gauge", "indices.store.size_in_bytes"),
@@ -105,7 +108,7 @@ class ElasticSearch(AgentCheck):
         "elasticsearch.relocating_shards": ("gauge", "relocating_shards"),
         "elasticsearch.initializing_shards": ("gauge", "initializing_shards"),
         "elasticsearch.unassigned_shards": ("gauge", "unassigned_shards"),
-        "elasticsearch.cluster_status": ("gauge", "status", lambda v: {"red":0,"yellow":1,"green":2}.get(v, -1)),
+        "elasticsearch.cluster_status": ("gauge", "status", lambda v: {"red": 0, "yellow": 1, "green": 2}.get(v, -1)),
     }
 
     def __init__(self, name, init_config, agentConfig):
@@ -284,7 +287,8 @@ class ElasticSearch(AgentCheck):
 
         raise NodeNotFound()
 
-    def _host_matches_node(self, primary_addrs):
+    @staticmethod
+    def _host_matches_node(primary_addrs):
         """ For < 0.19, check if the current host matches the IP given in the
             cluster nodes check `/_cluster/nodes`. Uses `ip addr` on Linux and
             `ifconfig` on Mac

@@ -16,8 +16,13 @@ log = logging.getLogger(__name__)
 # MetricsBucketAggregator constructor.
 RECENT_POINT_THRESHOLD_DEFAULT = 3600
 
-class Infinity(Exception): pass
-class UnknownValue(Exception): pass
+
+class Infinity(Exception):
+    pass
+
+
+class UnknownValue(Exception):
+    pass
 
 
 class Metric(object):
@@ -53,7 +58,6 @@ class Gauge(Metric):
         self.last_sample_time = time()
         self.timestamp = timestamp
 
-
     def flush(self, timestamp, interval):
         if self.value is not None:
             res = [self.formatter(
@@ -70,6 +74,7 @@ class Gauge(Metric):
             return res
 
         return []
+
 
 class BucketGauge(Gauge):
     """ A metric that tracks a value at particular points in time.
@@ -95,6 +100,7 @@ class BucketGauge(Gauge):
             return res
 
         return []
+
 
 class Counter(Metric):
     """ A metric that tracks a counter value. """
@@ -284,6 +290,7 @@ class Rate(Metric):
         finally:
             self.samples = self.samples[-1:]
 
+
 class Aggregator(object):
     """
     Abstract metric aggregator class.
@@ -354,7 +361,8 @@ class Aggregator(object):
 
         return name, value, metric_type, tags, sample_rate
 
-    def _unescape_event_text(self, string):
+    @staticmethod
+    def _unescape_event_text(string):
         return string.replace('\\n', '\n')
 
     def parse_event_packet(self, packet):

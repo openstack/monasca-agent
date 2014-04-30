@@ -22,7 +22,7 @@ class TestElastic(unittest.TestCase):
                 break
             except Exception:
                 time.sleep(0.5)
-                loop = loop + 1
+                loop += 1
                 if loop >= MAX_WAIT:
                     break              
 

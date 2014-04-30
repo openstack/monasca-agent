@@ -20,17 +20,17 @@ class TestAutoRestart(unittest.TestCase):
         if self.agent_foreground:
             self.agent_foreground.kill()
         if self.agent_daemon:
-            args = shlex.split('python agent.py stop')
+            args = shlex.split('python collector_daemon.py stop')
             subprocess.Popen(args).communicate()
 
     def _start_foreground(self):
         # Run the agent in the foreground with auto-restarting on.
-        args = shlex.split('python agent.py foreground')
+        args = shlex.split('python collector_daemon.py foreground')
         self.agent_foreground = subprocess.Popen(args)
         time.sleep(5)
 
     def _start_daemon(self):
-        args = shlex.split('python agent.py start')
+        args = shlex.split('python collector_daemon.py start')
         self.agent_daemon = subprocess.Popen(args)
         time.sleep(5)
 
@@ -48,7 +48,7 @@ class TestAutoRestart(unittest.TestCase):
             raise SkipTest('Autorestart tests don\'t work on travis')
         self._start_foreground()
 
-        grep_str = 'agent.py foreground'
+        grep_str = 'collector_daemon.py foreground'
         child_pid, parent_pid = self._get_child_parent_pids(grep_str)
 
         # Try killing the parent proc, confirm that the child is killed as well.
@@ -77,7 +77,7 @@ class TestAutoRestart(unittest.TestCase):
             raise SkipTest('Autorestart tests don\'t work on travis')
         self._start_daemon()
 
-        grep_str = 'agent.py start'
+        grep_str = 'collector_daemon.py start'
         child_pid, parent_pid = self._get_child_parent_pids(grep_str)
 
         # Try killing the parent proc, confirm that the child is killed as well.
@@ -97,7 +97,7 @@ class TestAutoRestart(unittest.TestCase):
         child_pid, parent_pid = self._get_child_parent_pids(grep_str)
 
         # Kill the daemon process.
-        args = shlex.split('python agent.py stop')
+        args = shlex.split('python collector_daemon.py stop')
         subprocess.Popen(args).communicate()
         self.agent_daemon = None
 

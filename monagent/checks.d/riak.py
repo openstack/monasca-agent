@@ -1,49 +1,46 @@
+from hashlib import md5
+import json
 import time
 
 from checks import AgentCheck
-from util import md5
-from util import json
 
-from checks.libs.httplib2 import Http, HttpLib2Error
+from httplib2 import Http, HttpLib2Error
 import socket
+
 
 class Riak(AgentCheck):
 
-    keys = [
-        "vnode_gets",
-        "vnode_puts",
-        "vnode_index_reads",
-        "vnode_index_writes",
-        "vnode_index_deletes",
-        "node_gets",
-        "node_puts",
-        "pbc_active",
-        "pbc_connects",
-        "memory_total",
-        "memory_processes",
-        "memory_processes_used",
-        "memory_atom",
-        "memory_atom_used",
-        "memory_binary",
-        "memory_code",
-        "memory_ets",
-        "read_repairs",
-        "node_put_fsm_rejected_60s",
-        "node_put_fsm_active_60s",
-        "node_put_fsm_in_rate",
-        "node_put_fsm_out_rate",
-        "node_get_fsm_rejected_60s",
-        "node_get_fsm_active_60s",
-        "node_get_fsm_in_rate",
-        "node_get_fsm_out_rate"
-    ]
+    keys = ["vnode_gets",
+            "vnode_puts",
+            "vnode_index_reads",
+            "vnode_index_writes",
+            "vnode_index_deletes",
+            "node_gets",
+            "node_puts",
+            "pbc_active",
+            "pbc_connects",
+            "memory_total",
+            "memory_processes",
+            "memory_processes_used",
+            "memory_atom",
+            "memory_atom_used",
+            "memory_binary",
+            "memory_code",
+            "memory_ets",
+            "read_repairs",
+            "node_put_fsm_rejected_60s",
+            "node_put_fsm_active_60s",
+            "node_put_fsm_in_rate",
+            "node_put_fsm_out_rate",
+            "node_get_fsm_rejected_60s",
+            "node_get_fsm_active_60s",
+            "node_get_fsm_in_rate",
+            "node_get_fsm_out_rate"]
 
-    stat_keys = [
-        "node_get_fsm_siblings",
-        "node_get_fsm_objsize",
-        "node_get_fsm_time",
-        "node_put_fsm_time"
-      ]
+    stat_keys = ["node_get_fsm_siblings",
+                 "node_get_fsm_objsize",
+                 "node_get_fsm_time",
+                 "node_put_fsm_time"]
 
     def __init__(self, name, init_config, agentConfig, instances=None):
         AgentCheck.__init__(self, name, init_config, agentConfig, instances)

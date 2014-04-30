@@ -5,6 +5,7 @@ from util import headers
 from checks import AgentCheck
 from checks.utils import add_basic_auth
 
+
 class Nginx(AgentCheck):
     """Tracks basic nginx metrics via the status module
     * number of connections

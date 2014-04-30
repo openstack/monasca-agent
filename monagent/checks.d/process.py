@@ -2,24 +2,24 @@ from checks import AgentCheck
 from util import Platform
 import time
 
+
 class ProcessCheck(AgentCheck):
 
-    PROCESS_GAUGE = (
-        'system.processes.threads',
-        'system.processes.cpu.pct',
-        'system.processes.mem.rss',
-        'system.processes.mem.vms',
-        'system.processes.mem.real',
-        'system.processes.open_file_decorators',
-        'system.processes.ioread_count',
-        'system.processes.iowrite_count',
-        'system.processes.ioread_bytes',
-        'system.processes.iowrite_bytes',
-        'system.processes.voluntary_ctx_switches',
-        'system.processes.involuntary_ctx_switches',
-        )
+    PROCESS_GAUGE = ('system.processes.threads',
+                     'system.processes.cpu.pct',
+                     'system.processes.mem.rss',
+                     'system.processes.mem.vms',
+                     'system.processes.mem.real',
+                     'system.processes.open_file_decorators',
+                     'system.processes.ioread_count',
+                     'system.processes.iowrite_count',
+                     'system.processes.ioread_bytes',
+                     'system.processes.iowrite_bytes',
+                     'system.processes.voluntary_ctx_switches',
+                     'system.processes.involuntary_ctx_switches')
 
-    def is_psutil_version_later_than(self, v):
+    @staticmethod
+    def is_psutil_version_later_than(v):
         try:
             import psutil
             vers = psutil.version_info
@@ -51,7 +51,7 @@ class ProcessCheck(AgentCheck):
                     if not found:
                         try:
                             try:
-                                cmdline = proc.cmdline() # psutil >= 2.0
+                                cmdline = proc.cmdline()  # psutil >= 2.0
                             except TypeError:
                                 cmdline = proc.cmdline  # psutil < 2.0
 

@@ -4,6 +4,7 @@ from util import headers
 from checks import AgentCheck
 from checks.utils import add_basic_auth
 
+
 class Lighttpd(AgentCheck):
     """Tracks basic connection/requests/workers metrics
 
@@ -80,7 +81,7 @@ class Lighttpd(AgentCheck):
         # Loop through and extract the numerical values
         for line in response.split('\n'):
             values = line.split(': ')
-            if len(values) == 2: # match
+            if len(values) == 2:  # match
                 metric, value = values
                 try:
                     value = float(value)
@@ -89,7 +90,7 @@ class Lighttpd(AgentCheck):
 
                 # Special case: kBytes => bytes
                 if metric == 'Total kBytes':
-                    value = value * 1024
+                    value *= 1024
 
                 # Send metric as a gauge, if applicable
                 if metric in self.GAUGES:

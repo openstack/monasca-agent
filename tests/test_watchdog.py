@@ -72,53 +72,61 @@ class TestWatchdog(unittest.TestCase):
         assert duration < 20
 
 class MockTxManager(object):
-    def flush(self):
+    @staticmethod
+    def flush():
         "Pretend to flush for a long time"
         time.sleep(5)
         sys.exit(0)
 
 class MemoryHogTxManager(object):
-    def flush(self):
+    @staticmethod
+    def flush():
         rand_data = []
         while True:
           rand_data.append('%030x' % randrange(256**15))
 
 class PseudoAgent(object):
     """Same logic as the agent, simplified"""
-    def busy_run(self):
+    @staticmethod
+    def busy_run():
         w = Watchdog(5)
         w.reset()
         x = 0
         while True:
             x = random()
 
-    def hanging_net(self):
+    @staticmethod
+    def hanging_net():
         w = Watchdog(5)
         w.reset()
         x = url.urlopen("http://localhost:31834")
         print "ERROR Net call returned", x
         return True
 
-    def normal_run(self):
+    @staticmethod
+    def normal_run():
         w = Watchdog(2)
         w.reset()
         for i in range(5):
             time.sleep(1)
             w.reset()
 
-    def slow_tornado(self):
+    @staticmethod
+    def slow_tornado():
         a = Application(12345, {})
         a._watchdog = Watchdog(4)
         a._tr_manager = MockTxManager()
         a.run()
 
-    def fast_tornado(self):
+    @staticmethod
+    def fast_tornado():
         a = Application(12345, {})
         a._watchdog = Watchdog(6)
         a._tr_manager = MockTxManager()
         a.run()
 
-    def use_lots_of_memory(self):
+    @staticmethod
+    def use_lots_of_memory():
         # Skip this step on travis
         if os.environ.get('TRAVIS', False): return
         a = Application(12345, {})

@@ -3,7 +3,7 @@ from checks import AgentCheck
 from fnmatch import fnmatch
 import os
 import time
-from util import namedtuple
+from collections import namedtuple
 
 CFUNC_TO_AGGR = {
     'AVERAGE': 'avg',
@@ -25,12 +25,14 @@ CACTI_TO_DD = {
     'ping': 'system.ping.latency'
 }
 
+
 class Cacti(AgentCheck):
     def __init__(self, name, init_config, agentConfig):
         AgentCheck.__init__(self, name, init_config, agentConfig)
         self.last_ts = {}
 
-    def get_library_versions(self):
+    @staticmethod
+    def get_library_versions():
         try:
             import rrdtool
             version = rrdtool.__version__
@@ -81,8 +83,7 @@ class Cacti(AgentCheck):
         if whitelist:
             if not os.path.isfile(whitelist) or not os.access(whitelist, os.R_OK):
                 # Don't run the check if the whitelist is unavailable
-                self.log.exception("Unable to read whitelist file at %s" \
-                    % (whitelist))
+                self.log.exception("Unable to read whitelist file at %s" % whitelist)
 
             wl = open(whitelist)
             for line in wl:
@@ -91,8 +92,8 @@ class Cacti(AgentCheck):
 
         return patterns
 
-
-    def _get_config(self, instance):
+    @staticmethod
+    def _get_config(instance):
         required = ['mysql_host', 'mysql_user', 'rrd_path']
         for param in required:
             if not instance.get(param):
@@ -219,7 +220,8 @@ class Cacti(AgentCheck):
 
         return res
 
-    def _format_metric_name(self, m_name, cfunc):
+    @staticmethod
+    def _format_metric_name(m_name, cfunc):
         ''' Format a cacti metric name into a Datadog-friendly name '''
         try:
             aggr = CFUNC_TO_AGGR[cfunc]
@@ -234,7 +236,8 @@ class Cacti(AgentCheck):
         except KeyError:
             return "cacti.%s.%s" % (m_name.lower(), aggr)
 
-    def _transform_metric(self, m_name, val):
+    @staticmethod
+    def _transform_metric(m_name, val):
         ''' Add any special case transformations here '''
         # Report memory in MB
         if m_name[0:11] in ('system.mem.', 'system.disk'):

@@ -3,22 +3,21 @@ import urllib2
 import socket
 
 from checks import AgentCheck
-from util import json, headers
+from util import headers
 
 import time
 
-try:
-    from collections import defaultdict
-except ImportError:
-    from compat.defaultdict import defaultdict
+from collections import defaultdict
 
 STATS_URL = "/;csv;norefresh"
 EVENT_TYPE = SOURCE_TYPE_NAME = 'haproxy'
+
 
 class Services(object):
     BACKEND = 'BACKEND'
     FRONTEND = 'FRONTEND'
     ALL = (BACKEND, FRONTEND)
+
 
 class HAProxy(AgentCheck):
     def __init__(self, name, init_config, agentConfig):
@@ -221,7 +220,8 @@ class HAProxy(AgentCheck):
                 # Store this host status so we can check against it later
                 self.host_status[url][key] = data['status']
 
-    def _create_event(self, status, hostname, lastchg, service_name):
+    @staticmethod
+    def _create_event(status, hostname, lastchg, service_name):
         if status == "DOWN":
             alert_type = "error"
             title = "HAProxy %s front-end reported %s %s" % (service_name, hostname, status)

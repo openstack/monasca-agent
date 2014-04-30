@@ -18,7 +18,7 @@ STATUS_VARS = {
     'Innodb_data_reads': ('mysql.innodb.data_reads', RATE),
     'Innodb_data_writes': ('mysql.innodb.data_writes', RATE),
     'Innodb_os_log_fsyncs': ('mysql.innodb.os_log_fsyncs', RATE),
-    'Innodb_data_reads': ('mysql.innodb.buffer_pool_size', RATE),
+    'Innodb_buffer_pool_size': ('mysql.innodb.buffer_pool_size', RATE),
     'Slow_queries': ('mysql.performance.slow_queries', RATE),
     'Questions': ('mysql.performance.questions', RATE),
     'Queries': ('mysql.performance.queries', RATE),
@@ -30,7 +30,7 @@ STATUS_VARS = {
     'Com_update_multi': ('mysql.performance.com_update_multi', RATE),
     'Com_delete_multi': ('mysql.performance.com_delete_multi', RATE),
     'Com_replace_select': ('mysql.performance.com_replace_select', RATE),
-    'Qcache_hits':('mysql.performance.qcache_hits', RATE),
+    'Qcache_hits': ('mysql.performance.qcache_hits', RATE),
     'Innodb_mutex_spin_waits': ('mysql.innodb.mutex_spin_waits', RATE),
     'Innodb_mutex_spin_rounds': ('mysql.innodb.mutex_spin_rounds', RATE),
     'Innodb_mutex_os_waits': ('mysql.innodb.mutex_os_waits', RATE),
@@ -42,13 +42,15 @@ STATUS_VARS = {
     'Innodb_current_row_locks': ('mysql.innodb.current_row_locks', GAUGE),
 }
 
+
 class MySql(AgentCheck):
     def __init__(self, name, init_config, agentConfig):
         AgentCheck.__init__(self, name, init_config, agentConfig)
         self.mysql_version = {}
         self.greater_502 = {}
 
-    def get_library_versions(self):
+    @staticmethod
+    def get_library_versions():
         try:
             import MySQLdb
             version = MySQLdb.__version__
@@ -71,7 +73,8 @@ class MySql(AgentCheck):
         self._collect_metrics(host, db, tags, options)
         self._collect_system_metrics(host, db, tags)
 
-    def _get_config(self, instance):
+    @staticmethod
+    def _get_config(instance):
         host = instance.get('server', '')
         user = instance.get('user', '')
         port = int(instance.get('port', 0))

@@ -15,23 +15,26 @@ import re
 import imp
 from optparse import OptionParser, Values
 from cStringIO import StringIO
+import yaml
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
 
 # project
-from util import get_os, yaml, yLoader, Platform
+from util import get_os, Platform
 from jmxfetch import JMXFetch, JMX_COLLECT_COMMAND
-from migration import migrate_old_style_configuration
 
 # CONSTANTS
-DATADOG_CONF = "datadog.conf"
-DEFAULT_CHECK_FREQUENCY = 15   # seconds
+AGENT_CONF = "agent.conf"
+DEFAULT_CHECK_FREQUENCY = 15  # seconds
 DEFAULT_STATSD_FREQUENCY = 2  # seconds
-DEFAULT_STATSD_BUCKET_SIZE = 10 #seconds
-PUP_STATSD_FREQUENCY = 2       # seconds
-PUP_STATSD_BUCKET_SIZE = 2       # seconds
+DEFAULT_STATSD_BUCKET_SIZE = 10  # seconds
 LOGGING_MAX_BYTES = 5 * 1024 * 1024
 
 log = logging.getLogger(__name__)
 windows_file_handler_added = False
+
 
 class PathNotFound(Exception):
     pass
@@ -39,31 +42,21 @@ class PathNotFound(Exception):
 
 def get_parsed_args():
     parser = OptionParser()
-    parser.add_option('-d', '--dd_url', action='store', default=None,
-                        dest='dd_url')
-    parser.add_option('-c', '--clean', action='store_true', default=False,
-                        dest='clean')
-    parser.add_option('-u', '--use-local-forwarder', action='store_true',
-                        default=False, dest='use_forwarder')
-    parser.add_option('-n', '--disable-dd', action='store_true', default=False,
-                        dest="disable_dd")
-    parser.add_option('-v', '--verbose', action='store_true', default=False,
-                        dest='verbose',
+    parser.add_option('-c', '--clean', action='store_true', default=False, dest='clean')
+    parser.add_option('-v', '--verbose', action='store_true', default=False, dest='verbose',
                       help='Print out stacktraces for errors in checks')
 
     try:
         options, args = parser.parse_args()
     except SystemExit:
         # Ignore parse errors
-        options, args = Values({'dd_url': None,
-                                'clean': False,
-                                'disable_dd':False,
-                                'use_forwarder': False}), []
+        options, args = Values({'clean': False}), []
     return options, args
 
 
 def get_version():
-    return "4.2.0"
+    return "4.3.0"
+
 
 def skip_leading_wsp(f):
     "Works on a file, returns a file-like object"
@@ -82,9 +75,9 @@ def _windows_commondata_path():
 
     _SHGetFolderPath = windll.shell32.SHGetFolderPathW
     _SHGetFolderPath.argtypes = [wintypes.HWND,
-                                ctypes.c_int,
-                                wintypes.HANDLE,
-                                wintypes.DWORD, wintypes.LPCWSTR]
+                                 ctypes.c_int,
+                                 wintypes.HANDLE,
+                                 wintypes.DWORD, wintypes.LPCWSTR]
 
     path_buf = wintypes.create_unicode_buffer(wintypes.MAX_PATH)
     result = _SHGetFolderPath(0, CSIDL_COMMON_APPDATA, 0, 0, path_buf)
@@ -93,7 +86,7 @@ def _windows_commondata_path():
 
 def _windows_config_path():
     common_data = _windows_commondata_path()
-    path = os.path.join(common_data, 'Datadog', DATADOG_CONF)
+    path = os.path.join(common_data, 'Datadog', AGENT_CONF)
     if os.path.exists(path):
         return path
     raise PathNotFound(path)
@@ -123,14 +116,16 @@ def _windows_checksd_path():
 
 
 def _unix_config_path():
-    path = os.path.join('/etc/dd-agent', DATADOG_CONF)
+    path = os.path.join('/etc/mon-agent', AGENT_CONF)
     if os.path.exists(path):
         return path
+    elif os.path.exists('./%s' % AGENT_CONF):
+        return './%s' % AGENT_CONF
     raise PathNotFound(path)
 
 
 def _unix_confd_path():
-    path = os.path.join('/etc/dd-agent', 'conf.d')
+    path = os.path.join('/etc/mon-agent', 'conf.d')
     if os.path.exists(path):
         return path
     raise PathNotFound(path)
@@ -177,8 +172,8 @@ def get_config_path(cfg_path=None, os_name=None):
     # Check if there's a config stored in the current agent directory
     path = os.path.realpath(__file__)
     path = os.path.dirname(path)
-    if os.path.exists(os.path.join(path, DATADOG_CONF)):
-        return os.path.join(path, DATADOG_CONF)
+    if os.path.exists(os.path.join(path, AGENT_CONF)):
+        return os.path.join(path, AGENT_CONF)
 
     # If all searches fail, exit the agent with an error
     sys.stderr.write("Please supply a configuration file at %s or in the directory where the Agent is currently deployed.\n" % bad_path)
@@ -196,15 +191,13 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         'dogstatsd_agregator_bucket_size': DEFAULT_STATSD_BUCKET_SIZE,
         'dogstatsd_normalize': 'yes',
         'dogstatsd_port': 8125,
-        'dogstatsd_target': 'http://localhost:17123',
-        'graphite_listen_port': None,
+        'forwarder_url': 'http://localhost:17123',
         'hostname': None,
         'listen_port': None,
         'tags': None,
-        'use_ec2_instance_id': False,  # DEPRECATED
         'version': get_version(),
         'watchdog': True,
-        'additional_checksd': '/etc/dd-agent/checks.d/',
+        'additional_checksd': '/etc/mon-agent/checks.d/',
     }
 
     dogstatsd_interval = DEFAULT_STATSD_FREQUENCY
@@ -230,25 +223,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
 
         # FIXME unnecessarily complex
 
-        if config.has_option('Main', 'use_dd'):
-            agentConfig['use_dd'] = config.get('Main', 'use_dd').lower() in ("yes", "true")
-        else:
-            agentConfig['use_dd'] = True
-
-        agentConfig['use_forwarder'] = False
-        if options is not None and options.use_forwarder:
-            listen_port = 17123
-            if config.has_option('Main', 'listen_port'):
-                listen_port = int(config.get('Main', 'listen_port'))
-            agentConfig['dd_url'] = "http://localhost:" + str(listen_port)
-            agentConfig['use_forwarder'] = True
-        elif options is not None and not options.disable_dd and options.dd_url:
-            agentConfig['dd_url'] = options.dd_url
-        else:
-            agentConfig['dd_url'] = config.get('Main', 'dd_url')
-        if agentConfig['dd_url'].endswith('/'):
-            agentConfig['dd_url'] = agentConfig['dd_url'][:-1]
-
         # Extra checks.d path
         # the linux directory is set by default
         if config.has_option('Main', 'additional_checksd'):
@@ -258,49 +232,16 @@ def get_config(parse_args=True, cfg_path=None, options=None):
             common_path = _windows_commondata_path()
             agentConfig['additional_checksd'] = os.path.join(common_path, 'Datadog', 'checks.d')
 
-        # Whether also to send to Pup
-        if config.has_option('Main', 'use_pup'):
-            agentConfig['use_pup'] = config.get('Main', 'use_pup').lower() in ("yes", "true")
-        else:
-            agentConfig['use_pup'] = False
-
         # Concerns only Windows
         if config.has_option('Main', 'use_web_info_page'):
             agentConfig['use_web_info_page'] = config.get('Main', 'use_web_info_page').lower() in ("yes", "true")
         else:
             agentConfig['use_web_info_page'] = True
 
-        if agentConfig['use_pup'] or agentConfig['use_web_info_page']:
-            if config.has_option('Main', 'pup_url'):
-                agentConfig['pup_url'] = config.get('Main', 'pup_url')
-            else:
-                agentConfig['pup_url'] = 'http://localhost:17125'
-
-            if config.has_option('Main', 'pup_port'):
-                agentConfig['pup_port'] = int(config.get('Main', 'pup_port'))
-
-        # Increases the frequency of statsd metrics when only sending to Pup
-        if not agentConfig['use_dd'] and agentConfig['use_pup']:
-            dogstatsd_interval = PUP_STATSD_FREQUENCY
-            dogstatsd_agregator_bucket_size = PUP_STATSD_BUCKET_SIZE
-
-        if not agentConfig['use_dd'] and not agentConfig['use_pup']:
-            sys.stderr.write("Please specify at least one endpoint to send metrics to. This can be done in datadog.conf.")
-            exit(2)
-
-        # Which API key to use
-        agentConfig['api_key'] = config.get('Main', 'api_key')
-
         # local traffic only? Default to no
         agentConfig['non_local_traffic'] = False
         if config.has_option('Main', 'non_local_traffic'):
             agentConfig['non_local_traffic'] = config.get('Main', 'non_local_traffic').lower() in ("yes", "true")
-
-        # DEPRECATED
-        if config.has_option('Main', 'use_ec2_instance_id'):
-            use_ec2_instance_id = config.get('Main', 'use_ec2_instance_id')
-            # translate yes into True, the rest into False
-            agentConfig['use_ec2_instance_id'] = (use_ec2_instance_id.lower() == 'yes')
 
         if config.has_option('Main', 'check_freq'):
             try:
@@ -313,17 +254,9 @@ def get_config(parse_args=True, cfg_path=None, options=None):
             if config.get('Main', 'watchdog').lower() in ('no', 'false'):
                 agentConfig['watchdog'] = False
 
-        # Optional graphite listener
-        if config.has_option('Main', 'graphite_listen_port'):
-            agentConfig['graphite_listen_port'] = \
-                int(config.get('Main', 'graphite_listen_port'))
-        else:
-            agentConfig['graphite_listen_port'] = None
-
         # Dogstatsd config
         dogstatsd_defaults = {
             'dogstatsd_port': 8125,
-            'dogstatsd_target': 'http://localhost:17123',
             'dogstatsd_interval': dogstatsd_interval,
             'dogstatsd_agregator_bucket_size': dogstatsd_agregator_bucket_size,
             'dogstatsd_normalize': 'yes',
@@ -342,12 +275,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
 
         # normalize 'yes'/'no' to boolean
         dogstatsd_defaults['dogstatsd_normalize'] = _is_affirmative(dogstatsd_defaults['dogstatsd_normalize'])
-
-        # optionally send dogstatsd data directly to the agent.
-        if config.has_option('Main', 'dogstatsd_use_ddurl'):
-            use_ddurl = _is_affirmative(config.get('Main', 'dogstatsd_use_ddurl'))
-            if use_ddurl:
-                agentConfig['dogstatsd_target'] = agentConfig['dd_url']
 
         # Optional config
         # FIXME not the prettiest code ever...
@@ -395,9 +322,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         if config.has_option("Main", "skip_ssl_validation"):
             agentConfig["skip_ssl_validation"] = _is_affirmative(config.get("Main", "skip_ssl_validation"))
 
-        agentConfig["collect_ec2_tags"] = False
-        if config.has_option("Main", "collect_ec2_tags"):
-            agentConfig["collect_ec2_tags"] = _is_affirmative(config.get("Main", "collect_ec2_tags"))
+        agentConfig['Api'] = get_mon_api_config(config)
 
     except ConfigParser.NoSectionError, e:
         sys.stderr.write('Config file not found or incorrectly formatted.\n')
@@ -412,10 +337,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
 
     # Storing proxy settings in the agentConfig
     agentConfig['proxy_settings'] = get_proxy(agentConfig)
-    if agentConfig.get('ca_certs', None) is None:
-        agentConfig['ssl_certificate'] = get_ssl_certificate(get_os(), 'datadog-cert.pem')
-    else:
-        agentConfig['ssl_certificate'] = agentConfig['ca_certs']
 
     return agentConfig
 
@@ -472,7 +393,7 @@ def set_win32_cert_path():
         crt_path = os.path.join(prog_path, 'ca-certificates.crt')
     else:
         cur_path = os.path.dirname(__file__)
-        crt_path = os.path.join(cur_path, 'packaging', 'datadog-agent', 'win32',
+        crt_path = os.path.join(cur_path, 'packaging', 'mon-agent', 'win32',
                 'install_files', 'ca-certificates.crt')
     import tornado.simple_httpclient
     log.info("Windows certificate path: %s" % crt_path)
@@ -585,35 +506,11 @@ def get_win32service_file(osname, filename):
     return None
 
 
-def get_ssl_certificate(osname, filename):
-    # The SSL certificate is needed by tornado in case of connection through a proxy
-    if osname == 'windows':
-        if hasattr(sys, 'frozen'):
-            # we're frozen - from py2exe
-            prog_path = os.path.dirname(sys.executable)
-            path = os.path.join(prog_path, filename)
-        else:
-            cur_path = os.path.dirname(__file__)
-            path = os.path.join(cur_path, filename)
-        if os.path.exists(path):
-            log.debug("Certificate file found at %s" % str(path))
-            return path
-
-    else:
-        cur_path = os.path.dirname(os.path.realpath(__file__))
-        path = os.path.join(cur_path, filename)
-        if os.path.exists(path):
-            return path
-
-
-    log.info("Certificate file NOT found at %s" % str(path))
-    return None
-
 def check_yaml(conf_path):
     f = open(conf_path)
     check_name = os.path.basename(conf_path).split('.')[0]
     try:
-        check_config = yaml.load(f.read(), Loader=yLoader)
+        check_config = yaml.load(f.read(), Loader=Loader)
         assert 'init_config' in check_config, "No 'init_config' section found"
         assert 'instances' in check_config, "No 'instances' section found"
 
@@ -656,9 +553,6 @@ def load_check_directory(agentConfig):
     except PathNotFound, e:
         log.error("No conf.d folder found at '%s' or in the directory where the Agent is currently deployed.\n" % e.args[0])
         sys.exit(3)
-
-    # Migrate datadog.conf integration configurations that are not supported anymore
-    migrate_old_style_configuration(agentConfig, confd_path, get_config_path(None, os_name=get_os()))
 
     # Start JMXFetch if needed
     JMXFetch.init(confd_path, agentConfig, get_logging_config(), DEFAULT_CHECK_FREQUENCY, JMX_COLLECT_COMMAND)
@@ -789,12 +683,12 @@ def get_log_date_format():
 
 def get_log_format(logger_name):
     if get_os() != 'windows':
-        return '%%(asctime)s | %%(levelname)s | dd.%s | %%(name)s(%%(filename)s:%%(lineno)s) | %%(message)s' % logger_name
+        return '%%(asctime)s | %%(levelname)s | %s | %%(name)s(%%(filename)s:%%(lineno)s) | %%(message)s' % logger_name
     return '%(asctime)s | %(levelname)s | %(name)s(%(filename)s:%(lineno)s) | %(message)s'
 
 
 def get_syslog_format(logger_name):
-    return 'dd.%s[%%(process)d]: %%(levelname)s (%%(filename)s:%%(lineno)s): %%(message)s' % logger_name
+    return '%s[%%(process)d]: %%(levelname)s (%%(filename)s:%%(lineno)s): %%(message)s' % logger_name
 
 
 def get_logging_config(cfg_path=None):
@@ -805,7 +699,6 @@ def get_logging_config(cfg_path=None):
             'collector_log_file': '/var/log/datadog/collector.log',
             'forwarder_log_file': '/var/log/datadog/forwarder.log',
             'dogstatsd_log_file': '/var/log/datadog/dogstatsd.log',
-            'pup_log_file': '/var/log/datadog/pup.log',
             'jmxfetch_log_file': '/var/log/datadog/jmxfetch.log',
             'log_to_event_viewer': False,
             'log_to_syslog': True,
@@ -813,11 +706,11 @@ def get_logging_config(cfg_path=None):
             'syslog_port': None,
         }
     else:
-        windows_log_location = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'ddagent.log')
-        jmxfetch_log_file = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'jmxfetch.log')
+        windows_log_location = os.path.join(_windows_commondata_path(), 'Mon', 'logs', 'agent.log')
+        jmxfetch_log_file = os.path.join(_windows_commondata_path(), 'Mon', 'logs', 'jmxfetch.log')
         logging_config = {
             'log_level': None,
-            'ddagent_log_file': windows_log_location,
+            'agent_log_file': windows_log_location,
             'jmxfetch_log_file': jmxfetch_log_file,
             'log_to_event_viewer': False,
             'log_to_syslog': False,
@@ -897,7 +790,7 @@ def initialize_logging(logger_name):
 
         # set up file loggers
         if get_os() == 'windows' and not windows_file_handler_added:
-            logger_name = 'ddagent'
+            logger_name = 'agent'
             windows_file_handler_added = True
 
         log_file = logging_config.get('%s_log_file' % logger_name)
@@ -961,3 +854,45 @@ def initialize_logging(logger_name):
     # re-get the log after logging is initialized
     global log
     log = logging.getLogger(__name__)
+
+def get_mon_api_config(config):
+    mon_api_config = {'is_enabled': False,
+                      'url': '',
+                      'project_id': '',
+                      'username': '',
+                      'password': False,
+                      'use_keystone': False,
+                      'keystone_url': '',
+                      'aggregate_metrics': True,
+                      'mapping_file': ''}
+
+    if config.has_section("Api"):
+
+        if config.has_option("Api", "use_mon_api"):
+            mon_api_config["use_mon_api"] = config.getboolean("Api", "use_mon_api")
+
+        if config.has_option("Api", "url"):
+            mon_api_config["url"] = config.get("Api", "url")
+
+        if config.has_option("Api", "project_id"):
+            mon_api_config["project_id"] = config.get("Api", "project_id")
+
+        if config.has_option("Api", "username"):
+            mon_api_config["username"] = config.get("Api", "username")
+
+        if config.has_option("Api", "password"):
+            mon_api_config["password"] = config.get("Api", "password")
+
+        if config.has_option("Api", "use_keystone"):
+            mon_api_config["use_keystone"] = config.getboolean("Api", "use_keystone")
+
+        if config.has_option("Api", "keystone_url"):
+            mon_api_config["keystone_url"] = config.get("Api", "keystone_url")
+
+        if config.has_option("Api", "aggregate_metrics"):
+            mon_api_config["aggregate_metrics"] = config.getboolean("Api", "aggregate_metrics")
+
+        if config.has_option("Api", "mapping_file"):
+            mon_api_config["mapping_file"] = config.get("Api", "mapping_file")
+
+    return mon_api_config
