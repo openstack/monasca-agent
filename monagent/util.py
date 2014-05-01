@@ -1,3 +1,4 @@
+from hashlib import md5
 import os
 import platform
 import signal
@@ -257,7 +258,6 @@ class GCE(object):
             return None
 
 
-
 class Watchdog(object):
     """Simple signal-based watchdog that will scuttle the current process
     if it has not been reset every N seconds, or if the processes exceeds
@@ -306,7 +306,6 @@ class PidFile(object):
 
     PID_DIR = '/var/run/mon-agent'
 
-
     def __init__(self, program, pid_dir=None):
         self.pid_file = "%s.pid" % program
         self.pid_dir = pid_dir or self.get_default_pid_dir()
@@ -338,7 +337,6 @@ class PidFile(object):
             log.error("Cannot save pid file anywhere")
             raise Exception("Cannot save pid file anywhere")
 
-
     def clean(self):
         try:
             path = self.get_path()
@@ -348,7 +346,6 @@ class PidFile(object):
         except Exception:
             log.warn("Could not clean up pid file")
             return False
-
 
     def get_pid(self):
         "Retrieve the actual pid"
@@ -389,6 +386,7 @@ class LaconicFilter(logging.Filter):
                 return 1
         except Exception:
             return 1
+
 
 class Timer(object):
     """ Helper class """

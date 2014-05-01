@@ -5,10 +5,11 @@ import sys
 from random import random, randrange
 import urllib as url
 import time
-sys.path.append(os.getcwd())
-from collector_daemon import CollectorDaemon
 
+sys.path.append(os.path.join(os.path.dirname(__file__), '../monagent'))
+from collector_daemon import CollectorDaemon
 from util import Watchdog
+
 
 class TestWatchdog(unittest.TestCase):
     """Test watchdog in various conditions

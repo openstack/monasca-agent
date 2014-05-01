@@ -42,6 +42,7 @@ class TestRedis(unittest.TestCase):
                 if loop >= MAX_WAIT:
                     break
     def setUp(self):
+        raise SkipTest("Requires Redis installed")
         if not self.is_travis():
             self.redis_noauth = subprocess.Popen(["redis-server", "tests/redisnoauth.cfg"], stdout=subprocess.PIPE)
             self.wait4(self.redis_noauth, "The server is now ready to accept connections")
@@ -54,7 +55,6 @@ class TestRedis(unittest.TestCase):
             self.redis_auth.terminate()
 
     def test_redis_auth(self):
-        raise SkipTest("Requires Redis installed")
         # Test connection with password
         if not self.is_travis():
             # correct password
@@ -88,7 +88,6 @@ class TestRedis(unittest.TestCase):
                 assert len(metrics) == 0, "Should have failed with bad password; got %s instead" % metrics
 
     def test_redis_default(self):
-        raise SkipTest("Requires Redis installed")
         # Base test, uses the noauth instance
         if self.is_travis():
             port = DEFAULT_PORT

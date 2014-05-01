@@ -38,6 +38,10 @@ class HaproxyTestCase(unittest.TestCase):
                 if loop >= MAX_WAIT:
                     break
 
+    def setUp(self):
+        self.process = None
+        self.cfg = None
+
     def start_server(self, config_fn, config):
         self.agentConfig = {
             'version': '0.1',
@@ -47,7 +51,6 @@ class HaproxyTestCase(unittest.TestCase):
         # Initialize the check from checks.d
         self.check = load_check('haproxy', config, self.agentConfig)
 
-        self.process = None
         try:
             self.cfg = tempfile.NamedTemporaryFile()
             self.cfg.write(open(config_fn).read())

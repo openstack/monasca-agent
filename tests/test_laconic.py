@@ -3,6 +3,7 @@ import unittest
 from cStringIO import StringIO
 from checks import LaconicFilter
 
+
 class TestLaconic(unittest.TestCase):
     """Verify that we only output messages once
     """

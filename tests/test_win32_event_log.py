@@ -40,6 +40,7 @@ instances:
 
 class WinEventLogTest(unittest.TestCase):
     def setUp(self):
+        raise SkipTest("Requires win32evtlog module")
         import win32evtlog
         self.LOG_EVENTS = [
             ('Test 1', win32evtlog.EVENTLOG_WARNING_TYPE),
@@ -73,8 +74,6 @@ class WinEventLogTest(unittest.TestCase):
 
     @attr('windows')
     def test_windows_event_log(self):
-        raise SkipTest("Requires win32evtlog module")
-        import win32evtlog
         check, instances = get_check('win32_event_log', CONFIG)
 
         # Run the check against all instances to set the last_ts
