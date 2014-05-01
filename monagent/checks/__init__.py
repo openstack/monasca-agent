@@ -15,6 +15,7 @@ from util import LaconicFilter, get_os, get_hostname
 from config import get_confd_path
 from checks import check_status
 
+
 log = logging.getLogger(__name__)
 
 
@@ -281,7 +282,7 @@ class AgentCheck(object):
         :param agentConfig: The global configuration for the agent
         :param instances: A list of configuration objects for each instance.
         """
-        from aggregator import MetricsAggregator
+        from monagent.common.aggregator import MetricsAggregator
 
         self.name = name
         self.init_config = init_config

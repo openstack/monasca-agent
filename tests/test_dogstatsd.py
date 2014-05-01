@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import random
 import time
-
 import unittest
+
 import nose.tools as nt
 
-from aggregator import MetricsAggregator
+from monagent.common.aggregator import MetricsAggregator
 
 
 class TestUnitDogStatsd(unittest.TestCase):
@@ -91,9 +91,8 @@ class TestUnitDogStatsd(unittest.TestCase):
 
     def test_tags_gh442(self):
         import json
-        import util
         import dogstatsd
-        from aggregator import api_formatter
+        from monagent.common.aggregator import api_formatter
 
         dogstatsd.json = json
         serialized = dogstatsd.serialize_metrics([api_formatter("foo", 12, 1, ('tag',), 'host')])

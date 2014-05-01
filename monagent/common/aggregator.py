@@ -1,3 +1,5 @@
+""" Aggregation classes used by the collector and dogstatsd to batch messages sent to the forwarder.
+"""
 import logging
 from time import time
 from checks.metric_types import MetricTypes
@@ -465,6 +467,7 @@ class Aggregator(object):
 
     def send_packet_count(self, metric_name):
         self.submit_metric(metric_name, self.count, 'g')
+
 
 class MetricsBucketAggregator(Aggregator):
     """

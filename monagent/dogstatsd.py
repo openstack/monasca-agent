@@ -25,7 +25,7 @@ import threading
 from urllib import urlencode
 
 # project
-from aggregator import MetricsBucketAggregator
+from monagent.common.aggregator import MetricsBucketAggregator
 from checks.check_status import DogstatsdStatus
 from config import get_config
 from daemon import Daemon, AgentSupervisor

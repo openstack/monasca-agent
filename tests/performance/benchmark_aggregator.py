@@ -3,7 +3,7 @@ Performance tests for the agent/dogstatsd metrics aggregator.
 """
 
 
-from aggregator import MetricsAggregator
+from monagent.common.aggregator import MetricsAggregator
 
 
 

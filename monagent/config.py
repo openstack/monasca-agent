@@ -863,7 +863,6 @@ def get_mon_api_config(config):
                       'password': False,
                       'use_keystone': False,
                       'keystone_url': '',
-                      'aggregate_metrics': True,
                       'mapping_file': '',
                       'dimensions': None}
 
@@ -878,7 +877,6 @@ def get_mon_api_config(config):
                    "password": config.get,
                    "use_keystone": config.getboolean,
                    "keystone_url": config.get,
-                   "aggregate_metrics": config.getboolean,
                    "mapping_file": config.get}
 
         for name, func in options.iteritems():

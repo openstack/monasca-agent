@@ -19,7 +19,6 @@ class MonAPI(object):
         project_id = mon_api_config['project_id']
         user_id = mon_api_config['username']
         password = mon_api_config['password']
-        self.aggregate_metrics = mon_api_config['aggregate_metrics']
         self.mapping_file = mon_api_config['mapping_file']
         if 'dimensions' in mon_api_config:
             self.dimensions = mon_api_config['dimensions']
@@ -69,10 +68,7 @@ class MonAPI(object):
         for agent_metric in payload:
             try:
                 api_metric = get_api_metric(agent_metric, payload, host_dimensions, log)
-                if self.aggregate_metrics:
-                    metrics_list.extend(api_metric)
-                else:
-                    self._post(api_metric)
+                metrics_list.extend(api_metric)
 
                 if len(api_metric) > 0:
                     log.debug("Sending metric to API: %s", str(api_metric))

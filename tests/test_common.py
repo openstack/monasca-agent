@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger()
 from checks import Check, CheckException, UnknownValue, CheckException, Infinity
 from checks.collector import Collector
-from aggregator import MetricsAggregator
+from monagent.common.aggregator import MetricsAggregator
 
 class TestCore(unittest.TestCase):
     "Tests to validate the core check logic"
