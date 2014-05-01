@@ -866,7 +866,7 @@ def get_mon_api_config(config):
                       'mapping_file': '',
                       'dimensions': None}
 
-    if config.has_section("Main", "dimensions"):
+    if config.has_option("Main", "dimensions"):
         mon_api_config["dimensions"] = config.get("Main", "dimensions")
 
     if config.has_section("Api"):
