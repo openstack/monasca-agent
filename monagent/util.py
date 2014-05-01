@@ -148,12 +148,6 @@ def get_hostname(config=None):
     if config_hostname and is_valid_hostname(config_hostname):
         return config_hostname
 
-    #Try to get GCE instance name
-    if hostname is None:
-        gce_hostname = GCE.get_hostname()
-        if gce_hostname is not None:
-            if is_valid_hostname(gce_hostname):
-                return gce_hostname
     # then move on to os-specific detection
     if hostname is None:
         def _get_hostname_unix():
@@ -186,76 +180,6 @@ def get_hostname(config=None):
         raise Exception('Unable to reliably determine host name. You can define one in agent.conf or in your hosts file')
     else:
         return hostname
-
-
-class GCE(object):
-    URL = "http://169.254.169.254/computeMetadata/v1/?recursive=true"
-    TIMEOUT = 0.1 # second
-    SOURCE_TYPE_NAME = 'google cloud platform'
-    metadata = None
-
-
-    @staticmethod
-    def _get_metadata():
-        if GCE.metadata is not None:
-            return GCE.metadata
-
-        socket_to = None
-        try:
-            socket_to = socket.getdefaulttimeout()
-            socket.setdefaulttimeout(GCE.TIMEOUT)
-        except Exception:
-            pass
-
-        try:
-            opener = urllib2.build_opener()
-            opener.addheaders = [('X-Google-Metadata-Request','True')]
-            GCE.metadata = json.loads(opener.open(GCE.URL).read().strip())
-
-        except Exception:
-            GCE.metadata = {}
-
-        try:
-            if socket_to is None:
-                socket_to = 3
-            socket.setdefaulttimeout(socket_to)
-        except Exception:
-            pass
-        return GCE.metadata
-
-
-
-    @staticmethod
-    def get_tags():
-
-        try:
-            host_metadata = GCE._get_metadata()
-            tags = []
-
-            for key, value in host_metadata['instance'].get('attributes', {}).iteritems():
-                tags.append("%s:%s" % (key, value))
-
-            tags.extend(host_metadata['instance'].get('tags', []))
-            tags.append('zone:%s' % host_metadata['instance']['zone'].split('/')[-1])
-            tags.append('instance-type:%s' % host_metadata['instance']['machineType'].split('/')[-1])
-            tags.append('internal-hostname:%s' % host_metadata['instance']['hostname'])
-            tags.append('instance-id:%s' % host_metadata['instance']['id'])
-            tags.append('project:%s' % host_metadata['project']['projectId'])
-            tags.append('numeric_project_id:%s' % host_metadata['project']['numericProjectId'])
-
-            GCE.metadata['hostname'] = host_metadata['instance']['hostname'].split('.')[0]
-
-            return tags
-        except Exception:
-            return None
-
-    @staticmethod
-    def get_hostname():
-        try:
-            host_metadata = GCE._get_metadata()
-            return host_metadata['instance']['hostname'].split('.')[0]
-        except Exception:
-            return None
 
 
 class Watchdog(object):
