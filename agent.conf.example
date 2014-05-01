@@ -25,11 +25,10 @@ agent_url : http://localhost:17123
 # Force the hostname to whatever you want.
 #hostname: mymachine.mydomain
 
-# Set the host's tags
-#tags: mytag0, mytag1
-
-# Collect AWS EC2 custom tags as agent tags
-# collect_ec2_tags: no
+# Optional dimensions to be sent with every metric from this node
+# They should be in the format name:value and seperated by a comma
+# Example (dimensions: Environment:Test, Origin:Mini-Mon, ...)
+dimensions: Origin:Mini-mon, Environment:Dev
 
 # Set the threshold for accepting points to allow anything
 # with recent_point_threshold seconds

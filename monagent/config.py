@@ -194,7 +194,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         'forwarder_url': 'http://localhost:17123',
         'hostname': None,
         'listen_port': None,
-        'tags': None,
         'version': get_version(),
         'watchdog': True,
         'additional_checksd': '/etc/mon-agent/checks.d/',
@@ -855,6 +854,7 @@ def initialize_logging(logger_name):
     global log
     log = logging.getLogger(__name__)
 
+
 def get_mon_api_config(config):
     mon_api_config = {'is_enabled': False,
                       'url': '',
@@ -864,35 +864,25 @@ def get_mon_api_config(config):
                       'use_keystone': False,
                       'keystone_url': '',
                       'aggregate_metrics': True,
-                      'mapping_file': ''}
+                      'mapping_file': '',
+                      'dimensions': None}
+
+    if config.has_section("Main", "dimensions"):
+        mon_api_config["dimensions"] = config.get("Main", "dimensions")
 
     if config.has_section("Api"):
+        options = {"use_mon_api": config.getboolean,
+                   "url": config.get,
+                   "project_id": config.get,
+                   "username": config.get,
+                   "password": config.get,
+                   "use_keystone": config.getboolean,
+                   "keystone_url": config.get,
+                   "aggregate_metrics": config.getboolean,
+                   "mapping_file": config.get}
 
-        if config.has_option("Api", "use_mon_api"):
-            mon_api_config["use_mon_api"] = config.getboolean("Api", "use_mon_api")
-
-        if config.has_option("Api", "url"):
-            mon_api_config["url"] = config.get("Api", "url")
-
-        if config.has_option("Api", "project_id"):
-            mon_api_config["project_id"] = config.get("Api", "project_id")
-
-        if config.has_option("Api", "username"):
-            mon_api_config["username"] = config.get("Api", "username")
-
-        if config.has_option("Api", "password"):
-            mon_api_config["password"] = config.get("Api", "password")
-
-        if config.has_option("Api", "use_keystone"):
-            mon_api_config["use_keystone"] = config.getboolean("Api", "use_keystone")
-
-        if config.has_option("Api", "keystone_url"):
-            mon_api_config["keystone_url"] = config.get("Api", "keystone_url")
-
-        if config.has_option("Api", "aggregate_metrics"):
-            mon_api_config["aggregate_metrics"] = config.getboolean("Api", "aggregate_metrics")
-
-        if config.has_option("Api", "mapping_file"):
-            mon_api_config["mapping_file"] = config.get("Api", "mapping_file")
+        for name, func in options.iteritems():
+            if config.has_option("Api", name):
+                mon_api_config[name] = func("Api", name)
 
     return mon_api_config

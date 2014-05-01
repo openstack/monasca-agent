@@ -62,13 +62,13 @@ class MonAPI(object):
         log.debug("Starting the mon_api.emitter")
         log.debug("Payload ==> %s" % payload)
         MonNormalizer(log, self.mapping_file)
-        host_tags = get_standard_dimensions(payload, self.dimensions, log)
+        host_dimensions = get_standard_dimensions(payload, self.dimensions, log)
 
         log.debug('mon_api_http_emitter: attempting postback to ' + self.url)
         metrics_list = []
         for agent_metric in payload:
             try:
-                api_metric = get_api_metric(agent_metric, payload, host_tags, log)
+                api_metric = get_api_metric(agent_metric, payload, host_dimensions, log)
                 if self.aggregate_metrics:
                     metrics_list.extend(api_metric)
                 else:
