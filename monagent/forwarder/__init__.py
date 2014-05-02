@@ -169,9 +169,7 @@ class Forwarder(tornado.web.Application):
     def _post_metrics(self):
 
         if len(self._metrics) > 0:
-            self._metrics['uuid'] = get_uuid()
             self._metrics['internalHostname'] = get_hostname(self._agentConfig)
-            self._metrics['apiKey'] = self._agentConfig['api_key']
             MetricTransaction(self._metrics, headers={'Content-Type': 'application/json'})
             self._metrics = {}
 

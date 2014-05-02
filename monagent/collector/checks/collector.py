@@ -314,12 +314,10 @@ class Collector(object):
             'collection_timestamp': now,
             'os': self.os,
             'python': sys.version,
-            'agentVersion': self.agentConfig['version'],
             'events': {},
             'metrics': [],
             'resources': {},
             'internalHostname' : get_hostname(self.agentConfig),
-            'uuid': get_uuid(),
             'host-tags': {},
         }
 

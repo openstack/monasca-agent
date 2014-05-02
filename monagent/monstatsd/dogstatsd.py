@@ -256,6 +256,7 @@ class Server(object):
 
         # Inline variables for quick look-up.
         buffer_size = self.buffer_size
+        #todo dogstatsd is the only thing using this method of the aggregator, is there a more standard way to do it?
         aggregator_submit = self.metrics_aggregator.submit_packets
         sock = [self.socket]
         socket_recv = self.socket.recv

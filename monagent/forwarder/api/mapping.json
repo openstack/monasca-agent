@@ -1,6 +1,4 @@
 {
-    "agentVersion": "DISCARD",
-    "apiKey": "DISCARD",
     "collection_timestamp": "DISCARD",
     "cpuIdle" : "cpu_idle_perc",
     "cpuStolen" : "cpu_stolen_perc",
@@ -64,5 +62,4 @@
     "system.processes.iowrite_bytes": "DISCARD",
     "system.processes.cpu.pct": "DISCARD",
     "system.processes.mem.vms": "DISCARD",
-    "uuid": "DISCARD"
 }
