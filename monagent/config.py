@@ -867,7 +867,9 @@ def get_mon_api_config(config):
                       'dimensions': None}
 
     if config.has_option("Main", "dimensions"):
-        mon_api_config["dimensions"] = config.get("Main", "dimensions")
+        # parse comma separated dimensions into a dimension list
+        dim_list = [dim.split(':') for dim in config.get['Main', 'dimensions'].split(',')]
+        mon_api_config['dimensions'] = {key.strip(): value.strip() for key, value in dim_list}
 
     if config.has_section("Api"):
         options = {"use_mon_api": config.getboolean,
