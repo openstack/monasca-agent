@@ -6,10 +6,10 @@ import os
 from nose.plugins.skip import SkipTest
 
 from monagent.common.aggregator import MetricsAggregator
-from dogstatsd import Server
-from util import PidFile
-from config import get_logging_config
-from jmxfetch import JMXFetch
+from monstatsd.dogstatsd import Server
+from monagent.common.util import PidFile
+from monagent.common.config import get_logging_config
+from monagent.collector.jmxfetch import JMXFetch
 
 
 STATSD_PORT = 8121

@@ -1,14 +1,16 @@
 import unittest
 import time
 import threading
-from monagent.common.aggregator import MetricsAggregator
-from dogstatsd import Server
-from util import PidFile
 import os
-from config import get_logging_config
-from jmxfetch import JMXFetch
 
 from nose.plugins.skip import SkipTest
+
+from monagent.common.aggregator import MetricsAggregator
+from monagent.monstatsd.dogstatsd import Server
+from monagent.common.util import PidFile
+from monagent.common.config import get_logging_config
+from monagent.collector.jmxfetch import JMXFetch
+
 
 STATSD_PORT = 8129
 class DummyReporter(threading.Thread):

@@ -1,10 +1,12 @@
-from checks import AgentCheck
-from config import get_checksd_path
-from util import get_os
 import sys
 import inspect
 import os
 import signal
+
+from monagent.collector.checks import AgentCheck
+from monagent.common.config import get_checksd_path
+from monagent.common.util import get_os
+
 
 def load_check(name, config, agentConfig):
     checksd_path = get_checksd_path(get_os())

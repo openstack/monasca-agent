@@ -6,6 +6,7 @@ import unittest
 import nose.tools as nt
 
 from monagent.common.aggregator import MetricsAggregator
+from monstatsd import dogstatsd
 
 
 class TestUnitDogStatsd(unittest.TestCase):
@@ -91,7 +92,6 @@ class TestUnitDogStatsd(unittest.TestCase):
 
     def test_tags_gh442(self):
         import json
-        import dogstatsd
         from monagent.common.aggregator import api_formatter
 
         dogstatsd.json = json

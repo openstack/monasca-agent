@@ -1,14 +1,12 @@
 import unittest
 import logging
-import sys
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__file__)
 
-from util import Platform
-from checks.system.unix import *
+from monagent.collector.checks.system.unix import *
 from common import get_check
-from config import get_system_stats
+from monagent.common.config import get_system_stats
 
 class TestSystem(unittest.TestCase):
     def testCPU(self):

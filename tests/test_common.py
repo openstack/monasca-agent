@@ -2,8 +2,8 @@ import time
 import unittest
 import logging
 logger = logging.getLogger()
-from checks import Check, CheckException, UnknownValue, CheckException, Infinity
-from checks.collector import Collector
+from collector.checks import Check, UnknownValue, CheckException, Infinity
+from collector.checks.collector import Collector
 from monagent.common.aggregator import MetricsAggregator
 
 class TestCore(unittest.TestCase):

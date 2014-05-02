@@ -2,7 +2,9 @@
 """
 import logging
 from time import time
-from checks.metric_types import MetricTypes
+
+from metric_types import MetricTypes
+
 
 log = logging.getLogger(__name__)
 

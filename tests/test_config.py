@@ -3,9 +3,9 @@ import unittest
 import os.path
 import tempfile
 
-from config import get_config
+from monagent.common.config import get_config
+from monagent.common.util import PidFile, is_valid_hostname
 
-from util import PidFile, is_valid_hostname
 
 class TestConfig(unittest.TestCase):
     def testWhiteSpaceConfig(self):

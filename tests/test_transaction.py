@@ -1,8 +1,8 @@
 import unittest
 from datetime import timedelta, datetime
 
-from transaction import Transaction, TransactionManager
-from forwarder import  MAX_QUEUE_SIZE, THROTTLING_DELAY
+from monagent.forwarder.transaction import Transaction, TransactionManager
+from monagent.forwarder import MAX_QUEUE_SIZE, THROTTLING_DELAY
 
 
 class memTransaction(Transaction):

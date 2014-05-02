@@ -20,10 +20,6 @@ import win32serviceutil
 import win32service
 
 # GUI Imports
-from guidata.qt.QtGui import (QWidget, QVBoxLayout, QSplitter, QFont,
-                              QListWidget, QPushButton, QLabel, QGroupBox,
-                              QHBoxLayout, QMessageBox, QInputDialog,
-                              QSystemTrayIcon, QIcon, QMenu)
 from guidata.qt.QtCore import SIGNAL, Qt, QSize, QPoint, QTimer
 
 from guidata.configtools import get_icon, get_family, MONOSPACE
@@ -32,7 +28,7 @@ from spyderlib.widgets.sourcecode.codeeditor import CodeEditor
 
 
 # Datadog
-from util import get_os
+from common.util import get_os
 from config import (get_confd_path, get_config_path, get_config, 
     _windows_commondata_path)
 
