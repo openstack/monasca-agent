@@ -28,7 +28,7 @@ class IISTestCase(unittest.TestCase):
 
         base_metrics = [m[0] for m in check.METRICS]
         ret_metrics = [m[0] for m in metrics]
-        ret_tags = [m[3]['tags'] for m in metrics]
+        ret_tags = [m[3]['dimensions'] for m in metrics]
 
         # Make sure each metric was captured
         for metric in base_metrics:

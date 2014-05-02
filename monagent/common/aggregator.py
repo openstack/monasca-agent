@@ -37,14 +37,13 @@ class Aggregator(object):
     # Types of metrics that allow strings
     ALLOW_STRINGS = ['s', ]
 
-    def __init__(self, hostname, interval=1.0, expiry_seconds=300, formatter=None, recent_point_threshold=None):
+    def __init__(self, hostname, interval=1.0, expiry_seconds=300, recent_point_threshold=None):
         self.events = []
         self.total_count = 0
         self.count = 0
         self.event_count = 0
         self.hostname = hostname
         self.expiry_seconds = expiry_seconds
-        self.formatter = formatter or self.api_formatter
         self.interval = float(interval)
 
         recent_point_threshold = recent_point_threshold or RECENT_POINT_THRESHOLD_DEFAULT
@@ -52,21 +51,27 @@ class Aggregator(object):
         self.num_discarded_old_points = 0
 
     @staticmethod
-    def api_formatter(metric, value, timestamp, tags, hostname, device_name=None,
-                      metric_type=None, interval=None):
-        # Workaround for a bug in minjson serialization
-        # (https://github.com/DataDog/dd-agent/issues/422)
-        if tags is not None and isinstance(tags, tuple) and len(tags) == 1:
-            tags = list(tags)
-        return {
-            'metric': metric,
-            'points': [(timestamp, value)],
-            'tags': tags,
-            'host': hostname,
-            'device_name': device_name,
-            'type': metric_type or MetricTypes.GAUGE,
-            'interval':interval,
-            }
+    def formatter(metric, value, timestamp, dimensions, hostname, device_name=None, metric_type=None, interval=None):
+        """ Formats metrics. Will look like:
+            (metric, timestamp, value, {"dimensions": {"name1": "value1", "name2": "value2"}, ...})
+            dimensions should be a dictionary
+        """
+        #todo is there a clearer way to do this, pass in a dictionary in the first place for attributes?
+        attributes = {}
+        if dimensions:
+            attributes['dimensions'] = dimensions
+        if hostname:
+            attributes['hostname'] = hostname
+        if device_name:
+            attributes['device_name'] = device_name
+        if metric_type:
+            attributes['type'] = metric_type
+        if interval:
+            attributes['interval'] = interval
+
+        if attributes:
+            return (metric, int(timestamp), value, attributes)
+        return (metric, int(timestamp), value)
 
     def packets_per_second(self, interval):
         if interval == 0:
@@ -104,18 +109,19 @@ class Aggregator(object):
                     raise Exception('Metric value must be a number: %s, %s' % (name, raw_value))
 
 
-        # Parse the optional values - sample rate & tags.
+        # Parse the optional values - sample rate & dimensions.
         sample_rate = 1
-        tags = None
+        dimensions = None
         for m in metadata[2:]:
             # Parse the sample rate
             if m[0] == '@':
                 sample_rate = float(m[1:])
                 assert 0 <= sample_rate <= 1
             elif m[0] == '#':
-                tags = tuple(sorted(m[1:].split(',')))
+                dim_list = [dim.split(':') for dim in m[1:].split(',')]
+                dimensions = {key.strip(): value.strip() for key, value in dim_list}
 
-        return name, value, metric_type, tags, sample_rate
+        return name, value, metric_type, dimensions, sample_rate
 
     @staticmethod
     def _unescape_event_text(string):
@@ -153,7 +159,7 @@ class Aggregator(object):
                 elif m[0] == u'h':
                     event['hostname'] = m[2:]
                 elif m[0] == u'#':
-                    event['tags'] = sorted(m[1:].split(u','))
+                    event['dimensions'] = sorted(m[1:].split(u','))
             return event
         except IndexError, ValueError:
             raise Exception(u'Unparseable event packet: %s' % packet)
@@ -170,15 +176,15 @@ class Aggregator(object):
                 self.event(**event)
             else:
                 self.count += 1
-                name, value, mtype, tags, sample_rate = self.parse_metric_packet(packet)
-                self.submit_metric(name, value, mtype, tags=tags, sample_rate=sample_rate)
+                name, value, mtype, dimensions, sample_rate = self.parse_metric_packet(packet)
+                self.submit_metric(name, value, mtype, dimensions=dimensions, sample_rate=sample_rate)
 
-    def submit_metric(self, name, value, mtype, tags=None, hostname=None,
+    def submit_metric(self, name, value, mtype, dimensions=None, hostname=None,
                                 device_name=None, timestamp=None, sample_rate=1):
         """ Add a metric to be aggregated """
         raise NotImplementedError()
 
-    def event(self, title, text, date_happened=None, alert_type=None, aggregation_key=None, source_type_name=None, priority=None, tags=None, hostname=None):
+    def event(self, title, text, date_happened=None, alert_type=None, aggregation_key=None, source_type_name=None, priority=None, dimensions=None, hostname=None):
         event = {
             'msg_title': title,
             'msg_text': text,
@@ -195,8 +201,8 @@ class Aggregator(object):
             event['source_type_name'] = source_type_name
         if priority is not None:
             event['priority'] = priority
-        if tags is not None:
-            event['tags'] = sorted(tags)
+        if dimensions is not None:
+            event['dimensions'] = dimensions
         if hostname is not None:
             event['host'] = hostname
         else:
@@ -228,8 +234,8 @@ class MetricsBucketAggregator(Aggregator):
     A metric aggregator class.
     """
 
-    def __init__(self, hostname, interval=1.0, expiry_seconds=300, formatter=None, recent_point_threshold=None):
-        super(MetricsBucketAggregator, self).__init__(hostname, interval, expiry_seconds, formatter, recent_point_threshold)
+    def __init__(self, hostname, interval=1.0, expiry_seconds=300, recent_point_threshold=None):
+        super(MetricsBucketAggregator, self).__init__(hostname, interval, expiry_seconds, recent_point_threshold)
         self.metric_by_bucket = {}
         self.last_sample_time_by_context = {}
         self.current_bucket = None
@@ -246,15 +252,15 @@ class MetricsBucketAggregator(Aggregator):
     def calculate_bucket_start(self, timestamp):
         return timestamp - (timestamp % self.interval)
 
-    def submit_metric(self, name, value, mtype, tags=None, hostname=None,
+    def submit_metric(self, name, value, mtype, dimensions=None, hostname=None,
                                 device_name=None, timestamp=None, sample_rate=1):
-        # Avoid calling extra functions to dedupe tags if there are none
+        # Avoid calling extra functions to dedupe dimensions if there are none
         # Note: if you change the way that context is created, please also change create_empty_metrics,
         #  which counts on this order
-        if tags is None:
-            context = (name, tuple(), hostname, device_name)
+        if dimensions is None:
+            context = (name, {}, hostname, device_name)
         else:
-            context = (name, tuple(sorted(set(tags))), hostname, device_name)
+            context = (name, dimensions, hostname, device_name)
 
         cur_time = time()
         # Check to make sure that the timestamp that is passed in (if any) is not older than
@@ -277,7 +283,7 @@ class MetricsBucketAggregator(Aggregator):
 
             if context not in metric_by_context:
                 metric_class = self.metric_type_to_class[mtype]
-                metric_by_context[context] = metric_class(self.formatter, name, tags,
+                metric_by_context[context] = metric_class(self.formatter, name, dimensions,
                     hostname or self.hostname, device_name)
 
             metric_by_context[context].sample(value, sample_rate, timestamp)
@@ -352,8 +358,8 @@ class MetricsAggregator(Aggregator):
     A metric aggregator class.
     """
 
-    def __init__(self, hostname, interval=1.0, expiry_seconds=300, formatter=None, recent_point_threshold=None):
-        super(MetricsAggregator, self).__init__(hostname, interval, expiry_seconds, formatter, recent_point_threshold)
+    def __init__(self, hostname, interval=1.0, expiry_seconds=300, recent_point_threshold=None):
+        super(MetricsAggregator, self).__init__(hostname, interval, expiry_seconds, recent_point_threshold)
         self.metrics = {}
         self.metric_type_to_class = {
             'g': Gauge,
@@ -364,16 +370,16 @@ class MetricsAggregator(Aggregator):
             '_dd-r': Rate,
         }
 
-    def submit_metric(self, name, value, mtype, tags=None, hostname=None,
+    def submit_metric(self, name, value, mtype, dimensions=None, hostname=None,
                                 device_name=None, timestamp=None, sample_rate=1):
-        # Avoid calling extra functions to dedupe tags if there are none
-        if tags is None:
-            context = (name, tuple(), hostname, device_name)
+        # Avoid calling extra functions to dedupe dimensions if there are none
+        if dimensions is None:
+            context = (name, {}, hostname, device_name)
         else:
-            context = (name, tuple(sorted(set(tags))), hostname, device_name)
+            context = (name, dimensions, hostname, device_name)
         if context not in self.metrics:
             metric_class = self.metric_type_to_class[mtype]
-            self.metrics[context] = metric_class(self.formatter, name, tags,
+            self.metrics[context] = metric_class(self.formatter, name, dimensions,
                 hostname or self.hostname, device_name)
         cur_time = time()
         if timestamp is not None and cur_time - int(timestamp) > self.recent_point_threshold:
@@ -382,23 +388,23 @@ class MetricsAggregator(Aggregator):
         else:
             self.metrics[context].sample(value, sample_rate, timestamp)
 
-    def gauge(self, name, value, tags=None, hostname=None, device_name=None, timestamp=None):
-        self.submit_metric(name, value, 'g', tags, hostname, device_name, timestamp)
+    def gauge(self, name, value, dimensions=None, hostname=None, device_name=None, timestamp=None):
+        self.submit_metric(name, value, 'g', dimensions, hostname, device_name, timestamp)
 
-    def increment(self, name, value=1, tags=None, hostname=None, device_name=None):
-        self.submit_metric(name, value, 'c', tags, hostname, device_name)
+    def increment(self, name, value=1, dimensions=None, hostname=None, device_name=None):
+        self.submit_metric(name, value, 'c', dimensions, hostname, device_name)
 
-    def decrement(self, name, value=-1, tags=None, hostname=None, device_name=None):
-        self.submit_metric(name, value, 'c', tags, hostname, device_name)
+    def decrement(self, name, value=-1, dimensions=None, hostname=None, device_name=None):
+        self.submit_metric(name, value, 'c', dimensions, hostname, device_name)
 
-    def rate(self, name, value, tags=None, hostname=None, device_name=None):
-        self.submit_metric(name, value, '_dd-r', tags, hostname, device_name)
+    def rate(self, name, value, dimensions=None, hostname=None, device_name=None):
+        self.submit_metric(name, value, '_dd-r', dimensions, hostname, device_name)
 
-    def histogram(self, name, value, tags=None, hostname=None, device_name=None):
-        self.submit_metric(name, value, 'h', tags, hostname, device_name)
+    def histogram(self, name, value, dimensions=None, hostname=None, device_name=None):
+        self.submit_metric(name, value, 'h', dimensions, hostname, device_name)
 
-    def set(self, name, value, tags=None, hostname=None, device_name=None):
-        self.submit_metric(name, value, 's', tags, hostname, device_name)
+    def set(self, name, value, dimensions=None, hostname=None, device_name=None):
+        self.submit_metric(name, value, 's', dimensions, hostname, device_name)
 
     def flush(self):
         timestamp = time()

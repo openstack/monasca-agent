@@ -337,7 +337,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
     except ConfigParser.NoOptionError, e:
         sys.stderr.write('There are some items missing from your config file, but nothing fatal [%s]' % e)
 
-    # Storing proxy settings in the agentConfig
+    # Storing proxy settings in the agent_config
     agentConfig['proxy_settings'] = get_proxy(agentConfig)
 
     return agentConfig

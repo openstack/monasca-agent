@@ -80,8 +80,8 @@ SELECT relname,
         'relation': True,
     }
 
-    def __init__(self, name, init_config, agentConfig):
-        AgentCheck.__init__(self, name, init_config, agentConfig)
+    def __init__(self, name, init_config, agent_config):
+        AgentCheck.__init__(self, name, init_config, agent_config)
         self.dbs = {}
         self.versions = {}
 

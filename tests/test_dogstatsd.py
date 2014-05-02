@@ -14,7 +14,7 @@ class TestUnitDogStatsd(unittest.TestCase):
     @staticmethod
     def sort_metrics(metrics):
         def sort_by(m):
-            return (m['metric'],  ','.join(m['tags'] or []))
+            return (m['metric'],  ','.join(m['dimensions'] or []))
         return sorted(metrics, key=sort_by)
 
     @staticmethod
@@ -76,17 +76,17 @@ class TestUnitDogStatsd(unittest.TestCase):
         first, second, third = metrics
 
         nt.assert_equal(first['metric'], 'gauge')
-        nt.assert_equal(first['tags'], None)
+        nt.assert_equal(first['dimensions'], None)
         nt.assert_equal(first['points'][0][1], 3)
         nt.assert_equal(first['host'], 'myhost')
 
         nt.assert_equal(second['metric'], 'gauge')
-        nt.assert_equal(second['tags'], ('tag1', 'tag2'))
+        nt.assert_equal(second['dimensions'], ('tag1', 'tag2'))
         nt.assert_equal(second['points'][0][1], 12)
         nt.assert_equal(second['host'], 'myhost')
 
         nt.assert_equal(third['metric'], 'gauge')
-        nt.assert_equal(third['tags'], ('tag3', 'tag4'))
+        nt.assert_equal(third['dimensions'], ('tag3', 'tag4'))
         nt.assert_equal(third['points'][0][1], 16)
         nt.assert_equal(third['host'], 'myhost')
 
@@ -414,7 +414,7 @@ class TestUnitDogStatsd(unittest.TestCase):
         first, second, third, fourth = events
 
         try:
-            first['tags']
+            first['dimensions']
         except Exception:
                 assert True
         else:
@@ -424,17 +424,17 @@ class TestUnitDogStatsd(unittest.TestCase):
 
         nt.assert_equal(second['title'], 'title2')
         nt.assert_equal(second['text'], 'text')
-        nt.assert_equal(second['tags'], sorted(['t1']))
+        nt.assert_equal(second['dimensions'], sorted(['t1']))
 
         nt.assert_equal(third['title'], 'title3')
         nt.assert_equal(third['text'], 'text')
-        nt.assert_equal(third['tags'], sorted(['t1', 't2:v2', 't3', 't4']))
+        nt.assert_equal(third['dimensions'], sorted(['t1', 't2:v2', 't3', 't4']))
 
         nt.assert_equal(fourth['title'], 'title4')
         nt.assert_equal(fourth['text'], 'text')
         nt.assert_equal(fourth['aggregation_key'], 'key')
         nt.assert_equal(fourth['priority'], 'normal')
-        nt.assert_equal(fourth['tags'], sorted(['t1', 't2']))
+        nt.assert_equal(fourth['dimensions'], sorted(['t1', 't2']))
 
     def test_event_title(self):
         stats = MetricsAggregator('myhost')

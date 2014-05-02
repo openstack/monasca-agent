@@ -43,8 +43,8 @@ class RabbitMQ(AgentCheck):
     Management Plugin (http://www.rabbitmq.com/management.html)
     """
 
-    def __init__(self, name, init_config, agentConfig, instances=None):
-        AgentCheck.__init__(self, name, init_config, agentConfig, instances)
+    def __init__(self, name, init_config, agent_config, instances=None):
+        AgentCheck.__init__(self, name, init_config, agent_config, instances)
         self.already_alerted = []
 
     @staticmethod

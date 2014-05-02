@@ -47,7 +47,7 @@ class Couchbase(AgentCheck):
     def _get_stats(self, url, instance):
         "Hit a given URL and return the parsed json"
         self.log.debug('Fetching Couchbase stats at url: %s' % url)
-        req = urllib2.Request(url, None, headers(self.agentConfig))
+        req = urllib2.Request(url, None, headers(self.agent_config))
         if 'user' in instance and 'password' in instance:
             add_basic_auth(req, instance['user'], instance['password'])
 

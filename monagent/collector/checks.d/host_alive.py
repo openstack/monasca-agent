@@ -11,8 +11,8 @@ from monagent.collector.checks import AgentCheck
 class HostAlive(AgentCheck):
     """Inherit Agentcheck class to test if a host is alive or not"""
 
-    def __init__(self, name, init_config, agentConfig, instances=None):
-        AgentCheck.__init__(self, name, init_config, agentConfig, instances)
+    def __init__(self, name, init_config, agent_config, instances=None):
+        AgentCheck.__init__(self, name, init_config, agent_config, instances)
 
     def _test_ssh(self, host, port, timeout=None):
         """ Connect to the SSH port (typically 22) and look for a banner """

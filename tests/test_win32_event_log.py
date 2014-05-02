@@ -102,7 +102,7 @@ class WinEventLogTest(unittest.TestCase):
             # Make sure we only picked up our source
             assert 'EVENTLOGTESTBAD' not in ev['msg_title']
             # Make sure the tags match up
-            assert ev['tags'] == inst1['tags']
+            assert ev['dimensions'] == inst1['dimensions']
             # Check that the notifications are there.
             for notify in inst1['notify']:
                 assert '@%s' % notify in ev['msg_text']
@@ -116,7 +116,7 @@ class WinEventLogTest(unittest.TestCase):
             # Make sure we only picked up our source
             assert 'EVENTLOGTESTBAD' not in ev['msg_title']
             # Make sure the tags match up
-            assert ev['tags'] == inst1['tags']
+            assert ev['dimensions'] == inst1['dimensions']
 
 
 if __name__ == "__main__":

@@ -24,4 +24,4 @@ class CouchDBTestCase(unittest.TestCase):
         metrics = self.check.get_metrics()
         self.assertTrue(type(metrics) == type([]), metrics)
         self.assertTrue(len(metrics) > 3)
-        self.assertTrue(len([k for k in metrics if "instance:http://localhost:5984" in k[3]['tags']]) > 3)
+        self.assertTrue(len([k for k in metrics if "instance:http://localhost:5984" in k[3]['dimensions']]) > 3)

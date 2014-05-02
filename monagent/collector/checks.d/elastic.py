@@ -111,8 +111,8 @@ class ElasticSearch(AgentCheck):
         "elasticsearch.cluster_status": ("gauge", "status", lambda v: {"red": 0, "yellow": 1, "green": 2}.get(v, -1)),
     }
 
-    def __init__(self, name, init_config, agentConfig):
-        AgentCheck.__init__(self, name, init_config, agentConfig)
+    def __init__(self, name, init_config, agent_config):
+        AgentCheck.__init__(self, name, init_config, agent_config)
 
         # Host status needs to persist across all checks
         self.cluster_status = {}
@@ -220,7 +220,7 @@ class ElasticSearch(AgentCheck):
         """ Hit a given URL and return the parsed json
             `auth` is a tuple of (username, password) or None
         """
-        req = urllib2.Request(url, None, headers(self.agentConfig))
+        req = urllib2.Request(url, None, headers(self.agent_config))
         if auth:
             add_basic_auth(req, *auth)
         request = urllib2.urlopen(req)
@@ -270,7 +270,7 @@ class ElasticSearch(AgentCheck):
         """ Returns a list of primary interface addresses as seen by ES.
             Used in ES < 0.19
         """
-        req = urllib2.Request(url, None, headers(self.agentConfig))
+        req = urllib2.Request(url, None, headers(self.agent_config))
         # Load basic authentication configuration, if available.
         if auth:
             add_basic_auth(req, *auth)

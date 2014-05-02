@@ -24,8 +24,8 @@ class SQLServer(AgentCheck):
         ('sqlserver.buffer.checkpoint_pages', 'gauge', 'Checkpoint pages/sec')
     ]
 
-    def __init__(self, name, init_config, agentConfig):
-        AgentCheck.__init__(self, name, init_config, agentConfig)
+    def __init__(self, name, init_config, agent_config):
+        AgentCheck.__init__(self, name, init_config, agent_config)
 
         # Load any custom metrics from conf.d/sqlserver.yaml
         for row in init_config.get('custom_metrics', []):

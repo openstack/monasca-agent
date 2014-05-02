@@ -42,8 +42,8 @@ class Riak(AgentCheck):
                  "node_get_fsm_time",
                  "node_put_fsm_time"]
 
-    def __init__(self, name, init_config, agentConfig, instances=None):
-        AgentCheck.__init__(self, name, init_config, agentConfig, instances)
+    def __init__(self, name, init_config, agent_config, instances=None):
+        AgentCheck.__init__(self, name, init_config, agent_config, instances)
         for k in ["mean", "median", "95", "99", "100"]:
             [self.keys.append(m + "_" + k) for m in self.stat_keys]
 

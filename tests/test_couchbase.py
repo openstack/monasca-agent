@@ -64,7 +64,7 @@ class CouchbaseTestCase(unittest.TestCase):
         
         self.assertTrue(type(metrics) == type([]), metrics)
         self.assertTrue(len(metrics) > 3)
-        self.assertTrue(len([k for k in metrics if "instance:http://localhost:8091" in k[3]['tags']]) > 3)
+        self.assertTrue(len([k for k in metrics if "instance:http://localhost:8091" in k[3]['dimensions']]) > 3)
 
         self.assertTrue(len([k for k in metrics if -1 != k[0].find('by_node')]) > 1, 'Unable to fund any per node metrics')
         self.assertTrue(len([k for k in metrics if -1 != k[0].find('by_bucket')]) > 1, 'Unable to fund any per node metrics')

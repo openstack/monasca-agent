@@ -15,8 +15,8 @@ from monagent.collector.checks import AgentCheck
 class WrapNagios(AgentCheck):
     """Inherit Agentcheck class to process Nagios checks"""
 
-    def __init__(self, name, init_config, agentConfig, instances=None):
-        AgentCheck.__init__(self, name, init_config, agentConfig, instances)
+    def __init__(self, name, init_config, agent_config, instances=None):
+        AgentCheck.__init__(self, name, init_config, agent_config, instances)
 
     @staticmethod
     def _do_skip_check(instance, last_run_data):

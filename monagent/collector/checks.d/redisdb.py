@@ -67,8 +67,8 @@ class Redis(AgentCheck):
         'used_cpu_user_children':       'redis.cpu.user_children',
     }
 
-    def __init__(self, name, init_config, agentConfig):
-        AgentCheck.__init__(self, name, init_config, agentConfig)
+    def __init__(self, name, init_config, agent_config):
+        AgentCheck.__init__(self, name, init_config, agent_config)
         self.connections = {}
 
     @staticmethod

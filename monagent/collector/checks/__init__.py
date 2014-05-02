@@ -55,8 +55,8 @@ class Check(object):
 
     def __init__(self, logger):
         # where to store samples, indexed by metric_name
-        # metric_name: {("sorted", "tags"): [(ts, value), (ts, value)],
-        #                 tuple(tags) are stored as a key since lists are not hashable
+        # metric_name: {("sorted", "dimensions"): [(ts, value), (ts, value)],
+        #                 tuple(dimensions) are stored as a key since lists are not hashable
         #               None: [(ts, value), (ts, value)]}
         #                 untagged values are indexed by None
         self._sample_store = {}
@@ -120,13 +120,13 @@ class Check(object):
         "Get all metric names"
         return self._sample_store.keys()
 
-    def save_gauge(self, metric, value, timestamp=None, tags=None, hostname=None, device_name=None):
+    def save_gauge(self, metric, value, timestamp=None, dimensions=None, hostname=None, device_name=None):
         """ Save a gauge value. """
         if not self.is_gauge(metric):
             self.gauge(metric)
-        self.save_sample(metric, value, timestamp, tags, hostname, device_name)
+        self.save_sample(metric, value, timestamp, dimensions, hostname, device_name)
 
-    def save_sample(self, metric, value, timestamp=None, tags=None, hostname=None, device_name=None):
+    def save_sample(self, metric, value, timestamp=None, dimensions=None, hostname=None, device_name=None):
         """Save a simple sample, evict old values if needed
         """
         from common.util import cast_metric_val
@@ -140,15 +140,12 @@ class Check(object):
         except ValueError, ve:
             raise NaN(ve)
 
-        # Sort and validate tags
-        if tags is not None:
-            if type(tags) not in [type([]), type(())]:
-                raise CheckException("Tags must be a list or tuple of strings")
-            else:
-                tags = tuple(sorted(tags))
+        # Sort and validate dimensions
+        if dimensions is not None and not isinstance(dimensions, dict):
+            raise CheckException("Dimensions must be a dictionary")
 
         # Data eviction rules
-        key = (tags, device_name)
+        key = (dimensions, device_name)
         if self.is_gauge(metric):
             self._sample_store[metric][key] = ((timestamp, value, hostname, device_name), )
         elif self.is_counter(metric):
@@ -162,7 +159,7 @@ class Check(object):
                                  (metric, time.ctime(timestamp)))
 
         if self.is_gauge(metric):
-            # store[metric][tags] = (ts, val) - only 1 value allowed
+            # store[metric][dimensions] = (ts, val) - only 1 value allowed
             assert len(self._sample_store[metric][key]) == 1, self._sample_store[metric]
         elif self.is_counter(metric):
             assert len(self._sample_store[metric][key]) in (1, 2), self._sample_store[metric]
@@ -187,14 +184,11 @@ class Check(object):
         except Exception, e:
             raise NaN(e)
 
-    def get_sample_with_timestamp(self, metric, tags=None, device_name=None, expire=True):
+    def get_sample_with_timestamp(self, metric, dimensions=None, device_name=None, expire=True):
         "Get (timestamp-epoch-style, value)"
 
-        # Get the proper tags
-        if tags is not None and isinstance(tags, list):
-            tags.sort()
-            tags = tuple(tags)
-        key = (tags, device_name)
+        # Get the proper dimensions
+        key = (dimensions, device_name)
 
         # Never seen this metric
         if metric not in self._sample_store:
@@ -216,9 +210,9 @@ class Check(object):
         else:
             raise UnknownValue()
 
-    def get_sample(self, metric, tags=None, device_name=None, expire=True):
+    def get_sample(self, metric, dimensions=None, device_name=None, expire=True):
         "Return the last value for that metric"
-        x = self.get_sample_with_timestamp(metric, tags, device_name, expire)
+        x = self.get_sample_with_timestamp(metric, dimensions, device_name, expire)
         assert isinstance(x, tuple) and len(x) == 4, x
         return x[1]
 
@@ -248,20 +242,20 @@ class Check(object):
         This is the preferred method to retrieve metrics
 
         @return the list of samples
-        @rtype [(metric_name, timestamp, value, {"tags": ["tag1", "tag2"]}), ...]
+        @rtype [(metric_name, timestamp, value, {"dimensions": ["tag1", "tag2"]}), ...]
         """
         metrics = []
         for m in self._sample_store:
             try:
                 for key in self._sample_store[m]:
-                    tags, device_name = key
+                    dimensions, device_name = key
                     try:
-                        ts, val, hostname, device_name = self.get_sample_with_timestamp(m, tags, device_name, expire)
+                        ts, val, hostname, device_name = self.get_sample_with_timestamp(m, dimensions, device_name, expire)
                     except UnknownValue:
                         continue
                     attributes = {}
-                    if tags:
-                        attributes['tags'] = list(tags)
+                    if dimensions:
+                        attributes['dimensions'] = list(dimensions)
                     if hostname:
                         attributes['host_name'] = hostname
                     if device_name:
@@ -274,25 +268,25 @@ class Check(object):
 
 class AgentCheck(object):
 
-    def __init__(self, name, init_config, agentConfig, instances=None):
+    def __init__(self, name, init_config, agent_config, instances=None):
         """
         Initialize a new check.
 
         :param name: The name of the check
         :param init_config: The config for initializing the check
-        :param agentConfig: The global configuration for the agent
+        :param agent_config: The global configuration for the agent
         :param instances: A list of configuration objects for each instance.
         """
         from monagent.common.aggregator import MetricsAggregator
 
         self.name = name
         self.init_config = init_config
-        self.agentConfig = agentConfig
-        self.hostname = get_hostname(agentConfig)
+        self.agent_config = agent_config
+        self.hostname = get_hostname(agent_config)
         self.log = logging.getLogger('%s.%s' % (__name__, name))
 
-        self.aggregator = MetricsAggregator(self.hostname, formatter=agent_formatter,
-                                            recent_point_threshold=agentConfig.get('recent_point_threshold', None))
+        self.aggregator = MetricsAggregator(self.hostname,
+                                            recent_point_threshold=agent_config.get('recent_point_threshold', None))
 
         self.events = []
         self.instances = instances or []
@@ -303,45 +297,45 @@ class AgentCheck(object):
         """ Return the number of instances that are configured for this check. """
         return len(self.instances)
 
-    def gauge(self, metric, value, tags=None, hostname=None, device_name=None, timestamp=None):
+    def gauge(self, metric, value, dimensions=None, hostname=None, device_name=None, timestamp=None):
         """
-        Record the value of a gauge, with optional tags, hostname and device
+        Record the value of a gauge, with optional dimensions, hostname and device
         name.
 
         :param metric: The name of the metric
         :param value: The value of the gauge
-        :param tags: (optional) A list of tags for this metric
+        :param dimensions: (optional) A list of dimensions for this metric
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         :param timestamp: (optional) The timestamp for this metric value
         """
-        self.aggregator.gauge(metric, value, tags, hostname, device_name, timestamp)
+        self.aggregator.gauge(metric, value, dimensions, hostname, device_name, timestamp)
 
-    def increment(self, metric, value=1, tags=None, hostname=None, device_name=None):
+    def increment(self, metric, value=1, dimensions=None, hostname=None, device_name=None):
         """
-        Increment a counter with optional tags, hostname and device name.
+        Increment a counter with optional dimensions, hostname and device name.
 
         :param metric: The name of the metric
         :param value: The value to increment by
-        :param tags: (optional) A list of tags for this metric
+        :param dimensions: (optional) A list of dimensions for this metric
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         """
-        self.aggregator.increment(metric, value, tags, hostname, device_name)
+        self.aggregator.increment(metric, value, dimensions, hostname, device_name)
 
-    def decrement(self, metric, value=-1, tags=None, hostname=None, device_name=None):
+    def decrement(self, metric, value=-1, dimensions=None, hostname=None, device_name=None):
         """
-        Increment a counter with optional tags, hostname and device name.
+        Increment a counter with optional dimensions, hostname and device name.
 
         :param metric: The name of the metric
         :param value: The value to decrement by
-        :param tags: (optional) A list of tags for this metric
+        :param dimensions: (optional) A list of dimensions for this metric
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         """
-        self.aggregator.decrement(metric, value, tags, hostname, device_name)
+        self.aggregator.decrement(metric, value, dimensions, hostname, device_name)
 
-    def rate(self, metric, value, tags=None, hostname=None, device_name=None):
+    def rate(self, metric, value, dimensions=None, hostname=None, device_name=None):
         """
         Submit a point for a metric that will be calculated as a rate on flush.
         Values will persist across each call to `check` if there is not enough
@@ -349,35 +343,35 @@ class AgentCheck(object):
 
         :param metric: The name of the metric
         :param value: The value of the rate
-        :param tags: (optional) A list of tags for this metric
+        :param dimensions: (optional) A list of dimensions for this metric
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         """
-        self.aggregator.rate(metric, value, tags, hostname, device_name)
+        self.aggregator.rate(metric, value, dimensions, hostname, device_name)
 
-    def histogram(self, metric, value, tags=None, hostname=None, device_name=None):
+    def histogram(self, metric, value, dimensions=None, hostname=None, device_name=None):
         """
-        Sample a histogram value, with optional tags, hostname and device name.
+        Sample a histogram value, with optional dimensions, hostname and device name.
 
         :param metric: The name of the metric
         :param value: The value to sample for the histogram
-        :param tags: (optional) A list of tags for this metric
+        :param dimensions: (optional) A list of dimensions for this metric
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         """
-        self.aggregator.histogram(metric, value, tags, hostname, device_name)
+        self.aggregator.histogram(metric, value, dimensions, hostname, device_name)
 
-    def set(self, metric, value, tags=None, hostname=None, device_name=None):
+    def set(self, metric, value, dimensions=None, hostname=None, device_name=None):
         """
-        Sample a set value, with optional tags, hostname and device name.
+        Sample a set value, with optional dimensions, hostname and device name.
 
         :param metric: The name of the metric
         :param value: The value for the set
-        :param tags: (optional) A list of tags for this metric
+        :param dimensions: (optional) A list of dimensions for this metric
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         """
-        self.aggregator.set(metric, value, tags, hostname, device_name)
+        self.aggregator.set(metric, value, dimensions, hostname, device_name)
 
     def event(self, event):
         """
@@ -396,11 +390,11 @@ class AgentCheck(object):
                     Defaults to 'info'.
                 "source_type_name": (optional) string, the source type name,
                 "host": (optional) string, the name of the host,
-                "tags": (optional) list, a list of tags to associate with this event
+                "dimensions": (optional) list, a list of dimensions to associate with this event
             }
         """
         if event.get('api_key') is None:
-            event['api_key'] = self.agentConfig['api_key']
+            event['api_key'] = self.agent_config['api_key']
         self.events.append(event)
 
     def has_events(self):
@@ -417,7 +411,7 @@ class AgentCheck(object):
         Get all metrics, including the ones that are tagged.
 
         @return the list of samples
-        @rtype [(metric_name, timestamp, value, {"tags": ["tag1", "tag2"]}), ...]
+        @rtype [(metric_name, timestamp, value, {"dimensions": ["tag1", "tag2"]}), ...]
         """
         return self.aggregator.flush()
 
@@ -561,30 +555,6 @@ class AgentCheck(object):
             return val
         else:
             return cast(val)
-
-
-def agent_formatter(metric, value, timestamp, tags, hostname, device_name=None,
-                                                metric_type=None, interval=None):
-    """ Formats metrics coming from the MetricsAggregator. Will look like:
-     (metric, timestamp, value, {"tags": ["tag1", "tag2"], ...})
-    """
-    attributes = {}
-    if tags:
-        attributes['tags'] = list(tags)
-    if hostname:
-        attributes['hostname'] = hostname
-    if device_name:
-        attributes['device_name'] = device_name
-    if metric_type:
-        attributes['type'] = metric_type
-    if interval:
-        # For now, don't send the interval for agent metrics, since they don't
-        # come at very predictable intervals.
-        # attributes['interval'] = None
-        pass
-    if attributes:
-        return (metric, int(timestamp), value, attributes)
-    return (metric, int(timestamp), value)
 
 
 def run_check(name, path=None):

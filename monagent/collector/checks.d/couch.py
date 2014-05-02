@@ -28,7 +28,7 @@ class CouchDb(AgentCheck):
     def _get_stats(self, url):
         "Hit a given URL and return the parsed json"
         self.log.debug('Fetching Couchdb stats at url: %s' % url)
-        req = urllib2.Request(url, None, headers(self.agentConfig))
+        req = urllib2.Request(url, None, headers(self.agent_config))
 
         # Do the request, log any errors
         request = urllib2.urlopen(req)

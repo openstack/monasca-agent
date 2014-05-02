@@ -44,8 +44,8 @@ class IIS(AgentCheck):
         ('iis.requests.isapi', 'rate', 'TotalISAPIExtensionRequests'),
     ]
 
-    def __init__(self, name, init_config, agentConfig):
-        AgentCheck.__init__(self, name, init_config, agentConfig)
+    def __init__(self, name, init_config, agent_config):
+        AgentCheck.__init__(self, name, init_config, agent_config)
         self.wmi_conns = {}
 
     def _get_wmi_conn(self, host, user, password):

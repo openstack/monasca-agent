@@ -339,8 +339,8 @@ class Collector(object):
             self.metadata_cache = payload['meta']
             # Add static tags from the configuration file
             host_tags = []
-            if self.agentConfig['tags'] is not None:
-                host_tags.extend([unicode(tag.strip()) for tag in self.agentConfig['tags'].split(",")])
+            if self.agentConfig['dimensions'] is not None:
+                host_tags.extend([unicode(tag.strip()) for tag in self.agentConfig['dimensions'].split(",")])
 
             if host_tags:
                 payload['host-tags']['system'] = host_tags

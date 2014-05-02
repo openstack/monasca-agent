@@ -24,8 +24,8 @@ class Apache(AgentCheck):
         'Total Accesses': 'apache.net.request_per_s'
     }
 
-    def __init__(self, name, init_config, agentConfig, instances=None):
-        AgentCheck.__init__(self, name, init_config, agentConfig, instances)
+    def __init__(self, name, init_config, agent_config, instances=None):
+        AgentCheck.__init__(self, name, init_config, agent_config, instances)
         self.assumed_url = {}
 
     def check(self, instance):
@@ -35,7 +35,7 @@ class Apache(AgentCheck):
         url = self.assumed_url.get(instance['apache_status_url'], instance['apache_status_url'])
 
         tags = instance.get('tags', [])
-        req = urllib2.Request(url, None, headers(self.agentConfig))
+        req = urllib2.Request(url, None, headers(self.agent_config))
         if 'apache_user' in instance and 'apache_password' in instance:
             add_basic_auth(req, instance['apache_user'], instance['apache_password'])
         request = urllib2.urlopen(req)

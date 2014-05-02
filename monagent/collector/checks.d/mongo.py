@@ -87,8 +87,8 @@ class MongoDb(AgentCheck):
 
     METRICS = GAUGES + RATES
 
-    def __init__(self, name, init_config, agentConfig):
-        AgentCheck.__init__(self, name, init_config, agentConfig)
+    def __init__(self, name, init_config, agent_config):
+        AgentCheck.__init__(self, name, init_config, agent_config)
         self._last_state_by_server = {}
 
     @staticmethod
@@ -236,7 +236,7 @@ class MongoDb(AgentCheck):
                     data['health'] = current['health']
 
                 data['state'] = replSet['myState']
-                self.check_last_state(data['state'], server, self.agentConfig)
+                self.check_last_state(data['state'], server, self.agent_config)
                 status['replSet'] = data
         except Exception, e:
             if "OperationFailure" in repr(e) and "replSetGetStatus" in str(e):

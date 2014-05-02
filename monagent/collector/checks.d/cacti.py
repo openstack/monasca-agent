@@ -27,8 +27,8 @@ CACTI_TO_DD = {
 
 
 class Cacti(AgentCheck):
-    def __init__(self, name, init_config, agentConfig):
-        AgentCheck.__init__(self, name, init_config, agentConfig)
+    def __init__(self, name, init_config, agent_config):
+        AgentCheck.__init__(self, name, init_config, agent_config)
         self.last_ts = {}
 
     @staticmethod

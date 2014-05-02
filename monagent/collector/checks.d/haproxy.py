@@ -17,8 +17,8 @@ class Services(object):
 
 
 class HAProxy(AgentCheck):
-    def __init__(self, name, init_config, agentConfig):
-        AgentCheck.__init__(self, name, init_config, agentConfig)
+    def __init__(self, name, init_config, agent_config):
+        AgentCheck.__init__(self, name, init_config, agent_config)
 
         # Host status needs to persist across all checks
         self.host_status = defaultdict(lambda: defaultdict(lambda: None))
@@ -75,7 +75,7 @@ class HAProxy(AgentCheck):
 
         self.log.debug("HAProxy Fetching haproxy search data from: %s" % url)
 
-        req = urllib2.Request(url, None, headers(self.agentConfig))
+        req = urllib2.Request(url, None, headers(self.agent_config))
         request = urllib2.urlopen(req)
         response = request.read()
         # Split the data by line

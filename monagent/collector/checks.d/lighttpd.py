@@ -57,8 +57,8 @@ class Lighttpd(AgentCheck):
         'Total Accesses': 'lighttpd.net.request_per_s'
     }
 
-    def __init__(self, name, init_config, agentConfig, instances=None):
-        AgentCheck.__init__(self, name, init_config, agentConfig, instances)
+    def __init__(self, name, init_config, agent_config, instances=None):
+        AgentCheck.__init__(self, name, init_config, agent_config, instances)
         self.assumed_url = {}
 
     def check(self, instance):
@@ -69,7 +69,7 @@ class Lighttpd(AgentCheck):
 
         tags = instance.get('tags', [])
         self.log.debug("Connecting to %s" % url)
-        req = urllib2.Request(url, None, headers(self.agentConfig))
+        req = urllib2.Request(url, None, headers(self.agent_config))
         if 'user' in instance and 'password' in instance:
             add_basic_auth(req, instance['user'], instance['password'])
         request = urllib2.urlopen(req)

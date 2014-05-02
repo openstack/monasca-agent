@@ -30,8 +30,8 @@ class Skip(Exception):
 class Jenkins(AgentCheck):
     datetime_format = '%Y-%m-%d_%H-%M-%S'
 
-    def __init__(self, name, init_config, agentConfig):
-        AgentCheck.__init__(self, name, init_config, agentConfig)
+    def __init__(self, name, init_config, agent_config):
+        AgentCheck.__init__(self, name, init_config, agent_config)
         self.high_watermarks = {}
 
     def _extract_timestamp(self, dir_name):
@@ -142,7 +142,7 @@ class Jenkins(AgentCheck):
 
         for job_dir in job_dirs:
             for output in self._get_build_results(instance.get('name'), job_dir):
-                output['host'] = get_hostname(self.agentConfig)
+                output['host'] = get_hostname(self.agent_config)
                 if create_event:
                     self.log.debug("Creating event for job: %s" % output['job_name'])
                     self.event(output)

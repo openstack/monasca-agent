@@ -24,4 +24,4 @@ class GearmanTestCase(unittest.TestCase):
         metrics = self.check.get_metrics()
         self.assertTrue(type(metrics) == type([]), metrics)
         self.assertTrue(len(metrics) == 4)
-        self.assertTrue(len([k for k in metrics if "second_tag" in k[3]['tags']]) == 4)
+        self.assertTrue(len([k for k in metrics if "second_tag" in k[3]['dimensions']]) == 4)

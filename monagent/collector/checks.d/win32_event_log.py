@@ -15,8 +15,8 @@ EVENT_TYPE = 'win32_log_event'
 
 
 class Win32EventLog(AgentCheck):
-    def __init__(self, name, init_config, agentConfig):
-        AgentCheck.__init__(self, name, init_config, agentConfig)
+    def __init__(self, name, init_config, agent_config):
+        AgentCheck.__init__(self, name, init_config, agent_config)
         self.last_ts = {}
         self.wmi_conns = {}
 
@@ -58,7 +58,7 @@ class Win32EventLog(AgentCheck):
 
         # Save any events returned to the payload as Datadog events
         for ev in events:
-            log_ev = LogEvent(ev, self.agentConfig.get('api_key', ''),
+            log_ev = LogEvent(ev, self.agent_config.get('api_key', ''),
                               self.hostname, tags, notify)
 
             # Since WQL only compares on the date and NOT the time, we have to
