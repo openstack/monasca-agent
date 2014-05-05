@@ -32,7 +32,6 @@ class Collector(object):
     def __init__(self, agent_config, emitter, checksd=None):
         self.emit_duration = None
         self.agent_config = agent_config
-        self.hostname = get_hostname(self.agent_config)
         self.os = get_os()
         self.plugins = None
         self.emitter = emitter

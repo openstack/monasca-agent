@@ -4,6 +4,7 @@ import logging
 import requests
 
 from keystone import Keystone
+from monagent.common.util import get_hostname
 
 
 log = logging.getLogger(__name__)
@@ -19,6 +20,8 @@ class MonAPI(object):
         """
         self.url = config['url']
         self.default_dimensions = config['dimensions']
+        if not 'hostname' in self.default_dimensions:  # Verify the hostname is set as a dimension
+            self.default_dimensions['hostname'] = get_hostname()
 
         #todo we should always use keystone, for development the keystone object should just return a dummy token
         if config['use_keystone']:
