@@ -5,6 +5,8 @@ from time import time
 from monagent.common.aggregator import log, Infinity, UnknownValue
 
 
+# todo it would be best to implement a Measurement group/list container, it could then have methods for converting to json
+# in the current setup both the emitter and the mon api are converting to json in for loops
 # A Measurement is the standard format used to pass data from the collector and monstatsd to the forwarder
 Measurement = namedtuple('Measurement', ['name', 'timestamp', 'value', 'dimensions'])
 

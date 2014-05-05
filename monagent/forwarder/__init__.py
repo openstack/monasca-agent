@@ -35,9 +35,10 @@ from tornado.options import define, parse_command_line, options
 
 # agent import
 from api import MonAPI
-from monagent.common.util import Watchdog, get_hostname, get_tornado_ioloop
-from monagent.common.config import get_config
 from monagent.common.check_status import ForwarderStatus
+from monagent.common.config import get_config
+from monagent.common.metrics import Measurement
+from monagent.common.util import Watchdog, get_hostname, get_tornado_ioloop
 from transaction import Transaction, TransactionManager
 
 log = logging.getLogger('forwarder')
@@ -133,16 +134,19 @@ class AgentInputHandler(tornado.web.RequestHandler):
             The message is expected to follow the format:
 
         """
-        # todo document the message format
-        # should be using - from monagent.common.metrics import Measurement
-        # read message
+        # read the message it should be a list of Measurements - from monagent.common.metrics import Measurement
         msg = tornado.escape.json_decode(self.request.body)
-        # todo do some validation on the json to make sure it has required fields
+        try:
+            measurements = [Measurement(**m) for m in msg]
+        except Exception:
+            log.exception('Error parsing body of Agent Input')
+            raise tornado.web.HTTPError(500)
+
         headers = self.request.headers
 
-        if msg is not None:
+        if len(measurements) > 0:
             # Setup a transaction for this message
-            tr = MetricTransaction(msg, headers)
+            tr = MetricTransaction(measurements, headers)
         else:
             raise tornado.web.HTTPError(500)
 
