@@ -97,7 +97,6 @@ class Reporter(threading.Thread):
 
         while not self.finished.isSet(): # Use camel case isSet for 2.4 support.
             self.finished.wait(self.interval)
-            self.metrics_aggregator.send_packet_count('datadog.dogstatsd.packet.count')
             self.flush()
             if self.watchdog:
                 self.watchdog.reset()

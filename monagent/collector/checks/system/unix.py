@@ -48,7 +48,7 @@ class Disk(Check):
                 use_mount=use_mount,
                 blacklist_re=blacklist_re
             )
-            return {'diskUsage': disks, 'inodes': inodes}
+            return {'disk_usage': disks, 'inodes': inodes}
 
         except Exception:
             self.logger.exception('Error collecting disk stats')
@@ -178,6 +178,8 @@ class IO(Check):
         self.header_re = re.compile(r'([%\\/\-_a-zA-Z0-9]+)[\s+]?')
         self.item_re = re.compile(r'^([a-zA-Z0-9\/]+)')
         self.value_re = re.compile(r'\d+\.\d+')
+        self.stat_blacklist = ["await", "wrqm/s", "avgqu-sz", "r_await", "w_await", "rrqm/s",
+                               "avgrq-sz", "%util", "svctm"]
 
     def _parse_linux2(self, output):
         recentStats = output.split('Device:')[2].split('\n')
@@ -213,7 +215,7 @@ class IO(Check):
 
             for headerIndex in range(len(headerNames)):
                 headerName = headerNames[headerIndex]
-                ioStats[device][headerName] = values[headerIndex]
+                ioStats[device][self.xlate(headerName, "linux")] = values[headerIndex]
 
         return ioStats
     
@@ -237,15 +239,20 @@ class IO(Check):
             names = {"wait": "await",
                      "svc_t": "svctm",
                      "%b": "%util",
-                     "kr/s": "rkB/s",
-                     "kw/s": "wkB/s",
+                     "kr/s": "io_read_kbytes_sec",
+                     "kw/s": "io_write_kbytes_sec",
                      "actv": "avgqu-sz"}
         elif os_name == "freebsd":
             names = {"svc_t": "await",
                      "%b": "%util",
-                     "kr/s": "rkB/s",
-                     "kw/s": "wkB/s",
+                     "kr/s": "io_read_kbytes_sec",
+                     "kw/s": "io_write_kbytes_sec",
                      "wait": "avgqu-sz"}
+        elif os_name == "linux":
+            names = {"rkB/s": "io_read_kbytes_sec",
+                     "r/s": "io_read_req_sec",
+                     "wkB/s": "io_write_kbytes_sec",
+                     "w/s": "io_write_req_sec"}
         # translate if possible
         return names.get(metric_name, metric_name)
 
@@ -359,7 +366,13 @@ class IO(Check):
                         filtered_io[device] = stats
             else:
                 filtered_io = io
-            return filtered_io
+
+            filtered = {}
+            for dev_name, stats in filtered_io:
+                filtered_stats = {stat: stats[stat] for stat in stats.iterkeys() if stat not in self.stat_blacklist}
+                filtered[dev_name] = filtered_stats
+
+            return filtered
 
         except Exception:
             self.logger.exception("Cannot extract IO statistics")
@@ -392,24 +405,10 @@ class Load(Check):
                 
         # Split out the 3 load average values
         load = [res.replace(',', '.') for res in re.findall(r'([0-9]+[\.,]\d+)', uptime)]
-        # Normalize load by number of cores
-        try:
-            cores = int(self.agent_config.get('system_stats').get('cpuCores'))
-            assert cores >= 1, "Cannot determine number of cores"
-            # Compute a normalized load, named .load.norm to make it easy to find next to .load
-            return {'system.load.1': float(load[0]),
-                    'system.load.5': float(load[1]),
-                    'system.load.15': float(load[2]),
-                    'system.load.norm.1': float(load[0])/cores,
-                    'system.load.norm.5': float(load[1])/cores,
-                    'system.load.norm.15': float(load[2])/cores,
-                    }
-        except Exception:
-            # No normalized load available
-            return {'system.load.1': float(load[0]),
-                    'system.load.5': float(load[1]),
-                    'system.load.15': float(load[2])}
-
+        return {'load_avg_1_min': float(load[0]),
+                'load_avg_5_min': float(load[1]),
+                'load_avg_15_min': float(load[2]),
+                }
 
 class Memory(Check):
     def __init__(self, logger):
@@ -501,35 +500,35 @@ class Memory(Check):
                     self.logger.exception("Cannot parse /proc/meminfo")
                     
             memData = {}
-            
+
             # Physical memory
             # FIXME units are in MB, we should use bytes instead
             try:
-                memData['memphysTotal'] = int(meminfo.get('MemTotal', 0)) / 1024
-                memData['memphysFree'] = int(meminfo.get('MemFree', 0)) / 1024
+                memData['mem_total_mb'] = int(meminfo.get('MemTotal', 0)) / 1024
+                memData['mem_free_mb'] = int(meminfo.get('MemFree', 0)) / 1024
                 memData['memphysBuffers'] = int(meminfo.get('Buffers', 0)) / 1024
                 memData['memphysCached'] = int(meminfo.get('Cached', 0)) / 1024
                 memData['memphysShared'] = int(meminfo.get('Shmem', 0)) / 1024
 
-                memData['memphysUsed'] = memData['memphysTotal'] - memData['memphysFree']
+                memData['mem_usable_perc'] = memData['mem_total_mb'] - memData['mem_free_mb']
                 # Usable is relative since cached and buffers are actually used to speed things up.
-                memData['memphysUsable'] = memData['memphysFree'] + memData['memphysBuffers'] + memData['memphysCached']
+                memData['mem_usable_mb'] = memData['mem_free_mb'] + memData['memphysBuffers'] + memData['memphysCached']
 
-                if memData['memphysTotal'] > 0:
-                    memData['memphysPctUsable'] = float(memData['memphysUsable']) / float(memData['memphysTotal'])
+                if memData['mem_total_mb'] > 0:
+                    memData['mem_usable_perc'] = float(memData['mem_usable_mb']) / float(memData['mem_total_mb'])
             except Exception:
                 self.logger.exception('Cannot compute stats from /proc/meminfo')
             
             # Swap
             # FIXME units are in MB, we should use bytes instead
             try:
-                memData['memswapTotal'] = int(meminfo.get('SwapTotal', 0)) / 1024
-                memData['memswapFree'] = int(meminfo.get('SwapFree', 0)) / 1024
+                memData['mem_swap_total_mb'] = int(meminfo.get('SwapTotal', 0)) / 1024
+                memData['mem_swap_free_mb'] = int(meminfo.get('SwapFree', 0)) / 1024
 
-                memData['memswapUsed'] = memData['memswapTotal'] - memData['memswapFree']
+                memData['mem_swap_used_mb'] = memData['mem_swap_total_mb'] - memData['mem_swap_free_mb']
                 
-                if memData['memswapTotal'] > 0:
-                    memData['memswapPctFree'] = float(memData['memswapFree']) / float(memData['memswapTotal'])
+                if memData['mem_swap_total_mb'] > 0:
+                    memData['mem_swap_free_perc'] = float(memData['mem_swap_free_mb']) / float(memData['mem_swap_total_mb'])
             except Exception:
                 self.logger.exception('Cannot compute swap stats')
             
@@ -705,7 +704,11 @@ class Cpu(Check):
         When figures are not available, False is sent back.
         """
         def format_results(us, sy, wa, idle, st):
-            data = {'cpuUser': us, 'cpuSystem': sy, 'cpuWait': wa, 'cpuIdle': idle, 'cpuStolen': st}
+            data = {'cpu_user_perc': us,
+                    'cpu_system_perc': sy,
+                    'cpu_wait_perc': wa,
+                    'cpu_idle_perc': idle,
+                    'cpu_stolen_perc': st}
             for key in data.keys():
                 if data[key] is None:
                     del data[key]
