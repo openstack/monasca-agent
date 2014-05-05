@@ -35,7 +35,7 @@ from tornado.options import define, parse_command_line, options
 
 # agent import
 from api import MonAPI
-from monagent.common.util import Watchdog, get_uuid, get_hostname, get_tornado_ioloop
+from monagent.common.util import Watchdog, get_hostname, get_tornado_ioloop
 from monagent.common.config import get_config
 from monagent.common.check_status import ForwarderStatus
 from transaction import Transaction, TransactionManager
@@ -129,8 +129,12 @@ class StatusHandler(tornado.web.RequestHandler):
 class AgentInputHandler(tornado.web.RequestHandler):
 
     def post(self):
-        """Read the message and forward it to the intake"""
+        """Read the message and forward it to the intake
+            The message is expected to follow the format:
 
+        """
+        # todo document the message format
+        # should be using - from monagent.common.metrics import Measurement
         # read message
         msg = tornado.escape.json_decode(self.request.body)
         # todo do some validation on the json to make sure it has required fields
@@ -169,7 +173,6 @@ class Forwarder(tornado.web.Application):
     def _post_metrics(self):
 
         if len(self._metrics) > 0:
-            self._metrics['internalHostname'] = get_hostname(self._agentConfig)
             MetricTransaction(self._metrics, headers={'Content-Type': 'application/json'})
             self._metrics = {}
 

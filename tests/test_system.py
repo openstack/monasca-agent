@@ -6,7 +6,6 @@ logger = logging.getLogger(__file__)
 
 from monagent.collector.checks.system.unix import *
 from common import get_check
-from monagent.common.config import get_system_stats
 
 class TestSystem(unittest.TestCase):
     def testCPU(self):
@@ -15,21 +14,6 @@ class TestSystem(unittest.TestCase):
         res = cpu.check({})
         # Make sure we sum up to 100% (or 99% in the case of macs)
         assert abs(reduce(lambda a,b:a+b, res.values(), 0) - 100) <= 5, res
-
-    def testLoad(self):
-        global logger
-        load = Load(logger)
-        res = load.check({'system_stats': get_system_stats()})
-        assert 'system.load.1' in res
-        if Platform.is_linux():
-            cores = int(get_system_stats().get('cpuCores'))
-            assert 'system.load.norm.1' in res
-            assert abs(res['system.load.1'] - cores * res['system.load.norm.1']) <= 0.1, (res['system.load.1'], cores * res['system.load.norm.1'])
-
-        # same test but without cpu count, no normalized load sent.
-        res = load.check({})
-        assert 'system.load.1' in res
-        assert 'system.load.norm.1' not in res
 
     lion_df_i = """Filesystem                        512-blocks      Used Available Capacity  iused    ifree %iused  Mounted onto
 /dev/disk1                         487932936 220080040 267340896    46% 27574003 33417612   45%   /

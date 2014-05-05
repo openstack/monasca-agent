@@ -13,7 +13,7 @@ import time
 
 # project
 from .. import Check
-from monagent.common.util import get_hostname, Platform
+from monagent.common.util import Platform
 
 
 # locale-resilient float converter
@@ -23,11 +23,11 @@ to_float = lambda s: float(s.replace(",", "."))
 class Disk(Check):
     """ Collects metrics about the machine's disks. """
 
-    def check(self, agentConfig):
+    def check(self):
         """Get disk space/inode stats"""
         # First get the configuration.
-        use_mount = agentConfig.get("use_mount", False)
-        blacklist_re = agentConfig.get('device_blacklist_re', None)
+        use_mount = self.agent_config.get("use_mount", False)
+        blacklist_re = self.agent_config.get('device_blacklist_re', None)
         platform_name = sys.platform
 
         try:
@@ -48,7 +48,7 @@ class Disk(Check):
                 use_mount=use_mount,
                 blacklist_re=blacklist_re
             )
-            return (disks, inodes)
+            return {'diskUsage': disks, 'inodes': inodes}
 
         except Exception:
             self.logger.exception('Error collecting disk stats')
@@ -249,7 +249,7 @@ class IO(Check):
         # translate if possible
         return names.get(metric_name, metric_name)
 
-    def check(self, agentConfig):
+    def check(self):
         """Capture io stats.
 
         @rtype dict
@@ -351,7 +351,7 @@ class IO(Check):
                 return False
 
             # If we filter devices, do it know.
-            device_blacklist_re = agentConfig.get('device_blacklist_re', None)
+            device_blacklist_re = self.agent_config.get('device_blacklist_re', None)
             if device_blacklist_re:
                 filtered_io = {}
                 for device, stats in io.iteritems():
@@ -368,7 +368,7 @@ class IO(Check):
 
 class Load(Check):
     
-    def check(self, agentConfig):
+    def check(self):
         if Platform.is_linux():
             try:
                 loadAvrgProc = open('/proc/loadavg', 'r')
@@ -394,7 +394,7 @@ class Load(Check):
         load = [res.replace(',', '.') for res in re.findall(r'([0-9]+[\.,]\d+)', uptime)]
         # Normalize load by number of cores
         try:
-            cores = int(agentConfig.get('system_stats').get('cpuCores'))
+            cores = int(self.agent_config.get('system_stats').get('cpuCores'))
             assert cores >= 1, "Cannot determine number of cores"
             # Compute a normalized load, named .load.norm to make it easy to find next to .load
             return {'system.load.1': float(load[0]),
@@ -436,7 +436,7 @@ class Memory(Check):
                 # No page size available
                 pass
     
-    def check(self, agentConfig):
+    def check(self):
         if Platform.is_linux():
             try:
                 meminfoProc = open('/proc/meminfo', 'r')
@@ -505,31 +505,31 @@ class Memory(Check):
             # Physical memory
             # FIXME units are in MB, we should use bytes instead
             try:
-                memData['physTotal'] = int(meminfo.get('MemTotal', 0)) / 1024
-                memData['physFree'] = int(meminfo.get('MemFree', 0)) / 1024
-                memData['physBuffers'] = int(meminfo.get('Buffers', 0)) / 1024
-                memData['physCached'] = int(meminfo.get('Cached', 0)) / 1024
-                memData['physShared'] = int(meminfo.get('Shmem', 0)) / 1024
+                memData['memphysTotal'] = int(meminfo.get('MemTotal', 0)) / 1024
+                memData['memphysFree'] = int(meminfo.get('MemFree', 0)) / 1024
+                memData['memphysBuffers'] = int(meminfo.get('Buffers', 0)) / 1024
+                memData['memphysCached'] = int(meminfo.get('Cached', 0)) / 1024
+                memData['memphysShared'] = int(meminfo.get('Shmem', 0)) / 1024
 
-                memData['physUsed'] = memData['physTotal'] - memData['physFree']
+                memData['memphysUsed'] = memData['memphysTotal'] - memData['memphysFree']
                 # Usable is relative since cached and buffers are actually used to speed things up.
-                memData['physUsable'] = memData['physFree'] + memData['physBuffers'] + memData['physCached']
+                memData['memphysUsable'] = memData['memphysFree'] + memData['memphysBuffers'] + memData['memphysCached']
 
-                if memData['physTotal'] > 0:
-                    memData['physPctUsable'] = float(memData['physUsable']) / float(memData['physTotal'])
+                if memData['memphysTotal'] > 0:
+                    memData['memphysPctUsable'] = float(memData['memphysUsable']) / float(memData['memphysTotal'])
             except Exception:
                 self.logger.exception('Cannot compute stats from /proc/meminfo')
             
             # Swap
             # FIXME units are in MB, we should use bytes instead
             try:
-                memData['swapTotal'] = int(meminfo.get('SwapTotal', 0)) / 1024
-                memData['swapFree'] = int(meminfo.get('SwapFree', 0)) / 1024
+                memData['memswapTotal'] = int(meminfo.get('SwapTotal', 0)) / 1024
+                memData['memswapFree'] = int(meminfo.get('SwapFree', 0)) / 1024
 
-                memData['swapUsed'] = memData['swapTotal'] - memData['swapFree']
+                memData['memswapUsed'] = memData['memswapTotal'] - memData['memswapFree']
                 
-                if memData['swapTotal'] > 0:
-                    memData['swapPctFree'] = float(memData['swapFree']) / float(memData['swapTotal'])
+                if memData['memswapTotal'] > 0:
+                    memData['memswapPctFree'] = float(memData['memswapFree']) / float(memData['memswapTotal'])
             except Exception:
                 self.logger.exception('Cannot compute swap stats')
             
@@ -698,35 +698,9 @@ class Memory(Check):
             return False
 
 
-class Processes(Check):
-
-    def check(self, agentConfig):
-        # Get output from ps
-        try:
-            ps = sp.Popen(['ps', 'auxww'], stdout=sp.PIPE, close_fds=True).communicate()[0]
-        except StandardError:
-            self.logger.exception('getProcesses')
-            return False
-        
-        # Split out each process
-        processLines = ps.split('\n')
-        
-        del processLines[0]  # Removes the headers
-        processLines.pop()  # Removes a trailing empty line
-        
-        processes = []
-        
-        for line in processLines:
-            line = line.split(None, 10)
-            processes.append(map(lambda s: s.strip(), line))
-        
-        return {'processes':   processes,
-                 'host':        get_hostname(agentConfig)}
-            
-
 class Cpu(Check):
 
-    def check(self, agentConfig):
+    def check(self):
         """Return an aggregate of CPU stats across all CPUs
         When figures are not available, False is sent back.
         """
@@ -914,7 +888,6 @@ if __name__ == '__main__':
     io = IO(log)
     load = Load(log)
     mem = Memory(log)
-    proc = Processes(log)
 
     config = {"device_blacklist_re": re.compile('.*disk0.*')}
     while True:
@@ -930,8 +903,6 @@ if __name__ == '__main__':
         print("--- Memory ---")
         print(mem.check(config))
         print("\n\n\n")
-        #print("--- Processes ---")
-        #print(proc.check(config))
         time.sleep(1)
 
 

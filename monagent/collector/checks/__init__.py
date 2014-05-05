@@ -36,7 +36,7 @@ class NaN(CheckException):
 class UnknownValue(CheckException):
     pass
 
-
+# todo convert all checks to the new interface then remove this. Is the LaconicFilter on logs used elsewhere?
 #==============================================================================
 # DEPRECATED
 # ------------------------------
@@ -53,12 +53,13 @@ class Check(object):
 
     """
 
-    def __init__(self, logger):
+    def __init__(self, logger, agent_config=None):
         # where to store samples, indexed by metric_name
         # metric_name: {("sorted", "dimensions"): [(ts, value), (ts, value)],
         #                 tuple(dimensions) are stored as a key since lists are not hashable
         #               None: [(ts, value), (ts, value)]}
         #                 untagged values are indexed by None
+        self.agent_config = agent_config
         self._sample_store = {}
         self._counters = {}  # metric_name: bool
         self.logger = logger
@@ -242,7 +243,7 @@ class Check(object):
         This is the preferred method to retrieve metrics
 
         @return the list of samples
-        @rtype [(metric_name, timestamp, value, {"dimensions": ["tag1", "tag2"]}), ...]
+        @rtype [(metric_name, timestamp, value, {"dimensions": {"name1": "key1", "name2": "key2"}}), ...]
         """
         metrics = []
         for m in self._sample_store:
@@ -255,7 +256,7 @@ class Check(object):
                         continue
                     attributes = {}
                     if dimensions:
-                        attributes['dimensions'] = list(dimensions)
+                        attributes['dimensions'] = dimensions
                     if hostname:
                         attributes['host_name'] = hostname
                     if device_name:
@@ -411,7 +412,7 @@ class AgentCheck(object):
         Get all metrics, including the ones that are tagged.
 
         @return the list of samples
-        @rtype [(metric_name, timestamp, value, {"dimensions": ["tag1", "tag2"]}), ...]
+        @rtype list of Measurement objects from monagent.common.metrics
         """
         return self.aggregator.flush()
 

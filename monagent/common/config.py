@@ -343,43 +343,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
     return agentConfig
 
 
-def get_system_stats():
-    systemStats = {
-        'machine': platform.machine(),
-        'platform': sys.platform,
-        'processor': platform.processor(),
-        'pythonV': platform.python_version(),
-    }
-
-    platf = sys.platform
-
-    if  Platform.is_linux(platf):
-        grep = subprocess.Popen(['grep', 'model name', '/proc/cpuinfo'], stdout=subprocess.PIPE, close_fds=True)
-        wc = subprocess.Popen(['wc', '-l'], stdin=grep.stdout, stdout=subprocess.PIPE, close_fds=True)
-        systemStats['cpuCores'] = int(wc.communicate()[0])
-
-    if Platform.is_darwin(platf):
-        systemStats['cpuCores'] = int(subprocess.Popen(['sysctl', 'hw.ncpu'], stdout=subprocess.PIPE, close_fds=True).communicate()[0].split(': ')[1])
-
-    if Platform.is_freebsd(platf):
-        systemStats['cpuCores'] = int(subprocess.Popen(['sysctl', 'hw.ncpu'], stdout=subprocess.PIPE, close_fds=True).communicate()[0].split(': ')[1])
-
-    if Platform.is_linux(platf):
-        systemStats['nixV'] = platform.dist()
-
-    elif Platform.is_darwin(platf):
-        systemStats['macV'] = platform.mac_ver()
-
-    elif Platform.is_freebsd(platf):
-        version = platform.uname()[2]
-        systemStats['fbsdV'] = ('freebsd', version, '')  # no codename for FreeBSD
-
-    elif Platform.is_win32(platf):
-        systemStats['winV'] = platform.win32_ver()
-
-    return systemStats
-
-
 def set_win32_cert_path():
     """In order to use tornado.httpclient with the packaged .exe on Windows we
     need to override the default ceritifcate location which is based on the path

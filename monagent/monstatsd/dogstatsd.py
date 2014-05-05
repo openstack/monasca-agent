@@ -187,7 +187,7 @@ class Reporter(threading.Thread):
                     'api': chunk
                 },
                 'uuid': get_uuid(),
-                'internalHostname': get_hostname()
+                'hostname': get_hostname()
             }
             params = {}
             url = '/intake?%s' % urlencode(params)

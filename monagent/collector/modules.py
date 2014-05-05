@@ -5,6 +5,8 @@ import os
 import imp
 import sys
 
+# todo seems to be only used by dogstatsd at this point, possibly remove?
+
 
 def imp_type_for_filename(filename):
     """Given the name of a Python module, return a type description suitable to

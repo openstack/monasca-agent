@@ -1,7 +1,12 @@
 """ Metric data types
 """
+from collections import namedtuple
 from time import time
 from monagent.common.aggregator import log, Infinity, UnknownValue
+
+
+# A Measurement is the standard format used to pass data from the collector and monstatsd to the forwarder
+Measurement = namedtuple('Measurement', ['name', 'timestamp', 'value', 'dimensions'])
 
 
 class MetricTypes(object):

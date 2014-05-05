@@ -167,15 +167,9 @@ class MonAPI(object):
         """
         log.debug("Payload ==> %s" % payload)
 
-        if 'internalHostname' in payload:
-            host_dimension = {"hostname": payload["internalHostname"]}
-        else:
-            # todo is internalHostname required? If not what is the alternative?
-            host_dimension = {}
-
-        dimensions = dict(self.default_dimensions.items() + host_dimension.items())
         timestamp = self._get_timestamp(payload)
-        metrics_list = [self._process_metric(metric, payload[metric], timestamp, dimensions) for metric in payload]
+        metrics_list = [self._process_metric(metric, payload[metric], timestamp, self.default_dimensions)
+                        for metric in payload]
 
         if len(metrics_list) > 0:
             log.debug('No valid metrics found in the payload, %s' % payload)

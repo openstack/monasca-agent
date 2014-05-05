@@ -89,11 +89,6 @@ class TestCore(unittest.TestCase):
         self.assertEquals(self.c.normalize("abc.metric(a+b+c{}/5)", "prefix"), "prefix.abc.metric_a_b_c_5")
         self.assertEquals(self.c.normalize("VBE.default(127.0.0.1,,8080).happy", "varnish"), "varnish.VBE.default_127.0.0.1_8080.happy")
 
-    def test_metadata(self):
-        c = Collector({}, None, {})
-        assert "hostname" in c._get_metadata()
-        assert "socket-fqdn" in c._get_metadata()
-        assert "socket-hostname" in c._get_metadata()
 
 class TestAggregator(unittest.TestCase):
     def setUp(self):

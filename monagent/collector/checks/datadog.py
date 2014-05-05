@@ -174,8 +174,9 @@ class Dogstream(object):
                 self.logger.warn("Can't tail %s file" % self.log_path)
 
             check_output = self._aggregate(self._values)
-            if self._events:
-                check_output.update({"dogstreamEvents": self._events})
+            # todo no events in our system, at this point
+#            if self._events:
+#                check_output.update({"dogstreamEvents": self._events})
             return check_output
         else:
             return {}

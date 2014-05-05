@@ -34,7 +34,7 @@ if int(sys.version_info[1]) <= 3:
 # Custom modules
 from checks.collector import Collector
 from monagent.common.check_status import CollectorStatus
-from monagent.common.config import get_config, get_system_stats, get_parsed_args, load_check_directory, get_confd_path, check_yaml, get_logging_config
+from monagent.common.config import get_config, get_parsed_args, load_check_directory, get_confd_path, check_yaml, get_logging_config
 from monagent.common.daemon import Daemon, AgentSupervisor
 from monagent.common.emitter import http_emitter
 from monagent.common.util import Watchdog, PidFile, get_os
@@ -101,11 +101,9 @@ class CollectorDaemon(Daemon):
         if config is None:
             config = get_config(parse_args=True)
 
-        systemStats = get_system_stats()
         # Load the checks.d checks
         checksd = load_check_directory(config)
-
-        self.collector = Collector(config, http_emitter, systemStats)
+        self.collector = Collector(config, http_emitter, checksd)
 
         # Configure the watchdog.
         check_frequency = int(config['check_freq'])
@@ -131,7 +129,7 @@ class CollectorDaemon(Daemon):
                     log.warn("Cannot enable profiler")
                     
             # Do the work.
-            self.collector.run(checksd=checksd, start_event=self.start_event)
+            self.collector.run()
 
             # disable profiler and printout stats to stdout
             if config.get('profile', False) and config.get('profile').lower() == 'yes' and profiled:
@@ -191,6 +189,7 @@ class CollectorDaemon(Daemon):
 def main():
     options, args = get_parsed_args()
     agentConfig = get_config(options=options)
+    # todo autorestart isn't used remove
     autorestart = agentConfig.get('autorestart', False)
 
     COMMANDS = [
@@ -247,8 +246,13 @@ def main():
         if autorestart:
             # Set-up the supervisor callbacks and fork it.
             logging.info('Running Agent with auto-restart ON')
-            def child_func(): agent.run()
-            def parent_func(): agent.start_event = False
+
+            def child_func():
+                agent.run()
+
+            def parent_func():
+                agent.start_event = False
+
             AgentSupervisor.start(parent_func, child_func)
         else:
             # Run in the standard foreground.

@@ -316,11 +316,10 @@ class CollectorStatus(AgentStatus):
 
     NAME = 'Collector'
 
-    def __init__(self, check_statuses=None, emitter_statuses=None, metadata=None):
+    def __init__(self, check_statuses=None, emitter_statuses=None):
         AgentStatus.__init__(self)
         self.check_statuses = check_statuses or []
         self.emitter_statuses = emitter_statuses or []
-        self.metadata = metadata or []
 
     @property
     def status(self):
@@ -333,14 +332,6 @@ class CollectorStatus(AgentStatus):
         return self.status != STATUS_OK
 
     def body_lines(self):
-        # Metadata whitelist
-        metadata_whitelist = [
-            'hostname',
-            'fqdn',
-            'ipv4',
-            'instance-id'
-        ]
-
         lines = [
             'Clocks',
             '======',
@@ -384,17 +375,6 @@ class CollectorStatus(AgentStatus):
             '=========',
             ''
         ]
-
-        if not self.metadata:
-            lines.append("  No host information available yet.")
-        else:
-            for key, host in self.metadata.items():
-                for whitelist_item in metadata_whitelist:
-                    if whitelist_item in key:
-                        lines.append("  " + key + ": " + host)
-                        break
-
-        lines.append('')
 
         # Checks.d Status
         lines += [
@@ -483,18 +463,6 @@ class CollectorStatus(AgentStatus):
 
         # Hostnames
         status_info['hostnames'] = {}
-        metadata_whitelist = [
-            'hostname',
-            'fqdn',
-            'ipv4',
-            'instance-id'
-        ]
-        if self.metadata:
-            for key, host in self.metadata.items():
-                for whitelist_item in metadata_whitelist:
-                    if whitelist_item in key:
-                        status_info['hostnames'][key] = host
-                        break
 
         # Checks.d Status
         status_info['checks'] = {}
