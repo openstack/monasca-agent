@@ -213,8 +213,8 @@ instances:
 
         metric_names = [m[0] for m in check.aggregator.metrics]
 
-        assert 'system.net.bytes_rcvd' in metric_names
-        assert 'system.net.bytes_sent' in metric_names
+        assert 'net_bytes_in' in metric_names
+        assert 'net_bytes_out' in metric_names
 
 
 if __name__ == "__main__":

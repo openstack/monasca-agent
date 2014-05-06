@@ -42,5 +42,5 @@ instances:
         username: my_username
         password: my_password
         database: my_database # Optional, defaults to "master"
-        tags:
-            - optional_tag
+        dimensions:
+            dim1: value1

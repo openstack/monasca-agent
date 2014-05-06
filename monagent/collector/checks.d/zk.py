@@ -39,7 +39,7 @@ class Zookeeper(AgentCheck):
         host = instance.get('host', 'localhost')
         port = int(instance.get('port', 2181))
         timeout = float(instance.get('timeout', 3.0))
-        tags = instance.get('tags', [])
+        dimensions = instance.get('dimensions', {})
 
         sock = socket.socket()
         sock.settimeout(timeout)
@@ -71,19 +71,20 @@ class Zookeeper(AgentCheck):
 
         if buf is not None:
             # Parse the response
-            metrics, new_tags = self.parse_stat(buf)
+            metrics, new_dimensions = self.parse_stat(buf)
+            dimensions.update(new_dimensions)
 
             # Write the data
             for metric, value in metrics:
-                self.gauge(metric, value, tags=tags + new_tags)
+                self.gauge(metric, value, dimensions=dimensions)
         else:
             # Reading from the client port timed out, track it as a metric
-            self.increment('zookeeper.timeouts', tags=tags)
+            self.increment('zookeeper.timeouts', dimensions=dimensions)
 
     @classmethod
     def parse_stat(cls, buf):
         ''' `buf` is a readable file-like object
-            returns a tuple: ([(metric_name, value)], tags)
+            returns a tuple: ([(metric_name, value)], dimensions)
         '''
         metrics = []
         buf.seek(0)
@@ -154,10 +155,10 @@ class Zookeeper(AgentCheck):
 
         # Mode: leader
         _, value = buf.readline().split(':')
-        tags = [u'mode:' + value.strip().lower()]
+        dimensions = {u'mode': value.strip().lower()}
 
         # Node count: 487
         _, value = buf.readline().split(':')
         metrics.append(('zookeeper.nodes', long(value.strip())))
 
-        return metrics, tags
+        return metrics, dimensions

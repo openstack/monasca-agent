@@ -112,7 +112,7 @@ class Docker(AgentCheck):
             self._mounpoints[metric["cgroup"]] = self._find_cgroup(metric["cgroup"])
 
     def check(self, instance):
-        tags = instance.get("tags") or []
+        dimensions = instance.get("dimensions") or {}
         containers = self._get_containers(instance)
         if not containers:
             self.warning("No containers are running.")
@@ -126,14 +126,12 @@ class Docker(AgentCheck):
 
         collected_containers = 0
         for container in containers:
-            container_tags = list(tags)
-            for name in container["Names"]:
-                container_tags.append(self._make_tag("name", name.lstrip("/")))
-            for key in DOCKER_TAGS:
-                container_tags.append(self._make_tag(key, container[key]))
+            container_dimensions = dimensions.copy()
+            container_dimensions['container_names'] = ' '.join(container["Names"])
+            container_dimensions['docker_tags'] = ' '.join(DOCKER_TAGS)
 
-            # Check if the container is included/excluded via its tags
-            if not self._is_container_included(instance, container_tags):
+            # Check if the container is included/excluded
+            if not self._is_container_included(instance, container["Names"]):
                 continue
 
             collected_containers += 1
@@ -143,14 +141,14 @@ class Docker(AgentCheck):
 
             for key, (dd_key, metric_type) in DOCKER_METRICS.items():
                 if key in container:
-                    getattr(self, metric_type)(dd_key, int(container[key]), tags=container_tags)
+                    getattr(self, metric_type)(dd_key, int(container[key]), dimensions=container_dimensions)
             for metric in LXC_METRICS:
                 mountpoint = self._mounpoints[metric["cgroup"]]
                 stat_file = os.path.join(mountpoint, metric["file"] % container["Id"])
                 stats = self._parse_cgroup_file(stat_file)
                 for key, (dd_key, metric_type) in metric["metrics"].items():
                     if key in stats:
-                        getattr(self, metric_type)(dd_key, int(stats[key]), tags=container_tags)
+                        getattr(self, metric_type)(dd_key, int(stats[key]), dimensions=container_dimensions)
 
     @staticmethod
     def _make_tag(key, value):

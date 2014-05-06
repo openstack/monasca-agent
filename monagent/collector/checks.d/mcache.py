@@ -95,10 +95,10 @@ class Memcache(AgentCheck):
 
         return {"memcache": version}
 
-    def _get_metrics(self, server, port, tags, memcache):
+    def _get_metrics(self, server, port, dimensions, memcache):
         mc = None  # client
         try:
-            self.log.debug("Connecting to %s:%s tags:%s", server, port, tags)
+            self.log.debug("Connecting to %s:%s dimensions:%s", server, port, dimensions)
             mc = memcache.Client(["%s:%d" % (server, port)])
             raw_stats = mc.get_stats()
 
@@ -109,13 +109,13 @@ class Memcache(AgentCheck):
                 # Check if metric is a gauge or rate
                 if metric in self.GAUGES:
                     our_metric = self.normalize(metric.lower(), 'memcache')
-                    self.gauge(our_metric, float(stats[metric]), tags=tags)
+                    self.gauge(our_metric, float(stats[metric]), dimensions=dimensions)
 
                 # Tweak the name if it's a rate so that we don't use the exact
                 # same metric name as the memcache documentation
                 if metric in self.RATES:
                     our_metric = self.normalize(metric.lower() + "_rate", 'memcache')
-                    self.rate(our_metric, float(stats[metric]), tags=tags)
+                    self.rate(our_metric, float(stats[metric]), dimensions=dimensions)
 
             # calculate some metrics based on other metrics.
             # stats should be present, but wrap in try/except
@@ -124,7 +124,7 @@ class Memcache(AgentCheck):
                 self.gauge(
                     "memcache.get_hit_percent",
                     100.0 * float(stats["get_hits"]) / float(stats["cmd_get"]),
-                    tags=tags,
+                    dimensions=dimensions,
                 )
             except ZeroDivisionError:
                 pass
@@ -133,7 +133,7 @@ class Memcache(AgentCheck):
                 self.gauge(
                     "memcache.fill_percent",
                     100.0 * float(stats["bytes"]) / float(stats["limit_maxbytes"]),
-                    tags=tags,
+                    dimensions=dimensions,
                 )
             except ZeroDivisionError:
                 pass
@@ -142,7 +142,7 @@ class Memcache(AgentCheck):
                 self.gauge(
                     "memcache.avg_item_size",
                     float(stats["bytes"]) / float(stats["curr_items"]),
-                    tags=tags,
+                    dimensions=dimensions,
                 )
             except ZeroDivisionError:
                 pass
@@ -172,9 +172,9 @@ class Memcache(AgentCheck):
             pass
 
         port = int(instance.get('port', self.DEFAULT_PORT))
-        tags = instance.get('tags', None)
+        dimensions = instance.get('dimensions', None)
 
-        self._get_metrics(server, port, tags, memcache)
+        self._get_metrics(server, port, dimensions, memcache)
 
     @staticmethod
     def parse_agent_config(agentConfig):
@@ -187,7 +187,7 @@ class Memcache(AgentCheck):
             instance = {
                 'url': memcache_url,
                 'port': memcache_port,
-                'tags': ["instance:%s_%s" % (memcache_url, memcache_port)]
+                'dimensions': {"instance": "%s_%s" % (memcache_url, memcache_port)}
             }
             all_instances.append(instance)
 
@@ -202,21 +202,20 @@ class Memcache(AgentCheck):
 
             url = instance[0]
             port = Memcache.DEFAULT_PORT
-            tags = None
+            dimensions = None
 
             if len(instance) > 1:
                 port = instance[1]
 
             if len(instance) == 3:
-                tags = ["instance:%s" % instance[2]]
-
-            if not tags:
-                tags = ["instance:%s_%s" % (url, port)]
+                dimensions = {"instance": instance[2]}
+            else:
+                dimensions = {"instance": "%s_%s" % (url, port)}
 
             all_instances.append({
                 'url': url,
                 'port': port,
-                'tags': tags
+                'dimensions': dimensions
             })
 
             index += 1

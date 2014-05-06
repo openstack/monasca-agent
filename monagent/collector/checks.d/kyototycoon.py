@@ -47,13 +47,11 @@ class KyotoTycoonCheck(AgentCheck):
         if not url:
             raise Exception('Invalid Kyoto Tycoon report url %r' % url)
 
-        tags = instance.get('tags', {})
+        dimensions = instance.get('dimensions', {})
         name = instance.get('name')
 
-        # generate the formatted list of tags
-        tags = ['%s:%s' % (k, v) for k, v in tags.items()]
         if name is not None:
-            tags.append('instance:%s' % name)
+            dimensions['instance'] = name
 
         response = urllib2.urlopen(url)
         body = response.read()
@@ -66,26 +64,27 @@ class KyotoTycoonCheck(AgentCheck):
             key, value = line.strip().split('\t', 1)
             if key in self.GAUGES:
                 name = self.GAUGES[key]
-                self.gauge('kyototycoon.%s' % name, float(value), tags=tags)
+                self.gauge('kyototycoon.%s' % name, float(value), dimensions=dimensions)
             
             elif key in self.RATES:
                 name = self.RATES[key]
-                self.rate('kyototycoon.%s_per_s' % name, float(value), tags=tags)
+                self.rate('kyototycoon.%s_per_s' % name, float(value), dimensions=dimensions)
 
             elif db_stats.match(key):
                 # Also produce a per-db metrics tagged with the db
-                # number in addition to the default tags
+                # number in addition to the default dimensions
                 m = db_stats.match(key)
                 dbnum = int(m.group(1))
-                mytags = tags + ['db:%d' % dbnum]
+                mydimensions = dimensions.copy()
+                mydimensions['db'] = dbnum
                 for part in whitespace.split(value):
                     k, v = part.split('=', 1)
                     if k in self.DB_GAUGES:
                         name = self.DB_GAUGES[k]
-                        self.gauge('kyototycoon.%s' % name, float(v), tags=mytags)
+                        self.gauge('kyototycoon.%s' % name, float(v), dimensions=mydimensions)
 
             if key in self.TOTALS:
                 totals[self.TOTALS[key]] += float(value)
 
         for key, value in totals.items():
-            self.rate('kyototycoon.%s_per_s' % key, value, tags=tags)
+            self.rate('kyototycoon.%s_per_s' % key, value, dimensions=dimensions)

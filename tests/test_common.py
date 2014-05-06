@@ -2,8 +2,8 @@ import time
 import unittest
 import logging
 logger = logging.getLogger()
-from collector.checks import Check, UnknownValue, CheckException, Infinity
-from collector.checks.collector import Collector
+from monagent.common.exceptions import UnknownValue, CheckException, Infinity
+from monagent.collector.checks import Check
 from monagent.common.aggregator import MetricsAggregator
 
 class TestCore(unittest.TestCase):
@@ -33,7 +33,7 @@ class TestCore(unittest.TestCase):
         self.assertEquals(self.c.get_samples(), {"test-metric": 3.0})
 
     def testEdgeCases(self):
-        self.assertRaises(CheckException, self.c.get_sample, "unknown-metric")
+        self.assertRaises(UnknownValue, self.c.get_sample, "unknown-metric")
         # same value
         self.c.save_sample("test-counter", 1.0, 1.0)
         self.c.save_sample("test-counter", 1.0, 1.0)
@@ -49,35 +49,35 @@ class TestCore(unittest.TestCase):
         self.c.save_sample("test-counter", -2.0, 3.0)
         self.assertRaises(UnknownValue, self.c.get_sample_with_timestamp, "test-counter")
 
-    def test_tags(self):
-        # Test metric tagging
+    def test_dimensions(self):
+        # Test metric dimensions
         now = int(time.time())
-        # Tag metrics
-        self.c.save_sample("test-counter", 1.0, 1.0, tags = ["tag1", "tag2"])
-        self.c.save_sample("test-counter", 2.0, 2.0, tags = ["tag1", "tag2"])
-        # Only 1 point recording for this combination of tags, won't be sent
-        self.c.save_sample("test-counter", 3.0, 3.0, tags = ["tag1", "tag3"])
-        self.c.save_sample("test-metric", 3.0, now, tags = ["tag3", "tag4"])
+        # dimensions metrics
+        self.c.save_sample("test-counter", 1.0, 1.0, dimensions={"dim1": "value1", "dim2": "value2"})
+        self.c.save_sample("test-counter", 2.0, 2.0, dimensions={"dim1": "value1", "dim2": "value2"})
+        # Only 1 point recording for this combination of dimensions, won't be sent
+        self.c.save_sample("test-counter", 3.0, 3.0, dimensions={"dim1": "value1", "dim3": "value3"})
+        self.c.save_sample("test-metric", 3.0, now, dimensions={"dim3": "value3", "dim4": "value4"})
         # Arg checks
-        self.assertRaises(CheckException, self.c.save_sample, "test-metric", 4.0, now + 5, tags = "abc")
-        # This is a different combination of tags
-        self.c.save_sample("test-metric", 3.0, now, tags = ["tag5", "tag3"])
+        self.assertRaises(CheckException, self.c.save_sample, "test-metric", 4.0, now + 5, dimensions="abc")
+        # This is a different combination of dimensions
+        self.c.save_sample("test-metric", 3.0, now, dimensions={"dim5": "value5", "dim3": "value3"})
         results = self.c.get_metrics()
         results.sort()
         self.assertEquals(results,
-                          [("test-counter", 2.0, 1.0, {"tags": ["tag1", "tag2"]}),
-                           ("test-metric", now, 3.0, {"tags": ["tag3", "tag4"]}),
-                           ("test-metric", now, 3.0, {"tags": ["tag3", "tag5"]}),
+                          [("test-counter", 2.0, 1.0, {"dimensions": {"dim1": "value1", "dim2": "value2"}}),
+                           ("test-metric", now, 3.0, {"dimensions": {"dim3": "value3", "dim4": "value4"}}),
+                           ("test-metric", now, 3.0, {"dimensions": {"dim3": "value3", "dim5": "value5"}})
                            ])
-        # Tagged metrics are not available through get_samples anymore
+        # dimensions metrics are not available through get_samples anymore
         self.assertEquals(self.c.get_samples(), {})
 
     def test_samples(self):
         self.assertEquals(self.c.get_samples(), {})
         self.c.save_sample("test-metric", 1.0, 0.0)  # value, ts
-        self.c.save_sample("test-counter", 1.0, 1.0) # value, ts
-        self.c.save_sample("test-counter", 4.0, 2.0) # value, ts
-        assert "test-metric"  in self.c.get_samples_with_timestamps(expire=False), self.c.get_samples_with_timestamps(expire=False)
+        self.c.save_sample("test-counter", 1.0, 1.0)  # value, ts
+        self.c.save_sample("test-counter", 4.0, 2.0)  # value, ts
+        assert "test-metric" in self.c.get_samples_with_timestamps(expire=False), self.c.get_samples_with_timestamps(expire=False)
         self.assertEquals(self.c.get_samples_with_timestamps(expire=False)["test-metric"], (0.0, 1.0, None, None))
         assert "test-counter" in self.c.get_samples_with_timestamps(expire=False), self.c.get_samples_with_timestamps(expire=False)
         self.assertEquals(self.c.get_samples_with_timestamps(expire=False)["test-counter"], (2.0, 3.0, None, None))
@@ -96,7 +96,7 @@ class TestAggregator(unittest.TestCase):
 
     def test_dupe_tags(self):
         self.aggr.increment('test-counter', 1, dimensions={'a': 'avalue', 'b': 'bvalue'})
-        self.aggr.increment('test-counter', 1, dimensions={'a': 'avalue', 'b': 'bvalue', 'b2': 'b2value'})
+        self.aggr.increment('test-counter', 1, dimensions={'a': 'avalue', 'b': 'bvalue', 'b': 'bvalue'})
         self.assertEquals(len(self.aggr.metrics), 1, self.aggr.metrics)
         metric = self.aggr.metrics.values()[0]
         self.assertEquals(metric.value, 2)

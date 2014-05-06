@@ -33,7 +33,7 @@ class DirectoryCheck(AgentCheck):
         self._get_stats(abs_directory, name, pattern, recursive)
 
     def _get_stats(self, directory, name, pattern, recursive):
-        tags = ["name:%s" % name]
+        dimensions = {"name": name}
         directory_bytes = 0
         directory_files = 0
         for root, dirs, files in walk(directory):
@@ -51,9 +51,11 @@ class DirectoryCheck(AgentCheck):
                     directory_files += 1
                     directory_bytes += file_stat.st_size
                     # file specific metrics
-                    self.histogram("system.disk.directory.file.bytes", file_stat.st_size, tags=tags)
-                    self.histogram("system.disk.directory.file.modified_sec_ago", time.time() - file_stat.st_mtime, tags=tags)
-                    self.histogram("system.disk.directory.file.created_sec_ago", time.time() - file_stat.st_ctime, tags=tags)
+                    self.histogram("system.disk.directory.file.bytes", file_stat.st_size, dimensions=dimensions)
+                    self.histogram("system.disk.directory.file.modified_sec_ago", time.time() - file_stat.st_mtime,
+                                   dimensions=dimensions)
+                    self.histogram("system.disk.directory.file.created_sec_ago", time.time() - file_stat.st_ctime,
+                                   dimensions=dimensions)
 
             # os.walk gives us all sub-directories and their files
             # if we do not want to do this recursively and just want
@@ -62,6 +64,6 @@ class DirectoryCheck(AgentCheck):
                 break
 
         # number of files
-        self.gauge("system.disk.directory.files", directory_files, tags=tags)
+        self.gauge("system.disk.directory.files", directory_files, dimensions=dimensions)
         # total file size
-        self.gauge("system.disk.directory.bytes", directory_bytes, tags=tags)
+        self.gauge("system.disk.directory.bytes", directory_bytes, dimensions=dimensions)

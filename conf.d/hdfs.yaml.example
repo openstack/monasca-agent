@@ -7,5 +7,5 @@ instances:
 
 # - namenode: namenode.example.com
 #   port: 8020
-#   tags:
-#     - optional_tag
+#   dimensions:
+#     dim1: value1

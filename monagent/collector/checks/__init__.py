@@ -117,6 +117,8 @@ class Check(object):
     def save_sample(self, metric, value, timestamp=None, dimensions=None, hostname=None, device_name=None):
         """Save a simple sample, evict old values if needed
         """
+        if dimensions is None:
+            dimensions = {}
         from common.util import cast_metric_val
 
         if timestamp is None:
@@ -133,7 +135,7 @@ class Check(object):
             raise CheckException("Dimensions must be a dictionary")
 
         # Data eviction rules
-        key = (dimensions, device_name)
+        key = (tuple(sorted(dimensions.items())), device_name)
         if self.is_gauge(metric):
             self._sample_store[metric][key] = ((timestamp, value, hostname, device_name), )
         elif self.is_counter(metric):
@@ -173,10 +175,13 @@ class Check(object):
             raise NaN(e)
 
     def get_sample_with_timestamp(self, metric, dimensions=None, device_name=None, expire=True):
-        "Get (timestamp-epoch-style, value)"
+        """Get (timestamp-epoch-style, value)
+        """
+        if dimensions is None:
+            dimensions = {}
 
         # Get the proper dimensions
-        key = (dimensions, device_name)
+        key = (tuple(sorted(dimensions.items())), device_name)
 
         # Never seen this metric
         if metric not in self._sample_store:
@@ -236,13 +241,14 @@ class Check(object):
         for m in self._sample_store:
             try:
                 for key in self._sample_store[m]:
-                    dimensions, device_name = key
+                    dimensions_list, device_name = key
+                    dimensions = dict(dimensions_list)
                     try:
                         ts, val, hostname, device_name = self.get_sample_with_timestamp(m, dimensions, device_name, expire)
                     except UnknownValue:
                         continue
                     attributes = {}
-                    if dimensions:
+                    if dimensions_list:
                         attributes['dimensions'] = dimensions
                     if hostname:
                         attributes['host_name'] = hostname
@@ -292,7 +298,7 @@ class AgentCheck(object):
 
         :param metric: The name of the metric
         :param value: The value of the gauge
-        :param dimensions: (optional) A list of dimensions for this metric
+        :param dimensions: (optional) A dictionary of dimensions for this metric
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         :param timestamp: (optional) The timestamp for this metric value
@@ -305,7 +311,7 @@ class AgentCheck(object):
 
         :param metric: The name of the metric
         :param value: The value to increment by
-        :param dimensions: (optional) A list of dimensions for this metric
+        :param dimensions: (optional) A dictionary of dimensions for this metric
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         """
@@ -317,7 +323,7 @@ class AgentCheck(object):
 
         :param metric: The name of the metric
         :param value: The value to decrement by
-        :param dimensions: (optional) A list of dimensions for this metric
+        :param dimensions: (optional) A dictionary of dimensions for this metric
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         """
@@ -331,7 +337,7 @@ class AgentCheck(object):
 
         :param metric: The name of the metric
         :param value: The value of the rate
-        :param dimensions: (optional) A list of dimensions for this metric
+        :param dimensions: (optional) A dictionary of dimensions for this metric
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         """
@@ -343,7 +349,7 @@ class AgentCheck(object):
 
         :param metric: The name of the metric
         :param value: The value to sample for the histogram
-        :param dimensions: (optional) A list of dimensions for this metric
+        :param dimensions: (optional) A dictionary of dimensions for this metric
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         """
@@ -355,7 +361,7 @@ class AgentCheck(object):
 
         :param metric: The name of the metric
         :param value: The value for the set
-        :param dimensions: (optional) A list of dimensions for this metric
+        :param dimensions: (optional) A dictionary of dimensions for this metric
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         """
@@ -378,7 +384,7 @@ class AgentCheck(object):
                     Defaults to 'info'.
                 "source_type_name": (optional) string, the source type name,
                 "host": (optional) string, the name of the host,
-                "dimensions": (optional) list, a list of dimensions to associate with this event
+                "dimensions": (optional) a dictionary of dimensions to associate with this event
             }
         """
         if event.get('api_key') is None:

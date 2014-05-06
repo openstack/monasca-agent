@@ -27,7 +27,7 @@ NODE_ATTRIBUTES = ['fd_used',
 
 ATTRIBUTES = {QUEUE_TYPE: QUEUE_ATTRIBUTES, NODE_TYPE: NODE_ATTRIBUTES}
 
-TAGS_MAP = {
+DIMENSIONS_MAP = {
     QUEUE_TYPE: {'node': 'node',
                  'name': 'queue',
                  'vhost': 'vhost',
@@ -156,22 +156,21 @@ class RabbitMQ(AgentCheck):
                 # We truncate the list of nodes/queues if it's above the limit
                 self._get_metrics(data_line, object_type)
 
-
     def _get_metrics(self, data, object_type):
-        tags = []
-        tag_list = TAGS_MAP[object_type]
-        for t in tag_list.keys():
-            tag = data.get(t, None)
-            if tag is not None:
-                tags.append('rabbitmq_%s:%s' % (tag_list[t], tag))
+        dimensions = {}
+        dimensions_list = DIMENSIONS_MAP[object_type]
+        for d in dimensions_list.iterkeys():
+            dim = data.get(d, None)
+            if dim is not None:
+                dimensions['rabbitmq_%s' % dimensions_list[d]] = dim
 
         for attribute in ATTRIBUTES[object_type]:
             value = data.get(attribute, None)
             if value is not None:
                 try:
-                    self.gauge('rabbitmq.%s.%s' % (METRIC_SUFFIX[object_type], attribute), float(value), tags=tags)
+                    self.gauge('rabbitmq.%s.%s' % (METRIC_SUFFIX[object_type], attribute), float(value), dimensions=dimensions)
                 except ValueError:
-                    self.log.debug("Caught ValueError for %s %s = %s  with tags: %s" % (METRIC_SUFFIX[object_type], attribute, value, tags))
+                    self.log.debug("Caught ValueError for %s %s = %s  with dimensions: %s" % (METRIC_SUFFIX[object_type], attribute, value, dimensions))
 
     def alert(self, base_url, max_detailed, size, object_type):
         key = "%s%s" % (base_url, object_type)
@@ -193,7 +192,7 @@ class RabbitMQ(AgentCheck):
                 "alert_type": 'warning',
                 "source_type_name": SOURCE_TYPE_NAME,
                 "host": self.hostname,
-                "tags": ["base_url:%s" % base_url, "host:%s" % self.hostname],
+                "dimensions": {"base_url": base_url, "host": self.hostname},
                 "event_object": "rabbitmq.limit.%s" % object_type,
             }
 

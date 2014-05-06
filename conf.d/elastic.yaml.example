@@ -11,6 +11,6 @@ instances:
     #-  url: http://localhost:9200
     #   username: username
     #   password: password
-    #   tags:
-    #     - 'tag1:key1'
-    #     - 'tag2:key2'
+    #   dimensions:
+    #     dim1: value1
+    #     dim2: value2

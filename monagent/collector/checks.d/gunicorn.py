@@ -25,9 +25,9 @@ class GUnicornCheck(AgentCheck):
     # Number of seconds to sleep between cpu time checks.
     CPU_SLEEP_SECS = 0.1
 
-    # Worker state tags.
-    IDLE_TAGS = ["state:idle"]
-    WORKING_TAGS = ["state:working"]
+    # Worker state dimensions.
+    IDLE_DIMENSIONS = {"state": "idle"}
+    WORKING_DIMENSIONS = {"state": "working"}
 
     @staticmethod
     def get_library_versions():
@@ -62,8 +62,8 @@ class GUnicornCheck(AgentCheck):
 
         # Submit the data.
         self.log.debug("instance %s procs - working:%s idle:%s" % (proc_name, working, idle))
-        self.gauge("gunicorn.workers", working, self.WORKING_TAGS)
-        self.gauge("gunicorn.workers", idle, self.IDLE_TAGS)
+        self.gauge("gunicorn.workers", working, self.WORKING_DIMENSIONS)
+        self.gauge("gunicorn.workers", idle, self.IDLE_DIMENSIONS)
 
     def _count_workers(self, worker_procs):
         working = 0

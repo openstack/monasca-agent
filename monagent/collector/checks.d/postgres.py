@@ -13,7 +13,7 @@ class PostgreSql(AgentCheck):
     RATE = AgentCheck.rate
     GAUGE = AgentCheck.gauge
     
-    # turning columns into tags
+    # turning columns into dimensions
     DB_METRICS = {
         'descriptors': [('datname', 'db')],
         'metrics': {'numbackends': ('postgresql.connections', GAUGE),
@@ -117,7 +117,7 @@ SELECT relname,
 
         return False
 
-    def _collect_stats(self, key, db, instance_tags, relations):
+    def _collect_stats(self, key, db, dimensions, relations):
         """Query pg_stat_* for various metrics
         If relations is not an empty list, gather per-relation metrics
         on top of that.
@@ -160,24 +160,22 @@ SELECT relname,
             # parse & submit results
             # A row should look like this
             # (descriptor, descriptor, ..., value, value, value, value, ...)
-            # with descriptor a PG relation or index name, which we use to create the tags
+            # with descriptor a PG relation or index name, which we use to create the dimensions
             for row in results:
-                # turn descriptors into tags
+                # turn descriptors into dimensions
                 desc = scope['descriptors']
                 # Check that all columns will be processed
                 assert len(row) == len(cols) + len(desc)
                 
-                # Build tags
+                # Build dimensions
                 # descriptors are: (pg_name, dd_tag_name): value
-                # Special-case the "db" tag, which overrides the one that is passed as instance_tag
+                # Special-case the "db" tag, which overrides the one that is passed as instance_dimensions
                 # The reason is that pg_stat_database returns all databases regardless of the
                 # connection.
-                if not scope['relation']:
-                    tags = [t for t in instance_tags if not t.startswith("db:")]
-                else:
-                    tags = [t for t in instance_tags]
+                if not scope['relation'] and 'db' in dimensions:
+                    del dimensions['db']
 
-                tags += ["%s:%s" % (d[0][1], d[1]) for d in zip(desc, row[:len(desc)])]
+                dimensions.update({d[0][1]: d[1] for d in zip(desc, row[:len(desc)])})
 
                 # [(metric-map, value), (metric-map, value), ...]
                 # metric-map is: (dd_name, "rate"|"gauge")
@@ -187,10 +185,9 @@ SELECT relname,
                 # To submit simply call the function for each value v
                 # v[0] == (metric_name, submit_function)
                 # v[1] == the actual value
-                # tags are
-                [v[0][1](self, v[0][0], v[1], tags=tags) for v in values]
+                # dimensions are
+                [v[0][1](self, v[0][0], v[1], dimensions=dimensions) for v in values]
             
-
     def get_connection(self, key, host, port, user, password, dbname, use_cached=True):
         "Get and memoize connections to instances"
         if key in self.dbs and use_cached:
@@ -227,26 +224,25 @@ SELECT relname,
         self.dbs[key] = connection
         return connection
 
-
     def check(self, instance):
         host = instance.get('host', '')
         port = instance.get('port', '')
         user = instance.get('username', '')
         password = instance.get('password', '')
-        tags = instance.get('tags', [])
+        dimensions = instance.get('dimensions', {})
         dbname = instance.get('dbname', 'postgres')
         relations = instance.get('relations', [])
 
         key = '%s:%s:%s' % (host, port,dbname)
         db = self.get_connection(key, host, port, user, password, dbname)
 
-        # Clean up tags in case there was a None entry in the instance
-        # e.g. if the yaml contains tags: but no actual tags
-        if tags is None:
-            tags = []
+        # Clean up dimensions in case there was a None entry in the instance
+        # e.g. if the yaml contains dimensions: but no actual dimensions
+        if dimensions is None:
+            dimensions = {}
         
-        # preset tags to the database name
-        tags.extend(["db:%s" % dbname])
+        # preset dimensions to the database name
+        dimensions["db"] = dbname
 
         # Check version
         version = self._get_version(key, db)
@@ -254,12 +250,11 @@ SELECT relname,
             
         # Collect metrics
         try:
-            self._collect_stats(key, db, tags, relations)
+            self._collect_stats(key, db, dimensions, relations)
         except ShouldRestartException:
             self.log.info("Resetting the connection")
             db = self.get_connection(key, host, port, user, password, dbname, use_cached=False)
-            self._collect_stats(key, db, tags, relations)
-
+            self._collect_stats(key, db, dimensions, relations)
 
     @staticmethod
     def parse_agent_config(agentConfig):

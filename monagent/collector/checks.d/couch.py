@@ -9,21 +9,21 @@ class CouchDb(AgentCheck):
     """Extracts stats from CouchDB via its REST API
     http://wiki.apache.org/couchdb/Runtime_Statistics
     """
-    def _create_metric(self, data, tags=None):
+    def _create_metric(self, data, dimensions=None):
         overall_stats = data.get('stats', {})
         for key, stats in overall_stats.items():
             for metric, val in stats.items():
                 if val['current'] is not None:
                     metric_name = '.'.join(['couchdb', key, metric])
-                    self.gauge(metric_name, val['current'], tags=tags)
+                    self.gauge(metric_name, val['current'], dimensions=dimensions)
         
         for db_name, db_stats in data.get('databases', {}).items():
             for name, val in db_stats.items():
                 if name in ['doc_count', 'disk_size'] and val is not None:
                     metric_name = '.'.join(['couchdb', 'by_db', name])
-                    metric_tags = list(tags)
-                    metric_tags.append('db:%s' % db_name)
-                    self.gauge(metric_name, val, tags=metric_tags, device_name=db_name)
+                    metric_dimensions = dimensions.copy()
+                    metric_dimensions['db'] = db_name
+                    self.gauge(metric_name, val, dimensions=metric_dimensions, device_name=db_name)
 
     def _get_stats(self, url):
         "Hit a given URL and return the parsed json"
@@ -40,7 +40,7 @@ class CouchDb(AgentCheck):
         if server is None:
             raise Exception("A server must be specified")
         data = self.get_data(server)
-        self._create_metric(data, tags=['instance:%s' % server])
+        self._create_metric(data, dimensions={'instance': server})
 
     def get_data(self, server):
         # The dictionary to be returned.

@@ -50,14 +50,14 @@ class TestMemCache(unittest.TestCase):
         self.assertEquals(len([t for t in r if t[0] == "memcache.total_items"]), 3, r)
 
         # Check that we got 21 metrics for a specific host
-        self.assertEquals(len([t for t in r if t[3].get('tags') == ["instance:mythirdtag"]]), 21, r)
+        self.assertEquals(len([t for t in r if t[3].get('dimensions') == {"instance": mythirdtag}]), 21, r)
 
-    def testTagging(self):
+    def testDimensions(self):
         raise SkipTest('Requires mcache')
         instance = {
             'url': 'localhost',
             'port': 11211,
-            'tags': ['regular_old_tag']
+            'dimensions': {'regular_old': 'dimensions'}
         }
 
         self.c.check(instance)
@@ -67,8 +67,8 @@ class TestMemCache(unittest.TestCase):
 
         r = self.c.get_metrics()
 
-        # Check the tags
-        self.assertEquals(len([t for t in r if t[3].get('tags') == ["regular_old_tag"]]), 21, r)
+        # Check the dimensions
+        self.assertEquals(len([t for t in r if t[3].get('dimensions') == {"regular_old": "dimensions"}]), 21, r)
 
         conf = {
             'memcache_server': 'localhost',
@@ -83,8 +83,8 @@ class TestMemCache(unittest.TestCase):
 
         r = self.c.get_metrics()
 
-        # Check the tags
-        self.assertEquals(len([t for t in r if t[3].get('tags') == ["instance:localhost_11211"]]), 21, r)
+        # Check the dimensions
+        self.assertEquals(len([t for t in r if t[3].get('dimensions') == {"instance": "localhost_11211"}]), 21, r)
 
     def testDummyHost(self):
         new_conf = self.c.parse_agent_config({"memcache_instance_1": "dummy:11211:myothertag"})

@@ -82,7 +82,7 @@ class Varnish(AgentCheck):
         # Not configured? Not a problem.
         if instance.get("varnishstat", None) is None:
             raise Exception("varnishstat is not configured")
-        tags = instance.get('tags', [])
+        dimensions = instance.get('dimensions', {})
         name = instance.get('name')
 
         # Get the varnish version from varnishstat
@@ -118,9 +118,9 @@ class Varnish(AgentCheck):
         cmd = [instance.get("varnishstat"), arg]
         if name is not None:
             cmd.extend(['-n', name])
-            tags += [u'varnish_name:%s' % name]
+            dimensions[u'varnish_name': name]
         else:
-            tags += [u'varnish_name:default']
+            dimensions[u'varnish_name': 'default']
         try:
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                                          stderr=subprocess.PIPE)
@@ -130,10 +130,10 @@ class Varnish(AgentCheck):
             raise
         if error and len(error) > 0:
             self.log.error(error)
-        self._parse_varnishstat(output, use_xml, tags)
+        self._parse_varnishstat(output, use_xml, dimensions)
 
-    def _parse_varnishstat(self, output, use_xml, tags=None):
-        tags = tags or []
+    def _parse_varnishstat(self, output, use_xml, dimensions=None):
+        dimensions = dimensions or {}
         if use_xml:
             p = xml.parsers.expat.ParserCreate()
             p.StartElementHandler = self._start_element
@@ -154,11 +154,11 @@ class Varnish(AgentCheck):
                 if rate_val.lower() in ("nan", "."):
                     # col 2 matters
                     self.log.debug("Varnish (gauge) %s %d" % (metric_name, int(gauge_val)))
-                    self.gauge(metric_name, int(gauge_val), tags=tags)
+                    self.gauge(metric_name, int(gauge_val), dimensions=dimensions)
                 else:
                     # col 3 has a rate (since restart)
                     self.log.debug("Varnish (rate) %s %d" % (metric_name, int(gauge_val)))
-                    self.rate(metric_name, float(gauge_val), tags=tags)
+                    self.rate(metric_name, float(gauge_val), dimensions=dimensions)
 
     @staticmethod
     def parse_agent_config(agentConfig):

@@ -21,27 +21,27 @@ class PostfixCheck(AgentCheck):
 
         directory = config['directory']
         queues = config['queues']
-        tags = config['tags']
+        dimensions = config['dimensions']
 
-        self._get_queue_count(directory, queues, tags)
+        self._get_queue_count(directory, queues, dimensions)
 
     @staticmethod
     def _get_config(instance):
         directory = instance.get('directory', None)
         queues = instance.get('queues', None)
-        tags = instance.get('tags', [])
+        dimensions = instance.get('dimensions', {})
         if not queues or not directory:
             raise Exception('missing required yaml config entry')
 
         instance_config = {
             'directory': directory,
             'queues': queues,
-            'tags': tags,
+            'dimensions': dimensions,
         }
 
         return instance_config
 
-    def _get_queue_count(self, directory, queues, tags):
+    def _get_queue_count(self, directory, queues, dimensions):
         for queue in queues:
             queue_path = os.path.join(directory, queue)
             if not os.path.exists(queue_path):
@@ -61,8 +61,8 @@ class PostfixCheck(AgentCheck):
                     raise Exception('The dd-agent user does not have sudo access')
 
             # emit an individually tagged metric
-            self.gauge('postfix.queue.size', count,
-                       tags=tags + ['queue:%s' % queue, 'instance:%s' % os.path.basename(directory)])
+            dimensions.update({'queue': queue, 'instance': os.path.basename(directory)})
+            self.gauge('postfix.queue.size', count, dimensions=dimensions)
 
             # these can be retrieved in a single graph statement
             # for example:

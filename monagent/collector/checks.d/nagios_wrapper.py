@@ -32,13 +32,11 @@ class WrapNagios(AgentCheck):
     def check(self, instance):
         """Run the command specified by check_command and capture the result"""
 
-        tags = [
-            'observer_host:' + socket.getfqdn(),
-        ]
+        dimensions = {'observer_host': socket.getfqdn()}
         if 'host_name' in instance:
-            tags.extend(['target_host:' + instance['host_name']])
+            dimensions['target_host'] = instance['host_name']
         else:
-            tags.extend(['target_host:' + socket.getfqdn()])
+            dimensions['target_host'] = sockeg.getfqdn()
 
         extra_path = self.init_config.get('check_path')
 
@@ -71,16 +69,16 @@ class WrapNagios(AgentCheck):
             # The check detail is all the text before the pipe
             detail = output[0].split('|')[0]
             if detail != '':
-                # Serialize the output for JSON-friendliness and add to the tags
-                tags.extend(['detail:' + json.dumps(detail)])
+                # Serialize the output for JSON-friendliness and add to the dimensions
+                dimensions['detail'] = json.dumps(detail)
         except OSError:
             # Return an UNKNOWN code (3) if I have landed here
-            self.gauge(instance['service_name'], 3, tags=tags)
+            self.gauge(instance['service_name'], 3, dimensions=dimensions)
             self.log.info(instance['check_command'].split(" ")[0] + " is missing or unreadable")
             return
 
         last_run_data[instance['service_name']] = time.time()
-        self.gauge(instance['service_name'], proc.poll(), tags=tags)
+        self.gauge(instance['service_name'], proc.poll(), dimensions=dimensions)
 
         # Save last-run data
         file_w = open(last_run_file, "w")

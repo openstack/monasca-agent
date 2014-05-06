@@ -67,7 +67,7 @@ class Lighttpd(AgentCheck):
 
         url = self.assumed_url.get(instance['lighttpd_status_url'], instance['lighttpd_status_url'])
 
-        tags = instance.get('tags', [])
+        dimensions = instance.get('dimensions', {})
         self.log.debug("Connecting to %s" % url)
         req = urllib2.Request(url, None, headers(self.agent_config))
         if 'user' in instance and 'password' in instance:
@@ -96,19 +96,19 @@ class Lighttpd(AgentCheck):
                 if metric in self.GAUGES:
                     metric_count += 1
                     metric_name = self.GAUGES[metric]
-                    self.gauge(metric_name, value, tags=tags)
+                    self.gauge(metric_name, value, dimensions=dimensions)
 
                 # Send metric as a rate, if applicable
                 if metric in self.RATES:
                     metric_count += 1
                     metric_name = self.RATES[metric]
-                    self.rate(metric_name, value, tags=tags)
+                    self.rate(metric_name, value, dimensions=dimensions)
 
                 # Send metric as a counter, if applicable
                 if metric in self.COUNTERS:
                     metric_count += 1
                     metric_name = self.COUNTERS[metric]
-                    self.increment(metric_name, value, tags=tags)
+                    self.increment(metric_name, value, dimensions=dimensions)
 
         if metric_count == 0:
             url_suffix = self.URL_SUFFIX_PER_VERSION[server_version]

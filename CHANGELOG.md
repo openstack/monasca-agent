@@ -15,3 +15,7 @@ Changes
 - collector only sends to forwarder now (previously you could optionally have it bypass the forwarder and send to datadogs)
 - moved non-code files to root of project
 - removed rpm build
+- Rearranged code so things are more logically grouped
+- Setup a standard message format for communicating to the forwarder
+- Converted from tags to dimensions throughout the collector
+- Rebranded dogstatsd and converted to dimensions

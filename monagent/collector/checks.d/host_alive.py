@@ -71,10 +71,8 @@ class HostAlive(AgentCheck):
     def check(self, instance):
         """Run the desired host-alive check againt this host"""
 
-        tags = [
-            'target_host:' + instance['host_name'],
-            'observer_host:' + socket.getfqdn(),
-        ]
+        dimensions = ['target_host:' + instance['host_name'],
+                      'observer_host:' + socket.getfqdn()]
 
         success = False
 
@@ -89,7 +87,7 @@ class HostAlive(AgentCheck):
             self.log.info("Unrecognized alive_test " + instance['alive_test'])
 
         if success is True:
-            self.gauge('host_alive', 0, tags=tags)
+            self.gauge('host_alive', 0, dimensions=dimensions)
         else:
-            self.gauge('host_alive', 1, tags=tags)
+            self.gauge('host_alive', 1, dimensions=dimensions)
 

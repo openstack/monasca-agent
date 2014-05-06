@@ -186,15 +186,15 @@ class ProcessCheck(AgentCheck):
             cpu_check_interval = 0.1
 
         pids = self.find_pids(search_string, psutil, exact_match=exact_match)
-        tags = ['process_name:%s' % name, name]
+        dimensions = {'process_name': name}
 
         self.log.debug('ProcessCheck: process %s analysed' % name)
 
-        self.gauge('processes_pid_count', len(pids), tags=tags)
+        self.gauge('processes_pid_count', len(pids), dimensions=dimensions)
 
         metrics = dict(zip(ProcessCheck.PROCESS_GAUGE, self.get_process_metrics(pids,
             psutil, cpu_check_interval)))
 
         for metric, value in metrics.iteritems():
             if value is not None:
-                self.gauge(metric, value, tags=tags)
+                self.gauge(metric, value, dimensions=dimensions)

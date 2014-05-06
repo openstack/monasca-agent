@@ -366,12 +366,12 @@ class MetricsAggregator(Aggregator):
         # Avoid calling extra functions to dedupe dimensions if there are none
         if dimensions is None:
             dimensions = {}
-        context = (name, dimensions, hostname, device_name)
+        context = (name, hostname, device_name)
 
         if context not in self.metrics:
             metric_class = self.metric_type_to_class[mtype]
             self.metrics[context] = metric_class(self.formatter, name, dimensions,
-                hostname or self.hostname, device_name)
+                                                 hostname or self.hostname, device_name)
         cur_time = time()
         if timestamp is not None and cur_time - int(timestamp) > self.recent_point_threshold:
             log.debug("Discarding %s - ts = %s , current ts = %s " % (name, timestamp, cur_time))

@@ -19,7 +19,7 @@ class HDFSCheck(AgentCheck):
             # PyYAML converts the number to an int for us
             raise ValueError('Port %r is not an integer' % port)
 
-        tags = instance.get('tags', None)
+        dimensions = instance.get('dimensions', None)
 
         hdfs = snakebite.client.Client(host, port)
         stats = hdfs.df()
@@ -31,15 +31,14 @@ class HDFSCheck(AgentCheck):
         #  'remaining': 71186818453504L,
         #  'corrupt_blocks': 0L}
 
-        self.gauge('hdfs.used', stats['used'], tags=tags)
-        self.gauge('hdfs.free', stats['remaining'], tags=tags)
-        self.gauge('hdfs.capacity', stats['capacity'], tags=tags)
+        self.gauge('hdfs.used', stats['used'], dimensions=dimensions)
+        self.gauge('hdfs.free', stats['remaining'], dimensions=dimensions)
+        self.gauge('hdfs.capacity', stats['capacity'], dimensions=dimensions)
         self.gauge('hdfs.in_use', float(stats['used']) /
-                   float(stats['capacity']), tags=tags)
-        self.gauge('hdfs.under_replicated', stats['under_replicated'],
-                tags=tags)
-        self.gauge('hdfs.missing_blocks', stats['missing_blocks'], tags=tags)
-        self.gauge('hdfs.corrupt_blocks', stats['corrupt_blocks'], tags=tags)
+                   float(stats['capacity']), dimensions=dimensions)
+        self.gauge('hdfs.under_replicated', stats['under_replicated'], dimensions=dimensions)
+        self.gauge('hdfs.missing_blocks', stats['missing_blocks'], dimensions=dimensions)
+        self.gauge('hdfs.corrupt_blocks', stats['corrupt_blocks'], dimensions=dimensions)
 
 if __name__ == '__main__':
     check, instances = HDFSCheck.from_yaml('./hdfs.yaml')

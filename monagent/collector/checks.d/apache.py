@@ -34,7 +34,7 @@ class Apache(AgentCheck):
 
         url = self.assumed_url.get(instance['apache_status_url'], instance['apache_status_url'])
 
-        tags = instance.get('tags', [])
+        dimensions = instance.get('dimensions', {})
         req = urllib2.Request(url, None, headers(self.agent_config))
         if 'apache_user' in instance and 'apache_password' in instance:
             add_basic_auth(req, instance['apache_user'], instance['apache_password'])
@@ -60,13 +60,13 @@ class Apache(AgentCheck):
                 if metric in self.GAUGES:
                     metric_count += 1
                     metric_name = self.GAUGES[metric]
-                    self.gauge(metric_name, value, tags=tags)
+                    self.gauge(metric_name, value, dimensions=dimensions)
 
                 # Send metric as a rate, if applicable
                 if metric in self.RATES:
                     metric_count += 1
                     metric_name = self.RATES[metric]
-                    self.rate(metric_name, value, tags=tags)
+                    self.rate(metric_name, value, dimensions=dimensions)
 
         if metric_count == 0:
             if self.assumed_url.get(instance['apache_status_url'], None) is None and url[-5:] != '?auto':

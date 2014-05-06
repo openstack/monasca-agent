@@ -119,7 +119,7 @@ class ElasticSearch(AgentCheck):
 
     def check(self, instance):
         config_url = instance.get('url')
-        added_tags = instance.get('tags')
+        dimensions = instance.get('dimensions', {})
         if config_url is None:
             raise Exception("An url must be specified")
 
@@ -137,10 +137,7 @@ class ElasticSearch(AgentCheck):
             config_url = "%s://%s" % (parsed[0], parsed[1])
 
         # Tag by URL so we can differentiate the metrics from multiple instances
-        tags = ['url:%s' % config_url]
-        if added_tags is not None:
-            for tag in added_tags:
-                tags.append(tag)
+        dimensions['url'] = config_url
 
         # Check ES version for this instance and define parameters (URLs and metrics) accordingly
         version = self._get_es_version(config_url, auth)
@@ -149,12 +146,12 @@ class ElasticSearch(AgentCheck):
         # Load stats data.
         url = urlparse.urljoin(config_url, self.STATS_URL)
         stats_data = self._get_data(url, auth)
-        self._process_stats_data(config_url, stats_data, auth, tags=tags)
+        self._process_stats_data(config_url, stats_data, auth, dimensions=dimensions)
 
         # Load the health data.
         url = urlparse.urljoin(config_url, self.HEALTH_URL)
         health_data = self._get_data(url, auth)
-        self._process_health_data(config_url, health_data, tags=tags)
+        self._process_health_data(config_url, health_data, dimensions=dimensions)
 
 
     def _get_es_version(self, config_url, auth=None):
@@ -227,13 +224,13 @@ class ElasticSearch(AgentCheck):
         response = request.read()
         return json.loads(response)
 
-    def _process_stats_data(self, config_url, data, auth, tags=None):
+    def _process_stats_data(self, config_url, data, auth, dimensions=None):
         for node in data['nodes']:
             node_data = data['nodes'][node]
 
             def process_metric(metric, xtype, path, xform=None):
                 # closure over node_data
-                self._process_metric(node_data, metric, path, xform, tags=tags)
+                self._process_metric(node_data, metric, path, xform, dimensions=dimensions)
 
             # On newer version of ES it's "host" not "hostname"
             node_hostname = node_data.get('hostname', node_data.get('host', None))
@@ -313,7 +310,7 @@ class ElasticSearch(AgentCheck):
         # Check the interface addresses against the primary address
         return primary_addrs in ips
 
-    def _process_metric(self, data, metric, path, xform=None, tags=None):
+    def _process_metric(self, data, metric, path, xform=None, dimensions=None):
         """data: dictionary containing all the stats
         metric: datadog metric
         path: corresponding path in data, flattened, e.g. thread_pool.bulk.queue
@@ -331,13 +328,13 @@ class ElasticSearch(AgentCheck):
         if value is not None:
             if xform: value = xform(value)
             if self.METRICS[metric][0] == "gauge":
-                self.gauge(metric, value, tags=tags)
+                self.gauge(metric, value, dimensions=dimensions)
             else:
-                self.rate(metric, value, tags=tags)
+                self.rate(metric, value, dimensions=dimensions)
         else:
             self._metric_not_found(metric, path)
 
-    def _process_health_data(self, config_url, data, tags=None):
+    def _process_health_data(self, config_url, data, dimensions=None):
         if self.cluster_status.get(config_url, None) is None:
             self.cluster_status[config_url] = data['status']
             if data['status'] in ["yellow", "red"]:
@@ -352,7 +349,7 @@ class ElasticSearch(AgentCheck):
 
         def process_metric(metric, xtype, path, xform=None):
             # closure over data
-            self._process_metric(data, metric, path, xform, tags=tags)
+            self._process_metric(data, metric, path, xform, dimensions=dimensions)
 
         for metric in self.METRICS:
             # metric description

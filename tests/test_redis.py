@@ -110,14 +110,14 @@ class TestRedis(unittest.TestCase):
         metrics = self._sort_metrics(r.get_metrics())
         assert metrics, "No metrics returned"
 
-        # Assert we have values, timestamps and tags for each metric.
+        # Assert we have values, timestamps and dimensions for each metric.
         for m in metrics:
             assert isinstance(m[1], int)    # timestamp
             assert isinstance(m[2], (int, float, long))  # value
-            tags = m[3]["dimensions"]
-            expected_tags = ["redis_host:localhost", "redis_port:%s" % port]
-            for e in expected_tags:
-                assert e in tags
+            dimensions = m[3]["dimensions"]
+            expected_dimensions = {"redis_host": "localhost", "redis_port": port}
+            for e in expected_dimensions:
+                assert e in dimensions
 
         def assert_key_present(expected, present, tolerance):
             "Assert we have the rest of the keys (with some tolerance for missing keys)"

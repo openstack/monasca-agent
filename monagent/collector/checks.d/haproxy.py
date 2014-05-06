@@ -147,8 +147,8 @@ class HAProxy(AgentCheck):
         for (service, status), count in hosts_statuses.iteritems():
             status = status.lower()
 
-            tags = ['status:%s' % status, 'service:%s' % service]
-            self.gauge("haproxy.count_per_status", count, tags=tags)
+            dimensions = {'status': status, 'service': service}
+            self.gauge("haproxy.count_per_status", count, dimensions=dimensions)
 
             if 'up' in status:
                 agg_statuses[service]['available'] += count
@@ -157,8 +157,8 @@ class HAProxy(AgentCheck):
 
         for service in agg_statuses:
             for status, count in agg_statuses[service].iteritems():
-                tags = ['status:%s' % status, 'service:%s' % service]
-                self.gauge("haproxy.count_per_status", count, tags=tags)
+                dimensions = {'status': status, 'service': service}
+                self.gauge("haproxy.count_per_status", count, dimensions=dimensions)
 
     def _process_metrics(self, data_list, service, url):
         for data in data_list:
@@ -173,22 +173,22 @@ class HAProxy(AgentCheck):
                 ...
             ]
             """
-            tags = ["type:%s" % service, "instance_url:%s" % url]
+            dimensions = {'type': service, 'instance_url': url}
             hostname = data['svname']
             service_name = data['pxname']
 
             if service == Services.BACKEND:
-                tags.append('backend:%s' % hostname)
-            tags.append("service:%s" % service_name)
+                dimensions['backend'] = hostname
+            dimensions["service"] = service_name
 
             for key, value in data.items():
                 if HAProxy.METRICS.get(key):
                     suffix = HAProxy.METRICS[key][1]
                     name = "haproxy.%s.%s" % (service.lower(), suffix)
                     if HAProxy.METRICS[key][0] == 'rate':
-                        self.rate(name, value, tags=tags)
+                        self.rate(name, value, dimensions=dimensions)
                     else:
-                        self.gauge(name, value, tags=tags)
+                        self.gauge(name, value, dimensions=dimensions)
 
     def _process_events(self, data_list, url):
         ''' Main event processing loop. Events will be created for a service
@@ -237,7 +237,7 @@ class HAProxy(AgentCheck):
              'alert_type': alert_type,
              "source_type_name": SOURCE_TYPE_NAME,
              "event_object": hostname,
-             "tags": ["frontend:%s" % service_name, "host:%s" % hostname]
+             "dimensions": {"frontend": service_name, "host": hostname}
         }
 
     @staticmethod

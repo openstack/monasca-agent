@@ -24,10 +24,10 @@ class Nginx(AgentCheck):
     def check(self, instance):
         if 'nginx_status_url' not in instance:
             raise Exception('NginX instance missing "nginx_status_url" value.')
-        tags = instance.get('tags', [])
+        dimensions = instance.get('dimensions', {})
 
         response = self._get_data(instance)
-        self._get_metrics(response, tags)
+        self._get_metrics(response, dimensions)
 
     def _get_data(self, instance):
         url = instance.get('nginx_status_url')
@@ -38,29 +38,29 @@ class Nginx(AgentCheck):
         return request.read()
 
 
-    def _get_metrics(self, response, tags):
+    def _get_metrics(self, response, dimensions):
         # Thanks to http://hostingfu.com/files/nginx/nginxstats.py for this code
         # Connections
         parsed = re.search(r'Active connections:\s+(\d+)', response)
         if parsed:
             connections = int(parsed.group(1))
-            self.gauge("nginx.net.connections", connections, tags=tags)
+            self.gauge("nginx.net.connections", connections, dimensions=dimensions)
 
         # Requests per second
         parsed = re.search(r'\s*(\d+)\s+(\d+)\s+(\d+)', response)
         if parsed:
             conn = int(parsed.group(1))
             requests = int(parsed.group(3))
-            self.rate("nginx.net.conn_opened_per_s", conn, tags=tags)
-            self.rate("nginx.net.request_per_s", requests, tags=tags)
+            self.rate("nginx.net.conn_opened_per_s", conn, dimensions=dimensions)
+            self.rate("nginx.net.request_per_s", requests, dimensions=dimensions)
 
         # Connection states, reading, writing or waiting for clients
         parsed = re.search(r'Reading: (\d+)\s+Writing: (\d+)\s+Waiting: (\d+)', response)
         if parsed:
             reading, writing, waiting = map(int, parsed.groups())
-            self.gauge("nginx.net.reading", reading, tags=tags)
-            self.gauge("nginx.net.writing", writing, tags=tags)
-            self.gauge("nginx.net.waiting", waiting, tags=tags)
+            self.gauge("nginx.net.reading", reading, dimensions=dimensions)
+            self.gauge("nginx.net.writing", writing, dimensions=dimensions)
+            self.gauge("nginx.net.waiting", waiting, dimensions=dimensions)
 
     @staticmethod
     def parse_agent_config(agentConfig):
@@ -83,7 +83,7 @@ class Nginx(AgentCheck):
                 instance = instance.split(":")
                 instances.append({
                     'nginx_status_url': ":".join(instance[:-1]),
-                    'tags': ['instance:%s' % instance[-1]]
+                    'dimensions': {'instance': instance[-1]}
                 })
                 load_conf(index+1)
 

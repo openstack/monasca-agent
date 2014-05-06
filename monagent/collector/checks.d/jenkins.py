@@ -147,15 +147,15 @@ class Jenkins(AgentCheck):
                     self.log.debug("Creating event for job: %s" % output['job_name'])
                     self.event(output)
 
-                    tags = ['job_name:%s' % output['job_name']]
+                    dimensions = {'job_name': output['job_name']}
                     if 'branch' in output:
-                        tags.append('branch:%s' % output['branch'])
-                    self.gauge("jenkins.job.duration", float(output['duration'])/1000.0, tags=tags)
+                        dimensions['branch'] = output['branch']
+                    self.gauge("jenkins.job.duration", float(output['duration'])/1000.0, dimensions=dimensions)
 
                     if output['result'] == 'SUCCESS':
-                        self.increment('jenkins.job.success', tags=tags)
+                        self.increment('jenkins.job.success', dimensions=dimensions)
                     else:
-                        self.increment('jenkins.job.failure', tags=tags)
+                        self.increment('jenkins.job.failure', dimensions=dimensions)
 
     @staticmethod
     def parse_agent_config(agentConfig):

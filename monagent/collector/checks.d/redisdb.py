@@ -124,19 +124,19 @@ class Redis(AgentCheck):
 
         return self.connections[key]
 
-    def _check_db(self, instance, custom_tags=None):
+    def _check_db(self, instance, dimensions=None):
         conn = self._get_conn(instance)
-        tags = set(custom_tags or [])
+        if dimensions is None:
+            dimensions = {}
 
         if 'unix_socket_path' in instance:
-            tags_to_add = ["unix_socket_path:%s" % instance.get("unix_socket_path")]
+            dimensions['unix_socket_path'] = instance.get("unix_socket_path")
         else:
-            tags_to_add =  ["redis_host:%s" % instance.get('host'), "redis_port:%s" % instance.get('port')]
+            dimensions['redis_host'] = instance.get('host')
+            dimensions['redis_port'] = instance.get('port')
 
         if instance.get('db') is not None:
-            tags_to_add.append("db:%s" % instance.get('db'))
-
-        tags = sorted(tags.union(tags_to_add))
+            dimensions['db'] = instance.get('db')
 
         # Ping the database for info, and track the latency.
         start = time.time()
@@ -152,12 +152,13 @@ class Redis(AgentCheck):
                 Please upgrade to a newer version by running sudo easy_install redis""" % redis.__version__)
 
         latency_ms = round((time.time() - start) * 1000, 2)
-        self.gauge('redis.info.latency_ms', latency_ms, tags=tags)
+        self.gauge('redis.info.latency_ms', latency_ms, dimensions=dimensions)
 
         # Save the database statistics.
         for key in info.keys():
             if self.db_key_pattern.match(key):
-                db_tags = list(tags) + ["redis_db:" + key]
+                db_dimensions = dimensions.copy()
+                db_dimensions['redis_db'] = key
                 for subkey in self.subkeys:
                     # Old redis module on ubuntu 10.04 (python-redis 0.6.1) does not
                     # returns a dict for those key but a string: keys=3,expires=0
@@ -168,15 +169,14 @@ class Redis(AgentCheck):
                     except AttributeError:
                         val = self._parse_dict_string(info[key], subkey, -1)
                     metric = '.'.join(['redis', subkey])
-                    self.gauge(metric, val, tags=db_tags)
+                    self.gauge(metric, val, dimensions=db_dimensions)
 
         # Save a subset of db-wide statistics
-        [self.gauge(self.GAUGE_KEYS[k], info[k], tags=tags) for k in self.GAUGE_KEYS if k in info]
-        [self.rate (self.RATE_KEYS[k],  info[k], tags=tags) for k in self.RATE_KEYS  if k in info]
+        [self.gauge(self.GAUGE_KEYS[k], info[k], dimensions=dimensions) for k in self.GAUGE_KEYS if k in info]
+        [self.rate (self.RATE_KEYS[k],  info[k], dimensions=dimensions) for k in self.RATE_KEYS  if k in info]
 
         # Save the number of commands.
-        self.rate('redis.net.commands', info['total_commands_processed'],
-                  tags=tags)
+        self.rate('redis.net.commands', info['total_commands_processed'], dimensions=dimensions)
 
     def check(self, instance):
         try:
@@ -186,8 +186,8 @@ class Redis(AgentCheck):
 
         if (not "host" in instance or not "port" in instance) and not "unix_socket_path" in instance:
             raise Exception("You must specify a host/port couple or a unix_socket_path")
-        custom_tags = instance.get('tags', [])
-        self._check_db(instance,custom_tags)
+        custom_dimensions = instance.get('dimensions', {})
+        self._check_db(instance, custom_dimensions)
 
     @staticmethod
     def parse_agent_config(agentConfig):

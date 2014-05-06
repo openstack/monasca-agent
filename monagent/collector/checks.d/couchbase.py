@@ -19,29 +19,29 @@ class Couchbase(AgentCheck):
     http://docs.couchbase.com/couchbase-manual-2.0/#using-the-rest-api
     """
 
-    def _create_metrics(self, data, tags=None):
+    def _create_metrics(self, data, dimensions=None):
         storage_totals = data['stats']['storageTotals']
         for key, storage_type in storage_totals.items():
             for metric_name, val in storage_type.items():
                 if val is not None:
                     metric_name = '.'.join(['couchbase', key, self.camel_case_to_joined_lower(metric_name)])
-                    self.gauge(metric_name, val, tags=tags)
+                    self.gauge(metric_name, val, dimensions=dimensions)
 
         for bucket_name, bucket_stats in data['buckets'].items():
             for metric_name, val in bucket_stats.items():
                 if val is not None:
                     metric_name = '.'.join(['couchbase', 'by_bucket', self.camel_case_to_joined_lower(metric_name)])
-                    metric_tags = list(tags)
-                    metric_tags.append('bucket:%s' % bucket_name)
-                    self.gauge(metric_name, val[0], tags=metric_tags, device_name=bucket_name)
+                    metric_dimensions = dimensions.copy()
+                    metric_dimensions['bucket'] = bucket_name
+                    self.gauge(metric_name, val[0], dimensions=metric_dimensions, device_name=bucket_name)
 
         for node_name, node_stats in data['nodes'].items():
             for metric_name, val in node_stats['interestingStats'].items():
                 if val is not None:
                     metric_name = '.'.join(['couchbase', 'by_node', self.camel_case_to_joined_lower(metric_name)])
-                    metric_tags = list(tags)
-                    metric_tags.append('node:%s' % node_name)
-                    self.gauge(metric_name, val, tags=metric_tags, device_name=node_name)
+                    metric_dimensions = dimensions.copy()
+                    metric_dimensions['node'] = node_name
+                    self.gauge(metric_name, val, dimensions=metric_dimensions, device_name=node_name)
 
 
     def _get_stats(self, url, instance):
@@ -64,15 +64,11 @@ class Couchbase(AgentCheck):
         server = instance.get('server', None)
         if server is None:
             raise Exception("The server must be specified")
-        tags = instance.get('tags', [])
-        # Clean up tags in case there was a None entry in the instance
-        # e.g. if the yaml contains tags: but no actual tags
-        if tags is None:
-            tags = []
-        tags.append('instance:%s' % server)
+        dimensions = instance.get('dimensions', {})
+        dimensions['instance'] = server
         instance['is_recent_python'] = sys.version_info >= (2, 6, 0)
         data = self.get_data(server, instance)
-        self._create_metrics(data, tags=list(set(tags)))
+        self._create_metrics(data, dimensions=dimensions)
 
     def get_data(self, server, instance):
         # The dictionary to be returned.

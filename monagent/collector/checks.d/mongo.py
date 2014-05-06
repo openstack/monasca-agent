@@ -160,10 +160,8 @@ class MongoDb(AgentCheck):
             if param is None:
                 del ssl_params[key]
 
-        tags = instance.get('tags', [])
-        tags.append('server:%s' % server)
-        # de-dupe tags to avoid a memory leak
-        tags = list(set(tags))
+        dimensions = instance.get('dimensions', {})
+        dimensions['server'] = server
 
         try:
             from pymongo import Connection
@@ -271,11 +269,11 @@ class MongoDb(AgentCheck):
             # Check if metric is a gauge or rate
             if m in self.GAUGES:
                 m = self.normalize(m.lower(), 'mongodb')
-                self.gauge(m, value, tags=tags)
+                self.gauge(m, value, dimensions=dimensions)
 
             if m in self.RATES:
                 m = self.normalize(m.lower(), 'mongodb') + "ps"
-                self.rate(m, value, tags=tags)
+                self.rate(m, value, dimensions=dimensions)
 
     @staticmethod
     def parse_agent_config(agentConfig):

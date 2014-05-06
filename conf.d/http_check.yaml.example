@@ -55,5 +55,5 @@ instances:
 #           Host: alternative.host.example.com
 #           X-Auth-Token: SOME-AUTH-TOKEN
 
-#        tags:
-#            - env:production
+#        dimensions:
+#            dim1: value1

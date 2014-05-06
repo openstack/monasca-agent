@@ -84,9 +84,9 @@ class KafkaCheck(AgentCheck):
 
         # Report the broker data
         for (topic, partition), broker_offset in broker_offsets.items():
-            broker_tags = ['topic:%s' % topic, 'partition:%s' % partition]
+            broker_dimensions = {'topic': topic, 'partition': partition}
             broker_offset = broker_offsets.get((topic, partition))
-            self.gauge('kafka.broker_offset', broker_offset, tags=broker_tags)
+            self.gauge('kafka.broker_offset', broker_offset, dimensions=broker_dimensions)
 
         # Report the consumer
         for (consumer_group, topic, partition), consumer_offset in consumer_offsets.items():
@@ -95,11 +95,10 @@ class KafkaCheck(AgentCheck):
             broker_offset = broker_offsets.get((topic, partition))
 
             # Report the consumer offset and lag
-            tags = ['topic:%s' % topic, 'partition:%s' % partition,
-                    'consumer_group:%s' % consumer_group]
-            self.gauge('kafka.consumer_offset', consumer_offset, tags=tags)
+            dimensions = {'topic': topic, 'partition': partition, 'consumer_group': consumer_group}
+            self.gauge('kafka.consumer_offset', consumer_offset, dimensions=dimensions)
             self.gauge('kafka.consumer_lag', broker_offset - consumer_offset,
-                       tags=tags)
+                       dimensions=dimensions)
 
     # Private config validation/marshalling functions
 

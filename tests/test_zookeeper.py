@@ -8,7 +8,7 @@ init_config:
 instances:
     - host: 127.0.0.1
       port: 2181
-      tags: []
+      dimensions: {}
 """
 
 class TestZookeeper(unittest.TestCase):
@@ -45,9 +45,9 @@ Node count: 487
         ]
 
         buf = StringIO(stat_response)
-        metrics, tags = Zookeeper.parse_stat(buf)
+        metrics, dimensions = Zookeeper.parse_stat(buf)
 
-        self.assertEquals(tags, ['mode:leader'])
+        self.assertEquals(dimensions, {'mode': 'leader'})
         self.assertEquals(metrics, expected)
 
     def test_zk_stat_parsing_gte_v344(self):
@@ -84,8 +84,8 @@ Node count: 487
         ]
 
         buf = StringIO(stat_response)
-        metrics, tags = Zookeeper.parse_stat(buf)
+        metrics, dimensions = Zookeeper.parse_stat(buf)
 
-        self.assertEquals(tags, ['mode:leader'])
+        self.assertEquals(dimensions, {'mode': 'leader'})
         self.assertEquals(metrics, expected)
 

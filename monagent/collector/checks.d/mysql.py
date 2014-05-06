@@ -63,7 +63,7 @@ class MySql(AgentCheck):
         return {"MySQLdb": version}
 
     def check(self, instance):
-        host, port, user, password, mysql_sock, defaults_file, tags, options = self._get_config(instance)
+        host, port, user, password, mysql_sock, defaults_file, dimensions, options = self._get_config(instance)
 
         if (not host or not user) and not defaults_file:
             raise Exception("Mysql host and user are needed.")
@@ -71,8 +71,8 @@ class MySql(AgentCheck):
         db = self._connect(host, port, mysql_sock, user, password, defaults_file)
 
         # Metric collection
-        self._collect_metrics(host, db, tags, options)
-        self._collect_system_metrics(host, db, tags)
+        self._collect_metrics(host, db, dimensions, options)
+        self._collect_system_metrics(host, db, dimensions)
 
     @staticmethod
     def _get_config(instance):
@@ -82,10 +82,10 @@ class MySql(AgentCheck):
         password = instance.get('pass', '')
         mysql_sock = instance.get('sock', '')
         defaults_file = instance.get('defaults_file', '')
-        tags = instance.get('tags', None)
+        dimensions = instance.get('dimensions', None)
         options = instance.get('options', {})
 
-        return host, port, user, password, mysql_sock, defaults_file, tags, options
+        return host, port, user, password, mysql_sock, defaults_file, dimensions, options
 
     def _connect(self, host, port, mysql_sock, user, password, defaults_file):
         try:
@@ -113,11 +113,11 @@ class MySql(AgentCheck):
 
         return db
 
-    def _collect_metrics(self, host, db, tags, options):
+    def _collect_metrics(self, host, db, dimensions, options):
         cursor = db.cursor()
         cursor.execute("SHOW /*!50002 GLOBAL */ STATUS;")
         results = dict(cursor.fetchall())
-        self._rate_or_gauge_statuses(STATUS_VARS, results, tags)
+        self._rate_or_gauge_statuses(STATUS_VARS, results, dimensions)
         cursor.close()
         del cursor
 
@@ -131,13 +131,13 @@ class MySql(AgentCheck):
             innodb_buffer_pool_pages_free = innodb_buffer_pool_pages_free * page_size
             innodb_buffer_pool_pages_used = innodb_buffer_pool_pages_total - innodb_buffer_pool_pages_free
 
-            self.gauge("mysql.innodb.buffer_pool_free", innodb_buffer_pool_pages_free, tags=tags)
-            self.gauge("mysql.innodb.buffer_pool_used", innodb_buffer_pool_pages_used, tags=tags)
-            self.gauge("mysql.innodb.buffer_pool_total", innodb_buffer_pool_pages_total, tags=tags)
+            self.gauge("mysql.innodb.buffer_pool_free", innodb_buffer_pool_pages_free, dimensions=dimensions)
+            self.gauge("mysql.innodb.buffer_pool_used", innodb_buffer_pool_pages_used, dimensions=dimensions)
+            self.gauge("mysql.innodb.buffer_pool_total", innodb_buffer_pool_pages_total, dimensions=dimensions)
 
         if 'galera_cluster' in options and options['galera_cluster']:
             value = self._collect_scalar('wsrep_cluster_size', results)
-            self.gauge('mysql.galera.wsrep_cluster_size', value, tags=tags)
+            self.gauge('mysql.galera.wsrep_cluster_size', value, dimensions=dimensions)
 
         if 'replication' in options and options['replication']:
             # get slave running form global status page
@@ -147,18 +147,19 @@ class MySql(AgentCheck):
                     slave_running = 1
                 else:
                     slave_running = 0
-                self.gauge("mysql.replication.slave_running", slave_running, tags=tags)
-            self._collect_dict(GAUGE, {"Seconds_behind_master": "mysql.replication.seconds_behind_master"}, "SHOW SLAVE STATUS", db, tags=tags)
+                self.gauge("mysql.replication.slave_running", slave_running, dimensions=dimensions)
+            self._collect_dict(GAUGE, {"Seconds_behind_master": "mysql.replication.seconds_behind_master"},
+                               "SHOW SLAVE STATUS", db, dimensions=dimensions)
 
-    def _rate_or_gauge_statuses(self, statuses, dbResults, tags):
+    def _rate_or_gauge_statuses(self, statuses, dbResults, dimensions):
         for status, metric in statuses.iteritems():
             metric_name, metric_type = metric
             value = self._collect_scalar(status, dbResults)
             if value is not None:
                 if metric_type == RATE:
-                    self.rate(metric_name, value, tags=tags)
+                    self.rate(metric_name, value, dimensions=dimensions)
                 elif metric_type == GAUGE:
-                    self.gauge(metric_name, value, tags=tags)
+                    self.gauge(metric_name, value, dimensions=dimensions)
 
     def _version_greater_502(self, db, host):
         # show global status was introduced in 5.0.2
@@ -217,7 +218,7 @@ class MySql(AgentCheck):
         self.log.debug("Collecting done, value %s" % dict[key])
         return the_type(dict[key])
 
-    def _collect_dict(self, metric_type, field_metric_map, query, db, tags):
+    def _collect_dict(self, metric_type, field_metric_map, query, db, dimensions):
         """
         Query status and get a dictionary back.
         Extract each field out of the dictionary
@@ -241,11 +242,11 @@ class MySql(AgentCheck):
                         col_idx = [d[0].lower() for d in cursor.description].index(field.lower())
                         if result[col_idx] is not None:
                             if metric_type == GAUGE:
-                                self.gauge(metric, float(result[col_idx]), tags=tags)
+                                self.gauge(metric, float(result[col_idx]), dimensions=dimensions)
                             elif metric_type == RATE:
-                                self.rate(metric, float(result[col_idx]), tags=tags)
+                                self.rate(metric, float(result[col_idx]), dimensions=dimensions)
                             else:
-                                self.gauge(metric, float(result[col_idx]), tags=tags)
+                                self.gauge(metric, float(result[col_idx]), dimensions=dimensions)
                         else:
                             self.log.debug("Received value is None for index %d" % col_idx)
                     except ValueError:
@@ -256,7 +257,7 @@ class MySql(AgentCheck):
             self.warning("Error while running %s\n%s" % (query, traceback.format_exc()))
             self.log.exception("Error while running %s" % query)
 
-    def _collect_system_metrics(self, host, db, tags):
+    def _collect_system_metrics(self, host, db, dimensions):
         pid = None
         # The server needs to run locally, accessed by TCP or socket
         if host in ["localhost", "127.0.0.1"] or db.port == long(0):
@@ -280,8 +281,8 @@ class MySql(AgentCheck):
                 # Convert time to s (number of second of CPU used by mysql)
                 # It's a counter, it will be divided by the period, multiply by 100
                 # to get the percentage of CPU used by mysql over the period
-                self.rate("mysql.performance.user_time", int((float(ucpu)/float(clk_tck)) * 100), tags=tags)
-                self.rate("mysql.performance.kernel_time", int((float(kcpu)/float(clk_tck)) * 100), tags=tags)
+                self.rate("mysql.performance.user_time", int((float(ucpu)/float(clk_tck)) * 100), dimensions=dimensions)
+                self.rate("mysql.performance.kernel_time", int((float(kcpu)/float(clk_tck)) * 100), dimensions=dimensions)
             except Exception:
                 self.warning("Error while reading mysql (pid: %s) procfs data\n%s" % (pid, traceback.format_exc()))
 

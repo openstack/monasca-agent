@@ -86,7 +86,8 @@ class TCPCheck(ServicesCheck):
             return Status.DOWN, "%s. Connection failed after %s ms" % (str(e), length)
 
         if response_time:
-            self.gauge('network.tcp.response_time', time.time() - start, tags=['url:%s:%s' % (instance.get('host', None), port)])
+            self.gauge('network.tcp.response_time', time.time() - start,
+                       dimensions={'url': '%s:%s' % (instance.get('host', None), port)})
 
         self.log.debug("%s:%s is UP" % (addr, port))
         return Status.UP, "UP"
