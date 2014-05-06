@@ -28,18 +28,18 @@ class Network(AgentCheck):
     }
 
     NETSTAT_GAUGE = {
-        ('udp4', 'connections'): 'system.net.udp4.connections',
-        ('udp6', 'connections'): 'system.net.udp6.connections',
-        ('tcp4', 'established'): 'system.net.tcp4.established',
-        ('tcp4', 'opening'): 'system.net.tcp4.opening',
-        ('tcp4', 'closing'): 'system.net.tcp4.closing',
-        ('tcp4', 'listening'): 'system.net.tcp4.listening',
-        ('tcp4', 'time_wait'): 'system.net.tcp4.time_wait',
-        ('tcp6', 'established'): 'system.net.tcp6.established',
-        ('tcp6', 'opening'): 'system.net.tcp6.opening',
-        ('tcp6', 'closing'): 'system.net.tcp6.closing',
-        ('tcp6', 'listening'): 'system.net.tcp6.listening',
-        ('tcp6', 'time_wait'): 'system.net.tcp6.time_wait',
+        ('udp4', 'connections'): 'net_udp4_connections',
+        ('udp6', 'connections'): 'net_udp6_connections',
+        ('tcp4', 'established'): 'net_tcp4_established',
+        ('tcp4', 'opening'): 'net_tcp4_opening',
+        ('tcp4', 'closing'): 'net_tcp4_closing',
+        ('tcp4', 'listening'): 'net_tcp4_listening',
+        ('tcp4', 'time_wait'): 'net_tcp4_time_wait',
+        ('tcp6', 'established'): 'net_tcp6_established',
+        ('tcp6', 'opening'): 'net_tcp6_opening',
+        ('tcp6', 'closing'): 'net_tcp6_closing',
+        ('tcp6', 'listening'): 'net_tcp6_listening',
+        ('tcp6', 'time_wait'): 'net_tcp6_time_wait',
     }
 
     def __init__(self, name, init_config, agent_config, instances=None):
@@ -73,12 +73,12 @@ class Network(AgentCheck):
             return False
 
         expected_metrics = [
-            'bytes_rcvd',
-            'bytes_sent',
-            'packets_in.count',
-            'packets_in.error',
-            'packets_out.count',
-            'packets_out.error',
+            'bytes_in',
+            'bytes_out',
+            'packets_in',
+            'errors_in',
+            'packets_out',
+            'errors_out',
         ]
         for m in expected_metrics:
             assert m in vals_by_metric
@@ -89,10 +89,10 @@ class Network(AgentCheck):
         # Not sure why the others aren't included. Until I understand why, I'm 
         # going to keep the same behaviour.
         exclude_iface_metrics = [
-            'packets_in.count',
-            'packets_in.error',
-            'packets_out.count',
-            'packets_out.error',
+            'packets_in',
+            'errors_in',
+            'packets_out',
+            'errors_out',
         ]
 
         count = 0
@@ -100,7 +100,7 @@ class Network(AgentCheck):
             if iface in self._excluded_ifaces and metric in exclude_iface_metrics:
                 # skip it!
                 continue
-            self.rate('system.net.%s' % metric, val, device_name=iface)
+            self.rate('net_%s' % metric, val, device_name=iface)
             count += 1
         self.log.debug("tracked %s network metrics for interface %s" % (count, iface))
 
@@ -168,12 +168,12 @@ class Network(AgentCheck):
             if self._parse_value(x[0]) or self._parse_value(x[8]):
                 iface = cols[0].strip()
                 metrics = {
-                    'bytes_rcvd': self._parse_value(x[0]),
-                    'bytes_sent': self._parse_value(x[8]),
-                    'packets_in.count': self._parse_value(x[1]),
-                    'packets_in.error': self._parse_value(x[2]) + self._parse_value(x[3]),
-                    'packets_out.count': self._parse_value(x[9]),
-                    'packets_out.error':self._parse_value(x[10]) + self._parse_value(x[11]),
+                    'bytes_in': self._parse_value(x[0]),
+                    'bytes_out': self._parse_value(x[8]),
+                    'packets_in': self._parse_value(x[1]),
+                    'errors_in': self._parse_value(x[2]) + self._parse_value(x[3]),
+                    'packets_out': self._parse_value(x[9]),
+                    'errors_out': self._parse_value(x[10]) + self._parse_value(x[11]),
                 }
                 self._submit_devicemetrics(iface, metrics)
 
@@ -234,12 +234,12 @@ class Network(AgentCheck):
             if self._parse_value(x[-5]) or self._parse_value(x[-2]):
                 iface = current
                 metrics = {
-                    'bytes_rcvd': self._parse_value(x[-5]),
-                    'bytes_sent': self._parse_value(x[-2]),
-                    'packets_in.count': self._parse_value(x[-7]),
-                    'packets_in.error': self._parse_value(x[-6]), 
-                    'packets_out.count': self._parse_value(x[-4]),
-                    'packets_out.error':self._parse_value(x[-3]),
+                    'bytes_in': self._parse_value(x[-5]),
+                    'bytes_out': self._parse_value(x[-2]),
+                    'packets_in': self._parse_value(x[-7]),
+                    'errors_in': self._parse_value(x[-6]),
+                    'packets_out': self._parse_value(x[-4]),
+                    'errors_out': self._parse_value(x[-3]),
                 }
                 self._submit_devicemetrics(iface, metrics)
 
@@ -257,9 +257,9 @@ class Network(AgentCheck):
         """
         Return a mapping of network metrics by interface. For example:
             { interface:
-                {'bytes_sent': 0,
-                  'bytes_rcvd': 0,
-                  'bytes_rcvd': 0,
+                {'bytes_out': 0,
+                  'bytes_in': 0,
+                  'bytes_in': 0,
                   ...
                 }
             }
@@ -319,12 +319,12 @@ class Network(AgentCheck):
 
         # A mapping of solaris names -> datadog names
         metric_by_solaris_name = {
-            'rbytes64':'bytes_rcvd',
-            'obytes64':'bytes_sent',
-            'ipackets64':'packets_in.count',
-            'ierrors':'packets_in.error',
-            'opackets64':'packets_out.count',
-            'oerrors':'packets_out.error',
+            'rbytes64': 'bytes_in',
+            'obytes64': 'bytes_out',
+            'ipackets64': 'packets_in',
+            'ierrors': 'errors_in',
+            'opackets64': 'packets_out',
+            'oerrors': 'errors_out',
         }
 
         lines = [l for l in netstat_output.split("\n") if len(l) > 0]
