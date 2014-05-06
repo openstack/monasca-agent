@@ -38,7 +38,7 @@ from api import MonAPI
 from monagent.common.check_status import ForwarderStatus
 from monagent.common.config import get_config
 from monagent.common.metrics import Measurement
-from monagent.common.util import Watchdog, get_hostname, get_tornado_ioloop
+from monagent.common.util import Watchdog, get_tornado_ioloop
 from transaction import Transaction, TransactionManager
 
 log = logging.getLogger('forwarder')

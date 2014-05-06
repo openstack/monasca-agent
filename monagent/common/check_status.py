@@ -11,7 +11,6 @@ import pickle
 import platform
 import sys
 import tempfile
-import traceback
 import time
 
 # project
