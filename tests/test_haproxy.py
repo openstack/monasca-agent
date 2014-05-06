@@ -43,13 +43,13 @@ class HaproxyTestCase(unittest.TestCase):
         self.cfg = None
 
     def start_server(self, config_fn, config):
-        self.agentConfig = {
+        self.agent_config = {
             'version': '0.1',
             'api_key': 'toto'
         }
 
         # Initialize the check from checks.d
-        self.check = load_check('haproxy', config, self.agentConfig)
+        self.check = load_check('haproxy', config, self.agent_config)
 
         try:
             self.cfg = tempfile.NamedTemporaryFile()

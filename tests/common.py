@@ -8,7 +8,7 @@ from monagent.common.config import get_checksd_path
 from monagent.common.util import get_os
 
 
-def load_check(name, config, agentConfig):
+def load_check(name, config, agent_config):
     checksd_path = get_checksd_path(get_os())
     if checksd_path not in sys.path:
         sys.path.append(checksd_path)
@@ -33,13 +33,14 @@ def load_check(name, config, agentConfig):
 
     # init the check class
     try:
-        return check_class(name, init_config=init_config, agentConfig=agentConfig, instances=instances)
+        return check_class(name, init_config=init_config, agent_config=agent_config, instances=instances)
     except:
         # Backwards compatitiblity for old checks that don't support the
         # instances argument.
-        c = check_class(name, init_config=init_config, agentConfig=agentConfig)
+        c = check_class(name, init_config=init_config, agent_config=agent_config)
         c.instances = instances
         return c
+
 
 def kill_subprocess(process_obj):
     try:
@@ -56,6 +57,7 @@ def kill_subprocess(process_obj):
         else:
             os.kill(process_obj.pid, signal.SIGKILL)
 
+
 def get_check(name, config_str):
     checksd_path = get_checksd_path(get_os())
     if checksd_path not in sys.path:
@@ -70,10 +72,9 @@ def get_check(name, config_str):
     if check_class is None:
         raise Exception("Unable to import check %s. Missing a class that inherits AgentCheck" % name)
 
-    agentConfig = {
+    agent_config = {
         'version': '0.1',
         'api_key': 'tota'
     }
 
-    return check_class.from_yaml(yaml_text=config_str, check_name=name,
-        agentConfig=agentConfig)
+    return check_class.from_yaml(yaml_text=config_str, check_name=name)

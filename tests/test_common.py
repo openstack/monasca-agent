@@ -95,8 +95,8 @@ class TestAggregator(unittest.TestCase):
         self.aggr = MetricsAggregator('test-aggr')
 
     def test_dupe_tags(self):
-        self.aggr.increment('test-counter', 1, tags=['a', 'b'])
-        self.aggr.increment('test-counter', 1, tags=['a', 'b', 'b'])
+        self.aggr.increment('test-counter', 1, dimensions={'a': 'avalue', 'b': 'bvalue'})
+        self.aggr.increment('test-counter', 1, dimensions={'a': 'avalue', 'b': 'bvalue', 'b2': 'b2value'})
         self.assertEquals(len(self.aggr.metrics), 1, self.aggr.metrics)
         metric = self.aggr.metrics.values()[0]
         self.assertEquals(metric.value, 2)

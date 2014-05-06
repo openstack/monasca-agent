@@ -12,7 +12,7 @@ import traceback
 from pprint import pprint
 
 from monagent.common import check_status
-
+from monagent.common.exceptions import NaN, CheckException, Infinity, UnknownValue
 from monagent.common.util import LaconicFilter, get_os, get_hostname
 from monagent.common.config import get_confd_path
 
@@ -21,20 +21,7 @@ log = logging.getLogger(__name__)
 
 
 # Constants
-class CheckException(Exception):
-    pass
 
-
-class Infinity(CheckException):
-    pass
-
-
-class NaN(CheckException):
-    pass
-
-
-class UnknownValue(CheckException):
-    pass
 
 # todo convert all checks to the new interface then remove this. Is the LaconicFilter on logs used elsewhere?
 #==============================================================================

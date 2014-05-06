@@ -1,8 +1,13 @@
 """ Metric data types
 """
 from collections import namedtuple
+import logging
 from time import time
-from monagent.common.aggregator import log, Infinity, UnknownValue
+
+from monagent.common.exceptions import Infinity, UnknownValue
+
+
+log = logging.getLogger(__name__)
 
 
 # todo it would be best to implement a Measurement group/list container, it could then have methods for converting to json

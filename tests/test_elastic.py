@@ -47,14 +47,12 @@ class TestElastic(unittest.TestCase):
     
     def testElasticChecksD(self):
         raise SkipTest("See https://github.com/DataDog/dd-agent/issues/825")
-        agentConfig = { 'elasticsearch': 'http://localhost:%s' % PORT,
-              'version': '0.1',
-              'api_key': 'toto' }
+        agent_config = {'elasticsearch': 'http://localhost:%s' % PORT, 'version': '0.1', 'api_key': 'toto'}
 
         # Initialize the check from checks.d
-        c = load_check('elastic', {'init_config': {}, 'instances':{}},agentConfig)
-        conf = c.parse_agent_config(agentConfig)
-        self.check = load_check('elastic', conf, agentConfig)
+        c = load_check('elastic', {'init_config': {}, 'instances': {}}, agent_config)
+        conf = c.parse_agent_config(agent_config)
+        self.check = load_check('elastic', conf, agent_config)
         
         self.check.check(conf['instances'][0])
         r = self.check.get_metrics()

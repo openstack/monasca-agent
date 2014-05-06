@@ -30,13 +30,13 @@ class TestMongo(unittest.TestCase):
                     break
 
     def setUp(self):
-        self.agentConfig = {
+        self.agent_config = {
             'version': '0.1',
             'api_key': 'toto'
         }
 
         # Initialize the check from checks.d
-        self.check = load_check('mongo', {'init_config': {}, 'instances': {}}, self.agentConfig)
+        self.check = load_check('mongo', {'init_config': {}, 'instances': {}}, self.agent_config)
 
         # Start 2 instances of Mongo in a replica set
         dir1 = mkdtemp()
@@ -85,7 +85,7 @@ class TestMongo(unittest.TestCase):
         }
 
         # Test mongodb with checks.d
-        self.check = load_check('mongo', self.config, self.agentConfig)
+        self.check = load_check('mongo', self.config, self.agent_config)
 
         # Run the check against our running server
         self.check.check(self.config['instances'][0])
@@ -133,21 +133,21 @@ class TestMongo(unittest.TestCase):
 
     def testMongoOldConfig(self):
         raise SkipTest('Requires MongoDB')
-        self.agentConfig1 = {
+        self.agent_config1 = {
             'mongodb_server': "mongodb://localhost:%s/test" % PORT1,
             'version': '0.1',
             'api_key': 'toto'
         }
-        conf1 = self.check.parse_agent_config(self.agentConfig1)
-        self.agentConfig2 = {
+        conf1 = self.check.parse_agent_config(self.agent_config1)
+        self.agent_config2 = {
             'mongodb_server': "mongodb://localhost:%s/test" % PORT2,
             'version': '0.1',
             'api_key': 'toto'
         }
-        conf2 = self.check.parse_agent_config(self.agentConfig2)
+        conf2 = self.check.parse_agent_config(self.agent_config2)
 
         # Test the first mongodb instance
-        self.check = load_check('mongo', conf1, self.agentConfig1)
+        self.check = load_check('mongo', conf1, self.agent_config1)
 
         # Run the check against our running server
         self.check.check(conf1['instances'][0])
@@ -176,7 +176,7 @@ class TestMongo(unittest.TestCase):
                 self.assertTrue( metric_val_checks[metric_name]( m[2] ) )
 
         # Test the second mongodb instance
-        self.check = load_check('mongo', conf2, self.agentConfig2)
+        self.check = load_check('mongo', conf2, self.agent_config2)
 
         # Run the check against our running server
         self.check.check(conf2['instances'][0])

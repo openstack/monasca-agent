@@ -11,7 +11,7 @@ class TestSystem(unittest.TestCase):
     def testCPU(self):
         global logger
         cpu = Cpu(logger)
-        res = cpu.check({})
+        res = cpu.check()
         # Make sure we sum up to 100% (or 99% in the case of macs)
         assert abs(reduce(lambda a,b:a+b, res.values(), 0) - 100) <= 5, res
 
@@ -113,16 +113,16 @@ none                  985964       1  985963    1% /lib/init/rw
     def test_collecting_disk_metrics(self):
         """Testing disk stats gathering"""
         if Platform.is_unix():
-            disk = Disk(logger)
-            res = disk.check({})
+            disk = Disk(logger, {})
+            res = disk.check()
             # Assert we have disk & inode stats
             assert len(res) == 2
-            assert res[0]
-            assert res[1]
+            assert res.keys()[0]
+            assert res.keys()[1]
 
     def testMemory(self):
         global logger
-        res = Memory(logger).check({})
+        res = Memory(logger).check()
         if Platform.is_linux():
             for k in ("swapTotal", "swapFree", "swapPctFree", "swapUsed", "physTotal", "physFree", "physUsed", "physBuffers", "physCached", "physUsable", "physPctUsable", "physShared"):
                 assert k in res, res
@@ -150,9 +150,7 @@ sda               0.00     0.00    0.00    0.00     0.00     0.00     0.00     0
         checker = IO(logger)
         results = checker._parse_linux2(debian_iostat_output)
         self.assertTrue('sda' in results)
-        for key in ('rrqm/s', 'wrqm/s', 'r/s', 'w/s', 'rkB/s', 'wkB/s',
-                    'avgrq-sz', 'avgqu-sz', 'await', 'r_await',
-                    'w_await', 'svctm', '%util'):
+        for key in ('io_read_req_sec', 'io_write_req_sec', 'io_read_kbytes_sec', 'io_write_kbytes_sec'):
             self.assertTrue(key in results['sda'], 'key %r not in results["sda"]' % key)
             self.assertEqual(results['sda'][key], '0.00')
 
@@ -173,8 +171,7 @@ sda               0.00     0.00  0.00  0.00     0.00     0.00     0.00     0.00 
         checker = IO(logger)
         results = checker._parse_linux2(centos_iostat_output)
         self.assertTrue('sda' in results)
-        for key in ('rrqm/s', 'wrqm/s', 'r/s', 'w/s', 'rkB/s', 'wkB/s',
-                    'avgrq-sz', 'avgqu-sz', 'await', 'svctm', '%util'):
+        for key in ('io_read_req_sec', 'io_write_req_sec', 'io_read_kbytes_sec', 'io_write_kbytes_sec'):
             self.assertTrue(key in results['sda'], 'key %r not in results["sda"]' % key)
             self.assertEqual(results['sda'][key], '0.00')
 

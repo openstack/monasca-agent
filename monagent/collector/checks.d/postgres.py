@@ -1,4 +1,5 @@
-from monagent.collector.checks import AgentCheck, CheckException
+from monagent.collector.checks import AgentCheck
+from monagent.common.exceptions import CheckException
 
 
 class ShouldRestartException(Exception):

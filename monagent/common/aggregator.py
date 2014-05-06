@@ -3,7 +3,6 @@
 import logging
 from time import time
 
-from metrics import MetricTypes
 from monagent.common.metrics import Gauge, BucketGauge, Counter, Histogram, Set, Rate
 
 
@@ -20,14 +19,6 @@ log = logging.getLogger(__name__)
 # that are the length of the interval that is passed into the
 # MetricsBucketAggregator constructor.
 RECENT_POINT_THRESHOLD_DEFAULT = 3600
-
-
-class Infinity(Exception):
-    pass
-
-
-class UnknownValue(Exception):
-    pass
 
 
 class Aggregator(object):
@@ -374,9 +365,9 @@ class MetricsAggregator(Aggregator):
                                 device_name=None, timestamp=None, sample_rate=1):
         # Avoid calling extra functions to dedupe dimensions if there are none
         if dimensions is None:
-            context = (name, {}, hostname, device_name)
-        else:
-            context = (name, dimensions, hostname, device_name)
+            dimensions = {}
+        context = (name, dimensions, hostname, device_name)
+
         if context not in self.metrics:
             metric_class = self.metric_type_to_class[mtype]
             self.metrics[context] = metric_class(self.formatter, name, dimensions,

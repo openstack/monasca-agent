@@ -11,8 +11,8 @@ class TestConfig(unittest.TestCase):
     def testWhiteSpaceConfig(self):
         """Leading whitespace confuse ConfigParser
         """
-        agentConfig = get_config(cfg_path=os.path.join(os.path.dirname(os.path.realpath(__file__)), "badconfig.conf"))
-        self.assertEquals(agentConfig["api_key"], "1234")
+        agent_config = get_config(cfg_path=os.path.join(os.path.dirname(os.path.realpath(__file__)), "badconfig.conf"))
+        self.assertEquals(agent_config["api_key"], "1234")
 
     def testGoodPidFie(self):
         """Verify that the pid file succeeds and fails appropriately"""

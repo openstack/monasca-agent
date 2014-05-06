@@ -13,11 +13,11 @@ class CouchbaseTestCase(unittest.TestCase):
                 'password': 'password',
             }]
         }
-        self.agentConfig = {
+        self.agent_config = {
             'version': '0.1',
             'api_key': 'toto'
         }
-        self.check = load_check('couchbase', self.config, self.agentConfig)
+        self.check = load_check('couchbase', self.config, self.agent_config)
 
     @attr('couchbase')
     def test_camel_case_to_joined_lower(self):
