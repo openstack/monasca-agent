@@ -1,7 +1,7 @@
 import sys
 
-from config import *
-from collector.jmxfetch import JMX_FETCH_JAR_NAME
+from monagent.common.config import *
+from monagent.collector.jmxfetch import JMX_FETCH_JAR_NAME
 
 
 try:

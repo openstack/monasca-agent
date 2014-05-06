@@ -21,15 +21,16 @@ def http_emitter(message, log, agentConfig):
     log.debug('http_emitter: attempting postback to ' + agentConfig['forwarder_url'])
 
     # Post back the data
-    payload = []
+    partial_payload = []
     for measurement in message:
-        if isinstance(Measurement, measurement):
+        if isinstance(measurement, Measurement):
             # Measurements need their __dict__ encoded to avoid being expressed as a tuple
-            payload.append(json.dumps(measurement.__dict__))
+            partial_payload.append(measurement.__dict__)
         else:
             # Not all measurements are of the Measurement type yet
-            payload.append(json.dumps(measurement))
+            partial_payload.append(measurement)
 
+    payload = json.dumps(partial_payload)
     url = "%s/intake" % agentConfig['forwarder_url']
     headers = post_headers(agentConfig, payload)
 

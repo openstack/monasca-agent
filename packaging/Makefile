@@ -10,7 +10,7 @@ SRC=../
 ROOT=root
 BUILD_NUMBER ?= 0
 
-VERSION=`PYTHONPATH=$(SRC)/monagent python -c "from config import get_version; print get_version()"`
+VERSION=`PYTHONPATH=$(SRC) python -c "from monagent.common.config import get_version; print get_version()"`
 
 FPM_BUILD=fpm --epoch 1 -s dir -e -C $(BUILD) \
 -a all -m "HP Cloud Monitoring <hpcs-mon@hp.com>" \
@@ -34,13 +34,8 @@ clean:
 # root directory.
 source:
 	mkdir -p $(ROOT)
-	cp -r $(SRC)/monagent/checks $(ROOT)/
-	cp -r $(SRC)/monagent/dogstream $(ROOT)/
-	cp -r $(SRC)/monagent/checks.d $(ROOT)/
+	cp -r $(SRC)/monagent $(ROOT)/
 	cp -r $(SRC)/conf.d $(ROOT)/
-	cp -r $(SRC)/monagent/resources $(ROOT)/
-	cp -r $(SRC)/monagent/api $(ROOT)/
-	cp -r $(SRC)/monagent/*.py $(ROOT)/
 	cp -r $(SRC)/LICENSE* $(ROOT)/
 	cp -r $(SRC)/agent.conf.example $(ROOT)/
 	find $(ROOT) -name "*.pyc" -exec rm {} \;
@@ -58,9 +53,9 @@ install_full: source
 	# Install the source to usr/share
 	cp -r $(ROOT)/*		 $(BUILD)/usr/share/mon/agent/
 	# Install the common executables.
-	ln -sf ../share/mon/agent/monstatsd/dogstatsd.py  $(BUILD)/usr/bin/dogstatsd
-	ln -sf ../share/mon/agent/forwarder/__init__.py $(BUILD)/usr/bin/mon-forwarder
-	ln -sf ../share/mon/agent/collector/daemon.py      $(BUILD)/usr/bin/mon-collector
+	ln -sf ../share/mon/agent/monagent/monstatsd/dogstatsd.py  $(BUILD)/usr/bin/dogstatsd
+	ln -sf ../share/mon/agent/monagent/forwarder/__init__.py $(BUILD)/usr/bin/mon-forwarder
+	ln -sf ../share/mon/agent/monagent/collector/daemon.py      $(BUILD)/usr/bin/mon-collector
 	chmod 755 $(BUILD)/usr/bin/dogstatsd
 	chmod 755 $(BUILD)/usr/bin/mon-forwarder
 	chmod 755 $(BUILD)/usr/bin/mon-collector

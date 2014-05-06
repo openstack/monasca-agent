@@ -137,6 +137,7 @@ class AgentInputHandler(tornado.web.RequestHandler):
         # read the message it should be a list of Measurements - from monagent.common.metrics import Measurement
         msg = tornado.escape.json_decode(self.request.body)
         try:
+            log.debug(msg)
             measurements = [Measurement(**m) for m in msg]
         except Exception:
             log.exception('Error parsing body of Agent Input')

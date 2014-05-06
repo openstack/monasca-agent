@@ -26,8 +26,12 @@ class Disk(Check):
     def check(self):
         """Get disk space/inode stats"""
         # First get the configuration.
-        use_mount = self.agent_config.get("use_mount", False)
-        blacklist_re = self.agent_config.get('device_blacklist_re', None)
+        if self.agent_config is not None:
+            use_mount = self.agent_config.get("use_mount", False)
+            blacklist_re = self.agent_config.get('device_blacklist_re', None)
+        else:
+            use_mount = False
+            blacklist_re = None
         platform_name = sys.platform
 
         try:
@@ -52,7 +56,7 @@ class Disk(Check):
 
         except Exception:
             self.logger.exception('Error collecting disk stats')
-            return False
+            return {}
 
     def parse_df_output(self, df_output, platform_name, inodes=False, use_mount=False, blacklist_re=None):
         """
@@ -355,10 +359,13 @@ class IO(Check):
                 #    6.67   3  0.02     0.00   0  0.00    <-- line of interest
                 io = self._parse_darwin(iostat)
             else:
-                return False
+                return {}
 
             # If we filter devices, do it know.
-            device_blacklist_re = self.agent_config.get('device_blacklist_re', None)
+            if self.agent_config is not None:
+                device_blacklist_re = self.agent_config.get('device_blacklist_re', None)
+            else:
+                device_blacklist_re = None
             if device_blacklist_re:
                 filtered_io = {}
                 for device, stats in io.iteritems():
@@ -368,7 +375,7 @@ class IO(Check):
                 filtered_io = io
 
             filtered = {}
-            for dev_name, stats in filtered_io:
+            for dev_name, stats in filtered_io.iteritems():
                 filtered_stats = {stat: stats[stat] for stat in stats.iterkeys() if stat not in self.stat_blacklist}
                 filtered[dev_name] = filtered_stats
 
@@ -376,7 +383,7 @@ class IO(Check):
 
         except Exception:
             self.logger.exception("Cannot extract IO statistics")
-            return False
+            return {}
 
 
 class Load(Check):
@@ -389,7 +396,7 @@ class Load(Check):
                 loadAvrgProc.close()
             except Exception:
                 self.logger.exception('Cannot extract load')
-                return False
+                return {}
             
             uptime = uptime[0]  # readlines() provides a list but we want a string
         
@@ -401,7 +408,7 @@ class Load(Check):
                                   close_fds=True).communicate()[0]
             except Exception:
                 self.logger.exception('Cannot extract load')
-                return False
+                return {}
                 
         # Split out the 3 load average values
         load = [res.replace(',', '.') for res in re.findall(r'([0-9]+[\.,]\d+)', uptime)]
@@ -443,7 +450,7 @@ class Memory(Check):
                 meminfoProc.close()
             except Exception:
                 self.logger.exception('Cannot get memory metrics from /proc/meminfo')
-                return False
+                return {}
             
             # $ cat /proc/meminfo
             # MemTotal:        7995360 kB
@@ -543,7 +550,7 @@ class Memory(Check):
                 sysctl = sp.Popen(['sysctl', 'vm.swapusage'], stdout=sp.PIPE, close_fds=True).communicate()[0]
             except StandardError:
                 self.logger.exception('getMemoryUsage')
-                return False
+                return {}
             
             # Deal with top
             lines = top.split('\n')
@@ -569,7 +576,7 @@ class Memory(Check):
                 sysctl = sp.Popen(['sysctl', 'vm.stats.vm'], stdout=sp.PIPE, close_fds=True).communicate()[0]
             except Exception:
                 self.logger.exception('getMemoryUsage')
-                return False
+                return {}
 
             lines = sysctl.split('\n')
 
@@ -625,7 +632,7 @@ class Memory(Check):
                 sysctl = sp.Popen(['swapinfo', '-m'], stdout=sp.PIPE, close_fds=True).communicate()[0]
             except Exception:
                 self.logger.exception('getMemoryUsage')
-                return False
+                return {}
 
             lines = sysctl.split('\n')
 
@@ -692,9 +699,9 @@ class Memory(Check):
                 return memData
             except Exception:
                 self.logger.exception("Cannot compute mem stats from kstat -c zone_memory_cap")
-                return False
+                return {}
         else:
-            return False
+            return {}
 
 
 class Cpu(Check):
@@ -780,7 +787,7 @@ class Cpu(Check):
                                       cpu_idle,
                                       cpu_stolen)
             else:
-                return False
+                return {}
             
         elif sys.platform == 'darwin':
             # generate 3 seconds of data
@@ -800,7 +807,7 @@ class Cpu(Check):
             else:
                 self.logger.warn("Expected to get at least 4 lines of data from iostat instead of just " +
                                  str(iostats[: max(80, len(iostats))]))
-                return False
+                return {}
 
         elif sys.platform.startswith("freebsd"):
             # generate 3 seconds of data
@@ -826,7 +833,7 @@ class Cpu(Check):
             else:
                 self.logger.warn("Expected to get at least 4 lines of data from iostat instead of just " +
                                  str(iostats[:max(80, len(iostats))]))
-                return False
+                return {}
 
         elif sys.platform == 'sunos5':
             # mpstat -aq 1 2
@@ -866,10 +873,10 @@ class Cpu(Check):
                                           0.0)
             except Exception:
                 self.logger.exception("Cannot compute CPU stats")
-                return False
+                return {}
         else:
             self.logger.warn("CPUStats: unsupported platform")
-            return False
+            return {}
 
 
 def _get_subprocess_output(command):

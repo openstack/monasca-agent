@@ -56,9 +56,9 @@ class Collector(object):
                              w32.Cpu(log)]
         else:
             system_checks = [u.Disk(log, agent_config),
-                             u.IO(log, agent_config),
+                             u.IO(log),
                              u.Load(log, agent_config),
-                             u.Memory(log, agent_config),
+                             u.Memory(log),
                              u.Cpu(log, agent_config)]
         self._checks.extend(system_checks)
 
@@ -135,7 +135,7 @@ class Collector(object):
 
         for check_type in self._checks:
             try:
-                for name, value in check_type.check():
+                for name, value in check_type.check().iteritems():
                     metrics_list.append(Measurement(name, timestamp, value, {}))
             except Exception:
                 log.exception('Error running check.')
@@ -149,7 +149,8 @@ class Collector(object):
         collect_duration = timer.step()
 
         # Add in metrics on the collector run, emit_duration is from the previous run
-        for name, value in self.collector_stats(len(metrics_list), len(events), collect_duration, self.emit_duration):
+        for name, value in self.collector_stats(len(metrics_list), len(events),
+                                                collect_duration, self.emit_duration).iteritems():
             metrics_list.append(Measurement(name, timestamp, value, {}))
 
         emitter_statuses = self._emit(metrics_list)

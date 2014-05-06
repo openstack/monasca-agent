@@ -4,9 +4,7 @@ import itertools
 import logging
 import logging.config
 import logging.handlers
-import platform
 import string
-import subprocess
 import sys
 import glob
 import inspect
@@ -188,7 +186,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         options, _ = get_parsed_args()
 
     # General config
-    agentConfig = {
+    agent_config = {
         'check_freq': DEFAULT_CHECK_FREQUENCY,
         'dogstatsd_interval': DEFAULT_STATSD_FREQUENCY,
         'dogstatsd_agregator_bucket_size': DEFAULT_STATSD_BUCKET_SIZE,
@@ -217,7 +215,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
 
         # bulk import
         for option in config.options('Main'):
-            agentConfig[option] = config.get('Main', option)
+            agent_config[option] = config.get('Main', option)
 
         #
         # Core config
@@ -228,33 +226,33 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         # Extra checks.d path
         # the linux directory is set by default
         if config.has_option('Main', 'additional_checksd'):
-            agentConfig['additional_checksd'] = config.get('Main', 'additional_checksd')
+            agent_config['additional_checksd'] = config.get('Main', 'additional_checksd')
         elif get_os() == 'windows':
             # default windows location
             common_path = _windows_commondata_path()
-            agentConfig['additional_checksd'] = os.path.join(common_path, 'Datadog', 'checks.d')
+            agent_config['additional_checksd'] = os.path.join(common_path, 'Datadog', 'checks.d')
 
         # Concerns only Windows
         if config.has_option('Main', 'use_web_info_page'):
-            agentConfig['use_web_info_page'] = config.get('Main', 'use_web_info_page').lower() in ("yes", "true")
+            agent_config['use_web_info_page'] = config.get('Main', 'use_web_info_page').lower() in ("yes", "true")
         else:
-            agentConfig['use_web_info_page'] = True
+            agent_config['use_web_info_page'] = True
 
         # local traffic only? Default to no
-        agentConfig['non_local_traffic'] = False
+        agent_config['non_local_traffic'] = False
         if config.has_option('Main', 'non_local_traffic'):
-            agentConfig['non_local_traffic'] = config.get('Main', 'non_local_traffic').lower() in ("yes", "true")
+            agent_config['non_local_traffic'] = config.get('Main', 'non_local_traffic').lower() in ("yes", "true")
 
         if config.has_option('Main', 'check_freq'):
             try:
-                agentConfig['check_freq'] = int(config.get('Main', 'check_freq'))
+                agent_config['check_freq'] = int(config.get('Main', 'check_freq'))
             except Exception:
                 pass
 
         # Disable Watchdog (optionally)
         if config.has_option('Main', 'watchdog'):
             if config.get('Main', 'watchdog').lower() in ('no', 'false'):
-                agentConfig['watchdog'] = False
+                agent_config['watchdog'] = False
 
         # Dogstatsd config
         dogstatsd_defaults = {
@@ -265,15 +263,15 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         }
         for key, value in dogstatsd_defaults.iteritems():
             if config.has_option('Main', key):
-                agentConfig[key] = config.get('Main', key)
+                agent_config[key] = config.get('Main', key)
             else:
-                agentConfig[key] = value
+                agent_config[key] = value
 
         #Forwarding to external statsd server
         if config.has_option('Main', 'statsd_forward_host'):
-            agentConfig['statsd_forward_host'] = config.get('Main', 'statsd_forward_host')
+            agent_config['statsd_forward_host'] = config.get('Main', 'statsd_forward_host')
             if config.has_option('Main', 'statsd_forward_port'):
-                agentConfig['statsd_forward_port'] = int(config.get('Main', 'statsd_forward_port'))
+                agent_config['statsd_forward_port'] = int(config.get('Main', 'statsd_forward_port'))
 
         # normalize 'yes'/'no' to boolean
         dogstatsd_defaults['dogstatsd_normalize'] = _is_affirmative(dogstatsd_defaults['dogstatsd_normalize'])
@@ -281,50 +279,50 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         # Optional config
         # FIXME not the prettiest code ever...
         if config.has_option('Main', 'use_mount'):
-            agentConfig['use_mount'] = _is_affirmative(config.get('Main', 'use_mount'))
+            agent_config['use_mount'] = _is_affirmative(config.get('Main', 'use_mount'))
 
         if config.has_option('Main', 'autorestart'):
-            agentConfig['autorestart'] = _is_affirmative(config.get('Main', 'autorestart'))
+            agent_config['autorestart'] = _is_affirmative(config.get('Main', 'autorestart'))
 
         try:
             filter_device_re = config.get('Main', 'device_blacklist_re')
-            agentConfig['device_blacklist_re'] = re.compile(filter_device_re)
+            agent_config['device_blacklist_re'] = re.compile(filter_device_re)
         except ConfigParser.NoOptionError:
             pass
 
         if config.has_option('datadog', 'ddforwarder_log'):
-            agentConfig['has_datadog'] = True
+            agent_config['has_datadog'] = True
 
         # Dogstream config
         if config.has_option("Main", "dogstream_log"):
             # Older version, single log support
             log_path = config.get("Main", "dogstream_log")
             if config.has_option("Main", "dogstream_line_parser"):
-                agentConfig["dogstreams"] = ':'.join([log_path, config.get("Main", "dogstream_line_parser")])
+                agent_config["dogstreams"] = ':'.join([log_path, config.get("Main", "dogstream_line_parser")])
             else:
-                agentConfig["dogstreams"] = log_path
+                agent_config["dogstreams"] = log_path
 
         elif config.has_option("Main", "dogstreams"):
-            agentConfig["dogstreams"] = config.get("Main", "dogstreams")
+            agent_config["dogstreams"] = config.get("Main", "dogstreams")
 
         if config.has_option("Main", "nagios_perf_cfg"):
-            agentConfig["nagios_perf_cfg"] = config.get("Main", "nagios_perf_cfg")
+            agent_config["nagios_perf_cfg"] = config.get("Main", "nagios_perf_cfg")
 
         if config.has_section('WMI'):
-            agentConfig['WMI'] = {}
+            agent_config['WMI'] = {}
             for key, value in config.items('WMI'):
-                agentConfig['WMI'][key] = value
+                agent_config['WMI'][key] = value
 
         if config.has_option("Main", "limit_memory_consumption") and \
             config.get("Main", "limit_memory_consumption") is not None:
-            agentConfig["limit_memory_consumption"] = int(config.get("Main", "limit_memory_consumption"))
+            agent_config["limit_memory_consumption"] = int(config.get("Main", "limit_memory_consumption"))
         else:
-            agentConfig["limit_memory_consumption"] = None
+            agent_config["limit_memory_consumption"] = None
 
         if config.has_option("Main", "skip_ssl_validation"):
-            agentConfig["skip_ssl_validation"] = _is_affirmative(config.get("Main", "skip_ssl_validation"))
+            agent_config["skip_ssl_validation"] = _is_affirmative(config.get("Main", "skip_ssl_validation"))
 
-        agentConfig['Api'] = get_mon_api_config(config)
+        agent_config['Api'] = get_mon_api_config(config)
 
     except ConfigParser.NoSectionError, e:
         sys.stderr.write('Config file not found or incorrectly formatted.\n')
@@ -338,9 +336,9 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         sys.stderr.write('There are some items missing from your config file, but nothing fatal [%s]' % e)
 
     # Storing proxy settings in the agent_config
-    agentConfig['proxy_settings'] = get_proxy(agentConfig)
+    agent_config['proxy_settings'] = get_proxy(agent_config)
 
-    return agentConfig
+    return agent_config
 
 
 def set_win32_cert_path():
@@ -364,21 +362,21 @@ def set_win32_cert_path():
     log.info("Windows certificate path: %s" % crt_path)
     tornado.simple_httpclient._DEFAULT_CA_CERTS = crt_path
 
-def get_proxy(agentConfig, use_system_settings=False):
+def get_proxy(agent_config, use_system_settings=False):
     proxy_settings = {}
 
     # First we read the proxy configuration from datadog.conf
-    proxy_host = agentConfig.get('proxy_host', None)
+    proxy_host = agent_config.get('proxy_host', None)
     if proxy_host is not None and not use_system_settings:
         proxy_settings['host'] = proxy_host
         try:
-            proxy_settings['port'] = int(agentConfig.get('proxy_port', 3128))
+            proxy_settings['port'] = int(agent_config.get('proxy_port', 3128))
         except ValueError:
             log.error('Proxy port must be an Integer. Defaulting it to 3128')
             proxy_settings['port'] = 3128
 
-        proxy_settings['user'] = agentConfig.get('proxy_user', None)
-        proxy_settings['password'] = agentConfig.get('proxy_password', None)
+        proxy_settings['user'] = agent_config.get('proxy_user', None)
+        proxy_settings['password'] = agent_config.get('proxy_password', None)
         proxy_settings['system_settings'] = False
         log.debug("Proxy Settings: %s:%s@%s:%s" % (proxy_settings['user'], "*****", proxy_settings['host'], proxy_settings['port']))
         return proxy_settings
@@ -494,7 +492,7 @@ def check_yaml(conf_path):
     finally:
         f.close()
 
-def load_check_directory(agentConfig):
+def load_check_directory(agent_config):
     ''' Return the initialized checks from checks.d, and a mapping of checks that failed to
     initialize. Only checks that have a configuration
     file in conf.d will be returned. '''
@@ -504,7 +502,7 @@ def load_check_directory(agentConfig):
     init_failed_checks = {}
 
     osname = get_os()
-    checks_paths = [glob.glob(os.path.join(agentConfig['additional_checksd'], '*.py'))]
+    checks_paths = [glob.glob(os.path.join(agent_config['additional_checksd'], '*.py'))]
 
     try:
         checksd_path = get_checksd_path(osname)
@@ -520,7 +518,7 @@ def load_check_directory(agentConfig):
         sys.exit(3)
 
     # Start JMXFetch if needed
-    JMXFetch.init(confd_path, agentConfig, get_logging_config(), DEFAULT_CHECK_FREQUENCY, JMX_COLLECT_COMMAND)
+    JMXFetch.init(confd_path, agent_config, get_logging_config(), DEFAULT_CHECK_FREQUENCY, JMX_COLLECT_COMMAND)
 
     # For backwards-compatability with old style checks, we have to load every
     # checks.d module and check for a corresponding config OR check if the old
@@ -578,7 +576,7 @@ def load_check_directory(agentConfig):
         elif hasattr(check_class, 'parse_agent_config'):
             # FIXME: Remove this check once all old-style checks are gone
             try:
-                check_config = check_class.parse_agent_config(agentConfig)
+                check_config = check_class.parse_agent_config(agent_config)
             except Exception, e:
                 continue
             if not check_config:
@@ -610,12 +608,12 @@ def load_check_directory(agentConfig):
         try:
             try:
                 c = check_class(check_name, init_config=init_config,
-                                agentConfig=agentConfig, instances=instances)
+                                agent_config=agent_config, instances=instances)
             except TypeError, e:
                 # Backwards compatibility for checks which don't support the
                 # instances argument in the constructor.
                 c = check_class(check_name, init_config=init_config,
-                                agentConfig=agentConfig)
+                                agent_config=agent_config)
                 c.instances = instances
         except Exception, e:
             log.exception('Unable to initialize check %s' % check_name)
