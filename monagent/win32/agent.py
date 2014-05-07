@@ -174,13 +174,13 @@ class DogstatsdProcess(multiprocessing.Process):
         self.is_enabled = True
 
     def run(self):
-        log.debug("Windows Service - Starting Dogstatsd server")
+        log.debug("Windows Service - Starting Monstatsd server")
         self.reporter, self.server, _ = dogstatsd.init()
         self.reporter.start()
         self.server.start()
 
     def stop(self):
-        log.debug("Windows Service - Stopping Dogstatsd server")
+        log.debug("Windows Service - Stopping Monstatsd server")
         self.server.stop()
         self.reporter.stop()
         self.reporter.join()

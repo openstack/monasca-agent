@@ -512,9 +512,9 @@ class CollectorStatus(AgentStatus):
         return status_info
 
 
-class DogstatsdStatus(AgentStatus):
+class MonstatsdStatus(AgentStatus):
 
-    NAME = 'Dogstatsd'
+    NAME = 'Monstatsd'
 
     def __init__(self, flush_count=0, packet_count=0, packets_per_second=0, metric_count=0, event_count=0):
         AgentStatus.__init__(self)

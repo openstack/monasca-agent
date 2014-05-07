@@ -23,7 +23,7 @@ except ImportError:
     from yaml import Loader
 
 # project
-from util import get_os, Platform
+from util import get_os
 from monagent.collector.jmxfetch import JMXFetch, JMX_COLLECT_COMMAND
 
 # CONSTANTS
@@ -188,10 +188,10 @@ def get_config(parse_args=True, cfg_path=None, options=None):
     # General config
     agent_config = {
         'check_freq': DEFAULT_CHECK_FREQUENCY,
-        'dogstatsd_interval': DEFAULT_STATSD_FREQUENCY,
-        'dogstatsd_agregator_bucket_size': DEFAULT_STATSD_BUCKET_SIZE,
-        'dogstatsd_normalize': 'yes',
-        'dogstatsd_port': 8125,
+        'monstatsd_interval': DEFAULT_STATSD_FREQUENCY,
+        'monstatsd_agregator_bucket_size': DEFAULT_STATSD_BUCKET_SIZE,
+        'monstatsd_normalize': 'yes',
+        'monstatsd_port': 8125,
         'forwarder_url': 'http://localhost:17123',
         'hostname': None,
         'listen_port': None,
@@ -200,8 +200,8 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         'additional_checksd': '/etc/mon-agent/checks.d/',
     }
 
-    dogstatsd_interval = DEFAULT_STATSD_FREQUENCY
-    dogstatsd_agregator_bucket_size = DEFAULT_STATSD_BUCKET_SIZE
+    monstatsd_interval = DEFAULT_STATSD_FREQUENCY
+    monstatsd_agregator_bucket_size = DEFAULT_STATSD_BUCKET_SIZE
 
     # Config handling
     try:
@@ -254,14 +254,14 @@ def get_config(parse_args=True, cfg_path=None, options=None):
             if config.get('Main', 'watchdog').lower() in ('no', 'false'):
                 agent_config['watchdog'] = False
 
-        # Dogstatsd config
-        dogstatsd_defaults = {
-            'dogstatsd_port': 8125,
-            'dogstatsd_interval': dogstatsd_interval,
-            'dogstatsd_agregator_bucket_size': dogstatsd_agregator_bucket_size,
-            'dogstatsd_normalize': 'yes',
+        # monstatsd config
+        monstatsd_defaults = {
+            'monstatsd_port': 8125,
+            'monstatsd_interval': monstatsd_interval,
+            'monstatsd_agregator_bucket_size': monstatsd_agregator_bucket_size,
+            'monstatsd_normalize': 'yes',
         }
-        for key, value in dogstatsd_defaults.iteritems():
+        for key, value in monstatsd_defaults.iteritems():
             if config.has_option('Main', key):
                 agent_config[key] = config.get('Main', key)
             else:
@@ -274,7 +274,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
                 agent_config['statsd_forward_port'] = int(config.get('Main', 'statsd_forward_port'))
 
         # normalize 'yes'/'no' to boolean
-        dogstatsd_defaults['dogstatsd_normalize'] = _is_affirmative(dogstatsd_defaults['dogstatsd_normalize'])
+        monstatsd_defaults['monstatsd_normalize'] = _is_affirmative(monstatsd_defaults['monstatsd_normalize'])
 
         # Optional config
         # FIXME not the prettiest code ever...
@@ -365,7 +365,7 @@ def set_win32_cert_path():
 def get_proxy(agent_config, use_system_settings=False):
     proxy_settings = {}
 
-    # First we read the proxy configuration from datadog.conf
+    # First we read the proxy configuration from agent.conf
     proxy_host = agent_config.get('proxy_host', None)
     if proxy_host is not None and not use_system_settings:
         proxy_settings['host'] = proxy_host
@@ -381,7 +381,7 @@ def get_proxy(agent_config, use_system_settings=False):
         log.debug("Proxy Settings: %s:%s@%s:%s" % (proxy_settings['user'], "*****", proxy_settings['host'], proxy_settings['port']))
         return proxy_settings
 
-    # If no proxy configuration was specified in datadog.conf
+    # If no proxy configuration was specified in agent.conf
     # We try to read it from the system settings
     try:
         import urllib
@@ -582,7 +582,7 @@ def load_check_directory(agent_config):
             if not check_config:
                 continue
             d = [
-                "Configuring %s in datadog.conf is deprecated." % (check_name),
+                "Configuring %s in agent.conf is deprecated." % (check_name),
                 "Please use conf.d. In a future release, support for the",
                 "old style of configuration will be dropped.",
             ]
@@ -659,10 +659,10 @@ def get_logging_config(cfg_path=None):
     if system_os != 'windows':
         logging_config = {
             'log_level': None,
-            'collector_log_file': '/var/log/datadog/collector.log',
-            'forwarder_log_file': '/var/log/datadog/forwarder.log',
-            'dogstatsd_log_file': '/var/log/datadog/dogstatsd.log',
-            'jmxfetch_log_file': '/var/log/datadog/jmxfetch.log',
+            'collector_log_file': '/var/log/mon-agent/collector.log',
+            'forwarder_log_file': '/var/log/mon-agent/forwarder.log',
+            'monstatsd_log_file': '/var/log/mon-agent/monstatsd.log',
+            'jmxfetch_log_file': '/var/log/mon-agent/jmxfetch.log',
             'log_to_event_viewer': False,
             'log_to_syslog': True,
             'syslog_host': None,
@@ -692,7 +692,7 @@ def get_logging_config(cfg_path=None):
             config_example_file = "https://github.com/DataDog/dd-agent/blob/master/datadog.conf.example"
 
         sys.stderr.write("""Python logging config is no longer supported and will be ignored.
-            To configure logging, update the logging portion of 'datadog.conf' to match:
+            To configure logging, update the logging portion of 'agent.conf' to match:
              '%s'.
              """ % config_example_file)
 
@@ -738,7 +738,6 @@ def get_logging_config(cfg_path=None):
         logging_config['disable_file_logging'] = False
 
     return logging_config
-
 
 
 def initialize_logging(logger_name):

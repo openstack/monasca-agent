@@ -1,4 +1,4 @@
-""" Aggregation classes used by the collector and dogstatsd to batch messages sent to the forwarder.
+""" Aggregation classes used by the collector and monstatsd to batch messages sent to the forwarder.
 """
 import logging
 from time import time

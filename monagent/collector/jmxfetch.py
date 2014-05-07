@@ -12,7 +12,6 @@ import subprocess
 import tempfile
 import time
 
-# datadog
 from monagent.common.util import PidFile, get_os
 
 log = logging.getLogger(__name__)
@@ -289,7 +288,7 @@ class JMXFetch(object):
     @classmethod
     def start(cls, confd_path, agentConfig, logging_config, path_to_java, java_run_opts,
         default_check_frequency, jmx_checks, command, reporter=None):
-        statsd_port = agentConfig.get('dogstatsd_port', "8125")
+        statsd_port = agentConfig.get('monstatsd_port', "8125")
 
         if reporter is None:
             reporter = "statsd:%s" % str(statsd_port)
