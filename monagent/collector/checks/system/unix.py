@@ -13,6 +13,7 @@ import time
 
 # project
 from .. import Check
+from monagent.common.metrics import Measurement
 from monagent.common.util import Platform
 
 
@@ -36,7 +37,7 @@ class Disk(Check):
 
         try:
             dfk_out = _get_subprocess_output(['df', '-k'])
-            disks = self.parse_df_output(
+            stats = self.parse_df_output(
                 dfk_out,
                 platform_name,
                 use_mount=use_mount,
@@ -52,8 +53,12 @@ class Disk(Check):
                 use_mount=use_mount,
                 blacklist_re=blacklist_re
             )
-            disks.update(inodes)
-            return disks
+            # parse into a list of Measurements
+            stats.update(inodes)
+            timestamp = time.time()
+            measurements = [Measurement(key.split('.', 1)[1], timestamp, value, {'device': key.split('.', 1)[0]})
+                            for key, value in stats.iteritems()]
+            return measurements
 
         except Exception:
             self.logger.exception('Error collecting disk stats')
@@ -70,8 +75,7 @@ class Disk(Check):
         # Transform the raw output into tuples of the df data.
         devices = self._transform_df_output(df_output, blacklist_re)
 
-        # If we want to use the mount point, replace the volume name on each
-        # line.
+        # If we want to use the mount point, replace the volume name on each line.
         for parts in devices:
             try:
                 if use_mount:
@@ -102,13 +106,13 @@ class Disk(Check):
                 self.logger.exception("Cannot parse %s" % (parts,))
 
             if inodes:
-                usage_data['df_%s_total_inodes' % parts[0]] = parts[1]
-                usage_data['df_%s_used_inodes' % parts[0]] = parts[2]
-                usage_data['df_%s_free_inodes' % parts[0]] = parts[3]
+                usage_data['%s.disk_total_inodes' % parts[0]] = parts[1]
+                usage_data['%s.disk_used_inodes' % parts[0]] = parts[2]
+                usage_data['%s.disk_free_inodes' % parts[0]] = parts[3]
             else:
-                usage_data['df_%s_total_kbytes' % parts[0]] = parts[1]
-                usage_data['df_%s_used_kbytes' % parts[0]] = parts[2]
-                usage_data['df_%s_free_kbytes' % parts[0]] = parts[3]
+                usage_data['%s.disk_total_kbytes' % parts[0]] = parts[1]
+                usage_data['%s.disk_used_kbytes' % parts[0]] = parts[2]
+                usage_data['%s.disk_free_kbytes' % parts[0]] = parts[3]
 
         return usage_data
 
@@ -381,11 +385,15 @@ class IO(Check):
             else:
                 filtered_io = io
 
+            measurements = []
+            timestamp = time.time()
             for dev_name, stats in filtered_io.iteritems():
                 filtered_stats = {stat: stats[stat] for stat in stats.iterkeys() if stat not in self.stat_blacklist}
-                filtered = {'%s_%s' % (dev_name, key): value for key, value in filtered_stats.iteritems()}
+                m_list = [Measurement(key, timestamp, value, {'device': dev_name})
+                          for key, value in filtered_stats.iteritems()]
+                measurements.extend(m_list)
 
-            return filtered
+            return measurements
 
         except Exception:
             self.logger.exception("Cannot extract IO statistics")

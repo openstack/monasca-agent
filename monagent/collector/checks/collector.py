@@ -41,26 +41,29 @@ class Collector(object):
         self.initialized_checks_d = []
         self.init_failed_checks_d = []
 
-        self._checks = [
+        self._checks = []
+        self._legacy_checks = [
 # todo dogstreams should be removed or moved over to a standard output type
 #            Dogstreams.init(log, self.agent_config)  # dogstreams
         ]
 
         # add system checks
+        # todo all these (legacy and system) should be moved to the newer AgentCheck class rather than check
         if self.os == 'windows':
-            system_checks = [w32.Disk(log),
+            legacy_checks = [w32.Disk(log),
                              w32.IO(log),
                              w32.Processes(log),
                              w32.Memory(log),
                              w32.Network(log),
                              w32.Cpu(log)]
+            system_checks = []
         else:
-            system_checks = [u.Disk(log, agent_config),
-                             u.IO(log),
-                             u.Load(log, agent_config),
+            system_checks = [u.Disk(log, agent_config), u.IO(log)]
+            legacy_checks = [u.Load(log, agent_config),
                              u.Memory(log),
                              u.Cpu(log, agent_config)]
         self._checks.extend(system_checks)
+        self._legacy_checks.extend(legacy_checks)
 
         if checksd:
             self.initialized_checks_d = checksd['initialized_checks']  # is of type {check_name: check}
@@ -119,7 +122,7 @@ class Collector(object):
     def run(self):
         """
         Collect data from each check and submit their data.
-        There are currently two types of checks the system checks in self._checks and the configured ones from checks.d
+        There are currently two types of checks the system checks and the configured ones from checks.d
         """
         timer = Timer()
         if self.os != 'windows':
@@ -133,12 +136,16 @@ class Collector(object):
         events = {}
 
         # Run the system checks. These checks output a dictionary of name/value pairs
-        for check_type in self._checks:
+        for check_type in self._legacy_checks:
             try:
                 for name, value in check_type.check().iteritems():
                     metrics_list.append(Measurement(name, timestamp, value, {}))
             except Exception:
                 log.exception('Error running check.')
+
+        # These are still implemented using the older check class but do output Measurements
+        for check_type in self._checks:
+            metrics_list.extend(check_type.check())
 
         # checks.d checks
         checks_d_metrics, checks_d_events, checks_statuses = self.run_checks_d()
