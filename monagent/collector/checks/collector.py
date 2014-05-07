@@ -129,10 +129,10 @@ class Collector(object):
 
         metrics_list = []
 
-        # Run the system checks. These checks output a dictionary of name/value pairs
         timestamp = time.time()
         events = {}
 
+        # Run the system checks. These checks output a dictionary of name/value pairs
         for check_type in self._checks:
             try:
                 for name, value in check_type.check().iteritems():

@@ -52,7 +52,8 @@ class Disk(Check):
                 use_mount=use_mount,
                 blacklist_re=blacklist_re
             )
-            return {'disk_usage': disks, 'inodes': inodes}
+            disks.update(inodes)
+            return disks
 
         except Exception:
             self.logger.exception('Error collecting disk stats')
@@ -64,7 +65,7 @@ class Disk(Check):
         is used to anchor the metric, otherwise false the mount 
         point is used. Returns a tuple of (disk, inode).
         """
-        usage_data = []
+        usage_data = {}
 
         # Transform the raw output into tuples of the df data.
         devices = self._transform_df_output(df_output, blacklist_re)
@@ -80,7 +81,7 @@ class Disk(Check):
                         # Filesystem 512-blocks Used Available Capacity iused ifree %iused  Mounted
                         # Inodes are in position 5, 6 and we need to compute the total
                         # Total
-                        parts[1] = int(parts[5]) + int(parts[6]) # Total
+                        parts[1] = int(parts[5]) + int(parts[6])  # Total
                         parts[2] = int(parts[5])  # Used
                         parts[3] = int(parts[6])  # Available
                     elif Platform.is_freebsd(platform_name):
@@ -100,7 +101,14 @@ class Disk(Check):
             except IndexError:
                 self.logger.exception("Cannot parse %s" % (parts,))
 
-            usage_data.append(parts)
+            if inodes:
+                usage_data['df_%s_total_inodes' % parts[0]] = parts[1]
+                usage_data['df_%s_used_inodes' % parts[0]] = parts[2]
+                usage_data['df_%s_free_inodes' % parts[0]] = parts[3]
+            else:
+                usage_data['df_%s_total_kbytes' % parts[0]] = parts[1]
+                usage_data['df_%s_used_kbytes' % parts[0]] = parts[2]
+                usage_data['df_%s_free_kbytes' % parts[0]] = parts[3]
 
         return usage_data
 
@@ -186,25 +194,24 @@ class IO(Check):
                                "avgrq-sz", "%util", "svctm"]
 
     def _parse_linux2(self, output):
-        recentStats = output.split('Device:')[2].split('\n')
-        header = recentStats[0]
-        headerNames = re.findall(self.header_re, header)
-        device = None
+        recent_stats = output.split('Device:')[2].split('\n')
+        header = recent_stats[0]
+        header_names = re.findall(self.header_re, header)
 
-        ioStats = {}
+        io_stats = {}
 
-        for statsIndex in range(1, len(recentStats)):
-            row = recentStats[statsIndex]
+        for statsIndex in range(1, len(recent_stats)):
+            row = recent_stats[statsIndex]
 
             if not row:
                 # Ignore blank lines.
                 continue
 
-            deviceMatch = self.item_re.match(row)
+            device_match = self.item_re.match(row)
 
-            if deviceMatch is not None:
+            if device_match is not None:
                 # Sometimes device names span two lines.
-                device = deviceMatch.groups()[0]
+                device = device_match.groups()[0]
             else:
                 continue
 
@@ -215,13 +222,13 @@ class IO(Check):
                 # instances of [].
                 continue
 
-            ioStats[device] = {}
+            io_stats[device] = {}
 
-            for headerIndex in range(len(headerNames)):
-                headerName = headerNames[headerIndex]
-                ioStats[device][self.xlate(headerName, "linux")] = values[headerIndex]
+            for header_index in range(len(header_names)):
+                header_name = header_names[header_index]
+                io_stats[device][self.xlate(header_name, "linux")] = values[header_index]
 
-        return ioStats
+        return io_stats
     
     @staticmethod
     def _parse_darwin(output):
@@ -374,10 +381,9 @@ class IO(Check):
             else:
                 filtered_io = io
 
-            filtered = {}
             for dev_name, stats in filtered_io.iteritems():
                 filtered_stats = {stat: stats[stat] for stat in stats.iterkeys() if stat not in self.stat_blacklist}
-                filtered[dev_name] = filtered_stats
+                filtered = {'%s_%s' % (dev_name, key): value for key, value in filtered_stats.iteritems()}
 
             return filtered
 
@@ -416,6 +422,7 @@ class Load(Check):
                 'load_avg_5_min': float(load[1]),
                 'load_avg_15_min': float(load[2]),
                 }
+
 
 class Memory(Check):
     def __init__(self, logger):

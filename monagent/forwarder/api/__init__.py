@@ -37,7 +37,7 @@ class MonAPI(object):
         """Does the actual http post
             measurements is a list of Measurement
         """
-        data = [json.dumps(m.__dict__) for m in measurements]
+        data = json.dumps([m.__dict__ for m in measurements])
 
         response = requests.post(self.url, data=data, headers=self.headers)
         if 200 <= response.status_code <= 299:
@@ -47,7 +47,8 @@ class MonAPI(object):
             # Good status from web service but some type of issue with the data
             error_msg = "Successful web service call but there were issues (Status: {0}," + \
                         "Status Message: {1}, Message Content: {1})"
-            log.warn(error_msg.format(response.status_code, response.text, response.str(measurements)))
+            log.error(error_msg.format(response.status_code, response.reason, response.text))
+            response.raise_for_status()
         else:  # Not a good status
             response.raise_for_status()
 

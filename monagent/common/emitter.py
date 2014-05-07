@@ -23,12 +23,11 @@ def http_emitter(message, log, agentConfig):
     # Post back the data
     partial_payload = []
     for measurement in message:
-        if isinstance(measurement, Measurement):
-            # Measurements need their __dict__ encoded to avoid being expressed as a tuple
-            partial_payload.append(measurement.__dict__)
-        else:
-            # Not all measurements are of the Measurement type yet
-            partial_payload.append(measurement)
+        if not isinstance(measurement, Measurement):
+            log.error('Data was not in the form of a monagent.common.metrics.Measurement')
+            continue
+        # Measurements need their __dict__ encoded to avoid being expressed as a tuple
+        partial_payload.append(measurement.__dict__)
 
     payload = json.dumps(partial_payload)
     url = "%s/intake" % agentConfig['forwarder_url']

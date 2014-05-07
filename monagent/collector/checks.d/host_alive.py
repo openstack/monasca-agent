@@ -71,8 +71,7 @@ class HostAlive(AgentCheck):
     def check(self, instance):
         """Run the desired host-alive check againt this host"""
 
-        dimensions = ['target_host:' + instance['host_name'],
-                      'observer_host:' + socket.getfqdn()]
+        dimensions = {'target_host': instance['host_name'], 'observer_host': socket.getfqdn()}
 
         success = False
 

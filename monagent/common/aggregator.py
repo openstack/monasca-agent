@@ -3,7 +3,7 @@
 import logging
 from time import time
 
-from monagent.common.metrics import Gauge, BucketGauge, Counter, Histogram, Set, Rate
+from monagent.common.metrics import Gauge, BucketGauge, Counter, Histogram, Measurement, Set, Rate
 
 
 log = logging.getLogger(__name__)
@@ -43,26 +43,16 @@ class Aggregator(object):
 
     @staticmethod
     def formatter(metric, value, timestamp, dimensions, hostname, device_name=None, metric_type=None, interval=None):
-        """ Formats metrics. Will look like:
+        """ Formats metrics, put them into a Measurement class
             (metric, timestamp, value, {"dimensions": {"name1": "value1", "name2": "value2"}, ...})
             dimensions should be a dictionary
         """
-        #todo is there a clearer way to do this, pass in a dictionary in the first place for attributes?
-        attributes = {}
-        if dimensions:
-            attributes['dimensions'] = dimensions
         if hostname:
-            attributes['hostname'] = hostname
+            dimensions['hostname'] = hostname
         if device_name:
-            attributes['device_name'] = device_name
-        if metric_type:
-            attributes['type'] = metric_type
-        if interval:
-            attributes['interval'] = interval
+            dimensions['device_name'] = device_name
 
-        if attributes:
-            return (metric, int(timestamp), value, attributes)
-        return (metric, int(timestamp), value)
+        return Measurement(metric, int(timestamp), value, dimensions)
 
     def packets_per_second(self, interval):
         if interval == 0:

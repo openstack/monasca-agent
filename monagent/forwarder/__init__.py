@@ -134,7 +134,7 @@ class AgentInputHandler(tornado.web.RequestHandler):
             The message is expected to follow the format:
 
         """
-        # read the message it should be a list of Measurements - from monagent.common.metrics import Measurement
+        # read the message it should be a list of monagent.common.metrics.Measurements expressed as a dict
         msg = tornado.escape.json_decode(self.request.body)
         try:
             log.debug(msg)
