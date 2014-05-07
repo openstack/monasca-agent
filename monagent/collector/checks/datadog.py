@@ -1,5 +1,4 @@
 import os
-import sys
 import traceback
 import re
 import time
@@ -8,7 +7,7 @@ from itertools import groupby  # >= python 2.4
 
 from utils import TailFile
 from . import LaconicFilter
-from .. import modules
+from monagent.collector import modules
 
 
 if hasattr('some string', 'partition'):

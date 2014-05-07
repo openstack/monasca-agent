@@ -12,6 +12,7 @@
 
 . /lib/lsb/init-functions
 PATH=$PATH:/sbin # add the location of start-stop-daemon on Debian
+export PYTHONPATH=$PYTHONPATH:/usr/share/mon/agent/
 
 AGENTPATH="/usr/bin/mon-collector"
 AGENTCONF="/etc/mon-agent/agent.conf"
