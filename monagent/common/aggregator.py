@@ -25,8 +25,6 @@ class Aggregator(object):
     """
     Abstract metric aggregator class.
     """
-    # Types of metrics that allow strings
-    ALLOW_STRINGS = ['s', ]
 
     def __init__(self, hostname, interval=1.0, expiry_seconds=300, recent_point_threshold=None):
         self.events = []
@@ -59,113 +57,13 @@ class Aggregator(object):
             return 0
         return round(float(self.count)/interval, 2)
 
-    def parse_metric_packet(self, packet):
-        name_and_metadata = packet.split(':', 1)
-
-        if len(name_and_metadata) != 2:
-            raise Exception('Unparseable metric packet: %s' % packet)
-
-        name = name_and_metadata[0]
-        metadata = name_and_metadata[1].split('|')
-
-        if len(metadata) < 2:
-            raise Exception('Unparseable metric packet: %s' % packet)
-
-        # Submit the metric
-        raw_value = metadata[0]
-        metric_type = metadata[1]
-
-        if metric_type in self.ALLOW_STRINGS:
-            value = raw_value
-        else:
-            # Try to cast as an int first to avoid precision issues, then as a
-            # float.
-            try:
-                value = int(raw_value)
-            except ValueError:
-                try:
-                    value = float(raw_value)
-                except ValueError:
-                    # Otherwise, raise an error saying it must be a number
-                    raise Exception('Metric value must be a number: %s, %s' % (name, raw_value))
-
-
-        # Parse the optional values - sample rate & dimensions.
-        sample_rate = 1
-        dimensions = None
-        for m in metadata[2:]:
-            # Parse the sample rate
-            if m[0] == '@':
-                sample_rate = float(m[1:])
-                assert 0 <= sample_rate <= 1
-            elif m[0] == '#':
-                dim_list = [dim.split(':') for dim in m[1:].split(',')]
-                dimensions = {key.strip(): value.strip() for key, value in dim_list}
-
-        return name, value, metric_type, dimensions, sample_rate
-
-    @staticmethod
-    def _unescape_event_text(string):
-        return string.replace('\\n', '\n')
-
-    def parse_event_packet(self, packet):
-        try:
-            name_and_metadata = packet.split(':', 1)
-            if len(name_and_metadata) != 2:
-                raise Exception(u'Unparseable event packet: %s' % packet)
-            # Event syntax:
-            # _e{5,4}:title|body|meta
-            name = name_and_metadata[0]
-            metadata = unicode(name_and_metadata[1])
-            title_length, text_length = name.split(',')
-            title_length = int(title_length[3:])
-            text_length = int(text_length[:-1])
-
-            event = {
-                'title': metadata[:title_length],
-                'text': self._unescape_event_text(metadata[title_length+1:title_length+text_length+1])
-            }
-            meta = metadata[title_length+text_length+1:]
-            for m in meta.split('|')[1:]:
-                if m[0] == u't':
-                    event['alert_type'] = m[2:]
-                elif m[0] == u'k':
-                    event['aggregation_key'] = m[2:]
-                elif m[0] == u's':
-                    event['source_type_name'] = m[2:]
-                elif m[0] == u'd':
-                    event['date_happened'] = int(m[2:])
-                elif m[0] == u'p':
-                    event['priority'] = m[2:]
-                elif m[0] == u'h':
-                    event['hostname'] = m[2:]
-                elif m[0] == u'#':
-                    event['dimensions'] = sorted(m[1:].split(u','))
-            return event
-        except IndexError, ValueError:
-            raise Exception(u'Unparseable event packet: %s' % packet)
-
-    def submit_packets(self, packets):
-        for packet in packets.split("\n"):
-
-            if not packet.strip():
-                continue
-
-            if packet.startswith('_e'):
-                self.event_count += 1
-                event = self.parse_event_packet(packet)
-                self.event(**event)
-            else:
-                self.count += 1
-                name, value, mtype, dimensions, sample_rate = self.parse_metric_packet(packet)
-                self.submit_metric(name, value, mtype, dimensions=dimensions, sample_rate=sample_rate)
-
-    def submit_metric(self, name, value, mtype, dimensions=None, hostname=None,
-                                device_name=None, timestamp=None, sample_rate=1):
+    def submit_metric(self, name, value, mtype, dimensions=None, hostname=None, device_name=None, timestamp=None,
+                      sample_rate=1):
         """ Add a metric to be aggregated """
         raise NotImplementedError()
 
-    def event(self, title, text, date_happened=None, alert_type=None, aggregation_key=None, source_type_name=None, priority=None, dimensions=None, hostname=None):
+    def event(self, title, text, date_happened=None, alert_type=None, aggregation_key=None, source_type_name=None,
+              priority=None, dimensions=None, hostname=None):
         event = {
             'msg_title': title,
             'msg_text': text,
@@ -206,9 +104,6 @@ class Aggregator(object):
 
         return events
 
-    def send_packet_count(self, metric_name):
-        self.submit_metric(metric_name, self.count, 'g')
-
 
 class MetricsBucketAggregator(Aggregator):
     """
@@ -234,7 +129,7 @@ class MetricsBucketAggregator(Aggregator):
         return timestamp - (timestamp % self.interval)
 
     def submit_metric(self, name, value, mtype, dimensions=None, hostname=None,
-                                device_name=None, timestamp=None, sample_rate=1):
+                      device_name=None, timestamp=None, sample_rate=1):
         # Avoid calling extra functions to dedupe dimensions if there are none
         # Note: if you change the way that context is created, please also change create_empty_metrics,
         #  which counts on this order
@@ -265,7 +160,7 @@ class MetricsBucketAggregator(Aggregator):
             if context not in metric_by_context:
                 metric_class = self.metric_type_to_class[mtype]
                 metric_by_context[context] = metric_class(self.formatter, name, dimensions,
-                    hostname or self.hostname, device_name)
+                                                          hostname or self.hostname, device_name)
 
             metric_by_context[context].sample(value, sample_rate, timestamp)
 
@@ -309,15 +204,16 @@ class MetricsBucketAggregator(Aggregator):
                                 self.last_sample_time_by_context[context] = metric.last_sample_time
                                 not_sampled_in_this_bucket.pop(context, None)
                     # We need to account for Metrics that have not expired and were not flushed for this bucket
-                    self.create_empty_metrics(not_sampled_in_this_bucket, expiry_timestamp, bucket_start_timestamp, metrics)
+                    self.create_empty_metrics(not_sampled_in_this_bucket, expiry_timestamp, bucket_start_timestamp,
+                                              metrics)
 
                     del self.metric_by_bucket[bucket_start_timestamp]
         else:
             # Even if there are no metrics in this flush, there may be some non-expired counters
             #  We should only create these non-expired metrics if we've passed an interval since the last flush
             if flush_cutoff_time >= self.last_flush_cutoff_time + self.interval:
-                self.create_empty_metrics(self.last_sample_time_by_context.copy(), expiry_timestamp, \
-                                                flush_cutoff_time-self.interval, metrics)
+                self.create_empty_metrics(self.last_sample_time_by_context.copy(), expiry_timestamp,
+                                          flush_cutoff_time-self.interval, metrics)
 
         # Log a warning regarding metrics with old timestamps being submitted
         if self.num_discarded_old_points > 0:
@@ -352,7 +248,7 @@ class MetricsAggregator(Aggregator):
         }
 
     def submit_metric(self, name, value, mtype, dimensions=None, hostname=None,
-                                device_name=None, timestamp=None, sample_rate=1):
+                      device_name=None, timestamp=None, sample_rate=1):
         # Avoid calling extra functions to dedupe dimensions if there are none
         if dimensions is None:
             dimensions = {}

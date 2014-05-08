@@ -5,20 +5,20 @@ import urllib2
 from monagent.common.metrics import Measurement
 
 
-def post_headers(agentConfig, payload):
+def post_headers(payload):
     return {
-        'User-Agent': 'Datadog Agent/%s' % agentConfig['version'],
+        'User-Agent': 'Mon/Agent',
         'Content-Type': 'application/json',
         'Accept': 'text/html, */*',
         'Content-MD5': md5(payload).hexdigest()
     }
 
 
-def http_emitter(message, log, agentConfig):
+def http_emitter(message, log, url):
     """Send payload
     """
 
-    log.debug('http_emitter: attempting postback to ' + agentConfig['forwarder_url'])
+    log.debug('http_emitter: attempting postback to ' + url)
 
     # Post back the data
     partial_payload = []
@@ -30,8 +30,8 @@ def http_emitter(message, log, agentConfig):
         partial_payload.append(measurement.__dict__)
 
     payload = json.dumps(partial_payload)
-    url = "%s/intake" % agentConfig['forwarder_url']
-    headers = post_headers(agentConfig, payload)
+    url = "%s/intake" % url
+    headers = post_headers(payload)
 
     try:
         request = urllib2.Request(url, payload, headers)

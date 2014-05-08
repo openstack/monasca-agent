@@ -5,7 +5,7 @@ import os
 import imp
 import sys
 
-# todo seems to be only used by dogstatsd at this point, possibly remove?
+# todo seems to be only used by dogstream at this point, possibly remove?
 
 
 def imp_type_for_filename(filename):
@@ -48,7 +48,7 @@ def module_name_for_filename(filename):
         module_elements.insert(0, path_elements.pop())
     modulename = '.'.join(module_elements)
     basename = '/'.join(path_elements)
-    return (basename, modulename)
+    return basename, modulename
 
 
 def get_module(name):

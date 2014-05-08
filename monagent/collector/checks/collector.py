@@ -5,7 +5,7 @@ import time
 import socket
 
 from monagent.common.metrics import Measurement
-from monagent.common.util import get_os, Timer, get_hostname
+from monagent.common.util import get_os, Timer
 import system.unix as u
 import system.win32 as w32
 from datadog import Dogstreams
@@ -77,7 +77,7 @@ class Collector(object):
             name = self.emitter.__name__
             emitter_status = EmitterStatus(name)
             try:
-                self.emitter(payload, log, self.agent_config)
+                self.emitter(payload, log, self.agent_config['forwarder_url'])
             except Exception, e:
                 log.exception("Error running emitter: %s" % self.emitter.__name__)
                 emitter_status = EmitterStatus(name, e)

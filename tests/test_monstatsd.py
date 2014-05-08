@@ -7,6 +7,7 @@ import nose.tools as nt
 
 from monagent.common.aggregator import MetricsAggregator
 from monagent import monstatsd
+from monagent.monstatsd.reporter import Reporter
 
 
 class TestUnitMonStatsd(unittest.TestCase):
@@ -95,7 +96,7 @@ class TestUnitMonStatsd(unittest.TestCase):
         from monagent.common.aggregator import api_formatter
 
         monstatsd.json = json
-        serialized = monstatsd.serialize_metrics([api_formatter("foo", 12, 1, ('tag',), 'host')])
+        serialized = Reporter.serialize_metrics([api_formatter("foo", 12, 1, ('tag',), 'host')])
         assert '"tags": ["tag"]' in serialized
 
     def test_counter(self):
@@ -358,19 +359,6 @@ class TestUnitMonStatsd(unittest.TestCase):
         # If we submit again, we're all good.
         stats.submit_packets('test.counter:123|c')
         assert stats.flush()
-
-
-    def test_diagnostic_stats(self):
-        stats = MetricsAggregator('myhost')
-        for i in xrange(10):
-            stats.submit_packets('metric:10|c')
-        stats.send_packet_count('monstatsd.packet.count')
-        metrics = self.sort_metrics(stats.flush())
-        nt.assert_equals(2, len(metrics))
-        first, second = metrics
-
-        nt.assert_equal(first['metric'], 'monstatsd.packet.count')
-        nt.assert_equal(first['points'][0][1], 10)
 
     def test_histogram_counter(self):
         # Test whether histogram.count == increment
