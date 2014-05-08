@@ -1,10 +1,21 @@
 import json
+import logging
 import threading
 from monagent.common.check_status import MonstatsdStatus
 from monagent.common.emitter import http_emitter
 from monagent.common.util import plural
-from monagent.monstatsd import WATCHDOG_TIMEOUT, EVENT_CHUNK_SIZE, log, FLUSH_LOGGING_PERIOD, FLUSH_LOGGING_INITIAL, \
-    FLUSH_LOGGING_COUNT
+from monagent.common.config import initialize_logging
+initialize_logging('monstatsd')
+log = logging.getLogger('monstatsd')
+
+
+WATCHDOG_TIMEOUT = 120
+# Since we call flush more often than the metrics aggregation interval, we should
+#  log a bunch of flushes in a row every so often.
+FLUSH_LOGGING_PERIOD = 70
+FLUSH_LOGGING_INITIAL = 10
+FLUSH_LOGGING_COUNT = 5
+EVENT_CHUNK_SIZE = 50
 
 
 class Reporter(threading.Thread):

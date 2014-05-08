@@ -6,7 +6,7 @@ import os
 from nose.plugins.skip import SkipTest
 
 from monagent.common.aggregator import MetricsAggregator
-from monagent.monstatsd.dogstatsd import Server
+from monagent.monstatsd import Server
 from monagent.common.util import PidFile
 from monagent.common.config import get_logging_config
 from monagent.collector.jmxfetch import JMXFetch

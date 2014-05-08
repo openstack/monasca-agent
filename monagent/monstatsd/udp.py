@@ -1,6 +1,12 @@
+import logging
 import select
 import socket
-from monagent.monstatsd import log, UDP_SOCKET_TIMEOUT
+from monagent.common.config import initialize_logging
+initialize_logging('monstatsd')
+log = logging.getLogger('monstatsd')
+
+
+UDP_SOCKET_TIMEOUT = 5
 
 
 class Server(object):

@@ -29,16 +29,6 @@ from monagent.common.util import PidFile, get_hostname
 log = logging.getLogger('monstatsd')
 
 
-WATCHDOG_TIMEOUT = 120
-UDP_SOCKET_TIMEOUT = 5
-# Since we call flush more often than the metrics aggregation interval, we should
-#  log a bunch of flushes in a row every so often.
-FLUSH_LOGGING_PERIOD = 70
-FLUSH_LOGGING_INITIAL = 10
-FLUSH_LOGGING_COUNT = 5
-EVENT_CHUNK_SIZE = 50
-
-
 class Monstatsd(Daemon):
     """ This class is the monstatsd daemon. """
 

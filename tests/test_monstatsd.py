@@ -91,14 +91,6 @@ class TestUnitMonStatsd(unittest.TestCase):
         nt.assert_equal(third['points'][0][1], 16)
         nt.assert_equal(third['host'], 'myhost')
 
-    def test_tags_gh442(self):
-        import json
-        from monagent.common.aggregator import api_formatter
-
-        monstatsd.json = json
-        serialized = Reporter.serialize_metrics([api_formatter("foo", 12, 1, ('tag',), 'host')])
-        assert '"tags": ["tag"]' in serialized
-
     def test_counter(self):
         stats = MetricsAggregator('myhost')
 
