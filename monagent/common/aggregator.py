@@ -45,6 +45,8 @@ class Aggregator(object):
             (metric, timestamp, value, {"dimensions": {"name1": "value1", "name2": "value2"}, ...})
             dimensions should be a dictionary
         """
+        if dimensions is None:
+            dimensions = {}
         if hostname:
             dimensions['hostname'] = hostname
         if device_name:
@@ -134,9 +136,9 @@ class MetricsBucketAggregator(Aggregator):
         # Note: if you change the way that context is created, please also change create_empty_metrics,
         #  which counts on this order
         if dimensions is None:
-            context = (name, {}, hostname, device_name)
+            context = (name, (), hostname, device_name)
         else:
-            context = (name, dimensions, hostname, device_name)
+            context = (name, dimensions.items(), hostname, device_name)
 
         cur_time = time()
         # Check to make sure that the timestamp that is passed in (if any) is not older than
