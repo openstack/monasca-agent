@@ -12,9 +12,9 @@ init_config:
 
 instances:
     -   host: .
-        tags:
-            - mytag1
-            - mytag2
+        dimensions:
+            dim1: value1
+            dim2: value2
 """
 
 
@@ -28,15 +28,15 @@ class IISTestCase(unittest.TestCase):
 
         base_metrics = [m[0] for m in check.METRICS]
         ret_metrics = [m[0] for m in metrics]
-        ret_tags = [m[3]['tags'] for m in metrics]
+        ret_dimensions = [m[3]['dimensions'] for m in metrics]
 
         # Make sure each metric was captured
         for metric in base_metrics:
             assert metric in ret_metrics
 
         # Make sure everything is tagged correctly
-        for tags in ret_tags:
-            assert tags == ['mytag1', 'mytag2']
+        for dimensions in ret_dimensions:
+            assert dimensions == {'dim1': 'value1', 'dim2': 'value2'}
 
 if __name__ == "__main__":
     unittest.main()

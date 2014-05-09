@@ -110,14 +110,14 @@ class TestRedis(unittest.TestCase):
         metrics = self._sort_metrics(r.get_metrics())
         assert metrics, "No metrics returned"
 
-        # Assert we have values, timestamps and tags for each metric.
+        # Assert we have values, timestamps and dimensions for each metric.
         for m in metrics:
             assert isinstance(m[1], int)    # timestamp
             assert isinstance(m[2], (int, float, long))  # value
-            tags = m[3]["tags"]
-            expected_tags = ["redis_host:localhost", "redis_port:%s" % port]
-            for e in expected_tags:
-                assert e in tags
+            dimensions = m[3]["dimensions"]
+            expected_dimensions = {"redis_host": "localhost", "redis_port": port}
+            for e in expected_dimensions:
+                assert e in dimensions
 
         def assert_key_present(expected, present, tolerance):
             "Assert we have the rest of the keys (with some tolerance for missing keys)"
@@ -133,7 +133,7 @@ class TestRedis(unittest.TestCase):
         # Assert that the keys metrics are tagged by db. just check db0, since
         # it's the only one we can guarantee is there.
         db_metrics = self._sort_metrics([m for m in metrics if m[0] in ['redis.keys',
-        'redis.expires'] and "redis_db:db14" in m[3]["tags"]])
+        'redis.expires'] and "redis_db:db14" in m[3]["dimensions"]])
         self.assertEquals(2, len(db_metrics))
 
         self.assertEquals('redis.expires', db_metrics[0][0])

@@ -3,7 +3,8 @@ import os
 import logging
 import unittest
 
-import modules
+from collector import modules
+
 
 log = logging.getLogger('datadog.test')
 

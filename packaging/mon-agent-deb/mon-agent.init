@@ -12,10 +12,11 @@
 
 . /lib/lsb/init-functions
 PATH=$PATH:/sbin # add the location of start-stop-daemon on Debian
+export PYTHONPATH=$PYTHONPATH:/usr/share/mon/agent/
 
 AGENTPATH="/usr/bin/mon-collector"
 AGENTCONF="/etc/mon-agent/agent.conf"
-DOGSTATSDPATH="/usr/bin/dogstatsd"
+MONSTATSDPATH="/usr/bin/monstatsd"
 AGENTUSER="mon-agent"
 FORWARDERPATH="/usr/bin/mon-forwarder"
 NAME="mon-agent"
@@ -124,11 +125,11 @@ case "$1" in
               # (right now only mon-agent supports additional flags)
         su $AGENTUSER -c "$AGENTPATH info $@"
         COLLECTOR_RETURN=$?
-        su $AGENTUSER -c "$DOGSTATSDPATH info"
-        DOGSTATSD_RETURN=$?
+        su $AGENTUSER -c "$MONSTATSDPATH info"
+        MONSTATSD_RETURN=$?
         su $AGENTUSER -c "$FORWARDERPATH info"
         FORWARDER_RETURN=$?
-        exit $(($COLLECTOR_RETURN+$DOGSTATSD_RETURN+$FORWARDER_RETURN))
+        exit $(($COLLECTOR_RETURN+$MONSTATSD_RETURN+$FORWARDER_RETURN))
         ;;
 
     status)

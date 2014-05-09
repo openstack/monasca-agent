@@ -8,7 +8,7 @@ instances:
 
 # Include/Exclude rules
 #
-# To include or exclude containers based on their tags, use the include and
+# To include or exclude containers based on their docker tags, use the include and
 # exclude keys in your instance.
 # The reasoning is: if a tag matches an exclude rule, it won't be included
 # unless it also matches an include rule.

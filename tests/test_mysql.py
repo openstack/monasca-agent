@@ -13,16 +13,16 @@ class TestMySql(unittest.TestCase):
 
     def testChecks(self):
         if not self.skip:
-            agentConfig = { 'mysql_server': 'localhost',
+            agent_config = { 'mysql_server': 'localhost',
                 'mysql_user': "datadog",
                 'mysql_pass': "phQOrbaXem0kP8JHri1qSMRS",
                 'version': '0.1',
                 'api_key': 'toto' }
 
             # Initialize the check from checks.d
-            c = load_check('mysql', {'init_config': {}, 'instances': {}}, agentConfig)
-            conf = c.parse_agent_config(agentConfig)
-            self.check = load_check('mysql', conf, agentConfig)
+            c = load_check('mysql', {'init_config': {}, 'instances': {}}, agent_config)
+            conf = c.parse_agent_config(agent_config)
+            self.check = load_check('mysql', conf, agent_config)
 
             self.check.run()
             metrics = self.check.get_metrics()

@@ -1,7 +1,8 @@
 import logging
 import unittest
 from cStringIO import StringIO
-from checks import LaconicFilter
+
+from collector.checks import LaconicFilter
 
 
 class TestLaconic(unittest.TestCase):

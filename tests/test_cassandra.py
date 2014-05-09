@@ -1,12 +1,9 @@
 import logging
 import unittest
-import os
-import os.path
 
 from nose.plugins.attrib import attr
 
-from dogstream.cassandra import parse_cassandra
-
+from collector.dogstream.cassandra import parse_cassandra
 
 
 logger = logging.getLogger(__name__)

@@ -11,7 +11,7 @@ case "$1" in
         chown -R mon-agent:root /etc/mon-agent
         chown -R mon-agent:root /var/log/mon-agent
         chown -R root:root /usr/share/mon/agent
-        chown -h root:root /usr/bin/dogstatsd
+        chown -h root:root /usr/bin/monstatsd
         chown -h root:root /usr/bin/mon-collector
         chown -h root:root /usr/bin/mon-forwarder
 

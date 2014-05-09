@@ -4,7 +4,9 @@ from tempfile import NamedTemporaryFile
 import re
 import os
 
-from checks.datadog import Dogstreams, EventDefaults, point_sorter
+from collector.checks.datadog import Dogstreams, EventDefaults, point_sorter
+from collector.dogstream import cassandra, supervisord_log, common
+
 
 log = logging.getLogger('datadog.test')
 NAGIOS_TEST_HOST = os.path.join(os.path.dirname(__file__), "host-perfdata")
@@ -326,7 +328,6 @@ class TestDogstream(TailTestCase):
         self.assertEquals(expected_output, actual_output)
 
     def test_cassandra_parser(self):
-        from dogstream import cassandra, common
 
         log_data = """ INFO [CompactionExecutor:1594] 2012-05-12 21:05:12,924 Saved test_data-Encodings-KeyCache (86400 items) in 85 ms
  INFO [CompactionExecutor:1595] 2012-05-12 21:05:15,144 Saved test_data-Metrics-KeyCache (86400 items) in 96 ms
@@ -399,7 +400,6 @@ class TestDogstream(TailTestCase):
         self.assertEquals(expected_output, actual_output)
 
     def test_supervisord_parser(self):
-        from dogstream import supervisord_log
         log_data = """2012-07-16 22:30:48,335 INFO spawned: 'monitor' with pid 20216
 2012-07-14 03:02:47,325 INFO success: foo_bar entered RUNNING state, process has stayed up for > than 2 seconds (startsecs)
 2012-07-17 02:53:04,600 CRIT Server 'inet_http_server' running without any HTTP authentication checking
@@ -463,7 +463,7 @@ class TestNagiosPerfData(TailTestCase):
         self.nagios_config.close()
 
     def test_service_perfdata(self):
-        from checks.datadog import NagiosServicePerfData
+        from collector.checks.datadog import NagiosServicePerfData
 
         self._write_nagios_config([
             "service_perfdata_file=%s" % self.log_file.name,
@@ -541,7 +541,7 @@ class TestNagiosPerfData(TailTestCase):
         self.assertEquals(expected_output, actual_output)
     
     def test_service_perfdata_special_cases(self):
-        from checks.datadog import NagiosServicePerfData
+        from collector.checks.datadog import NagiosServicePerfData
 
         self._write_nagios_config([
             "service_perfdata_file=%s" % self.log_file.name,
@@ -665,7 +665,7 @@ class TestNagiosPerfData(TailTestCase):
 
         self.assertEquals(expected_output, actual_output)
     def test_host_perfdata(self):
-        from checks.datadog import NagiosHostPerfData
+        from collector.checks.datadog import NagiosHostPerfData
 
         self._write_nagios_config([
             "host_perfdata_file=%s" % self.log_file.name,
@@ -717,7 +717,7 @@ class TestNagiosPerfData(TailTestCase):
         self.assertEquals(expected_output, actual_output)
 
     def test_alt_service_perfdata(self):
-        from checks.datadog import NagiosServicePerfData
+        from collector.checks.datadog import NagiosServicePerfData
 
         self._write_nagios_config([
             "service_perfdata_file=%s" % NAGIOS_TEST_SVC,
@@ -732,7 +732,7 @@ class TestNagiosPerfData(TailTestCase):
         self.assertEquals(expected_output, actual_output)
 
     def test_alt_host_perfdata(self):
-        from checks.datadog import NagiosHostPerfData
+        from collector.checks.datadog import NagiosHostPerfData
 
         self._write_nagios_config([
             "host_perfdata_file=%s" % NAGIOS_TEST_HOST,

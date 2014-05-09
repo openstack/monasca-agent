@@ -15,11 +15,11 @@ init_config:
 
 instances:
     -   apache_status_url: http://localhost:9444/server-status
-        tags:
-            - instance:first
+        dimensions:
+            instance:first
     -   apache_status_url: http://localhost:9444/server-status?auto
-        tags:
-            - instance:second
+        dimensions:
+            instance:second
 """
 
         self.nginx_config = """
@@ -28,14 +28,14 @@ init_config:
 instances:
     -   nginx_status_url: http://localhost:44441/nginx_status/
     -   nginx_status_url: http://localhost:44441/nginx_status/
-        tags:
-            - first_one
+        dimensions:
+            test:first_one
     -   nginx_status_url: http://dummyurl:44441/nginx_status/
-        tags:
-            - dummy
+        dimensions:
+            test1:dummy
     -   nginx_status_url: http://localhost:44441/nginx_status/
-        tags:
-            - second
+        dimensions:
+            test2:second
 """
 
         self.lighttpd_config = """
@@ -43,11 +43,11 @@ init_config:
 
 instances:
     -   lighttpd_status_url: http://localhost:9449/server-status
-        tags:
-            - instance:first
+        dimensions:
+            instance:first
     -   lighttpd_status_url: http://localhost:9449/server-status?auto
-        tags:
-            - instance:second
+        dimensions:
+            instance:second
 """
 
     def testApache(self):
@@ -56,11 +56,11 @@ instances:
 
         a.check(instances[0])
         metrics = a.get_metrics()
-        self.assertEquals(metrics[0][3].get('tags'), ['instance:first'])
+        self.assertEquals(metrics[0][3].get('dimensions'), {'instance': 'first'})
 
         a.check(instances[1])
         metrics = a.get_metrics()
-        self.assertEquals(metrics[0][3].get('tags'), ['instance:second'])
+        self.assertEquals(metrics[0][3].get('dimensions'), {'instance': 'second'})
 
     def testApacheOldConfig(self):
         a, _ = get_check('apache', self.apache_config)
@@ -79,7 +79,7 @@ instances:
 
         nginx.check(instances[1])
         r = nginx.get_metrics()
-        self.assertEquals(r[0][3].get('tags'), ['first_one'])
+        self.assertEquals(r[0][3].get('dimensions'), {'test': 'first_one'})
 
     def testNginxOldConfig(self):
         nginx, _ = get_check('nginx', self.nginx_config)
@@ -99,11 +99,11 @@ instances:
 
         l.check(instances[0])
         metrics = l.get_metrics()
-        self.assertEquals(metrics[0][3].get('tags'), ['instance:first'])
+        self.assertEquals(metrics[0][3].get('dimensions'), {'instance': 'first'})
 
         l.check(instances[1])
         metrics = l.get_metrics()
-        self.assertEquals(metrics[0][3].get('tags'), ['instance:second'])
+        self.assertEquals(metrics[0][3].get('dimensions'), {'instance': 'second'})
 
 
 if __name__ == '__main__':

@@ -3,13 +3,13 @@ init_config:
 
 instances:
 #  Add one or more instances, which accept report_url,
-#  name, and optionally tags keys. The report URL should
+#  name, and optionally dimensions. The report URL should
 #  be a URL to the Kyoto Tycoon "report" RPC endpoint.
 #
 #  Complete example:
 #
 #  - name: my_kyoto_instance
 #    report_url: http://localhost:1978/rpc/report
-#    tags:
+#    dimensions:
 #      foo: bar
 #      baz: bat

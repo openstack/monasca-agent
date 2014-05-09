@@ -2,7 +2,7 @@ import logging
 import subprocess
 import tempfile
 import unittest
-import os
+
 
 class TestTail(unittest.TestCase):
     def setUp(self):
@@ -30,7 +30,7 @@ class TestTail(unittest.TestCase):
         ])    
     
     def test_logrotate_copytruncate(self):
-        from checks.utils import TailFile
+        from collector.checks.utils import TailFile
         
         def line_parser(l):
             self.last_line = l

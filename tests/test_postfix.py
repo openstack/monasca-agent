@@ -88,7 +88,7 @@ class TestPostfix(unittest.TestCase):
         # output postfix.py dd-agent plugin counts... per queue
         print
         for tuple in out_count:
-            queue = tuple[3]['tags'][0].split(':')[1]
+            queue = tuple[3]['dimensions'][0].split(':')[1]
             self.assertEquals(int(tuple[2]), int(self.in_count[queue][0]))
             print 'Test messages counted by dd-agent for', queue, '= ', tuple[2]
 

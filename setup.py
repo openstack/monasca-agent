@@ -1,6 +1,8 @@
 import sys
-from config import *
-from jmxfetch import JMX_FETCH_JAR_NAME
+
+from monagent.common.config import *
+from monagent.collector.jmxfetch import JMX_FETCH_JAR_NAME
+
 
 try:
     from setuptools import setup, find_packages
@@ -26,7 +28,7 @@ install_requires=[
 
 if sys.platform == 'win32':
     from glob import glob
-    import py2exe
+
     install_requires.extend([
         'tornado==3.0.1',
         'pywin32==217',

@@ -64,7 +64,7 @@ class SQLServerTestCase(unittest.TestCase):
         tagged_metrics = [m for m in metrics
             if m[0] == 'sqlserver.db.commit_table_entries']
         for metric in tagged_metrics:
-            for tag in metric[3]['tags']:
+            for tag in metric[3]['dimensions']:
                 assert tag.startswith('db')
 
 if __name__ == "__main__":

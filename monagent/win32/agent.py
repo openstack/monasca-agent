@@ -1,6 +1,8 @@
 # set up logging before importing any other components
 from config import initialize_logging
 from monagent.pup import pup
+from collector import modules
+from monstatsd import dogstatsd
 
 initialize_logging('collector')
 
@@ -9,18 +11,15 @@ import win32service
 import win32event
 import sys
 import logging
-import modules
 import time
 import multiprocessing
 
 from optparse import Values
-from checks.collector import Collector
+from collector.checks.collector import Collector
 from emitter import http_emitter
-from win32.common import handle_exe_click
-import dogstatsd
 from ddagent import Application
 from win32.common import handle_exe_click
-from jmxfetch import JMXFetch
+from collector.jmxfetch import JMXFetch
 
 log = logging.getLogger(__name__)
 RESTART_INTERVAL = 24 * 60 * 60  # Defaults to 1 day
@@ -175,13 +174,13 @@ class DogstatsdProcess(multiprocessing.Process):
         self.is_enabled = True
 
     def run(self):
-        log.debug("Windows Service - Starting Dogstatsd server")
+        log.debug("Windows Service - Starting Monstatsd server")
         self.reporter, self.server, _ = dogstatsd.init()
         self.reporter.start()
         self.server.start()
 
     def stop(self):
-        log.debug("Windows Service - Stopping Dogstatsd server")
+        log.debug("Windows Service - Stopping Monstatsd server")
         self.server.stop()
         self.reporter.stop()
         self.reporter.join()

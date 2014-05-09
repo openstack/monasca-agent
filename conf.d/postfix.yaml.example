@@ -13,15 +13,13 @@ instances:
           - incoming
           - active
           - deferred
-      tags:
-          - optional_tag1
-          - optional_tag2
+      dimensions:
+        dim1: value1
     - directory: /var/spool/postfix-2
       queues:
           - incoming
           - active
           - deferred
-      tags:
-          - optional_tag3
-          - optional_tag4
+      dimensions:
+        dim1: value1
 

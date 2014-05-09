@@ -2,17 +2,17 @@ init_config:
 
 instances:
     # For every instance, you have an `lighttpd_status_url` and (optionally)
-    # a list of tags.
+    # a list of dimensions.
 
     -   lighttpd_status_url: http://example.com/server-status?auto
-        tags:
-            -   instance:foo
+        dimensions:
+            instance:foo
 
     -   lighttpd_status_url: http://example2.com:1234/server-status?auto
-        tags:
-            -   instance:bar
+        dimensions:
+            instance:bar
 
     # Lighttpd2 status url
     -   lighttpd_status_url: http://example.com/server-status?format=plain
-        tags:
-            -   instance:l2
+        dimensions:
+            instance:l2

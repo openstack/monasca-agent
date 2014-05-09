@@ -7,8 +7,8 @@ import urllib as url
 import time
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../monagent'))
-from collector_daemon import CollectorDaemon
-from util import Watchdog
+from monagent.collector.daemon import CollectorDaemon
+from monagent.common.util import Watchdog
 
 
 class TestWatchdog(unittest.TestCase):

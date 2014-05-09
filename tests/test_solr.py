@@ -1,13 +1,16 @@
 import unittest
 import time
 import threading
-from aggregator import MetricsAggregator
-from dogstatsd import Dogstatsd, init, Server
-from util import PidFile
 import os
-from config import get_logging_config
-from jmxfetch import JMXFetch
+
 from nose.plugins.skip import SkipTest
+
+from monagent.common.aggregator import MetricsAggregator
+from monagent.monstatsd import Server
+from monagent.common.util import PidFile
+from monagent.common.config import get_logging_config
+from monagent.collector.jmxfetch import JMXFetch
+
 
 STATSD_PORT = 8127
 class DummyReporter(threading.Thread):
@@ -66,9 +69,9 @@ class JMXTestCase(unittest.TestCase):
 
         self.assertTrue(type(metrics) == type([]))
         self.assertTrue(len(metrics) > 8, metrics)
-        self.assertEquals(len([t for t in metrics if 'instance:solr_instance' in t['tags'] and t['metric'] == "jvm.thread_count"]), 1, metrics)
-        self.assertTrue(len([t for t in metrics if "jvm." in t['metric'] and 'instance:solr_instance' in t['tags']]) > 4, metrics)
-        self.assertTrue(len([t for t in metrics if "solr." in t['metric'] and 'instance:solr_instance' in t['tags']]) > 4, metrics)
+        self.assertEquals(len([t for t in metrics if 'instance:solr_instance' in t['dimensions'] and t['metric'] == "jvm.thread_count"]), 1, metrics)
+        self.assertTrue(len([t for t in metrics if "jvm." in t['metric'] and 'instance:solr_instance' in t['dimensions']]) > 4, metrics)
+        self.assertTrue(len([t for t in metrics if "solr." in t['metric'] and 'instance:solr_instance' in t['dimensions']]) > 4, metrics)
 
 if __name__ == "__main__":
     unittest.main()
