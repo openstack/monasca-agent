@@ -345,7 +345,7 @@ class CollectorStatus(AgentStatus):
         lines.append('  System UTC time: ' + datetime.datetime.utcnow().__str__())
         lines.append('')
 
-        # Paths to checks.d/conf.d
+        # Paths to checks_d/conf.d
         lines += [
             'Paths',
             '=====',
@@ -365,7 +365,7 @@ class CollectorStatus(AgentStatus):
             checksd_path = 'Not found'
 
         lines.append('  conf.d: ' + confd_path)
-        lines.append('  checks.d: ' + checksd_path)
+        lines.append('  checks_d: ' + checksd_path)
         lines.append('')
 
         # Hostnames

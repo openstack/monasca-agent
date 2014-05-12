@@ -123,7 +123,7 @@ setup(
     install_requires=install_requires,
     setup_requires=setup_requires,
     url="https://github.com/hpcloud-mon/mon-agent",
-    packages=find_packages(exclude=['tests']),
+    packages=find_packages(exclude=['tests', 'build*', 'packaging*']),
     entry_points={
         'console_scripts': [
             'mon-forwarder = monagent.forwarder:main',

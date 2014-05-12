@@ -122,7 +122,7 @@ class Collector(object):
     def run(self):
         """
         Collect data from each check and submit their data.
-        There are currently two types of checks the system checks and the configured ones from checks.d
+        There are currently two types of checks the system checks and the configured ones from checks_d
         """
         timer = Timer()
         if self.os != 'windows':
@@ -147,7 +147,7 @@ class Collector(object):
         for check_type in self._checks:
             metrics_list.extend(check_type.check())
 
-        # checks.d checks
+        # checks_d checks
         checks_d_metrics, checks_d_events, checks_statuses = self.run_checks_d()
         metrics_list.extend(checks_d_metrics)
         events.update(checks_d_events)
@@ -167,7 +167,7 @@ class Collector(object):
         self._set_status(checks_statuses, emitter_statuses, collect_duration)
 
     def run_checks_d(self):
-        """ Run defined checks.d checks.
+        """ Run defined checks_d checks.
             returns a list of Measurements, a dictionary of events and a list of check statuses.
         """
         measurements = []

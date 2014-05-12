@@ -105,11 +105,11 @@ def _windows_checksd_path():
     if hasattr(sys, 'frozen'):
         # we're frozen - from py2exe
         prog_path = os.path.dirname(sys.executable)
-        checksd_path = os.path.join(prog_path, '..', 'checks.d')
+        checksd_path = os.path.join(prog_path, '..', 'checks_d')
     else:
 
         cur_path = os.path.dirname(__file__)
-        checksd_path = os.path.join(cur_path, '../collector/checks.d')
+        checksd_path = os.path.join(cur_path, '../collector/checks_d')
 
     if os.path.exists(checksd_path):
         return checksd_path
@@ -134,9 +134,9 @@ def _unix_confd_path():
 
 def _unix_checksd_path():
     # Unix only will look up based on the current directory
-    # because checks.d will hang with the other python modules
+    # because checks_d will hang with the other python modules
     cur_path = os.path.dirname(os.path.realpath(__file__))
-    checksd_path = os.path.join(cur_path, '../collector/checks.d')
+    checksd_path = os.path.join(cur_path, '../collector/checks_d')
 
     if os.path.exists(checksd_path):
         return checksd_path
@@ -197,7 +197,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         'listen_port': None,
         'version': get_version(),
         'watchdog': True,
-        'additional_checksd': '/etc/mon-agent/checks.d/',
+        'additional_checksd': '/etc/mon-agent/checks_d/',
     }
 
     monstatsd_interval = DEFAULT_STATSD_FREQUENCY
@@ -223,14 +223,14 @@ def get_config(parse_args=True, cfg_path=None, options=None):
 
         # FIXME unnecessarily complex
 
-        # Extra checks.d path
+        # Extra checks_d path
         # the linux directory is set by default
         if config.has_option('Main', 'additional_checksd'):
             agent_config['additional_checksd'] = config.get('Main', 'additional_checksd')
         elif get_os() == 'windows':
             # default windows location
             common_path = _windows_commondata_path()
-            agent_config['additional_checksd'] = os.path.join(common_path, 'Datadog', 'checks.d')
+            agent_config['additional_checksd'] = os.path.join(common_path, 'Datadog', 'checks_d')
 
         # Concerns only Windows
         if config.has_option('Main', 'use_web_info_page'):
@@ -493,7 +493,7 @@ def check_yaml(conf_path):
         f.close()
 
 def load_check_directory(agent_config):
-    ''' Return the initialized checks from checks.d, and a mapping of checks that failed to
+    ''' Return the initialized checks from checks_d, and a mapping of checks that failed to
     initialize. Only checks that have a configuration
     file in conf.d will be returned. '''
     from monagent.collector.checks import AgentCheck
@@ -521,7 +521,7 @@ def load_check_directory(agent_config):
     JMXFetch.init(confd_path, agent_config, get_logging_config(), DEFAULT_CHECK_FREQUENCY, JMX_COLLECT_COMMAND)
 
     # For backwards-compatability with old style checks, we have to load every
-    # checks.d module and check for a corresponding config OR check if the old
+    # checks_d module and check for a corresponding config OR check if the old
     # config will "activate" the check.
     #
     # Once old-style checks aren't supported, we'll just read the configs and
@@ -541,9 +541,9 @@ def load_check_directory(agent_config):
             if os.path.exists(conf_path):
                 # There is a configuration file for that check but the module can't be imported
                 init_failed_checks[check_name] = {'error':e, 'traceback':traceback_message}
-                log.exception('Unable to import check module %s.py from checks.d' % check_name)
+                log.exception('Unable to import check module %s.py from checks_d' % check_name)
             else: # There is no conf for that check. Let's not spam the logs for it.
-                log.debug('Unable to import check module %s.py from checks.d' % check_name)
+                log.debug('Unable to import check module %s.py from checks_d' % check_name)
             continue
 
         check_class = None
@@ -589,7 +589,7 @@ def load_check_directory(agent_config):
             log.warn(" ".join(d))
 
         else:
-            log.debug('No conf.d/%s.yaml found for checks.d/%s.py' % (check_name, check_name))
+            log.debug('No conf.d/%s.yaml found for checks_d/%s.py' % (check_name, check_name))
             continue
 
         # Look for the per-check config, which *must* exist
@@ -631,8 +631,8 @@ def load_check_directory(agent_config):
 
         log.debug('Loaded check.d/%s.py' % check_name)
 
-    log.info('initialized checks.d checks: %s' % initialized_checks.keys())
-    log.info('initialization failed checks.d checks: %s' % init_failed_checks.keys())
+    log.info('initialized checks_d checks: %s' % initialized_checks.keys())
+    log.info('initialization failed checks_d checks: %s' % init_failed_checks.keys())
     return {'initialized_checks':initialized_checks.values(),
             'init_failed_checks':init_failed_checks,
             }

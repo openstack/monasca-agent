@@ -49,7 +49,7 @@ class TestElastic(unittest.TestCase):
         raise SkipTest("See https://github.com/DataDog/dd-agent/issues/825")
         agent_config = {'elasticsearch': 'http://localhost:%s' % PORT, 'version': '0.1', 'api_key': 'toto'}
 
-        # Initialize the check from checks.d
+        # Initialize the check from checks_d
         c = load_check('elastic', {'init_config': {}, 'instances': {}}, agent_config)
         conf = c.parse_agent_config(agent_config)
         self.check = load_check('elastic', conf, agent_config)

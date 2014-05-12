@@ -119,7 +119,7 @@ class DDAgent(multiprocessing.Process):
         systemStats = get_system_stats()
         self.collector = Collector(self.config, emitters, systemStats)
 
-        # Load the checks.d checks
+        # Load the checks_d checks
         checksd = load_check_directory(self.config)
 
         # Main agent loop will run until interrupted

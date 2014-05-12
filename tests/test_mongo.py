@@ -35,7 +35,7 @@ class TestMongo(unittest.TestCase):
             'api_key': 'toto'
         }
 
-        # Initialize the check from checks.d
+        # Initialize the check from checks_d
         self.check = load_check('mongo', {'init_config': {}, 'instances': {}}, self.agent_config)
 
         # Start 2 instances of Mongo in a replica set
@@ -84,7 +84,7 @@ class TestMongo(unittest.TestCase):
             }]
         }
 
-        # Test mongodb with checks.d
+        # Test mongodb with checks_d
         self.check = load_check('mongo', self.config, self.agent_config)
 
         # Run the check against our running server

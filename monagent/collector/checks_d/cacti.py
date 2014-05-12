@@ -246,7 +246,7 @@ class Cacti(AgentCheck):
 
 
     '''
-        For backwards compatability with pre-checks.d configuration.
+        For backwards compatability with pre-checks_d configuration.
         Convert old-style config to new-style config.
     '''
     @staticmethod

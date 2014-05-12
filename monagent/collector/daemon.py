@@ -101,7 +101,7 @@ class CollectorDaemon(Daemon):
         if config is None:
             config = get_config(parse_args=True)
 
-        # Load the checks.d checks
+        # Load the checks_d checks
         checksd = load_check_directory(config)
         self.collector = Collector(config, http_emitter, checksd)
 
@@ -264,7 +264,7 @@ def main():
             # Try the old-style check first
             print getattr(collector.checks.collector, check_name)(log).check(agentConfig)
         except Exception:
-            # If not an old-style check, try checks.d
+            # If not an old-style check, try checks_d
             checks = load_check_directory(agentConfig)
             for check in checks['initialized_checks']:
                 if check.name == check_name:

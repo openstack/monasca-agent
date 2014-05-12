@@ -48,7 +48,7 @@ class HaproxyTestCase(unittest.TestCase):
             'api_key': 'toto'
         }
 
-        # Initialize the check from checks.d
+        # Initialize the check from checks_d
         self.check = load_check('haproxy', config, self.agent_config)
 
         try:
