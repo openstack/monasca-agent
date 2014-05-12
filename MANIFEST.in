@@ -1,3 +1,0 @@
-include agent.conf.example
-include checks/libs/jmxterm-1.0-alpha-4-uber.jar
-include checks/libs/jmxfetch-0.2.0-jar-with-dependencies.jar

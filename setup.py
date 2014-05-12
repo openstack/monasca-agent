@@ -1,22 +1,7 @@
+from glob import glob
 import sys
 
-from monagent.common.config import *
-from monagent.collector.jmxfetch import JMX_FETCH_JAR_NAME
-
-
-try:
-    from setuptools import setup, find_packages
-
-    # required to build the cython extensions
-    from distutils.extension import Extension #pylint: disable=no-name-in-module
-
-except ImportError:
-    from ez_setup import use_setuptools
-    use_setuptools()
-    from setuptools import setup, find_packages
-
-# Extra arguments to pass to the setup function
-extra_args = {}
+from setuptools import setup, find_packages
 
 # Prereqs of the build. Won't get installed when deploying the egg.
 setup_requires = [
@@ -24,6 +9,19 @@ setup_requires = [
 
 # Prereqs of the install. Will install when deploying the egg.
 install_requires=[
+    'requests',
+    'gearman',
+    'httplib2',
+    'nose==1.3.0',
+    'ntplib',
+    'pymongo',
+    'pylint',
+    'psutil',
+    'python-memcached',
+    'PyYAML',
+    'redis',
+    'simplejson',
+    'tornado'
 ]
 
 if sys.platform == 'win32':
@@ -77,10 +75,12 @@ if sys.platform == 'win32':
     class Target(object):
         def __init__(self, **kw):
             self.__dict__.update(kw) 
-            self.version = get_version()
+            self.version = '1.0.0'
             self.cmdline_style = 'pywin32'
 
     agent_svc = Target(name='Mon Agent', modules='win32.agent', dest_base='ddagent')
+
+    from monagent.collector.jmxfetch import JMX_FETCH_JAR_NAME
 
     extra_args = {
         'options': {
@@ -109,13 +109,30 @@ if sys.platform == 'win32':
 
 setup(
     name='mon-agent',
-    version=get_version(),
-    description="DevOps' best friend",
+    maintainer="Tim Kuhlman",
+    maintainer_email="tim.kuhlman@hp.com",
+    version='1.0.0',
+    description="Collects metrics from the host it is installed on and sends to the monitroing api",
+    classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "License :: OSI Approved :: Apache Software License",
+        "Topic :: System :: Monitoring"
+    ],
+    license="Apache",
+    keywords="openstack monitoring",
     install_requires=install_requires,
     setup_requires=setup_requires,
-    packages=find_packages(exclude=['ez_setup']),
+    url="https://github.com/hpcloud-mon/mon-agent",
+    packages=find_packages(exclude=['tests']),
+    entry_points={
+        'console_scripts': [
+            'mon-forwarder = monagent.forwarder:main',
+            'mon-collector = monagent.collector.daemon:main',
+            'monstatsd = monagent.monstatsd:main'
+        ],
+    },
     include_package_data=True,
-    test_suite='nose.collector',
-    zip_safe=False,
-    **extra_args
+    data_files=[('share/mon/agent', ['agent.conf.example','packaging/supervisor.conf', 'packaging/mon-agent.init']),
+                ('share/mon/agent/conf.d', glob('conf.d/*'))],
+    test_suite='nose.collector'
 )
