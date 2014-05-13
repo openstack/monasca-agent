@@ -254,7 +254,7 @@ class MetricsAggregator(Aggregator):
         # Avoid calling extra functions to dedupe dimensions if there are none
         if dimensions is None:
             dimensions = {}
-        context = (name, hostname, device_name)
+        context = (name, tuple(dimensions.items()), hostname, device_name)
 
         if context not in self.metrics:
             metric_class = self.metric_type_to_class[mtype]
