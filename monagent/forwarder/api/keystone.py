@@ -54,8 +54,9 @@ class Keystone(object):
         }
     }
 
-    def __init__(self, endpoint):
+    def __init__(self, endpoint, use_keystone):
         self.endpoint = endpoint
+        self.use_keystone
 
     def get_token_password_auth(self, user_id, password, project_id):
         self.password_auth['auth']['identity']['password']['user']['id'] = user_id

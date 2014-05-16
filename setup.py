@@ -21,7 +21,8 @@ install_requires=[
     'PyYAML',
     'redis',
     'simplejson',
-    'tornado'
+    'tornado',
+    'python-monclient',
 ]
 
 if sys.platform == 'win32':
