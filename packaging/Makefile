@@ -89,6 +89,7 @@ $(FPM_BUILD) -t deb \
 -d "python-httplib2" \
 -d "python-ntplib" \
 -d "python-yaml" \
+-d "python-monclient" \
 --post-install mon-agent-deb/postinst \
 --post-uninstall mon-agent-deb/postrm \
 --pre-uninstall  mon-agent-deb/prerm \

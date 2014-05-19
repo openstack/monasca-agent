@@ -1,56 +1,65 @@
 import json
 import logging
 
-import requests
-
+from threading import Timer
 from keystone import Keystone
 from monagent.common.util import get_hostname
-
+from monclient import client
+import monclient.exc as exc
 
 log = logging.getLogger(__name__)
 
 
 class MonAPI(object):
     """Sends measurements to MonAPI
-        Any errors should raise and exception so the transaction calling this is not committed
+        Any errors should raise an exception so the transaction calling this is not committed
     """
     def __init__(self, config):
         """
-        Initialize Mon api connection.
+        Initialize Mon api client connection.
         """
         self.url = config['url']
+        self.api_version = '2_0'
         self.default_dimensions = config['dimensions']
+        self.token_expiration = 1438
         if not 'hostname' in self.default_dimensions:  # Verify the hostname is set as a dimension
             self.default_dimensions['hostname'] = get_hostname()
 
-        #todo we should always use keystone, for development the keystone object should just return a dummy token
         if config['use_keystone']:
-            self.keystone = Keystone(config['keystone_url'])
-            token = self.keystone.get_token_password_auth(config['username'], config['password'], config['project_id'])
-            self.headers = {'content-type': 'application/json',
-                            'X-Auth-Token': token}
+            # Get a new token
+            self._refresh_token()
         else:
-            self.headers = {'content-type': 'application/json',
-                            'X-Tenant-Id': config['project_id']}
+            self.token = config['project_id']
+
+        # construct the mon client
+        kwargs = {
+            'token': self.token
+        }
+        self.mon_client = client.Client(self.api_version, self.url, **kwargs)
 
     def _post(self, measurements):
         """Does the actual http post
             measurements is a list of Measurement
         """
-        data = json.dumps([m.__dict__ for m in measurements])
-
-        response = requests.post(self.url, data=data, headers=self.headers)
-        if 200 <= response.status_code <= 299:
-            # Good status from web service
-            log.debug("Message sent successfully: {0}".format(str(data)))
-        elif 400 <= response.status_code <= 499:
-            # Good status from web service but some type of issue with the data
-            error_msg = "Successful web service call but there were issues (Status: {0}," + \
-                        "Status Message: {1}, Message Content: {1})"
-            log.error(error_msg.format(response.status_code, response.reason, response.text))
-            response.raise_for_status()
-        else:  # Not a good status
-            response.raise_for_status()
+        data = [m.__dict__ for m in measurements]
+        kwargs = {
+            'jsonbody': data
+        }
+        try:
+            response = self.mon_client.metrics.create(**kwargs)
+            if 200 <= response.status_code <= 299:
+                # Good status from web service
+                log.debug("Message sent successfully: {0}".format(str(data)))
+            elif 400 <= response.status_code <= 499:
+                # Good status from web service but some type of issue with the data
+                error_msg = "Successful web service call but there were issues (Status: {0}," + \
+                            "Status Message: {1}, Message Content: {1})"
+                log.error(error_msg.format(response.status_code, response.reason, response.text))
+                response.raise_for_status()
+            else:  # Not a good status
+                response.raise_for_status()
+        except exc.HTTPException as he:
+            log.error("Error sending message to mon-api: {0}".format(str(he.message)))
 
     def post_metrics(self, measurements):
         """post_metrics
@@ -61,3 +70,19 @@ class MonAPI(object):
             measurement.dimensions.update(self.default_dimensions)
 
         self._post(measurements)
+
+    def _refresh_token(self):
+        """_refresh_token
+            Gets a new token from Keystone and resets the validity timer
+        """
+        token = None
+        try:
+            log.debug("Getting token from Keystone")
+            keystone = Keystone(config['keystone_url'], config['use_keystone'])
+            self.token = keystone.get_token_password_auth(config['username'], config['password'], config['project_id'])
+            log.debug("Setting Keystone token expiration timer for {0} minutes".format(str(self.token_expiration)))
+            self.timer = Timer(self.token_expiration,self._refresh_token)
+            self.timer.start()
+        except Exception as ex:
+            log.error("Error getting token from Keystone: {0}".format(str(ex.message)))
+            raise ex
