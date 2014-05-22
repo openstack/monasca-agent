@@ -112,7 +112,7 @@ setup(
     name='mon-agent',
     maintainer="Tim Kuhlman",
     maintainer_email="tim.kuhlman@hp.com",
-    version='1.0.2',
+    version='1.0.3',
     description="Collects metrics from the host it is installed on and sends to the monitroing api",
     classifiers=[
         "Development Status :: 5 - Production/Stable",

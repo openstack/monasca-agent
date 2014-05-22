@@ -56,7 +56,7 @@ def get_parsed_args():
 
 
 def get_version():
-    return "1.0.2"
+    return "1.0.3"
 
 
 def skip_leading_wsp(f):
@@ -831,12 +831,15 @@ def get_mon_api_config(config):
 
     if config.has_option("Main", "dimensions"):
         # parse comma separated dimensions into a dimension list
-        dim_list = [dim.split(':') for dim in config.get('Main', 'dimensions').split(',')]
-        mon_api_config['dimensions'] = {key.strip(): value.strip() for key, value in dim_list}
+        try:
+            dim_list = [dim.split(':') for dim in config.get('Main', 'dimensions').split(',')]
+            mon_api_config['dimensions'] = {key.strip(): value.strip() for key, value in dim_list}
+        except ValueError:
+            mon_api_config['dimensions'] = { }
+
 
     if config.has_section("Api"):
-        options = {"use_mon_api": config.getboolean,
-                   "url": config.get,
+        options = {"url": config.get,
                    "project_id": config.get,
                    "username": config.get,
                    "password": config.get,
