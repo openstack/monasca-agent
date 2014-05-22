@@ -18,6 +18,7 @@ class MonAPI(object):
         """
         Initialize Mon api client connection.
         """
+        self.config = config
         self.url = config['url']
         self.api_version = '2_0'
         self.default_dimensions = config['dimensions']
@@ -78,8 +79,8 @@ class MonAPI(object):
         token = None
         try:
             log.debug("Getting token from Keystone")
-            keystone = Keystone(config['keystone_url'], config['use_keystone'])
-            self.token = keystone.get_token_password_auth(config['username'], config['password'], config['project_id'])
+            keystone = Keystone(self.config['keystone_url'], self.config['use_keystone'])
+            self.token = keystone.get_token_password_auth(self.config['username'], self.config['password'], self.config['project_id'])
             log.debug("Setting Keystone token expiration timer for {0} minutes".format(str(self.token_expiration)))
             self.timer = Timer(self.token_expiration,self._refresh_token)
             self.timer.start()
