@@ -826,7 +826,6 @@ def get_mon_api_config(config):
                       'password': False,
                       'use_keystone': False,
                       'keystone_url': '',
-                      'mapping_file': '',
                       'dimensions': None}
 
     if config.has_option("Main", "dimensions"):
@@ -844,8 +843,7 @@ def get_mon_api_config(config):
                    "username": config.get,
                    "password": config.get,
                    "use_keystone": config.getboolean,
-                   "keystone_url": config.get,
-                   "mapping_file": config.get}
+                   "keystone_url": config.get}
 
         for name, func in options.iteritems():
             if config.has_option("Api", name):
