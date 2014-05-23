@@ -13,6 +13,7 @@ import re
 import imp
 from optparse import OptionParser, Values
 from cStringIO import StringIO
+from version import __version__
 
 import yaml
 
@@ -56,7 +57,7 @@ def get_parsed_args():
 
 
 def get_version():
-    return "1.0.3"
+    return __version__
 
 
 def skip_leading_wsp(f):
