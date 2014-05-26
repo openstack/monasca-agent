@@ -3,6 +3,9 @@ import sys
 
 from setuptools import setup, find_packages
 
+# Read in the version
+exec(open('monagent/common/version.py').read())
+
 # Prereqs of the build. Won't get installed when deploying the egg.
 setup_requires = [
 ]
@@ -112,7 +115,7 @@ setup(
     name='mon-agent',
     maintainer="Tim Kuhlman",
     maintainer_email="tim.kuhlman@hp.com",
-    version='1.0.3',
+    version=__version__,
     description="Collects metrics from the host it is installed on and sends to the monitroing api",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
