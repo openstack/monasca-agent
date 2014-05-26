@@ -59,7 +59,6 @@ def get_parsed_args():
 def get_version():
     return __version__
 
-
 def skip_leading_wsp(f):
     "Works on a file, returns a file-like object"
     return StringIO("\n".join(map(string.strip, f.readlines())))
