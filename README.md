@@ -1,9 +1,13 @@
 mon-agent
 =========
 
-Jahmon Monitoring Agent code.  The Monitoring Agent is deployed to all systems that require monitoring. It performs checks
-on the monitored box and send the gathered metrics to the Monitoring API.
+The Monitoring Agent is a system for gathering metrics and sending them to
+the Monitoring API.  In its basic configuration, the Agent collects metrics
+on various aspects of the host system, but may be extended with Python-based
+plugins or statsd-compatible clients.  Many plugins are included, and some of
+these may be used to gather metrics against remote systems and services as well.
 
-More details found in the [wiki](https://github.com/hpcloud-mon/mon-agent/wiki)
+For information on deploying and using the Monitoring Agent, please see the
+[Wiki](https://github.com/hpcloud-mon/mon-agent/wiki)
 
 Copyright (c) 2014 Hewlett-Packard Development Company, L.P.
