@@ -14,21 +14,16 @@ use_keystone: True
 # Keystone API URL: URL for the Keystone server to use
 # Example: https://region-a.geo-1.identity.hpcloudsvc.com:35357/v3/auth/tokens
 keystone_url: CHANGE_ME
-# Aggregate Metrics?: Send single message or message for each metric
-# True or False
-aggregate_metrics: True
 
 [Main]
-
-agent_url : http://localhost:17123
 
 # Force the hostname to whatever you want.
 #hostname: mymachine.mydomain
 
 # Optional dimensions to be sent with every metric from this node
 # They should be in the format name:value and seperated by a comma
-# Example (dimensions: Environment:Test, Origin:Mini-Mon, ...)
-dimensions: Origin:Mini-mon, Environment:Dev
+# Example (dimensions: service:nova, group:group_a, ...)
+dimensions: service:mini-mon
 
 # Set the threshold for accepting points to allow anything
 # with recent_point_threshold seconds
@@ -128,7 +123,7 @@ log_level: DEBUG
 
 collector_log_file: /var/log/mon-agent/collector.log
 forwarder_log_file: /var/log/mon-agent/forwarder.log
-dogstatsd_log_file: /var/log/mon-agent/dogstatsd.log
+monstatsd_log_file: /var/log/mon-agent/monstatsd.log
 
 # if syslog is enabled but a host and port are not set, a local domain socket
 # connection will be attempted
