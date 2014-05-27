@@ -3,7 +3,7 @@ import time
 import json
 import re
 
-from httplib2 import Http, HttpLib2Error
+from httplib2 import Http, HttpLib2Error, httplib
 
 from monagent.collector.checks import AgentCheck
 
@@ -59,6 +59,12 @@ class HTTPCheck(AgentCheck):
         except socket.error, e:
             length = int((time.time() - start) * 1000)
             self.log.info("%s is DOWN, error: %s. Connection failed after %s ms" % (addr, repr(e), length))
+            self.gauge('http_status', 1, dimensions=new_dimensions)
+            return
+
+        except httplib.ResponseNotReady, e:
+            length = int((time.time() - start) * 1000)
+            self.log.info("%s is DOWN, error: %s. Network is not routable after %s ms" % (addr, repr(e), length))
             self.gauge('http_status', 1, dimensions=new_dimensions)
             return
 
