@@ -20,8 +20,8 @@ AGENTUSER="mon-agent"
 FORWARDERPATH="/usr/local/bin/mon-forwarder"
 NAME="mon-agent"
 DESC="Monitoring Agent"
-AGENT_PID_PATH="/var/run/mon-agent.pid"
-SUPERVISOR_PIDFILE="/var/run/mon-agent-supervisord.pid"
+AGENT_PID_PATH="/var/tmp/mon-agent.pid"
+SUPERVISOR_PIDFILE="/var/tmp/mon-agent-supervisord.pid"
 SUPERVISOR_FILE="/etc/mon-agent/supervisor.conf"
 SUPERVISOR_SOCK="/var/tmp/mon-agent-supervisor.sock"
 SUPERVISORD=$(which supervisord)
@@ -86,7 +86,7 @@ case "$1" in
 
        
         log_daemon_msg "Starting $DESC (using supervisord)" "$NAME"
-        start-stop-daemon --start --quiet --oknodo --exec $SUPERVISORD -- -c $SUPERVISOR_FILE --pidfile $SUPERVISOR_PIDFILE
+        start-stop-daemon --start --quiet --oknodo --exec $SUPERVISORD -- -c $SUPERVISOR_FILE -u $AGENTUSER --pidfile $SUPERVISOR_PIDFILE
         if [ $? -ne 0 ]; then
             log_end_msg 1
         fi

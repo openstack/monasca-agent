@@ -291,10 +291,10 @@ def main():
             else:
                 print "%s is valid" % basename
         if all_valid:
-            print "All yaml files passed. You can now run the Datadog agent."
+            print "All yaml files passed. You can now run the Monitoring agent."
             return 0
         else:
-            print("Fix the invalid yaml files above in order to start the Datadog agent. "
+            print("Fix the invalid yaml files above in order to start the Monitoring agent. "
                     "A useful external tool for yaml parsing can be found at "
                     "http://yaml-online-parser.appspot.com/")
             return 1
@@ -322,7 +322,6 @@ def main():
             if not should_run:
                 print "Couldn't find any valid JMX configuration in your conf.d directory: %s" % confd_directory
                 print "Have you enabled any JMX check ?"
-                print "If you think it's not normal please get in touch with Datadog Support"
 
 
     return 0
