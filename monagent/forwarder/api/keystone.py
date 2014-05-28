@@ -12,11 +12,20 @@ class Keystone(object):
                 ],
                 "password": {
                     "user": {
+                        "domain": {
+                            "name": "Default"
+                        },
+                        "name": "",
+                        "password": ""
                     }
                 }
             },
             "scope": {
                 "project": {
+                    "domain": {
+                        "name": "Default"
+                    },
+                    "name": ""
                 }
             }
         }
@@ -58,9 +67,9 @@ class Keystone(object):
         self.endpoint = endpoint
 
     def get_token_password_auth(self, user_id, password, project_id):
-        self.password_auth['auth']['identity']['password']['user']['id'] = user_id
+        self.password_auth['auth']['identity']['password']['user']['name'] = user_id
         self.password_auth['auth']['identity']['password']['user']['password'] = password
-        self.password_auth['auth']['scope']['project']['id'] = project_id
+        self.password_auth['auth']['scope']['project']['name'] = project_id
         data = json.dumps(self.password_auth)
         headers = {'Content-Type': 'application/json'}
         response = requests.post(self.endpoint, data=data, headers=headers)
