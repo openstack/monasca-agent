@@ -1,10 +1,27 @@
-Changes
+Change Log
 =======
 
-# 1.0.0 / 04-28-2014
-
+# 1.0.3 / 05-28-2014
 ## Changes
-- Fork from datadog agent 4.2.0
+- Fixed http_check does not handle exception for unroutable network
+- Fixed forwarder crashing with missing or malformed dimensions
+- Removed deprecated "mon_" prefix from http_check metrics
+- Fixed request format for Keystone token retrieval
+- Changed supervisor to run as the mon-agent user, not root
+
+
+# 1.0.2 / 2014-05-19
+## Changes
+- Integrated mon_client library
+- Fixed bug in keystone processing
+
+# 1.0.1 / 2014-05-12
+## Changes
+- Fixed subsequent dimensions missing in certain plugins
+
+# 1.0.0 / 2014-04-28
+## Changes
+- Fork from Datadog agent 4.2.0
 - removed most datadog branding
 - removed embeded code
 - Cleaned up name of collector/forwarder
