@@ -132,7 +132,8 @@ setup(
         'console_scripts': [
             'mon-forwarder = monagent.forwarder:main',
             'mon-collector = monagent.collector.daemon:main',
-            'monstatsd = monagent.monstatsd:main'
+            'monstatsd = monagent.monstatsd:main',
+            'mon-setup = monsetup:main'
         ],
     },
     include_package_data=True,
