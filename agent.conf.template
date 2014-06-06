@@ -1,29 +1,24 @@
 [Api]
 # Monitoring API URL: URL for the monitoring API
 # Example: https://region-a.geo-1.monitoring.hpcloudsvc.com/v1.1/metrics
-url: CHANGE_ME
-# Monitoring API Project Id: Project Id for the monitoring API
-project_id: CHANGE_ME
-# Monitoring API Username: Username for the monitoring API
-username: CHANGE_ME
-# Monitoring API Password: Password for the monitoring API
-password: CHANGE_ME
-# Use Keystone for Authentication?: Use Keystone for authentication
-# True or False
-use_keystone: True
+url: {args.mon_url}
+# Keystone Username
+username: {args.username}
+# Keystone Password
+password: {args.password}
 # Keystone API URL: URL for the Keystone server to use
 # Example: https://region-a.geo-1.identity.hpcloudsvc.com:35357/v3/auth/tokens
-keystone_url: CHANGE_ME
+keystone_url: {args.keystone_url}
 
 [Main]
 
 # Force the hostname to whatever you want.
-#hostname: mymachine.mydomain
+hostname: {hostname}
 
 # Optional dimensions to be sent with every metric from this node
 # They should be in the format name:value and seperated by a comma
 # Example (dimensions: service:nova, group:group_a, ...)
-dimensions: service:mini-mon
+dimensions: service:{args.service}
 
 # Set the threshold for accepting points to allow anything
 # with recent_point_threshold seconds
@@ -119,7 +114,7 @@ monstatsd_port : 8125
 # Logging
 # ========================================================================== #
 
-log_level: DEBUG
+log_level: INFO
 
 collector_log_file: /var/log/mon-agent/collector.log
 forwarder_log_file: /var/log/mon-agent/forwarder.log

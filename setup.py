@@ -24,6 +24,7 @@ install_requires=[
     'PyYAML',
     'redis',
     'simplejson',
+    'supervisor',
     'tornado',
     'python-monclient',
 ]
@@ -137,7 +138,7 @@ setup(
         ],
     },
     include_package_data=True,
-    data_files=[('share/mon/agent', ['agent.conf.example','packaging/supervisor.conf', 'packaging/mon-agent.init']),
+    data_files=[('share/mon/agent', ['agent.conf.template', 'packaging/supervisor.conf', 'packaging/mon-agent.init']),
                 ('share/mon/agent/conf.d', glob('conf.d/*'))],
     test_suite='nose.collector'
 )
