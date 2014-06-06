@@ -8,6 +8,7 @@ class Plugin(object):
     # todo these should include dependency detection
 
     def __init__(self, config_dir, template_dir, overwrite=True):
+        self.available = False
         self.config_dir = config_dir
         self.template_dir = template_dir
         self.dependencies = ()
@@ -15,7 +16,7 @@ class Plugin(object):
         self._detect()
 
     def _detect(self):
-        """Run detection"""
+        """Run detection, set self.available True if the service is detected."""
         raise NotImplementedError
 
     def build_config(self):

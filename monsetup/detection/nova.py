@@ -6,7 +6,7 @@ class Nova(Plugin):
 
     def _detect(self):
         """Run detection"""
-        pass
+        self.available = True
 
     def build_config(self):
         pass

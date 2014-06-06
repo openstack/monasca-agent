@@ -47,6 +47,8 @@ class SysV(Service):
             if not os.path.exists(link_path):
                 os.symlink(self.init_script, link_path)
 
+        log.info('Enabled {0} service via SysV init script'.format(self.name))
+
     def start(self, restart=True):
         """Starts mon-agent
             If the agent is running and restart is True, restart
@@ -55,6 +57,7 @@ class SysV(Service):
             log.error('The service is not enabled')
             return False
 
+        log.info('Starting {0} service via SysV init script'.format(self.name))
         subprocess.check_call([self.init_script, 'start'])  # Throws CalledProcessError on error
         return True
 
@@ -65,6 +68,7 @@ class SysV(Service):
             log.error('The service is not enabled')
             return False
 
+        log.info('Stopping {0} service via SysV init script'.format(self.name))
         subprocess.check_call([self.init_script, 'stop'])  # Throws CalledProcessError on error
         return True
 

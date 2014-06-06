@@ -10,7 +10,7 @@ class Network(Plugin):
 
     def _detect(self):
         """Run detection"""
-        pass
+        self.available = True
 
     def build_config(self):
         """No detection just copy the config"""

@@ -6,6 +6,7 @@ import argparse
 import logging
 import os
 import socket
+import subprocess
 import sys
 
 from detection import network, nova
@@ -35,9 +36,9 @@ def main(argv=None):
     args = parser.parse_args()
 
     if args.verbose:
-        log.setLevel(logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
     else:
-        log.setLevel(logging.INFO)
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
     # todo implement a way to include some predefined configuration, useful for active checks
     # todo if overwrite is set I should either warn or just delete any config files not in the new config
@@ -53,6 +54,7 @@ def main(argv=None):
     agent_service.enable()
 
     # Write the main agent.conf
+    log.info('Configuring base Agent settings.')
     agent_template = open(os.path.join(args.template_dir, 'agent.conf.template'), 'r')
     agent_conf = open(os.path.join(args.config_dir, 'agent.conf'), 'w')
     agent_conf.write(agent_template.read().format(args=args, hostname=socket.gethostname()))
@@ -67,15 +69,16 @@ def main(argv=None):
     # Run through detection and config building for the plugins
     for detect_class in DETECTION_PLUGINS:
         detect = detect_class(args.config_dir, args.template_dir, args.overwrite)
-        if detect.dependencies_installed():
+        if detect.available:
+            log.info('Configuring {0}'.format(detect.name))
             detect.build_config()
-        else:
-            log.warn('{0} found but not configured as it is missing dependencies: {1}'.format(detect.name,
-                                                                                              detect.dependencies))
-            #todo add option to install dependencies
+        #todo add option to install dependencies
 
     # Now that the config is build start the service
-    agent_service.start(restart=True)
+    try:
+        agent_service.start(restart=True)
+    except subprocess.CalledProcessError:
+        log.error('The service did not startup correctly see /var/log/mon-agent')
 
 
 if __name__ == "__main__":
