@@ -33,10 +33,14 @@ class WrapNagios(AgentCheck):
         """Run the command specified by check_command and capture the result"""
 
         dimensions = {'observer_host': socket.getfqdn()}
+        # Add per-instance dimensions, if any
+        if instance.has_key('dimensions') and instance['dimensions'] is not None:
+            dimensions.update(instance['dimensions'])
+
         if 'host_name' in instance:
             dimensions['target_host'] = instance['host_name']
         else:
-            dimensions['target_host'] = sockeg.getfqdn()
+            dimensions['target_host'] = socket.getfqdn()
 
         extra_path = self.init_config.get('check_path')
 
