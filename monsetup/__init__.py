@@ -8,11 +8,11 @@ import os
 import socket
 import sys
 
-from detection import nova
+from detection import network, nova
 from service import sysv
 
 # List of all detection plugins to run
-DETECTION_PLUGINS = [nova.Nova]
+DETECTION_PLUGINS = [network.Network, nova.Nova]
 # Map OS to service type
 OS_SERVICE_MAP = {'linux': sysv.SysV}
 
@@ -31,6 +31,7 @@ def main(argv=None):
     parser.add_argument('--headless', help="Run in a non-interactive mode", action="store_true")
     parser.add_argument('--overwrite', help="Overwrite existing configuration", action="store_true")
     parser.add_argument('-v', '--verbose', help="Verbose Output", action="store_true")
+    #todo provide an option to exclude certain detection plugins
     args = parser.parse_args()
 
     if args.verbose:
@@ -65,8 +66,8 @@ def main(argv=None):
 
     # Run through detection and config building for the plugins
     for detect_class in DETECTION_PLUGINS:
-        detect = detect_class(args.config_dir, args.overwrite)
-        if detect.has_dependencies():
+        detect = detect_class(args.config_dir, args.template_dir, args.overwrite)
+        if detect.dependencies_installed():
             detect.build_config()
         else:
             log.warn('{0} found but not configured as it is missing dependencies: {1}'.format(detect.name,

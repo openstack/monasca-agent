@@ -7,7 +7,7 @@ username: {args.username}
 # Keystone Password
 password: {args.password}
 # Keystone API URL: URL for the Keystone server to use
-# Example: https://region-a.geo-1.identity.hpcloudsvc.com:35357/v3/auth/tokens
+# Example: https://region-a.geo-1.identity.hpcloudsvc.com:35357/v3/
 keystone_url: {args.keystone_url}
 
 [Main]

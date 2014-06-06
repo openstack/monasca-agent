@@ -7,8 +7,9 @@ class Plugin(object):
     """Abstract class implemented by the mon-agent plugin detection classes"""
     # todo these should include dependency detection
 
-    def __init__(self, config_dir, overwrite=True):
+    def __init__(self, config_dir, template_dir, overwrite=True):
         self.config_dir = config_dir
+        self.template_dir = template_dir
         self.dependencies = ()
         self.overwrite = overwrite
         self._detect()
@@ -20,7 +21,9 @@ class Plugin(object):
     def build_config(self):
         raise NotImplementedError
 
-    def has_dependencies(self):
+    def dependencies_installed(self):
+        """return True if dependencies are installed
+        """
         raise NotImplementedError
 
     @property
