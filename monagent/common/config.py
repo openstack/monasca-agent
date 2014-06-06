@@ -824,7 +824,7 @@ def get_mon_api_config(config):
                       'project_id': '',
                       'username': '',
                       'password': False,
-                      'use_keystone': False,
+                      'use_keystone': True,
                       'keystone_url': '',
                       'dimensions': None}
 

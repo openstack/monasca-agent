@@ -1,10 +1,12 @@
 """Classes implementing different methods for running mon-agent on startup as well as starting the process immediately
 """
+import psutil
 
 
 class Service(object):
     """Abstract base class implementing the interface for various service types."""
-    def __init__(self, name='mon-agent'):
+    def __init__(self, config_dir, name='mon-agent'):
+        self.config_dir = config_dir
         self.name = name
 
     def enable(self):
@@ -32,4 +34,9 @@ class Service(object):
     def is_running(self):
         """Returns True if mon-agent is running, false otherwise
         """
-        raise NotImplementedError
+        # Looking for the supervisor process not the individual components
+        for process in psutil.pids():
+            if '/etc/mon-agent/supervisor.conf' in process.cmdline():
+                return True
+
+        return False
