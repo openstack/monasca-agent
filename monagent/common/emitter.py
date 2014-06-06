@@ -34,8 +34,10 @@ def http_emitter(message, log, url):
     headers = post_headers(payload)
 
     try:
+        proxy_handler = urllib2.ProxyHandler({})  # Make sure no proxy is autodetected for this localhost connection
+        opener = urllib2.build_opener(proxy_handler)  # Should this be installed as the default opener and reused?
         request = urllib2.Request(url, payload, headers)
-        response = urllib2.urlopen(request)
+        response = opener.open(request)
         try:
             log.debug('http_emitter: postback response: ' + str(response.read()))
         finally:
