@@ -32,11 +32,12 @@ class Service(object):
         """
         raise NotImplementedError
 
-    def is_running(self):
+    @staticmethod
+    def is_running():
         """Returns True if mon-agent is running, false otherwise
         """
         # Looking for the supervisor process not the individual components
-        for process in psutil.pids():
+        for process in psutil.process_iter():
             if '/etc/mon-agent/supervisor.conf' in process.cmdline():
                 return True
 

@@ -91,7 +91,8 @@ def main(argv=None):
             with open(config_path, 'r') as config_file:
                 old_config = yaml.load(config_file.read())
             if old_config is not None:
-                value = old_config.update(value)
+                old_config.update(value)
+                value = old_config
         with open(config_path, 'w') as config_file:
             os.chmod(config_path, 0640)
             os.chown(config_path, 0, pwd.getpwnam(args.user).pw_uid)

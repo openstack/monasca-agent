@@ -1,6 +1,9 @@
-"""Classes for detection of running resources to be monitored.
+"""Classes and utilities for detection of running resources to be monitored.
     Detection classes should be platform independent
 """
+import psutil
+
+from monsetup import agent_config
 
 
 class Plugin(object):
@@ -36,3 +39,23 @@ class Plugin(object):
             return self._name
         else:
             return self.__class__.__name__
+
+
+def find_process_name(pname):
+    """Simple function to search running process for one with pname.
+    """
+    for process in psutil.process_iter():
+        if pname == process.name():
+            return process.pid
+
+    return None
+
+
+def watch_process(search_strings):
+    """Takes a list of process search strings and returns a Plugins object with the config set.
+        This was built as a helper as many plugins setup process watching
+    """
+    config = agent_config.Plugins()
+    config['process'] = {'init_config': None,
+                         'instances': [{'name': search_strings[0], 'search_string': search_strings}]}
+    return config
