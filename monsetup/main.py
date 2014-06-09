@@ -5,6 +5,7 @@
 import argparse
 import logging
 import os
+import pwd
 import socket
 import subprocess
 import sys
@@ -36,6 +37,7 @@ def main(argv=None):
                         help="Overwrite existing plugin configuration." +
                              "The default is to merge. Agent.conf is always overwritten.",
                         action="store_true")
+    parser.add_argument('--user', help="User name to run mon-agent as", default='mon-agent')
     parser.add_argument('-v', '--verbose', help="Verbose Output", action="store_true")
     #todo provide an option to exclude certain detection plugins
     args = parser.parse_args()
@@ -52,7 +54,8 @@ def main(argv=None):
 
     # Service enable, includes setup of config directories so must be done before configuration
     # todo is there a better place for basic directories to be made then the service enabling?
-    agent_service = OS_SERVICE_MAP[detected_os](os.path.join(args.template_dir, 'mon-agent.init'), args.config_dir)
+    agent_service = OS_SERVICE_MAP[detected_os](os.path.join(args.template_dir, 'mon-agent.init'), args.config_dir,
+                                                username=args.user)
     # Todo add logic for situations where either enable or start is not needed or if not running as root isn't possible
     agent_service.enable()
 
@@ -89,6 +92,8 @@ def main(argv=None):
             if old_config is not None:
                 value = old_config.update(value)
         with open(config_path, 'w') as config_file:
+            os.chmod(config_path, 0640)
+            os.chown(config_path, 0, pwd.getpwnam(args.user).pw_uid)
             config_file.write(yaml.dump(value))
 
     # Now that the config is build start the service

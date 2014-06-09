@@ -34,8 +34,10 @@ class SysV(Service):
         # todo log dir is hardcoded
         for path in ('/var/log/mon-agent', self.config_dir, '%s/conf.d' % self.config_dir):
             if not os.path.exists(path):
-                os.mkdir(path, 0775)
-                os.chown(path, user.pw_uid, user.pw_gid)
+                os.mkdir(path, 0755)
+                os.chown(path, 'root', user.pw_gid)
+        # the log dir needs to be writable by the user
+        os.chown('/var/log/mon-agent', user.pw_uid, user.pw_gid)
 
         # link the init script, then enable
         if not os.path.exists(self.init_script):
