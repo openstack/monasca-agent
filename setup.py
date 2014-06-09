@@ -134,7 +134,7 @@ setup(
             'mon-forwarder = monagent.forwarder:main',
             'mon-collector = monagent.collector.daemon:main',
             'monstatsd = monagent.monstatsd:main',
-            'mon-setup = monsetup:main'
+            'mon-setup = monsetup.main:main'
         ],
     },
     include_package_data=True,

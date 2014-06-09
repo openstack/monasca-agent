@@ -2,11 +2,11 @@ from . import Plugin
 from monsetup import agent_config
 
 
-class Nova(Plugin):
-    """Detect Nova daemons and setup configuration to monitor them."""
+class MySQL(Plugin):
+    """Detect MySQL daemons and setup configuration to monitor them."""
 
     def _detect(self):
-        """Run detection"""
+        """Run detection, set self.available True if the service is detected."""
         self.available = True
 
     def build_config(self):
