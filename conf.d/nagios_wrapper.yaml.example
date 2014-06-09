@@ -20,4 +20,4 @@ instances:
 #    - service_name:     swap
 #      check_command:    /usr/lib/nagios/plugins/check_swap -w 50\% -c 10\%
 #      check_interval:   120
-
+#      dimensions:       { 'group': 'memory' }

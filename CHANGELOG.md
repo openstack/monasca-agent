@@ -1,7 +1,11 @@
 Change Log
 =======
 
-# 1.0.3 / 05-28-2014
+# 1.0.4 / 2014-06-09
+## Changes
+- host_alive and nagios_wrapper plugins can now support separate dimensions per instance
+
+# 1.0.3 / 2014-05-28
 ## Changes
 - Fixed http_check does not handle exception for unroutable network
 - Fixed forwarder crashing with missing or malformed dimensions
