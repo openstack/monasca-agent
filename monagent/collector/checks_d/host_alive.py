@@ -72,6 +72,9 @@ class HostAlive(AgentCheck):
         """Run the desired host-alive check againt this host"""
 
         dimensions = {'target_host': instance['host_name'], 'observer_host': socket.getfqdn()}
+        # Add per-instance dimensions, if any
+        if instance.has_key('dimensions') and instance['dimensions'] is not None:
+            dimensions.update(instance['dimensions'])
 
         success = False
 
