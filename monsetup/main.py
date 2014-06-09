@@ -30,16 +30,19 @@ def main(argv=None):
     parser.add_argument('-s', '--service', help="Service this node is associated with.", required=True)
     parser.add_argument('--keystone_url', help="Keystone url", required=True)
     parser.add_argument('--mon_url', help="Mon API url", required=True)
-    parser.add_argument('--config_dir', help="Alternative configuration directory", default='/etc/mon-agent')
+    parser.add_argument('--config_dir', help="Configuration directory", default='/etc/mon-agent')
+    parser.add_argument('--log_dir', help="mon-agent log directory", default='/var/log/mon-agent')
     parser.add_argument('--template_dir', help="Alternative template directory", default='/usr/local/share/mon/agent')
     parser.add_argument('--headless', help="Run in a non-interactive mode", action="store_true")
     parser.add_argument('--overwrite',
                         help="Overwrite existing plugin configuration." +
                              "The default is to merge. Agent.conf is always overwritten.",
                         action="store_true")
+    parser.add_argument('--skip_enable', help="By default the service is enabled," +
+                                              " which requires the script run as root. Set this to skip that step.",
+                        action="store_true")
     parser.add_argument('--user', help="User name to run mon-agent as", default='mon-agent')
     parser.add_argument('-v', '--verbose', help="Verbose Output", action="store_true")
-    #todo provide an option to exclude certain detection plugins
     args = parser.parse_args()
 
     if args.verbose:
@@ -47,17 +50,14 @@ def main(argv=None):
     else:
         logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
-    # todo implement a way to include some predefined configuration, useful for active checks
-
     # Detect os
     detected_os = 'linux'  # todo add detection
 
     # Service enable, includes setup of config directories so must be done before configuration
-    # todo is there a better place for basic directories to be made then the service enabling?
     agent_service = OS_SERVICE_MAP[detected_os](os.path.join(args.template_dir, 'mon-agent.init'), args.config_dir,
-                                                username=args.user)
-    # Todo add logic for situations where either enable or start is not needed or if not running as root isn't possible
-    agent_service.enable()
+                                                args.log_dir, username=args.user)
+    if args.skip_enable:
+        agent_service.enable()
 
     # Write the main agent.conf - Note this is always overwritten
     log.info('Configuring base Agent settings.')
@@ -100,7 +100,7 @@ def main(argv=None):
     try:
         agent_service.start(restart=True)
     except subprocess.CalledProcessError:
-        log.error('The service did not startup correctly see /var/log/mon-agent')
+        log.error('The service did not startup correctly see %s' % args.log_dir)
 
 
 if __name__ == "__main__":

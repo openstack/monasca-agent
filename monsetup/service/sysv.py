@@ -12,9 +12,9 @@ log = logging.getLogger(__name__)
 
 
 class SysV(Service):
-    def __init__(self, init_template, config_dir, name='mon-agent', username='mon-agent'):
+    def __init__(self, init_template, config_dir, log_dir, name='mon-agent', username='mon-agent'):
         """Setup this service with the given init template"""
-        super(SysV, self).__init__(config_dir, name)
+        super(SysV, self).__init__(config_dir, log_dir, name)
         self.init_script = '/etc/init.d/%s' % self.name
         self.init_template = init_template
         self.username = username
@@ -32,12 +32,12 @@ class SysV(Service):
 
         # Create dirs
         # todo log dir is hardcoded
-        for path in ('/var/log/mon-agent', self.config_dir, '%s/conf.d' % self.config_dir):
+        for path in (self.log_dir, self.config_dir, '%s/conf.d' % self.config_dir):
             if not os.path.exists(path):
                 os.mkdir(path, 0755)
                 os.chown(path, 'root', user.pw_gid)
         # the log dir needs to be writable by the user
-        os.chown('/var/log/mon-agent', user.pw_uid, user.pw_gid)
+        os.chown(self.log_dir, user.pw_uid, user.pw_gid)
 
         # link the init script, then enable
         if not os.path.exists(self.init_script):
