@@ -12,11 +12,11 @@ import sys
 import yaml
 
 import agent_config
-from detection import mysql, network, nova
+from detection import kafka, mysql, network, nova, zookeeper
 from service import sysv
 
 # List of all detection plugins to run
-DETECTION_PLUGINS = [mysql.MySQL, network.Network, nova.Nova]
+DETECTION_PLUGINS = [kafka.Kafka, mysql.MySQL, network.Network, nova.Nova, zookeeper.Zookeeper]
 # Map OS to service type
 OS_SERVICE_MAP = {'linux': sysv.SysV}
 

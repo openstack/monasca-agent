@@ -8,7 +8,10 @@ log = logging.getLogger(__name__)
 
 class MySQL(Plugin):
     """Detect MySQL daemons and setup configuration to monitor them.
-        This plugin needs user/pass infor for mysql setup, this is best placed in /root/.mysql.cnf
+        This plugin needs user/pass infor for mysql setup, this is best placed in /root/.my.cnf in a format such as
+        [client]
+            user = root
+            password = yourpassword
     """
 
     def _detect(self):
@@ -24,18 +27,18 @@ class MySQL(Plugin):
         config.update(watch_process(['mysqld']))
         log.info("\tWatching the mysqld process.")
 
-        # Attempt login, requires either an empty root password from localhost or relying on a configured .mysql.cnf
+        # Attempt login, requires either an empty root password from localhost or relying on a configured .my.cnf
         if self.dependencies_installed():  # ensures MySQLdb is available
             import MySQLdb
             import _mysql_exceptions
             try:
-                MySQLdb.connect(read_default_file='/root/.mysql.cnf')
+                MySQLdb.connect(read_default_file='/root/.my.cnf')
             except _mysql_exceptions.MySQLError:
                 pass
             else:
-                log.info("\tConfiguring MySQL plugin to connect with auth settings from /root/.mysql.cnf")
+                log.info("\tConfiguring MySQL plugin to connect with auth settings from /root/.my.cnf")
                 config['mysql'] = {'init_config': None, 'instances':
-                                   [{'server': 'localhost', 'user': 'root', 'defaults_file': '/root/.mysql.cnf'}]}
+                                   [{'server': 'localhost', 'user': 'root', 'defaults_file': '/root/.my.cnf'}]}
 
             if not 'mysql' in config:
                 try:
