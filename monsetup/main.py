@@ -24,7 +24,8 @@ log = logging.getLogger(__name__)
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description='Detect running daemons then configure and start the agent.')
+    parser = argparse.ArgumentParser(description='Detect running daemons then configure and start the agent.',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-u', '--username', help="Keystone username used to post metrics", required=True)
     parser.add_argument('-p', '--password', help="Keystone password used to post metrics", required=True)
     parser.add_argument('-s', '--service', help="Service this node is associated with.", required=True)
