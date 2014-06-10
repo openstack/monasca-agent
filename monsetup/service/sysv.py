@@ -35,7 +35,7 @@ class SysV(Service):
         for path in (self.log_dir, self.config_dir, '%s/conf.d' % self.config_dir):
             if not os.path.exists(path):
                 os.mkdir(path, 0755)
-                os.chown(path, 'root', user.pw_gid)
+                os.chown(path, 0, user.pw_gid)
         # the log dir needs to be writable by the user
         os.chown(self.log_dir, user.pw_uid, user.pw_gid)
 

@@ -57,7 +57,7 @@ def main(argv=None):
     # Service enable, includes setup of config directories so must be done before configuration
     agent_service = OS_SERVICE_MAP[detected_os](os.path.join(args.template_dir, 'mon-agent.init'), args.config_dir,
                                                 args.log_dir, username=args.user)
-    if args.skip_enable:
+    if not args.skip_enable:
         agent_service.enable()
 
     # Write the main agent.conf - Note this is always overwritten
