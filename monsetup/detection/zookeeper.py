@@ -11,7 +11,6 @@ log = logging.getLogger(__name__)
 class Zookeeper(Plugin):
     """Detect Zookeeper daemons and setup configuration to monitor them.
     """
-
     def _detect(self):
         """Run detection, set self.available True if the service is detected."""
         if find_process_cmdline('zookeeper') is not None:
