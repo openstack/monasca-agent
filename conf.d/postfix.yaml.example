@@ -13,13 +13,5 @@ instances:
           - incoming
           - active
           - deferred
-      dimensions:
-        dim1: value1
-    - directory: /var/spool/postfix-2
-      queues:
-          - incoming
-          - active
-          - deferred
-      dimensions:
-        dim1: value1
-
+#      dimensions:
+#        dim1: value1
