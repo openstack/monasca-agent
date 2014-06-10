@@ -82,7 +82,7 @@ def main(argv=None):
         if detect.available:
             log.info('Configuring {0}'.format(detect.name))
             new_config = detect.build_config()
-            plugin_config.update(new_config)
+            plugin_config.merge(new_config)
 
         #todo add option to install dependencies
 
@@ -95,7 +95,7 @@ def main(argv=None):
             with open(config_path, 'r') as config_file:
                 old_config = yaml.load(config_file.read())
             if old_config is not None:
-                old_config.update(value)
+                old_config.update(value)  # Note this is not a deep merge
                 value = old_config
         with open(config_path, 'w') as config_file:
             os.chmod(config_path, 0640)

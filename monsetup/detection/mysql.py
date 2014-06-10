@@ -24,7 +24,7 @@ class MySQL(Plugin):
         """
         config = agent_config.Plugins()
         # First watch the process
-        config.update(watch_process(['mysqld']))
+        config.merge(watch_process(['mysqld']))
         log.info("\tWatching the mysqld process.")
 
         # Attempt login, requires either an empty root password from localhost or relying on a configured .my.cnf

@@ -18,3 +18,23 @@ class Plugins(collections.defaultdict):
 
     def diff(self, other_plugins):
        raise NotImplementedError
+
+    def merge(self, other):
+        """Do a deep merge with precedence going to other (as is the case with update)
+        """
+        # Implemented as a function so it can be used for arbitrary dictionaries not just self, this is needed
+        # for the recursive nature of the merge.
+        deep_merge(self, other)
+
+
+def deep_merge(adict, other):
+    """A recursive merge of two dictionaries including combining of any lists within the data structure
+    """
+    for key, value in other.iteritems():
+        if key in adict:
+            if isinstance(adict[key], dict) and isinstance(value, dict):
+                deep_merge(adict[key], value)
+            elif isinstance(adict[key], list) and isinstance(value, list):
+                adict[key] += value
+        else:
+            adict[key] = value

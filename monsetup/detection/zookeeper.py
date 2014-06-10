@@ -22,7 +22,7 @@ class Zookeeper(Plugin):
         config = agent_config.Plugins()
         # First watch the process
         log.info("\tWatching the zookeeper process.")
-        config.update(watch_process(['zookeeper']))
+        config.merge(watch_process(['zookeeper']))
 
         log.info("\tEnabling the zookeeper plugin")
         with open(os.path.join(self.template_dir, 'conf.d/zk.yaml.example'), 'r') as zk_template:

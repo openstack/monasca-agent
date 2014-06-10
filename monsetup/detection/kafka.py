@@ -23,7 +23,7 @@ class Kafka(Plugin):
         """
         config = agent_config.Plugins()
         # First watch the process
-        config.update(watch_process(['kafka']))
+        config.merge(watch_process(['kafka']))
         log.info("\tWatching the kafka process.")
 
         if self.dependencies_installed():
