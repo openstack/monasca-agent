@@ -54,17 +54,21 @@ def main(argv=None):
     # Detect os
     detected_os = 'linux'  # todo add detection
 
-    # Service enable, includes setup of config directories so must be done before configuration
+    # Service enable, includes setup of users/config directories so must be done before configuration
     agent_service = OS_SERVICE_MAP[detected_os](os.path.join(args.template_dir, 'mon-agent.init'), args.config_dir,
                                                 args.log_dir, username=args.user)
     if not args.skip_enable:
         agent_service.enable()
 
+    gid = pwd.getpwnam(args.user).pw_gid
     # Write the main agent.conf - Note this is always overwritten
     log.info('Configuring base Agent settings.')
+    agent_conf_path = os.path.join(args.config_dir, 'agent.conf')
     with open(os.path.join(args.template_dir, 'agent.conf.template'), 'r') as agent_template:
-        with open(os.path.join(args.config_dir, 'agent.conf'), 'w') as agent_conf:
+        with open(agent_conf_path, 'w') as agent_conf:
             agent_conf.write(agent_template.read().format(args=args, hostname=socket.gethostname()))
+    os.chown(agent_conf_path, 0, gid)
+    os.chmod(agent_conf_path, 0640)
     # Link the supervisor.conf
     supervisor_path = os.path.join(args.config_dir, 'supervisor.conf')
     if os.path.exists(supervisor_path):
@@ -95,7 +99,7 @@ def main(argv=None):
                 value = old_config
         with open(config_path, 'w') as config_file:
             os.chmod(config_path, 0640)
-            os.chown(config_path, 0, pwd.getpwnam(args.user).pw_uid)
+            os.chown(config_path, 0, gid)
             config_file.write(yaml.dump(value))
 
     # Now that the config is build start the service
