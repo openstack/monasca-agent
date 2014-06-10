@@ -95,7 +95,7 @@ def main(argv=None):
             with open(config_path, 'r') as config_file:
                 old_config = yaml.load(config_file.read())
             if old_config is not None:
-                old_config.update(value)  # Note this is not a deep merge
+                agent_config.deep_merge(old_config, value)
                 value = old_config
         with open(config_path, 'w') as config_file:
             os.chmod(config_path, 0640)
