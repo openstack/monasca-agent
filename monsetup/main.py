@@ -28,6 +28,7 @@ def main(argv=None):
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-u', '--username', help="Keystone username used to post metrics", required=True)
     parser.add_argument('-p', '--password', help="Keystone password used to post metrics", required=True)
+    parser.add_argument('--project_name', help="Keystone project/tenant name", required=True)
     parser.add_argument('-s', '--service', help="Service this node is associated with.", required=True)
     parser.add_argument('--keystone_url', help="Keystone url", required=True)
     parser.add_argument('--mon_url', help="Mon API url", required=True)

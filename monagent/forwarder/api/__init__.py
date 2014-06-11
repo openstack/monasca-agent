@@ -91,7 +91,7 @@ class MonAPI(object):
             keystone.get_token_password_auth(
                                     self.config['username'],
                                     self.config['password'],
-                                    self.config['project_id'])
+                                    self.config['project_name'])
             log.debug("Setting Keystone token expiration timer for " +
                       "{0} minutes".format(str(self.token_expiration)))
             self.timer = Timer(self.token_expiration, self._refresh_token)
