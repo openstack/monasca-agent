@@ -11,6 +11,6 @@ For information on deploying and using the Monitoring Agent, please see the
 
 # Simple Installation
 - `pip install mon-agent`
-- Run configuration `mon-setup -u me -p pass -s mini-mon --keystone_url https://keystone --mon_url https://mon-api`
+- Run configuration `mon-setup -u me -p pass --project_name myproject -s mini-mon --keystone_url https://keystone --mon_url https://mon-api`
 
 Copyright (c) 2014 Hewlett-Packard Development Company, L.P.
