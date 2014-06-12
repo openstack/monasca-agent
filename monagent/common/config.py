@@ -821,10 +821,10 @@ def initialize_logging(logger_name):
 def get_mon_api_config(config):
     mon_api_config = {'is_enabled': False,
                       'url': '',
-                      'project_id': '',
+                      'project_name': '',
                       'username': '',
                       'password': False,
-                      'use_keystone': False,
+                      'use_keystone': True,
                       'keystone_url': '',
                       'dimensions': None}
 
@@ -839,7 +839,7 @@ def get_mon_api_config(config):
 
     if config.has_section("Api"):
         options = {"url": config.get,
-                   "project_id": config.get,
+                   "project_name": config.get,
                    "username": config.get,
                    "password": config.get,
                    "use_keystone": config.getboolean,
