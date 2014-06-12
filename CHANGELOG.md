@@ -1,6 +1,11 @@
 Change Log
 =======
 
+# 1.0.5 / 2014-06-12
+## Changes
+- Initial support for mon-setup
+- Changed project_id to project_name in the configuration
+
 # 1.0.4 / 2014-06-09
 ## Changes
 - host_alive and nagios_wrapper plugins can now support separate dimensions per instance
