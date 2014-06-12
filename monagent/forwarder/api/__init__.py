@@ -32,7 +32,7 @@ class MonAPI(object):
             # Get a new token
             self._refresh_token()
         else:
-            self.token = config['project_id']
+            self.token = config['project_name']
 
         # construct the mon client
         kwargs = {
