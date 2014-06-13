@@ -28,13 +28,6 @@ class MonAPI(object):
         if not 'hostname' in self.default_dimensions:
             self.default_dimensions['hostname'] = get_hostname()
 
-<<<<<<< HEAD
-        if config['use_keystone']:
-            # Get a new token
-            self._refresh_token()
-        else:
-            self.token = config['project_name']
-=======
         try:
             log.debug("Getting token from Keystone")
             self.keystone = Keystone(config['keystone_url'],
@@ -48,7 +41,6 @@ class MonAPI(object):
             log.error("Error getting token from Keystone: {0}".
                       format(str(ex.message)))
             raise ex
->>>>>>> Keystone authentication improvements
 
         # construct the mon client
         self.kwargs = {
@@ -108,27 +100,3 @@ class MonAPI(object):
             measurement.dimensions.update(self.default_dimensions)
 
         self._post(measurements)
-<<<<<<< HEAD
-
-    def _refresh_token(self):
-        """_refresh_token
-            Gets a new token from Keystone and resets the validity timer
-        """
-        try:
-            log.debug("Getting token from Keystone")
-            keystone = Keystone(self.config['keystone_url'])
-            self.token = \
-            keystone.get_token_password_auth(
-                                    self.config['username'],
-                                    self.config['password'],
-                                    self.config['project_name'])
-            log.debug("Setting Keystone token expiration timer for " +
-                      "{0} minutes".format(str(self.token_expiration)))
-            self.timer = Timer(self.token_expiration, self._refresh_token)
-            self.timer.start()
-        except Exception as ex:
-            log.error("Error getting token from Keystone: {0}".
-                      format(str(ex.message)))
-            raise ex
-=======
->>>>>>> Keystone authentication improvements
