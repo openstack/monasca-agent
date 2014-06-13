@@ -71,7 +71,7 @@ class MonAPI(object):
                     # with the data
                     if response.status_code == 401:
                         # Get a new token and retry
-                        self.token = self.keystone.get_token_password_auth()
+                        self.token = self.keystone.get_token()
                         # Recreate the client.  This is temporary until
                         # the client is updated to be able to reset the
                         # token.

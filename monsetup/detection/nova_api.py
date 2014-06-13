@@ -14,7 +14,7 @@ class NovaAPI(Plugin):
         """Build the config as a Plugins object and return.
         """
         config = agent_config.Plugins()
-        # First watch the Nova-API processes
+        # First watch the Nova-API process
         log.info("\tWatching the nova API process.")
         config.merge(watch_process(['nova-api']))
 

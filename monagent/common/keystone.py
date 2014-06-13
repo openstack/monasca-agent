@@ -41,14 +41,18 @@ class Keystone(object):
                                 cls, *args, **kwargs)
         return cls._instance
 
-    def __init__(self, endpoint, user_id, password, project_name):
+    def __init__(self):
+        self.endpoint = None
+        self.user_id = None
+        self.password = None
+        self.project_name = None
+
+    def get_token(self, endpoint, user_id, password, project_name):
+        global token
         self.endpoint = endpoint
         self.user_id = user_id
         self.password = password
         self.project_name = project_name
-
-    def get_token_password_auth(self):
-        global token
         self.password_auth['auth']['identity']['password']['user']['name'] = self.user_id
         self.password_auth['auth']['identity']['password']['user']['password'] = self.password
         self.password_auth['auth']['scope']['project']['name'] = self.project_name
