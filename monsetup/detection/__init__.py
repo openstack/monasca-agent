@@ -70,3 +70,14 @@ def watch_process(search_strings):
     config['process'] = {'init_config': None,
                          'instances': [{'name': search_strings[0], 'search_string': search_strings}]}
     return config
+
+def service_api_check(name, url, pattern):
+    """Setup a service api to be watched by the http_check plugin."""
+    config = agent_config.Plugins()
+    config['http_check'] = {'init_config': None,
+                            'instances': [{'name': name,
+                                           'url': url,
+                                           'match_pattern': pattern,
+                                           'timeout': 10,
+                                           'use_keystone': True}]}
+    return config

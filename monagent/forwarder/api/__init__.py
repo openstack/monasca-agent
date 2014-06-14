@@ -30,13 +30,17 @@ class MonAPI(object):
 
         try:
             log.debug("Getting token from Keystone")
-            self.keystone = Keystone(config['keystone_url'],
-                                     config['username'],
-                                     config['password'],
-                                     config['project_name'])
+            self.keystone_url = config['keystone_url']
+            self.username = config['username']
+            self.password = config['password']
+            self.project_name = config['project_name']
             
-            self.token = keystone.get_token()
-            
+            self.keystone = Keystone(self.keystone_url,
+                                  self.username,
+                                  self.password,
+                                  self.project_name)
+            self.token = self.keystone.get_token()
+
         except Exception as ex:
             log.error("Error getting token from Keystone: {0}".
                       format(str(ex.message)))
@@ -57,26 +61,24 @@ class MonAPI(object):
             'jsonbody': data
         }
         try:
-            successful = False
-            retries = 0
-            while not successful and retries <= 1:
+            done = False
+            while not done:
                 response = self.mon_client.metrics.create(**kwargs)
                 if 200 <= response.status_code <= 299:
                     # Good status from web service
                     log.debug("Message sent successfully: {0}"
                               .format(str(data)))
-                    successful = True
                 elif 400 <= response.status_code <= 499:
                     # Good status from web service but some type of issue
                     # with the data
                     if response.status_code == 401:
                         # Get a new token and retry
                         self.token = self.keystone.get_token()
-                        # Recreate the client.  This is temporary until
+                        # Re-create the client.  This is temporary until
                         # the client is updated to be able to reset the
                         # token.
                         self.mon_client = client.Client(self.api_version, self.url, **self.kwargs)
-                        retries += 1
+                        continue
                     else:
                         error_msg = "Successful web service call but there" + \
                                     " were issues (Status: {0}, Status Message: " + \
@@ -86,6 +88,7 @@ class MonAPI(object):
                         response.raise_for_status()
                 else:  # Not a good status
                     response.raise_for_status()
+                done = True
         except exc.HTTPException as he:
             log.error("Error sending message to mon-api: {0}"
                       .format(str(he.message)))

@@ -1,6 +1,8 @@
-from . import Plugin, find_process_cmdline, watch_process
+import logging
+from . import Plugin, find_process_cmdline, watch_process, service_api_check
 from monsetup import agent_config
 
+log = logging.getLogger(__name__)
 
 class NovaAPI(Plugin):
     """Detect the Nova-API daemon and setup configuration to monitor it."""
@@ -8,6 +10,7 @@ class NovaAPI(Plugin):
     def _detect(self):
         """Run detection"""
         if find_process_cmdline('nova-api') is not None:
+            log.info('Found nova-api')
             self.available = True
 
     def build_config(self):
@@ -19,13 +22,8 @@ class NovaAPI(Plugin):
         config.merge(watch_process(['nova-api']))
 
         # Next setup an active http_status check on the API
-        config['http_check'] = {'init_config': None,
-                                 'instances': [{'name': 'nova_api',
-                                                'collect_response_time': true,
-                                                'match_pattern': '.*servers.*',
-                                                'timeout': '10',
-                                                'url': 'http://localhost/v2',
-                                                'use_keystone': 'true'}]}
+        log.info("\tConfiguring an http_check for the nova API.")
+        config.merge(service_api_check('nova_api', 'http://localhost:5000/v2.0', '.*identity-v2.*'))
 
         return config
 

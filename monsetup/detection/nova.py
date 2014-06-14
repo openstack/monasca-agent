@@ -1,6 +1,8 @@
+import logging
 from . import Plugin, find_process_cmdline, watch_process
 from monsetup import agent_config
 
+log = logging.getLogger(__name__)
 
 class Nova(Plugin):
     """Detect Nova daemons and setup configuration to monitor them."""
@@ -8,6 +10,7 @@ class Nova(Plugin):
     def _detect(self):
         """Run detection"""
         if find_process_cmdline('nova-compute') is not None:
+            log.info('Found nova')
             self.available = True
 
     def build_config(self):

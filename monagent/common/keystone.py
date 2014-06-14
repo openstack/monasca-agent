@@ -1,8 +1,6 @@
 import json
 import requests
 
-token = None
-
 class Keystone(object):
 
     password_auth = {
@@ -32,27 +30,13 @@ class Keystone(object):
         }
     }
 
-    #: Create a singleton instance. Since the connection/auth process is expensive we
-    #:  don't need to do it multiple times.
-    _instance = None
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super(Keystone, cls).__new__(
-                                cls, *args, **kwargs)
-        return cls._instance
-
-    def __init__(self):
-        self.endpoint = None
-        self.user_id = None
-        self.password = None
-        self.project_name = None
-
-    def get_token(self, endpoint, user_id, password, project_name):
-        global token
+    def __init__(self, endpoint, user_id, password, project_name):
         self.endpoint = endpoint
         self.user_id = user_id
         self.password = password
         self.project_name = project_name
+
+    def get_token(self):
         self.password_auth['auth']['identity']['password']['user']['name'] = self.user_id
         self.password_auth['auth']['identity']['password']['user']['password'] = self.password
         self.password_auth['auth']['scope']['project']['name'] = self.project_name
@@ -60,6 +44,5 @@ class Keystone(object):
         headers = {'Content-Type': 'application/json'}
         response = requests.post(self.endpoint, data=data, headers=headers)
         response.raise_for_status()
-        token = response.headers['X-Subject-Token']
-        return token
-    
+        self.token = response.headers['X-Subject-Token']
+        return self.token
