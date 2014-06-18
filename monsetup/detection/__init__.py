@@ -62,22 +62,38 @@ def find_process_name(pname):
     return None
 
 
-def watch_process(search_strings):
+def watch_process(search_strings, service = None):
     """Takes a list of process search strings and returns a Plugins object with the config set.
         This was built as a helper as many plugins setup process watching
     """
     config = agent_config.Plugins()
+    parameters = {'name': search_strings[0],
+                  'search_string': search_strings}
+
+    # If service parameter is set in the plugin config, add the service dimension which
+    # will override the service in the agent config
+    if service:
+        parameters['dimensions'] = {'service': service}
+
     config['process'] = {'init_config': None,
-                         'instances': [{'name': search_strings[0], 'search_string': search_strings}]}
+                         'instances': [parameters]}
     return config
 
-def service_api_check(name, url, pattern):
+def service_api_check(name, url, pattern, service = None):
     """Setup a service api to be watched by the http_check plugin."""
     config = agent_config.Plugins()
+    parameters = {'name': name,
+                  'url': url,
+                  'match_pattern': pattern,
+                  'timeout': 10,
+                  'use_keystone': True}
+
+    # If service parameter is set in the plugin config, add the service dimension which
+    # will override the service in the agent config
+    if service:
+        parameters['dimensions'] = {'service': service}
+
     config['http_check'] = {'init_config': None,
-                            'instances': [{'name': name,
-                                           'url': url,
-                                           'match_pattern': pattern,
-                                           'timeout': 10,
-                                           'use_keystone': True}]}
+                            'instances': [parameters]}
+
     return config

@@ -100,6 +100,8 @@ class MonAPI(object):
         """
         # Add default dimensions
         for measurement in measurements:
-            measurement.dimensions.update(self.default_dimensions)
+            for dimension in self.default_dimensions:
+                if dimension not in measurement.dimensions:
+                    measurement.dimensions.update(dimension)
 
         self._post(measurements)

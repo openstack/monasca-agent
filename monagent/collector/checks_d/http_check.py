@@ -43,6 +43,8 @@ class HTTPCheck(AgentCheck):
         content = ''
 
         new_dimensions = dimensions.copy()
+        if dimensions != None:
+            new_dimensions.update(dimensions)
         new_dimensions['url'] = addr
 
         start = time.time()
@@ -64,13 +66,13 @@ class HTTPCheck(AgentCheck):
                 if username is not None and password is not None:
                     h.add_credentials(username, password)
                 resp, content = h.request(addr, "GET", headers=headers)
-    
+
             except socket.timeout, e:
                 length = int((time.time() - start) * 1000)
                 self.log.info("%s is DOWN, error: %s. Connection failed after %s ms" % (addr, str(e), length))
                 self.gauge('http_status', 1, dimensions=new_dimensions)
                 return
-    
+
             except HttpLib2Error, e:
                 length = int((time.time() - start) * 1000)
                 self.log.info("%s is DOWN, error: %s. Connection failed after %s ms" % (addr, str(e), length))
@@ -88,22 +90,22 @@ class HTTPCheck(AgentCheck):
                 self.log.info("%s is DOWN, error: %s. Network is not routable after %s ms" % (addr, repr(e), length))
                 self.gauge('http_status', 1, dimensions=new_dimensions)
                 return
-    
+
             except Exception, e:
                 length = int((time.time() - start) * 1000)
                 self.log.error("Unhandled exception %s. Connection failed after %s ms" % (str(e), length))
                 self.gauge('http_status', 1, dimensions=new_dimensions)
                 raise
-    
+
             if response_time:
                 # Stop the timer as early as possible
                 running_time = time.time() - start
                 self.gauge('http_response_time', running_time, dimensions=new_dimensions)
-    
+
             # Add a 'detail' tag if requested
             if include_content:
                 new_dimensions['detail'] = json.dumps(content)
-    
+
             if int(resp.status) >= 400:
                 if int(resp.status) == 401:
                     # Get a new token and retry
@@ -120,7 +122,7 @@ class HTTPCheck(AgentCheck):
                     self.log.info("Pattern match failed! '%s' not in '%s'" % (pattern, content))
                     self.gauge('http_status', 1, dimensions=new_dimensions)
                     return
-    
+
             self.log.debug("%s is UP" % addr)
             self.gauge('http_status', 0, dimensions=new_dimensions)
             done = True
