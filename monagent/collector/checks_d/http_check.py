@@ -1,3 +1,4 @@
+"""Monasca HTTP checker"""
 import socket
 import time
 import json
@@ -5,10 +6,13 @@ import re
 
 from httplib2 import Http, HttpLib2Error, httplib
 
-from monagent.collector.checks import AgentCheck
+from monagent.collector.checks.services_checks import ServicesCheck, Status
 
 
-class HTTPCheck(AgentCheck):
+class HTTPCheck(ServicesCheck):
+
+    def __init__(self, name, init_config, agent_config, instances=None):
+        ServicesCheck.__init__(self, name, init_config, agent_config, instances)
 
     @staticmethod
     def _load_conf(instance):
@@ -27,7 +31,11 @@ class HTTPCheck(AgentCheck):
         ssl = instance.get('disable_ssl_validation', True)
         return url, username, password, timeout, include_content, headers, response_time, dimensions, ssl, pattern
 
-    def check(self, instance):
+    def _create_status_event(self, status, msg, instance):
+        """Does nothing: status events are not yet supported by Monasca API"""
+        return
+
+    def _check(self, instance):
         addr, username, password, timeout, include_content, headers, response_time, dimensions, disable_ssl_validation, pattern = self._load_conf(instance)
         content = ''
 
@@ -48,31 +56,31 @@ class HTTPCheck(AgentCheck):
             length = int((time.time() - start) * 1000)
             self.log.info("%s is DOWN, error: %s. Connection failed after %s ms" % (addr, str(e), length))
             self.gauge('http_status', 1, dimensions=new_dimensions)
-            return
+            return Status.DOWN, "%s is DOWN, error: %s. Connection failed after %s ms" % (addr, str(e), length)
 
         except HttpLib2Error, e:
             length = int((time.time() - start) * 1000)
             self.log.info("%s is DOWN, error: %s. Connection failed after %s ms" % (addr, str(e), length))
             self.gauge('http_status', 1, dimensions=new_dimensions)
-            return
+            return Status.DOWN, "%s is DOWN, error: %s. Connection failed after %s ms" % (addr, str(e), length)
 
         except socket.error, e:
             length = int((time.time() - start) * 1000)
             self.log.info("%s is DOWN, error: %s. Connection failed after %s ms" % (addr, repr(e), length))
             self.gauge('http_status', 1, dimensions=new_dimensions)
-            return
+            return Status.DOWN, "%s is DOWN, error: %s. Connection failed after %s ms" % (addr, str(e), length)
 
         except httplib.ResponseNotReady, e:
             length = int((time.time() - start) * 1000)
             self.log.info("%s is DOWN, error: %s. Network is not routable after %s ms" % (addr, repr(e), length))
             self.gauge('http_status', 1, dimensions=new_dimensions)
-            return
+            return Status.DOWN, "%s is DOWN, error: %s. Network is not routable after %s ms" % (addr, str(e), length)
 
         except Exception, e:
             length = int((time.time() - start) * 1000)
             self.log.error("Unhandled exception %s. Connection failed after %s ms" % (str(e), length))
             self.gauge('http_status', 1, dimensions=new_dimensions)
-            raise
+            return Status.DOWN, "%s is DOWN, error: %s. Connection failed after %s ms" % (addr, str(e), length)
 
         if response_time:
             # Stop the timer as early as possible
@@ -93,8 +101,9 @@ class HTTPCheck(AgentCheck):
             else:
                 self.log.info("Pattern match failed! '%s' not in '%s'" % (pattern, content))
                 self.gauge('http_status', 1, dimensions=new_dimensions)
-                return
+                return Status.DOWN, "Pattern match failed! '%s' not in '%s'" % (pattern, content)
 
         self.log.debug("%s is UP" % addr)
         self.gauge('http_status', 0, dimensions=new_dimensions)
+        return Status.UP, "%s is UP" % addr
 

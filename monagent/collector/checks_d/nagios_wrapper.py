@@ -1,5 +1,5 @@
 #!/bin/env python
-"""DataDog wrapper for Nagios checks"""
+"""Monasca wrapper for Nagios checks"""
 
 import hashlib
 import json
@@ -9,14 +9,14 @@ import socket
 import subprocess
 import time
 
-from monagent.collector.checks import AgentCheck
+from monagent.collector.checks.services_checks import ServicesCheck, Status
 
 
-class WrapNagios(AgentCheck):
-    """Inherit Agentcheck class to process Nagios checks"""
+class WrapNagios(ServicesCheck):
+    """Inherit ServicesCheck class to process Nagios checks"""
 
     def __init__(self, name, init_config, agent_config, instances=None):
-        AgentCheck.__init__(self, name, init_config, agent_config, instances)
+        ServicesCheck.__init__(self, name, init_config, agent_config, instances)
 
     @staticmethod
     def _do_skip_check(instance, last_run_data):
@@ -29,7 +29,7 @@ class WrapNagios(AgentCheck):
         else:
             return False
 
-    def check(self, instance):
+    def _check(self, instance):
         """Run the command specified by check_command and capture the result"""
 
         dimensions = {'observer_host': socket.getfqdn()}
@@ -81,8 +81,13 @@ class WrapNagios(AgentCheck):
             self.log.info(instance['check_command'].split(" ")[0] + " is missing or unreadable")
             return
 
+        status_code = proc.poll()
         last_run_data[instance['service_name']] = time.time()
-        self.gauge(instance['service_name'], proc.poll(), dimensions=dimensions)
+        self.gauge(instance['service_name'], status_code, dimensions=dimensions)
+        # Return DOWN on critical, UP otherwise
+        if status_code == "2":
+            return Status.DOWN, "DOWN: " + dimensions['detail']
+        return Status.UP, "UP: " + dimensions['detail']
 
         # Save last-run data
         file_w = open(last_run_file, "w")
