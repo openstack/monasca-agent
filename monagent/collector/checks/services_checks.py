@@ -3,8 +3,8 @@ import time
 from Queue import Queue, Empty
 import threading
 
-from checks import AgentCheck
-from collector.checks.libs.thread_pool import Pool
+from monagent.collector.checks import AgentCheck
+from monagent.collector.checks.libs.thread_pool import Pool
 
 
 TIMEOUT = 180

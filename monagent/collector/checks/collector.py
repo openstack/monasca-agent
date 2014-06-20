@@ -105,16 +105,16 @@ class Collector(object):
         thread_count = threading.active_count()
         metrics['monagent.collector.threads.count'] = thread_count
         if thread_count > MAX_THREADS_COUNT:
-            self.logger.warn("Collector thread count is high: %d" % thread_count)
+            log.warn("Collector thread count is high: %d" % thread_count)
 
         metrics['monagent.collector.collection.time'] = collection_time
         if collection_time > MAX_COLLECTION_TIME:
-            self.logger.info("Collection time (s) is high: %.1f, metrics count: %d, events count: %d" %
+            log.info("Collection time (s) is high: %.1f, metrics count: %d, events count: %d" %
                              (collection_time, num_metrics, num_events))
 
         metrics['monagent.collector.emit.time'] = emit_time
         if emit_time is not None and emit_time > MAX_EMIT_TIME:
-            self.logger.info("Emit time (s) is high: %.1f, metrics count: %d, events count: %d" %
+            log.info("Emit time (s) is high: %.1f, metrics count: %d, events count: %d" %
                              (emit_time, num_metrics, num_events))
 
         return metrics
