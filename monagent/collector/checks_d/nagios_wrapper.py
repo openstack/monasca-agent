@@ -1,5 +1,5 @@
 #!/bin/env python
-"""Monasca wrapper for Nagios checks"""
+"""Monitoring Agent wrapper for Nagios checks"""
 
 import hashlib
 import json
@@ -28,6 +28,10 @@ class WrapNagios(ServicesCheck):
                 return True
         else:
             return False
+
+    def _create_status_event(self, status, msg, instance):
+        """Does nothing: status events are not yet supported by Mon API"""
+        return
 
     def _check(self, instance):
         """Run the command specified by check_command and capture the result"""

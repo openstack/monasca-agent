@@ -1,3 +1,6 @@
+#!/bin/env python
+"""Monitoring Agent plugin for HTTP/API checks"""
+
 import socket
 import time
 import json
@@ -39,7 +42,7 @@ class HTTPCheck(ServicesCheck):
         return url, username, password, timeout, include_content, headers, response_time, dimensions, ssl, pattern, use_keystone, keystone
 
     def _create_status_event(self, status, msg, instance):
-        """Does nothing: status events are not yet supported by Monasca API"""
+        """Does nothing: status events are not yet supported by Mon API"""
         return
 
     def _check(self, instance):

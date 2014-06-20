@@ -1,5 +1,5 @@
 #!/bin/env python
-"""Monasca remote host aliveness checker"""
+"""Monitoring Agent remote host aliveness checker"""
 
 import socket
 import subprocess
@@ -69,7 +69,7 @@ class HostAlive(ServicesCheck):
             return True
 
     def _create_status_event(self, status, msg, instance):
-        """Does nothing: status events are not yet supported by Monasca API"""
+        """Does nothing: status events are not yet supported by Mon API"""
         return
 
     def _check(self, instance):
