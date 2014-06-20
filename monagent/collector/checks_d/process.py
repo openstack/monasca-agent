@@ -145,7 +145,7 @@ class ProcessCheck(AgentCheck):
                         read_bytes += io_counters.read_bytes
                         write_bytes += io_counters.write_bytes
                     except psutil.AccessDenied:
-                        self.log.info('DD user agent does not have access \
+                        self.log.info('mon-agent user agent does not have access \
                             to I/O counters for process %d: %s' % (pid, p.name))
                         read_count = None
                         write_count = None
@@ -158,7 +158,7 @@ class ProcessCheck(AgentCheck):
                 pass
 
         if got_denied:
-            self.warning("The Datadog Agent was denied access when trying to get the number of file descriptors")
+            self.warning("The Monitoring Agent was denied access when trying to get the number of file descriptors")
 
         #Memory values are in Byte
         return (thr, cpu, rss, vms, real, open_file_descriptors,
@@ -171,6 +171,7 @@ class ProcessCheck(AgentCheck):
             raise Exception('You need the "psutil" package to run this check')
 
         name = instance.get('name', None)
+        dimensions = instance.get('dimensions', {})
         exact_match = instance.get('exact_match', True)
         search_string = instance.get('search_string', None)
         cpu_check_interval = instance.get('cpu_check_interval', 0.1)
@@ -186,7 +187,7 @@ class ProcessCheck(AgentCheck):
             cpu_check_interval = 0.1
 
         pids = self.find_pids(search_string, psutil, exact_match=exact_match)
-        dimensions = {'process_name': name}
+        dimensions.update({'process_name': name})
 
         self.log.debug('ProcessCheck: process %s analysed' % name)
 
