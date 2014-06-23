@@ -1,6 +1,14 @@
 Change Log
 =======
 
+# 1.0.6 / 2014-06-19
+## Changes
+- Improved token handling in forwarder and http_status check.
+- Updated the agent to allow plugins to override the default dimensions in the plugin config
+- Added detection and auto-configuration of Nova, Swift and Cinder OpenStack processes and APIs
+- Fixed crash in collector where plugins take more than 120 seconds to run
+- Changed "active" plugins http_check, host_alive, and nagios_wrapper to use ServiceCheck class for threadpool support
+
 # 1.0.5 / 2014-06-12
 ## Changes
 - Initial support for mon-setup

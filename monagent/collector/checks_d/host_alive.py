@@ -1,18 +1,18 @@
 #!/bin/env python
-"""DataDog remote host aliveness checker"""
+"""Monitoring Agent remote host aliveness checker"""
 
 import socket
 import subprocess
 import sys
 
-from monagent.collector.checks import AgentCheck
+from monagent.collector.checks.services_checks import ServicesCheck, Status
 
 
-class HostAlive(AgentCheck):
-    """Inherit Agentcheck class to test if a host is alive or not"""
+class HostAlive(ServicesCheck):
+    """Inherit ServicesCheck class to test if a host is alive or not"""
 
     def __init__(self, name, init_config, agent_config, instances=None):
-        AgentCheck.__init__(self, name, init_config, agent_config, instances)
+        ServicesCheck.__init__(self, name, init_config, agent_config, instances)
 
     def _test_ssh(self, host, port, timeout=None):
         """ Connect to the SSH port (typically 22) and look for a banner """
@@ -68,7 +68,11 @@ class HostAlive(AgentCheck):
         else:
             return True
 
-    def check(self, instance):
+    def _create_status_event(self, status, msg, instance):
+        """Does nothing: status events are not yet supported by Mon API"""
+        return
+
+    def _check(self, instance):
         """Run the desired host-alive check againt this host"""
 
         dimensions = {'target_host': instance['host_name'], 'observer_host': socket.getfqdn()}
@@ -90,6 +94,9 @@ class HostAlive(AgentCheck):
 
         if success is True:
             self.gauge('host_alive', 0, dimensions=dimensions)
+            return Status.UP, "UP"
         else:
             self.gauge('host_alive', 1, dimensions=dimensions)
+            self.log.error("Host down: " + instance['host_name'])
+            return Status.DOWN, "DOWN"
 
