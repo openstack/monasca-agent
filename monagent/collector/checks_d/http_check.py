@@ -8,8 +8,10 @@ from monagent.collector.checks import AgentCheck
 from monagent.common.keystone import Keystone
 from monagent.common.config import get_config
 
+token = None
+
 class HTTPCheck(AgentCheck):
-    
+
     @staticmethod
     def _load_conf(instance):
         # Fetches the conf
@@ -28,17 +30,21 @@ class HTTPCheck(AgentCheck):
         ssl = instance.get('disable_ssl_validation', True)
         config = get_config()
         api_config = config['Api']
-        keystone = Keystone(api_config['keystone_url'],
-                            api_config['username'],
-                            api_config['password'],
-                            api_config['project_name'])
+        if use_keystone:
+            keystone = Keystone(api_config['keystone_url'] + '/tokens',
+                                api_config['username'],
+                                api_config['password'],
+                                api_config['project_name'])
+        else:
+            keystone = None
 
         return url, username, password, timeout, include_content, headers, response_time, dimensions, ssl, pattern, use_keystone, keystone
 
     def check(self, instance):
         addr, username, password, timeout, include_content, headers, response_time, dimensions, disable_ssl_validation, pattern, use_keystone, keystone = self._load_conf(instance)
         
-        self.token = None
+        global token
+
         self.keystone = keystone
         content = ''
 
@@ -51,9 +57,10 @@ class HTTPCheck(AgentCheck):
         done = False
         while not done:
             if use_keystone:
-                self.token = self.get_token()
-                if self.token:
-                    headers["X-Auth-Token"] = self.token
+                if not token:
+                    token = self.keystone.get_token()
+                if token:
+                    headers["X-Auth-Token"] = token
                     headers["Content-type"] = "application/json"
                 else:
                     self.log.warning("Unable to get token, skipping check...")
@@ -107,13 +114,14 @@ class HTTPCheck(AgentCheck):
                 new_dimensions['detail'] = json.dumps(content)
 
             if int(resp.status) >= 400:
-                if int(resp.status) == 401:
+                if use_keystone and int(resp.status) == 401:
                     # Get a new token and retry
-                    self.token = self.refresh_token()
+                    token = self.keystone.refresh_token()
                     continue
                 else:
                     self.log.info("%s is DOWN, error code: %s" % (addr, str(resp.status)))
                     self.gauge('http_status', 1, dimensions=new_dimensions)
+                    return
     
             if pattern is not None:
                 if re.search(pattern, content, re.DOTALL):
@@ -126,14 +134,3 @@ class HTTPCheck(AgentCheck):
             self.log.debug("%s is UP" % addr)
             self.gauge('http_status', 0, dimensions=new_dimensions)
             done = True
-
-    def get_token(self):
-        """ Return a keystone token. """
-        if not self.token:
-            return self.refresh_token()
-        return self.token
-
-    def refresh_token(self):
-        """ Get a new keystone token. """
-        self.token = self.keystone.get_token()
-        return self.token

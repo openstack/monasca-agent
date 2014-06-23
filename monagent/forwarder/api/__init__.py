@@ -30,15 +30,15 @@ class MonAPI(object):
 
         try:
             log.debug("Getting token from Keystone")
-            self.keystone_url = config['keystone_url']
+            self.keystone_url = config['keystone_url'] + '/tokens'
             self.username = config['username']
             self.password = config['password']
             self.project_name = config['project_name']
             
             self.keystone = Keystone(self.keystone_url,
-                                  self.username,
-                                  self.password,
-                                  self.project_name)
+                                     self.username,
+                                     self.password,
+                                     self.project_name)
             self.token = self.keystone.get_token()
 
         except Exception as ex:
@@ -73,7 +73,7 @@ class MonAPI(object):
                     # with the data
                     if response.status_code == 401:
                         # Get a new token and retry
-                        self.token = self.keystone.get_token()
+                        self.token = self.keystone.refresh_token()
                         # Re-create the client.  This is temporary until
                         # the client is updated to be able to reset the
                         # token.
@@ -100,8 +100,8 @@ class MonAPI(object):
         """
         # Add default dimensions
         for measurement in measurements:
-            for dimension in self.default_dimensions:
-                if dimension not in measurement.dimensions:
-                    measurement.dimensions.update(dimension)
+            for dimension in self.default_dimensions.keys():
+                if not measurement.dimensions.has_key(dimension):
+                    measurement.dimensions.update({dimension: self.default_dimensions[dimension]})
 
         self._post(measurements)
