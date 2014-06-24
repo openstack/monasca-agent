@@ -30,7 +30,7 @@ class MonAPI(object):
 
         try:
             log.debug("Getting token from Keystone")
-            self.keystone_url = config['keystone_url'] + '/tokens'
+            self.keystone_url = config['keystone_url'].rstrip('/') + '/auth/tokens'
             self.username = config['username']
             self.password = config['password']
             self.project_name = config['project_name']
@@ -39,7 +39,7 @@ class MonAPI(object):
                                      self.username,
                                      self.password,
                                      self.project_name)
-            self.token = self.keystone.get_token()
+            self.token = None
 
         except Exception as ex:
             log.error("Error getting token from Keystone: {0}".
@@ -61,6 +61,8 @@ class MonAPI(object):
             'jsonbody': data
         }
         try:
+            if not self.token:
+                self.token = self.keystone.get_token()
             done = False
             while not done:
                 response = self.mon_client.metrics.create(**kwargs)
