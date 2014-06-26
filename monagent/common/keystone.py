@@ -57,7 +57,7 @@ class Keystone(object):
         self.password_auth['auth']['scope']['project']['name'] = self.project_name
         data = json.dumps(self.password_auth)
         headers = {'Content-Type': 'application/json'}
-        response = requests.post(self.endpoint, data=data, headers=headers)
+        response = requests.post(self.endpoint.rstrip('/') + '/auth/tokens', data=data, headers=headers)
         response.raise_for_status()
         self.token = response.headers['X-Subject-Token']
         return self.token
