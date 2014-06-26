@@ -37,7 +37,7 @@ class HTTPCheck(ServicesCheck):
         config = get_config()
         api_config = config['Api']
         if use_keystone:
-            keystone = Keystone(api_config['keystone_url'].rstrip('/') + '/auth/tokens',
+            keystone = Keystone(api_config['keystone_url'],
                                 api_config['username'],
                                 api_config['password'],
                                 api_config['project_name'])

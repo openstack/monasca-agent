@@ -40,7 +40,7 @@ class Keystone(object):
         return cls._instance
 
     def __init__(self, endpoint, user_id, password, project_name):
-        self.endpoint = endpoint
+        self.endpoint = endpoint.rstrip('/') + '/auth/tokens'
         self.user_id = user_id
         self.password = password
         self.project_name = project_name

@@ -28,29 +28,17 @@ class MonAPI(object):
         if not 'hostname' in self.default_dimensions:
             self.default_dimensions['hostname'] = get_hostname()
 
-        try:
-            log.debug("Getting token from Keystone")
-            self.keystone_url = config['keystone_url'].rstrip('/') + '/auth/tokens'
-            self.username = config['username']
-            self.password = config['password']
-            self.project_name = config['project_name']
-            
-            self.keystone = Keystone(self.keystone_url,
-                                     self.username,
-                                     self.password,
-                                     self.project_name)
-            self.token = None
-
-        except Exception as ex:
-            log.error("Error getting token from Keystone: {0}".
-                      format(str(ex.message)))
-            raise ex
-
-        # construct the mon client
-        self.kwargs = {
-            'token': self.token
-        }
-        self.mon_client = client.Client(self.api_version, self.url, **self.kwargs)
+        log.debug("Getting token from Keystone")
+        self.keystone_url = config['keystone_url']
+        self.username = config['username']
+        self.password = config['password']
+        self.project_name = config['project_name']
+        
+        self.keystone = Keystone(self.keystone_url,
+                                 self.username,
+                                 self.password,
+                                 self.project_name)
+        self.mon_client = None
 
     def _post(self, measurements):
         """Does the actual http post
@@ -61,8 +49,10 @@ class MonAPI(object):
             'jsonbody': data
         }
         try:
-            if not self.token:
-                self.token = self.keystone.get_token()
+            if not self.mon_client:
+                # construct the mon client
+                self.mon_client = self.get_client()
+
             done = False
             while not done:
                 response = self.mon_client.metrics.create(**kwargs)
@@ -74,12 +64,8 @@ class MonAPI(object):
                     # Good status from web service but some type of issue
                     # with the data
                     if response.status_code == 401:
-                        # Get a new token and retry
-                        self.token = self.keystone.refresh_token()
-                        # Re-create the client.  This is temporary until
-                        # the client is updated to be able to reset the
-                        # token.
-                        self.mon_client = client.Client(self.api_version, self.url, **self.kwargs)
+                        # Get a new token/client and retry
+                        self.mon_client = self.get_client()
                         continue
                     else:
                         error_msg = "Successful web service call but there" + \
@@ -107,3 +93,17 @@ class MonAPI(object):
                     measurement.dimensions.update({dimension: self.default_dimensions[dimension]})
 
         self._post(measurements)
+
+    def get_client(self):
+        """get_client
+            get a new mon-client object
+        """
+        token = self.keystone.refresh_token()
+        # Re-create the client.  This is temporary until
+        # the client is updated to be able to reset the
+        # token.
+        kwargs = {
+            'token': token
+        }
+        return client.Client(self.api_version, self.url, **self.kwargs)
+
