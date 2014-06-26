@@ -2,7 +2,7 @@ import json
 import logging
 
 from threading import Timer
-from keystone import Keystone
+from monagent.common.keystone import Keystone
 from monagent.common.util import get_hostname
 from monclient import client
 import monclient.exc as exc
@@ -28,17 +28,29 @@ class MonAPI(object):
         if not 'hostname' in self.default_dimensions:
             self.default_dimensions['hostname'] = get_hostname()
 
-        if config['use_keystone']:
-            # Get a new token
-            self._refresh_token()
-        else:
-            self.token = config['project_name']
+        try:
+            log.debug("Getting token from Keystone")
+            self.keystone_url = config['keystone_url'] + '/tokens'
+            self.username = config['username']
+            self.password = config['password']
+            self.project_name = config['project_name']
+            
+            self.keystone = Keystone(self.keystone_url,
+                                     self.username,
+                                     self.password,
+                                     self.project_name)
+            self.token = self.keystone.get_token()
+
+        except Exception as ex:
+            log.error("Error getting token from Keystone: {0}".
+                      format(str(ex.message)))
+            raise ex
 
         # construct the mon client
-        kwargs = {
+        self.kwargs = {
             'token': self.token
         }
-        self.mon_client = client.Client(self.api_version, self.url, **kwargs)
+        self.mon_client = client.Client(self.api_version, self.url, **self.kwargs)
 
     def _post(self, measurements):
         """Does the actual http post
@@ -49,22 +61,34 @@ class MonAPI(object):
             'jsonbody': data
         }
         try:
-            response = self.mon_client.metrics.create(**kwargs)
-            if 200 <= response.status_code <= 299:
-                # Good status from web service
-                log.debug("Message sent successfully: {0}"
-                          .format(str(data)))
-            elif 400 <= response.status_code <= 499:
-                # Good status from web service but some type of issue
-                # with the data
-                error_msg = "Successful web service call but there" + \
-                            " were issues (Status: {0}, Status Message: " + \
-                            "{1}, Message Content: {1})"
-                log.error(error_msg.format(response.status_code,
-                                           response.reason, response.text))
-                response.raise_for_status()
-            else:  # Not a good status
-                response.raise_for_status()
+            done = False
+            while not done:
+                response = self.mon_client.metrics.create(**kwargs)
+                if 200 <= response.status_code <= 299:
+                    # Good status from web service
+                    log.debug("Message sent successfully: {0}"
+                              .format(str(data)))
+                elif 400 <= response.status_code <= 499:
+                    # Good status from web service but some type of issue
+                    # with the data
+                    if response.status_code == 401:
+                        # Get a new token and retry
+                        self.token = self.keystone.refresh_token()
+                        # Re-create the client.  This is temporary until
+                        # the client is updated to be able to reset the
+                        # token.
+                        self.mon_client = client.Client(self.api_version, self.url, **self.kwargs)
+                        continue
+                    else:
+                        error_msg = "Successful web service call but there" + \
+                                    " were issues (Status: {0}, Status Message: " + \
+                                    "{1}, Message Content: {1})"
+                        log.error(error_msg.format(response.status_code,
+                                                   response.reason, response.text))
+                        response.raise_for_status()
+                else:  # Not a good status
+                    response.raise_for_status()
+                done = True
         except exc.HTTPException as he:
             log.error("Error sending message to mon-api: {0}"
                       .format(str(he.message)))
@@ -76,27 +100,8 @@ class MonAPI(object):
         """
         # Add default dimensions
         for measurement in measurements:
-            measurement.dimensions.update(self.default_dimensions)
+            for dimension in self.default_dimensions.keys():
+                if not measurement.dimensions.has_key(dimension):
+                    measurement.dimensions.update({dimension: self.default_dimensions[dimension]})
 
         self._post(measurements)
-
-    def _refresh_token(self):
-        """_refresh_token
-            Gets a new token from Keystone and resets the validity timer
-        """
-        try:
-            log.debug("Getting token from Keystone")
-            keystone = Keystone(self.config['keystone_url'])
-            self.token = \
-            keystone.get_token_password_auth(
-                                    self.config['username'],
-                                    self.config['password'],
-                                    self.config['project_name'])
-            log.debug("Setting Keystone token expiration timer for " +
-                      "{0} minutes".format(str(self.token_expiration)))
-            self.timer = Timer(self.token_expiration, self._refresh_token)
-            self.timer.start()
-        except Exception as ex:
-            log.error("Error getting token from Keystone: {0}".
-                      format(str(ex.message)))
-            raise ex
