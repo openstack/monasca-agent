@@ -40,7 +40,7 @@ class Keystone(object):
         return cls._instance
 
     def __init__(self, endpoint, user_id, password, project_name):
-        self.endpoint = endpoint.rstrip('/') + '/auth/tokens'
+        self.endpoint = endpoint
         self.user_id = user_id
         self.password = password
         self.project_name = project_name
@@ -57,7 +57,7 @@ class Keystone(object):
         self.password_auth['auth']['scope']['project']['name'] = self.project_name
         data = json.dumps(self.password_auth)
         headers = {'Content-Type': 'application/json'}
-        response = requests.post(self.endpoint, data=data, headers=headers)
+        response = requests.post(self.endpoint.rstrip('/') + '/auth/tokens', data=data, headers=headers)
         response.raise_for_status()
         self.token = response.headers['X-Subject-Token']
         return self.token
