@@ -105,5 +105,4 @@ class MonAPI(object):
         kwargs = {
             'token': token
         }
-        return client.Client(self.api_version, self.url, **self.kwargs)
-
+        return client.Client(self.api_version, self.url, **kwargs)
