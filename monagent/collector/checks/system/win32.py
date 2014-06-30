@@ -1,4 +1,4 @@
-from .. import Check
+from monagent.collector.checks.check import Check
 
 try:
     import wmi

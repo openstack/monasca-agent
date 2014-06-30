@@ -12,7 +12,7 @@ import sys
 import time
 
 # project
-from .. import Check
+from monagent.collector.checks.check import Check
 from monagent.common.metrics import Measurement
 from monagent.common.util import Platform
 
