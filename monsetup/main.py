@@ -10,15 +10,16 @@ import socket
 import subprocess
 import sys
 import yaml
+from monagent.common.keystone import Keystone
 
 import agent_config
-from detection import kafka, mon, mysql, network, nova, nova_api, cinder, cinder_api, swift, swift_api, zookeeper
+from detection.plugins import kafka, mon, mysql, network, zookeeper, nova, glance, cinder, neutron, swift, ceilometer, keystone
 from service import sysv
 
 # List of all detection plugins to run
 DETECTION_PLUGINS = [kafka.Kafka, mon.MonAPI, mon.MonPersister, mon.MonThresh, mysql.MySQL,
-                     network.Network, nova.Nova, nova_api.NovaAPI, cinder.Cinder,
-                     cinder_api.CinderAPI, swift.Swift, swift_api.SwiftAPI, zookeeper.Zookeeper]
+                     network.Network, nova.Nova, cinder.Cinder, swift.Swift, glance.Glance,
+                     ceilometer.Ceilometer, neutron.Neutron, keystone.Keystone, zookeeper.Zookeeper]
 # Map OS to service type
 OS_SERVICE_MAP = {'linux': sysv.SysV}
 
@@ -78,6 +79,17 @@ def main(argv=None):
         os.remove(supervisor_path)
     os.symlink(os.path.join(args.template_dir, 'supervisor.conf'), supervisor_path)
 
+    # Create the keystone object to use for alarm creation
+    token = None
+    try:
+        keystone = Keystone(args.keystone_url,
+                            args.username,
+                            args.password,
+                            args.project_name)
+        token = keystone.get_token()
+    except:
+        log.exception('Unable to get Keystone Token, skipping alarm configuration...')
+
     # Run through detection and config building for the plugins
     plugin_config = agent_config.Plugins()
     for detect_class in DETECTION_PLUGINS:
@@ -86,6 +98,9 @@ def main(argv=None):
             log.info('Configuring {0}'.format(detect.name))
             new_config = detect.build_config()
             plugin_config.merge(new_config)
+            if token and args.mon_url:
+                if not detect.configure_alarms(args.mon_url, token):
+                    log.warn('Unable to configure alarms for {0}'.format(detect.name))
 
         #todo add option to install dependencies
 

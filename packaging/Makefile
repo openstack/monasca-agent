@@ -53,9 +53,9 @@ install_full: source
 	# Install the source to usr/share
 	cp -r $(ROOT)/*		 $(BUILD)/usr/share/mon/agent/
 	# Install the common executables.
-	ln -sf ../share/mon/agent/monagent/monstatsd/__init__.py  $(BUILD)/usr/bin/monstatsd
-	ln -sf ../share/mon/agent/monagent/forwarder/__init__.py $(BUILD)/usr/bin/mon-forwarder
-	ln -sf ../share/mon/agent/monagent/collector/daemon.py      $(BUILD)/usr/bin/mon-collector
+	ln -sf ../share/mon/agent/monagent/monstatsd/daemon.py $(BUILD)/usr/bin/monstatsd
+	ln -sf ../share/mon/agent/monagent/forwarder/daemon.py $(BUILD)/usr/bin/mon-forwarder
+	ln -sf ../share/mon/agent/monagent/collector/daemon.py $(BUILD)/usr/bin/mon-collector
 	chmod 755 $(BUILD)/usr/bin/monstatsd
 	chmod 755 $(BUILD)/usr/bin/mon-forwarder
 	chmod 755 $(BUILD)/usr/bin/mon-collector

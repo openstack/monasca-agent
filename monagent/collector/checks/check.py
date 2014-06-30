@@ -11,6 +11,7 @@ import time
 import traceback
 
 from monagent.common import check_status
+from monagent.common.keystone import Keystone
 from monagent.common.config import get_confd_path
 from monagent.common.exceptions import CheckException, NaN, Infinity, UnknownValue
 from monagent.common.util import LaconicFilter, get_hostname, get_os
@@ -256,6 +257,8 @@ class Check(object):
 
 
 class AgentCheck(object):
+    
+    keystone = None
 
     def __init__(self, name, init_config, agent_config, instances=None):
         """
@@ -281,6 +284,12 @@ class AgentCheck(object):
         self.instances = instances or []
         self.warnings = []
         self.library_versions = None
+
+        api_config = self.agent_config['Api']
+        AgentCheck.keystone = Keystone(api_config['keystone_url'],
+                                       api_config['username'],
+                                       api_config['password'],
+                                       api_config['project_name'])
 
     def instance_count(self):
         """ Return the number of instances that are configured for this check. """
@@ -453,6 +462,7 @@ class AgentCheck(object):
         instance_statuses = []
         for i, instance in enumerate(self.instances):
             try:
+                instance['keystone'] = AgentCheck.keystone
                 self.check(instance)
                 if self.has_warnings():
                     instance_status = check_status.InstanceStatus(i,

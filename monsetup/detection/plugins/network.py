@@ -1,7 +1,7 @@
 import os
 import yaml
 
-from . import Plugin
+from monsetup.detection import Plugin
 from monsetup import agent_config
 
 
