@@ -6,7 +6,7 @@ from datetime import datetime
 from itertools import groupby  # >= python 2.4
 
 from utils import TailFile
-from . import LaconicFilter
+from monagent.common.util import LaconicFilter
 from monagent.collector import modules
 
 

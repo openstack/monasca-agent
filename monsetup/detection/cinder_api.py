@@ -4,6 +4,7 @@ from monsetup import agent_config
 
 log = logging.getLogger(__name__)
 
+
 class CinderAPI(Plugin):
     """Detect the Cinder-API daemon and setup configuration to monitor it."""
 
@@ -21,11 +22,12 @@ class CinderAPI(Plugin):
         config = agent_config.Plugins()
         # First watch the Nova-API process
         log.info("\tMonitoring the cinder API process.")
-        config.merge(watch_process([self.process_name],  self.service_name))
+        config.merge(watch_process([self.process_name], self.service_name))
 
         # Next setup an active http_status check on the API
         log.info("\tConfiguring an http_check for the cinder API.")
-        config.merge(service_api_check(self.process_name, 'http://localhost:8776/v2.0', '.*version=1.*',  self.service_name))
+        config.merge(
+            service_api_check(self.process_name, 'http://localhost:8776/v2.0', '.*version=1.*', self.service_name))
 
         return config
 

@@ -17,7 +17,7 @@ class Plugins(collections.defaultdict):
     # todo Possibly enforce the key being a string without .yaml in it.
 
     def diff(self, other_plugins):
-       raise NotImplementedError
+        raise NotImplementedError
 
     def merge(self, other):
         """Do a deep merge with precedence going to other (as is the case with update)
