@@ -31,6 +31,7 @@ class Kafka(Plugin):
 
             import kazoo
             from kazoo.client import KazooClient
+
             logging.getLogger('kazoo').setLevel(logging.WARN)  # kazoo fills up the console without this
 
             zk = KazooClient(hosts='127.0.0.1:2181', read_only=True)
@@ -47,7 +48,6 @@ class Kafka(Plugin):
                             consumers[consumer][topic] = topics[topic]
                 except kazoo.exceptions.NoNodeError:
                     continue
-
 
             log.info("\tInstalling kafka_consumer plugin.")
             config['kafka_consumer'] = {'init_config': None,
