@@ -6,9 +6,11 @@ from monsetup import agent_config
 
 
 class Postfix(Plugin):
+
     """If postfix is running install the default config
     """
-    # todo this is is disabled as postfix requires passwordless sudo for the mon-agent user, a bad practice
+    # todo this is is disabled as postfix requires passwordless sudo for the
+    # mon-agent user, a bad practice
 
     def _detect(self):
         """Run detection, set self.available True if the service is detected."""
@@ -18,7 +20,8 @@ class Postfix(Plugin):
     def build_config(self):
         """Build the config as a Plugins object and return.
         """
-        # A bit silly to parse the yaml only for it to be converted back but this plugin is the exception not the rule
+        # A bit silly to parse the yaml only for it to be converted back but this
+        # plugin is the exception not the rule
         with open(os.path.join(self.template_dir, 'conf.d/postfix.yaml.example'), 'r') as postfix_template:
             default_net_config = yaml.load(postfix_template.read())
         config = agent_config.Plugins()

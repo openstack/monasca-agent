@@ -27,6 +27,7 @@ CACTI_TO_DD = {
 
 
 class Cacti(AgentCheck):
+
     def __init__(self, name, init_config, agent_config):
         AgentCheck.__init__(self, name, init_config, agent_config)
         self.last_ts = {}
@@ -41,10 +42,10 @@ class Cacti(AgentCheck):
         except AttributeError:
             version = "Unknown"
 
-        return {"rrdtool": version} 
+        return {"rrdtool": version}
 
     def check(self, instance):
-        
+
         # Load the instance config
         config = self._get_config(instance)
 
@@ -52,13 +53,15 @@ class Cacti(AgentCheck):
         try:
             import rrdtool
         except ImportError, e:
-            raise Exception("Cannot import rrdtool module. Check the instructions to install this module at https://app.datadoghq.com/account/settings#integrations/cacti")
+            raise Exception(
+                "Cannot import rrdtool module. Check the instructions to install this module at https://app.datadoghq.com/account/settings#integrations/cacti")
 
         # Try importing MySQL
         try:
             import MySQLdb
         except ImportError, e:
-            raise Exception("Cannot import MySQLdb module. Check the instructions to install this module at https://app.datadoghq.com/account/settings#integrations/cacti")
+            raise Exception(
+                "Cannot import MySQLdb module. Check the instructions to install this module at https://app.datadoghq.com/account/settings#integrations/cacti")
 
         connection = MySQLdb.connect(config.host, config.user, config.password, config.db)
 
@@ -132,7 +135,7 @@ class Cacti(AgentCheck):
             return metric_count
 
         # Find the consolidation functions for the RRD metrics
-        c_funcs = set([v for k,v in info.items() if k.endswith('.cf')])
+        c_funcs = set([v for k, v in info.items() if k.endswith('.cf')])
 
         for c in list(c_funcs):
             last_ts_key = '%s.%s' % (rrd_path, c)
@@ -165,7 +168,7 @@ class Cacti(AgentCheck):
                     # Save this metric as a gauge
                     val = self._transform_metric(m_name, p[k])
                     self.gauge(m_name, val, hostname=hostname,
-                        device_name=device_name, timestamp=ts)
+                               device_name=device_name, timestamp=ts)
                     metric_count += 1
                     last_ts = (ts + interval)
 
@@ -178,7 +181,7 @@ class Cacti(AgentCheck):
             tuples of (hostname, device_name, rrd_path)
         '''
         def _in_whitelist(rrd):
-            path = rrd.replace('<path_rra>/','')
+            path = rrd.replace('<path_rra>/', '')
             for p in whitelist:
                 if fnmatch(path, p):
                     return True
@@ -186,7 +189,8 @@ class Cacti(AgentCheck):
 
         c = connection.cursor()
 
-        and_parameters = " OR ".join(["hsc.field_name = '%s'" % field_name for field_name in field_names])
+        and_parameters = " OR ".join(
+            ["hsc.field_name = '%s'" % field_name for field_name in field_names])
 
         # Check for the existence of the `host_snmp_cache` table
         rrd_query = """
@@ -202,7 +206,7 @@ class Cacti(AgentCheck):
             WHERE dt.data_source_path IS NOT NULL
             AND dt.data_source_path != ''
             AND (%s OR hsc.field_name is NULL) """ % and_parameters
-            
+
         c.execute(rrd_query)
         res = []
         for hostname, device_name, rrd_path in c.fetchall():
@@ -243,7 +247,6 @@ class Cacti(AgentCheck):
         if m_name[0:11] in ('system.mem.', 'system.disk'):
             return val / 1024
         return val
-
 
     '''
         For backwards compatability with pre-checks_d configuration.

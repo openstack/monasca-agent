@@ -60,7 +60,8 @@ class Zookeeper(AgentCheck):
                 while chunk:
                     if num_reads > max_reads:
                         # Safeguard against an infinite loop
-                        raise Exception("Read %s bytes before exceeding max reads of %s. " % (buf.tell(), max_reads))
+                        raise Exception(
+                            "Read %s bytes before exceeding max reads of %s. " % (buf.tell(), max_reads))
                     chunk = sock.recv(chunk_size)
                     buf.write(chunk)
                     num_reads += 1
@@ -101,7 +102,7 @@ class Zookeeper(AgentCheck):
         has_connections_val = version_tuple >= ('3', '4', '4')
 
         # Clients:
-        buf.readline() # skip the Clients: header
+        buf.readline()  # skip the Clients: header
         connections = 0
         client_line = buf.readline().strip()
         if client_line:

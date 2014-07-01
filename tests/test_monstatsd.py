@@ -6,22 +6,21 @@ import unittest
 import nose.tools as nt
 
 from monagent.common.aggregator import MetricsAggregator
-from monagent import monstatsd
-from monagent.monstatsd.reporter import Reporter
 
 
 class TestUnitMonStatsd(unittest.TestCase):
-
     @staticmethod
     def sort_metrics(metrics):
         def sort_by(m):
-            return (m['metric'],  ','.join(m['dimensions'] or []))
+            return (m['metric'], ','.join(m['dimensions'] or []))
+
         return sorted(metrics, key=sort_by)
 
     @staticmethod
     def sort_events(metrics):
         def sort_by(m):
-            return (m['title'], m['text'],  ','.join(m.get('tags', None) or []))
+            return (m['title'], m['text'], ','.join(m.get('tags', None) or []))
+
         return sorted(metrics, key=sort_by)
 
     def test_counter_normalization(self):
@@ -33,7 +32,6 @@ class TestUnitMonStatsd(unittest.TestCase):
         stats.submit_packets('int:15|c')
 
         stats.submit_packets('float:5|c')
-
 
         metrics = self.sort_metrics(stats.flush())
         assert len(metrics) == 2
@@ -56,19 +54,17 @@ class TestUnitMonStatsd(unittest.TestCase):
             stats.submit_packets('h2:1|h')
 
         metrics = self.sort_metrics(stats.flush())
-        _, _, h1count, _, _, \
-        _, _, h2count, _, _ = metrics
+        _, _, h1count, _, _, _, _, h2count, _, _ = metrics
 
         nt.assert_equal(h1count['points'][0][1], 0.5)
         nt.assert_equal(h2count['points'][0][1], 2)
-
 
     def test_tags(self):
         stats = MetricsAggregator('myhost')
         stats.submit_packets('gauge:1|c')
         stats.submit_packets('gauge:2|c|@1')
         stats.submit_packets('gauge:4|c|#tag1,tag2')
-        stats.submit_packets('gauge:8|c|#tag2,tag1') # Should be the same as above
+        stats.submit_packets('gauge:8|c|#tag2,tag1')  # Should be the same as above
         stats.submit_packets('gauge:16|c|#tag3,tag4')
 
         metrics = self.sort_metrics(stats.flush())
@@ -124,7 +120,6 @@ class TestUnitMonStatsd(unittest.TestCase):
         nt.assert_equals(second['points'][0][1], 0)
         nt.assert_equals(third['metric'], 'my.third.counter')
         nt.assert_equals(third['points'][0][1], 0)
-
 
     def test_sampled_counter(self):
 
@@ -246,7 +241,7 @@ class TestUnitMonStatsd(unittest.TestCase):
         # Sample all numbers between 1-100 many times. This
         # means our percentiles should be relatively close to themselves.
         percentiles = range(100)
-        random.shuffle(percentiles) # in place
+        random.shuffle(percentiles)  # in place
         for i in percentiles:
             for j in xrange(20):
                 for type_ in ['h', 'ms']:
@@ -266,19 +261,17 @@ class TestUnitMonStatsd(unittest.TestCase):
         assert_almost_equal(pmax['points'][0][1], 99, 1)
         assert_almost_equal(pmed['points'][0][1], 50, 2)
         assert_almost_equal(pavg['points'][0][1], 50, 2)
-        assert_almost_equal(pcount['points'][0][1], 4000, 0) # 100 * 20 * 2
+        assert_almost_equal(pcount['points'][0][1], 4000, 0)  # 100 * 20 * 2
         nt.assert_equals(p95['host'], 'myhost')
 
         # Ensure that histograms are reset.
         metrics = self.sort_metrics(stats.flush())
         assert not metrics
 
-
     def test_sampled_histogram(self):
         # Submit a sampled histogram.
         stats = MetricsAggregator('myhost')
         stats.submit_packets('sampled.hist:5|h|@0.5')
-
 
         # Assert we scale up properly.
         metrics = self.sort_metrics(stats.flush())
@@ -304,7 +297,6 @@ class TestUnitMonStatsd(unittest.TestCase):
         counter, gauge = metrics
         assert counter['points'][0][1] == 2
         assert gauge['points'][0][1] == 1
-
 
     def test_bad_packets_throw_errors(self):
         packets = [
@@ -368,8 +360,10 @@ class TestUnitMonStatsd(unittest.TestCase):
             metrics = self.sort_metrics(stats.flush())
             assert len(metrics) > 0
 
-            nt.assert_equal([m['points'][0][1] for m in metrics if m['metric'] == 'test.counter'], [cnt * run])
-            nt.assert_equal([m['points'][0][1] for m in metrics if m['metric'] == 'test.hist.count'], [cnt * run])
+            nt.assert_equal([m['points'][0][1]
+                             for m in metrics if m['metric'] == 'test.counter'], [cnt * run])
+            nt.assert_equal([m['points'][0][1]
+                             for m in metrics if m['metric'] == 'test.hist.count'], [cnt * run])
 
     def test_scientific_notation(self):
         stats = MetricsAggregator('myhost', interval=10)
@@ -396,7 +390,7 @@ class TestUnitMonStatsd(unittest.TestCase):
         try:
             first['dimensions']
         except Exception:
-                assert True
+            assert True
         else:
             assert False, "event['tags'] shouldn't be defined when no tags aren't explicited in the packet"
         nt.assert_equal(first['title'], 'title1')
@@ -422,7 +416,7 @@ class TestUnitMonStatsd(unittest.TestCase):
         stats.submit_packets(u'_e{9,4}:2intitulé|text')
         stats.submit_packets('_e{14,4}:3title content|text')
         stats.submit_packets('_e{14,4}:4title|content|text')
-        stats.submit_packets('_e{13,4}:5title\\ntitle|text') # \n stays escaped
+        stats.submit_packets('_e{13,4}:5title\\ntitle|text')  # \n stays escaped
 
         events = self.sort_events(stats.flush_events())
 
@@ -439,8 +433,8 @@ class TestUnitMonStatsd(unittest.TestCase):
         stats = MetricsAggregator('myhost')
         stats.submit_packets('_e{2,0}:t1|')
         stats.submit_packets('_e{2,12}:t2|text|content')
-        stats.submit_packets('_e{2,23}:t3|First line\\nSecond line') # \n is a newline
-        stats.submit_packets(u'_e{2,19}:t4|♬ †øU †øU ¥ºu T0µ ♪') # utf-8 compliant
+        stats.submit_packets('_e{2,23}:t3|First line\\nSecond line')  # \n is a newline
+        stats.submit_packets(u'_e{2,19}:t4|♬ †øU †øU ¥ºu T0µ ♪')  # utf-8 compliant
 
         events = self.sort_events(stats.flush_events())
 
@@ -451,6 +445,7 @@ class TestUnitMonStatsd(unittest.TestCase):
         nt.assert_equal(second['text'], 'text|content')
         nt.assert_equal(third['text'], 'First line\nSecond line')
         nt.assert_equal(fourth['text'], u'♬ †øU †øU ¥ºu T0µ ♪')
+
 
 if __name__ == "__main__":
     unittest.main()

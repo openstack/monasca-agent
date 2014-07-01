@@ -16,6 +16,7 @@ STATSD_PORT = 8126
 
 
 class DummyReporter(threading.Thread):
+
     def __init__(self, metrics_aggregator):
         threading.Thread.__init__(self)
         self.finished = threading.Event()
@@ -24,7 +25,6 @@ class DummyReporter(threading.Thread):
         self.metrics = None
         self.finished = False
         self.start()
-
 
     def run(self):
         while not self.finished:
@@ -38,18 +38,18 @@ class DummyReporter(threading.Thread):
 
 
 class JMXTestCase(unittest.TestCase):
+
     def setUp(self):
         aggregator = MetricsAggregator("test_host")
         self.server = Server(aggregator, "localhost", STATSD_PORT)
         pid_file = PidFile('dogstatsd')
         self.reporter = DummyReporter(aggregator)
-        
+
         self.t1 = threading.Thread(target=self.server.start)
         self.t1.start()
 
         confd_path = os.path.realpath(os.path.join(os.path.abspath(__file__), "..", "jmx_yamls"))
-        JMXFetch.init(confd_path, {'dogstatsd_port':STATSD_PORT}, get_logging_config(), 15)
-
+        JMXFetch.init(confd_path, {'dogstatsd_port': STATSD_PORT}, get_logging_config(), 15)
 
     def tearDown(self):
         self.server.stop()
@@ -69,9 +69,12 @@ class JMXTestCase(unittest.TestCase):
 
         self.assertTrue(type(metrics) == type([]))
         self.assertTrue(len(metrics) > 0)
-        self.assertEquals(len([t for t in metrics if t['metric'] == "tomcat.threads.busy" and "instance:tomcat_instance" in t['dimensions']]), 2, metrics)
-        self.assertEquals(len([t for t in metrics if t['metric'] == "tomcat.bytes_sent" and "instance:tomcat_instance" in t['dimensions']]), 0, metrics)
-        self.assertTrue(len([t for t in metrics if "jvm." in t['metric'] and "instance:tomcat_instance" in t['dimensions']]) > 4, metrics)
+        self.assertEquals(len([t for t in metrics if t[
+                          'metric'] == "tomcat.threads.busy" and "instance:tomcat_instance" in t['dimensions']]), 2, metrics)
+        self.assertEquals(len([t for t in metrics if t[
+                          'metric'] == "tomcat.bytes_sent" and "instance:tomcat_instance" in t['dimensions']]), 0, metrics)
+        self.assertTrue(len([t for t in metrics if "jvm." in t['metric']
+                             and "instance:tomcat_instance" in t['dimensions']]) > 4, metrics)
 
 
 if __name__ == "__main__":

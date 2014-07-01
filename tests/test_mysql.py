@@ -2,7 +2,9 @@ import unittest
 from tests.common import load_check
 import time
 
+
 class TestMySql(unittest.TestCase):
+
     def setUp(self):
         # This should run on pre-2.7 python so no skiptest
         self.skip = False
@@ -13,11 +15,11 @@ class TestMySql(unittest.TestCase):
 
     def testChecks(self):
         if not self.skip:
-            agent_config = { 'mysql_server': 'localhost',
-                'mysql_user': "datadog",
-                'mysql_pass': "phQOrbaXem0kP8JHri1qSMRS",
-                'version': '0.1',
-                'api_key': 'toto' }
+            agent_config = {'mysql_server': 'localhost',
+                            'mysql_user': "datadog",
+                            'mysql_pass': "phQOrbaXem0kP8JHri1qSMRS",
+                            'version': '0.1',
+                            'api_key': 'toto'}
 
             # Initialize the check from checks_d
             c = load_check('mysql', {'init_config': {}, 'instances': {}}, agent_config)
@@ -31,6 +33,6 @@ class TestMySql(unittest.TestCase):
             self.check.run()
             metrics = self.check.get_metrics()
             self.assertTrue(len(metrics) >= 16, metrics)
-        
+
 if __name__ == '__main__':
     unittest.main()

@@ -14,7 +14,9 @@ PORT1 = 37017
 PORT2 = 37018
 MAX_WAIT = 150
 
+
 class TestMongo(unittest.TestCase):
+
     def wait4mongo(self, process, port):
         # Somehow process.communicate() hangs
         out = process.stdout
@@ -68,8 +70,10 @@ class TestMongo(unittest.TestCase):
 
     def tearDown(self):
         try:
-            if "p1" in dir(self): self.p1.terminate()
-            if "p2" in dir(self): self.p2.terminate()
+            if "p1" in dir(self):
+                self.p1.terminate()
+            if "p2" in dir(self):
+                self.p2.terminate()
         except Exception:
             logging.getLogger().exception("Cannot terminate mongod instances")
 
@@ -79,7 +83,7 @@ class TestMongo(unittest.TestCase):
             'instances': [{
                 'server': "mongodb://localhost:%s/test" % PORT1
             },
-            {
+                {
                 'server': "mongodb://localhost:%s/test" % PORT2
             }]
         }
@@ -111,7 +115,7 @@ class TestMongo(unittest.TestCase):
         for m in metrics:
             metric_name = m[0]
             if metric_name in metric_val_checks:
-                self.assertTrue( metric_val_checks[metric_name]( m[2] ) )
+                self.assertTrue(metric_val_checks[metric_name](m[2]))
 
         # Run the check against our running server
         self.check.check(self.config['instances'][1])
@@ -129,7 +133,7 @@ class TestMongo(unittest.TestCase):
         for m in metrics:
             metric_name = m[0]
             if metric_name in metric_val_checks:
-                self.assertTrue( metric_val_checks[metric_name]( m[2] ) )
+                self.assertTrue(metric_val_checks[metric_name](m[2]))
 
     def testMongoOldConfig(self):
         raise SkipTest('Requires MongoDB')
@@ -173,7 +177,7 @@ class TestMongo(unittest.TestCase):
         for m in metrics:
             metric_name = m[0]
             if metric_name in metric_val_checks:
-                self.assertTrue( metric_val_checks[metric_name]( m[2] ) )
+                self.assertTrue(metric_val_checks[metric_name](m[2]))
 
         # Test the second mongodb instance
         self.check = load_check('mongo', conf2, self.agent_config2)
@@ -194,7 +198,7 @@ class TestMongo(unittest.TestCase):
         for m in metrics:
             metric_name = m[0]
             if metric_name in metric_val_checks:
-                self.assertTrue( metric_val_checks[metric_name]( m[2] ) )
+                self.assertTrue(metric_val_checks[metric_name](m[2]))
 
 if __name__ == '__main__':
     unittest.main()

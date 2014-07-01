@@ -24,6 +24,7 @@ FLUSH_LOGGING_INITIAL = 5
 
 
 class Collector(object):
+
     """
     The collector is responsible for collecting data from each check and
     passing it along to the emitters, who send it to their final destination.
@@ -43,12 +44,13 @@ class Collector(object):
 
         self._checks = []
         self._legacy_checks = [
-# todo dogstreams should be removed or moved over to a standard output type
-#            Dogstreams.init(log, self.agent_config)  # dogstreams
+            # todo dogstreams should be removed or moved over to a standard output type
+            # Dogstreams.init(log, self.agent_config)  # dogstreams
         ]
 
         # add system checks
-        # todo all these (legacy and system) should be moved to the newer AgentCheck class rather than check
+        # todo all these (legacy and system) should be moved to the newer
+        # AgentCheck class rather than check
         if self.os == 'windows':
             legacy_checks = [w32.Disk(log),
                              w32.IO(log),
@@ -66,8 +68,10 @@ class Collector(object):
         self._legacy_checks.extend(legacy_checks)
 
         if checksd:
-            self.initialized_checks_d = checksd['initialized_checks']  # is of type {check_name: check}
-            self.init_failed_checks_d = checksd['init_failed_checks']  # is of type {check_name: {error, traceback}}
+            # is of type {check_name: check}
+            self.initialized_checks_d = checksd['initialized_checks']
+            # is of type {check_name: {error, traceback}}
+            self.init_failed_checks_d = checksd['init_failed_checks']
 
     def _emit(self, payload):
         """ Send the payload via the emitter. """
@@ -94,7 +98,8 @@ class Collector(object):
             log.info("Finished run #%s. Collection time: %ss. Emit time: %ss" %
                      (self.run_count, round(collect_duration, 2), round(self.emit_duration, 2)))
             if self.run_count == FLUSH_LOGGING_INITIAL:
-                log.info("First flushes done, next flushes will be logged every %s flushes." % FLUSH_LOGGING_PERIOD)
+                log.info("First flushes done, next flushes will be logged every %s flushes." %
+                         FLUSH_LOGGING_PERIOD)
 
         else:
             log.debug("Finished run #%s. Collection time: %ss. Emit time: %ss" %
@@ -110,12 +115,12 @@ class Collector(object):
         metrics['monagent.collector.collection.time'] = collection_time
         if collection_time > MAX_COLLECTION_TIME:
             log.info("Collection time (s) is high: %.1f, metrics count: %d, events count: %d" %
-                             (collection_time, num_metrics, num_events))
+                     (collection_time, num_metrics, num_events))
 
         metrics['monagent.collector.emit.time'] = emit_time
         if emit_time is not None and emit_time > MAX_EMIT_TIME:
             log.info("Emit time (s) is high: %.1f, metrics count: %d, events count: %d" %
-                             (emit_time, num_metrics, num_events))
+                     (emit_time, num_metrics, num_events))
 
         return metrics
 

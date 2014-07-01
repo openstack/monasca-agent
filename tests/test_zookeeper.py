@@ -1,6 +1,8 @@
 import unittest
 from StringIO import StringIO
+
 from tests.common import get_check
+
 
 CONFIG = """
 init_config:
@@ -11,7 +13,9 @@ instances:
       dimensions: {}
 """
 
+
 class TestZookeeper(unittest.TestCase):
+
     def test_zk_stat_parsing_lt_v344(self):
         Zookeeper, instances = get_check('zk', CONFIG)
         stat_response = """Zookeeper version: 3.2.2--1, built on 03/16/2010 07:31 GMT
@@ -32,16 +36,16 @@ Mode: leader
 Node count: 487
 """
         expected = [
-            ('zookeeper.latency.min',              -10),
-            ('zookeeper.latency.avg',                0),
-            ('zookeeper.latency.max',            20007),
-            ('zookeeper.bytes_received',    101032173L),
-            ('zookeeper.bytes_sent',                0L),
-            ('zookeeper.connections',                6),
-            ('zookeeper.bytes_outstanding',         0L),
-            ('zookeeper.zxid.epoch',                 1),
-            ('zookeeper.zxid.count',          55024071),
-            ('zookeeper.nodes',                    487L),
+            ('zookeeper.latency.min', -10),
+            ('zookeeper.latency.avg', 0),
+            ('zookeeper.latency.max', 20007),
+            ('zookeeper.bytes_received', 101032173L),
+            ('zookeeper.bytes_sent', 0L),
+            ('zookeeper.connections', 6),
+            ('zookeeper.bytes_outstanding', 0L),
+            ('zookeeper.zxid.epoch', 1),
+            ('zookeeper.zxid.count', 55024071),
+            ('zookeeper.nodes', 487L),
         ]
 
         buf = StringIO(stat_response)
@@ -71,16 +75,16 @@ Mode: leader
 Node count: 487
 """
         expected = [
-            ('zookeeper.latency.min',              -10),
-            ('zookeeper.latency.avg',                0),
-            ('zookeeper.latency.max',            20007),
-            ('zookeeper.bytes_received',    101032173L),
-            ('zookeeper.bytes_sent',                0L),
-            ('zookeeper.connections',                1),
-            ('zookeeper.bytes_outstanding',         0L),
-            ('zookeeper.zxid.epoch',                 1),
-            ('zookeeper.zxid.count',          55024071),
-            ('zookeeper.nodes',                    487L),
+            ('zookeeper.latency.min', -10),
+            ('zookeeper.latency.avg', 0),
+            ('zookeeper.latency.max', 20007),
+            ('zookeeper.bytes_received', 101032173L),
+            ('zookeeper.bytes_sent', 0L),
+            ('zookeeper.connections', 1),
+            ('zookeeper.bytes_outstanding', 0L),
+            ('zookeeper.zxid.epoch', 1),
+            ('zookeeper.zxid.count', 55024071),
+            ('zookeeper.nodes', 487L),
         ]
 
         buf = StringIO(stat_response)
@@ -88,4 +92,3 @@ Node count: 487
 
         self.assertEquals(dimensions, {'mode': 'leader'})
         self.assertEquals(metrics, expected)
-

@@ -32,7 +32,7 @@ class SQLServer(AgentCheck):
             if row['type'] not in VALID_METRIC_TYPES:
                 self.log.error('%s has an invalid metric type: %s' % (row['name'], row['type']))
             self.METRICS.append((row['name'], row['type'], row['counter_name'],
-                                row.get('instance_name', ''), row.get('tag_by', None)))
+                                 row.get('instance_name', ''), row.get('tag_by', None)))
 
         # Cache connections
         self.connections = {}
@@ -76,8 +76,8 @@ class SQLServer(AgentCheck):
                 self.connections[conn_key] = conn
             except Exception, e:
                 cx = "%s - %s" % (host, database)
-                raise Exception("Unable to connect to SQL Server for instance %s.\n %s" \
-                    % (cx, traceback.format_exc()))
+                raise Exception("Unable to connect to SQL Server for instance %s.\n %s"
+                                % (cx, traceback.format_exc()))
 
         conn = self.connections[conn_key]
         cursor = conn.cursor()
@@ -137,4 +137,3 @@ class SQLServer(AgentCheck):
             dimensions[tag_by] = instance_name.strip()
             metric_func = getattr(self, mtype)
             metric_func(mname, value, dimensions=dimensions)
-

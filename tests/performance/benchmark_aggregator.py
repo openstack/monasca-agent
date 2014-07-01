@@ -6,8 +6,6 @@ Performance tests for the agent/dogstatsd metrics aggregator.
 from monagent.common.aggregator import MetricsAggregator
 
 
-
-
 class TestAggregatorPerf(object):
 
     FLUSH_COUNT = 10
@@ -58,4 +56,4 @@ class TestAggregatorPerf(object):
 if __name__ == '__main__':
     t = TestAggregatorPerf()
     t.test_dogstatsd_aggregation_perf()
-    #t.test_checksd_aggregation_perf()
+    # t.test_checksd_aggregation_perf()

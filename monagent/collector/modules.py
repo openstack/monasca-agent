@@ -38,7 +38,7 @@ def load_qualified_module(full_module_name, path=None):
 
 def module_name_for_filename(filename):
     """Given the name of a Python file, find an appropropriate module name.
-    
+
     This involves determining whether the file is within a package, and
     determining the name of same."""
     all_segments = filename.split(os.sep)
@@ -54,7 +54,7 @@ def module_name_for_filename(filename):
 def get_module(name):
     """Given either an absolute path to a Python file or a module name, load
     and return a Python module.
-    
+
     If the module is already loaded, takes no action."""
     if name.startswith('/'):
         basename, modulename = module_name_for_filename(name)

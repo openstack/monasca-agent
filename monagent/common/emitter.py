@@ -34,8 +34,10 @@ def http_emitter(message, log, url):
     headers = post_headers(payload)
 
     try:
-        proxy_handler = urllib2.ProxyHandler({})  # Make sure no proxy is autodetected for this localhost connection
-        opener = urllib2.build_opener(proxy_handler)  # Should this be installed as the default opener and reused?
+        # Make sure no proxy is autodetected for this localhost connection
+        proxy_handler = urllib2.ProxyHandler({})
+        # Should this be installed as the default opener and reused?
+        opener = urllib2.build_opener(proxy_handler)
         request = urllib2.Request(url, payload, headers)
         response = opener.open(request)
         try:

@@ -30,6 +30,7 @@ log = logging.getLogger('monstatsd')
 
 
 class Monstatsd(Daemon):
+
     """ This class is the monstatsd daemon. """
 
     def __init__(self, pid_file, server, reporter, autorestart):
@@ -107,7 +108,8 @@ def init_monstatsd(config_path=None, use_watchdog=False):
     if non_local_traffic:
         server_host = ''
 
-    server = Server(aggregator, server_host, port, forward_to_host=forward_to_host, forward_to_port=forward_to_port)
+    server = Server(aggregator, server_host, port, forward_to_host=forward_to_host,
+                    forward_to_port=forward_to_port)
 
     return reporter, server, c
 

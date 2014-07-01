@@ -17,6 +17,7 @@ class Services(object):
 
 
 class HAProxy(AgentCheck):
+
     def __init__(self, name, init_config, agent_config):
         AgentCheck.__init__(self, name, init_config, agent_config)
 
@@ -60,7 +61,8 @@ class HAProxy(AgentCheck):
 
         process_events = instance.get('status_check', self.init_config.get('status_check', False))
 
-        self._process_data(data, collect_aggregates_only, process_events, url=url, collect_status_metrics=collect_status_metrics)
+        self._process_data(data, collect_aggregates_only, process_events,
+                           url=url, collect_status_metrics=collect_status_metrics)
 
     def _fetch_data(self, url, username, password):
         ''' Hit a given URL and return the parsed json '''
@@ -95,7 +97,7 @@ class HAProxy(AgentCheck):
         # Holds a list of dictionaries describing each system
         data_list = []
 
-        for line in data[1:]: # Skip the first line
+        for line in data[1:]:  # Skip the first line
             if not line.strip():
                 continue
             data_dict = {}
@@ -123,7 +125,6 @@ class HAProxy(AgentCheck):
             if collect_status_metrics and 'status' in data_dict and 'pxname' in data_dict:
                 hosts_statuses[(data_dict['pxname'], data_dict['status'])] += 1
 
-
             if data_dict['svname'] in Services.ALL:
                 data_list.append(data_dict)
 
@@ -143,7 +144,7 @@ class HAProxy(AgentCheck):
         return data
 
     def _process_status_metric(self, hosts_statuses):
-        agg_statuses = defaultdict(lambda:{'available':0, 'unavailable':0})
+        agg_statuses = defaultdict(lambda: {'available': 0, 'unavailable': 0})
         for (service, status), count in hosts_statuses.iteritems():
             status = status.lower()
 
@@ -196,7 +197,7 @@ class HAProxy(AgentCheck):
         for data in data_list:
             hostname = data['svname']
             service_name = data['pxname']
-            key = "%s:%s" % (hostname,service_name)
+            key = "%s:%s" % (hostname, service_name)
             status = self.host_status[url][key]
 
             if status is None:
@@ -227,17 +228,18 @@ class HAProxy(AgentCheck):
                 alert_type = "success"
             else:
                 alert_type = "info"
-            title = "HAProxy %s front-end reported %s back and %s" % (service_name, hostname, status)
+            title = "HAProxy %s front-end reported %s back and %s" % (
+                service_name, hostname, status)
 
         return {
-             'timestamp': int(time.time() - lastchg),
-             'event_type': EVENT_TYPE,
-             'host': hostname,
-             'msg_title': title,
-             'alert_type': alert_type,
-             "source_type_name": SOURCE_TYPE_NAME,
-             "event_object": hostname,
-             "dimensions": {"frontend": service_name, "host": hostname}
+            'timestamp': int(time.time() - lastchg),
+            'event_type': EVENT_TYPE,
+            'host': hostname,
+            'msg_title': title,
+            'alert_type': alert_type,
+            "source_type_name": SOURCE_TYPE_NAME,
+            "event_object": hostname,
+            "dimensions": {"frontend": service_name, "host": hostname}
         }
 
     @staticmethod

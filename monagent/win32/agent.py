@@ -24,6 +24,7 @@ from collector.jmxfetch import JMXFetch
 log = logging.getLogger(__name__)
 RESTART_INTERVAL = 24 * 60 * 60  # Defaults to 1 day
 
+
 class AgentSvc(win32serviceutil.ServiceFramework):
     _svc_name_ = "DatadogAgent"
     _svc_display_name_ = "Datadog Agent"
@@ -50,7 +51,7 @@ class AgentSvc(win32serviceutil.ServiceFramework):
             'forwarder': DDForwarder(config),
             'collector': DDAgent(agentConfig),
             'dogstatsd': DogstatsdProcess(config),
-            'pup':       PupProcess(config),
+            'pup': PupProcess(config),
         }
 
     def SvcStop(self):
@@ -105,6 +106,7 @@ class AgentSvc(win32serviceutil.ServiceFramework):
 
 
 class DDAgent(multiprocessing.Process):
+
     def __init__(self, agentConfig, start_event=True):
         multiprocessing.Process.__init__(self, name='ddagent')
         self.config = agentConfig
@@ -137,7 +139,7 @@ class DDAgent(multiprocessing.Process):
     def get_emitters(self):
         emitters = [http_emitter]
         custom = [s.strip() for s in
-            self.config.get('custom_emitters', '').split(',')]
+                  self.config.get('custom_emitters', '').split(',')]
         for emitter_spec in custom:
             if not emitter_spec:
                 continue
@@ -145,7 +147,9 @@ class DDAgent(multiprocessing.Process):
 
         return emitters
 
+
 class DDForwarder(multiprocessing.Process):
+
     def __init__(self, agentConfig):
         multiprocessing.Process.__init__(self, name='ddforwarder')
         self.config = agentConfig
@@ -159,7 +163,7 @@ class DDForwarder(multiprocessing.Process):
             port = 17123
         else:
             port = int(port)
-        app_config = get_config(parse_args = False)
+        app_config = get_config(parse_args=False)
         self.forwarder = Application(port, app_config, watchdog=False)
         self.forwarder.run()
 
@@ -167,7 +171,9 @@ class DDForwarder(multiprocessing.Process):
         log.debug("Windows Service - Stopping forwarder")
         self.forwarder.stop()
 
+
 class DogstatsdProcess(multiprocessing.Process):
+
     def __init__(self, agentConfig):
         multiprocessing.Process.__init__(self, name='dogstatsd')
         self.config = agentConfig
@@ -185,7 +191,9 @@ class DogstatsdProcess(multiprocessing.Process):
         self.reporter.stop()
         self.reporter.join()
 
+
 class PupProcess(multiprocessing.Process):
+
     def __init__(self, agentConfig):
         multiprocessing.Process.__init__(self, name='pup')
         self.config = agentConfig

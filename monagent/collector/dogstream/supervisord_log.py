@@ -20,9 +20,9 @@ SUPERVISORD_LEVELS = [
     'INFO',   # normal informational output
 
     # IGNORED...
-    #'DEBG',   # messages useful for users trying to debug configurations
-    #'TRAC',   # messages useful to developers trying to debug plugins
-    #'BLAT',   # messages useful for developers trying to debug supervisor
+    # 'DEBG',   # messages useful for users trying to debug configurations
+    # 'TRAC',   # messages useful to developers trying to debug plugins
+    # 'BLAT',   # messages useful for developers trying to debug supervisor
 
 ]
 
@@ -35,6 +35,7 @@ ALERT_TYPES_MAPPING = {"CRIT": "error",
 # regex to extract the 'program' supervisord is managing from the text
 program_matcher = re.compile("^\w+:? '?(?P<program>\w+)'?")
 
+
 def parse_supervisord(log, line):
     """
     Parse the supervisord.log line into a dogstream event
@@ -42,7 +43,8 @@ def parse_supervisord(log, line):
     if len(line) == 0:
         log.info("Skipping empty line of supervisord.log")
         return None
-    if log: log.debug('PARSE supervisord:%s' % line)
+    if log:
+        log.debug('PARSE supervisord:%s' % line)
     line_items = line.split(' ', 3)
     timestamp = ' '.join(line_items[:2])
     timestamp_parts = timestamp.split(',')
@@ -52,7 +54,7 @@ def parse_supervisord(log, line):
     event_type = line_items[2]
     msg = line_items[3]
     if event_type in SUPERVISORD_LEVELS:
-        alert_type=ALERT_TYPES_MAPPING.get(event_type, 'info')
+        alert_type = ALERT_TYPES_MAPPING.get(event_type, 'info')
         if alert_type == 'info' and 'success' in msg:
             alert_type = 'success'
         event = dict(timestamp=date,
@@ -62,7 +64,8 @@ def parse_supervisord(log, line):
         program_result = program_matcher.match(msg)
         if program_result:
             event['event_object'] = program_result.groupdict()['program']
-        if log: log.debug('RESULT supervisord:%s' %event)
+        if log:
+            log.debug('RESULT supervisord:%s' % event)
         return [event]
     else:
         return None

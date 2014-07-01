@@ -22,6 +22,7 @@ import random
 
 
 class KafkaCheck(AgentCheck):
+
     def check(self, instance):
         consumer_groups = self.read_config(instance, 'consumer_groups',
                                            cast=self._validate_consumer_groups)
@@ -131,4 +132,5 @@ consumer_groups:
             return host_ports
         except Exception, e:
             self.log.exception(e)
-            raise Exception('Could not parse %s. Must be in the form of `host0:port0,host1:port1,host2:port2`' % val)
+            raise Exception(
+                'Could not parse %s. Must be in the form of `host0:port0,host1:port1,host2:port2`' % val)

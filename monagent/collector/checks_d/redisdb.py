@@ -12,59 +12,58 @@ class Redis(AgentCheck):
     subkeys = ['keys', 'expires']
     GAUGE_KEYS = {
         # Append-only metrics
-        'aof_last_rewrite_time_sec':    'redis.aof.last_rewrite_time',
-        'aof_rewrite_in_progress':      'redis.aof.rewrite',
-        'aof_current_size':             'redis.aof.size',
-        'aof_buffer_length':            'redis.aof.buffer_length',
+        'aof_last_rewrite_time_sec': 'redis.aof.last_rewrite_time',
+        'aof_rewrite_in_progress': 'redis.aof.rewrite',
+        'aof_current_size': 'redis.aof.size',
+        'aof_buffer_length': 'redis.aof.buffer_length',
 
         # Network
-        'connected_clients':            'redis.net.clients',
-        'connected_slaves':             'redis.net.slaves',
-        'rejected_connections':         'redis.net.rejected',
+        'connected_clients': 'redis.net.clients',
+        'connected_slaves': 'redis.net.slaves',
+        'rejected_connections': 'redis.net.rejected',
 
         # clients
-        'blocked_clients':              'redis.clients.blocked',
-        'client_biggest_input_buf':     'redis.clients.biggest_input_buf',
-        'client_longest_output_list':   'redis.clients.longest_output_list',
+        'blocked_clients': 'redis.clients.blocked',
+        'client_biggest_input_buf': 'redis.clients.biggest_input_buf',
+        'client_longest_output_list': 'redis.clients.longest_output_list',
 
         # Keys
-        'evicted_keys':                 'redis.keys.evicted',
-        'expired_keys':                 'redis.keys.expired',
+        'evicted_keys': 'redis.keys.evicted',
+        'expired_keys': 'redis.keys.expired',
 
         # stats
-        'keyspace_hits':                'redis.stats.keyspace_hits',
-        'keyspace_misses':              'redis.stats.keyspace_misses',
-        'latest_fork_usec':             'redis.perf.latest_fork_usec',
+        'keyspace_hits': 'redis.stats.keyspace_hits',
+        'keyspace_misses': 'redis.stats.keyspace_misses',
+        'latest_fork_usec': 'redis.perf.latest_fork_usec',
 
         # pubsub
-        'pubsub_channels':              'redis.pubsub.channels',
-        'pubsub_patterns':              'redis.pubsub.patterns',
+        'pubsub_channels': 'redis.pubsub.channels',
+        'pubsub_patterns': 'redis.pubsub.patterns',
 
         # rdb
-        'rdb_bgsave_in_progress':       'redis.rdb.bgsave',
-        'rdb_changes_since_last_save':  'redis.rdb.changes_since_last',
-        'rdb_last_bgsave_time_sec':     'redis.rdb.last_bgsave_time',
+        'rdb_bgsave_in_progress': 'redis.rdb.bgsave',
+        'rdb_changes_since_last_save': 'redis.rdb.changes_since_last',
+        'rdb_last_bgsave_time_sec': 'redis.rdb.last_bgsave_time',
 
         # memory
-        'mem_fragmentation_ratio':      'redis.mem.fragmentation_ratio',
-        'used_memory':                  'redis.mem.used',
-        'used_memory_lua':              'redis.mem.lua',
-        'used_memory_peak':             'redis.mem.peak',
-        'used_memory_rss':              'redis.mem.rss',
+        'mem_fragmentation_ratio': 'redis.mem.fragmentation_ratio',
+        'used_memory': 'redis.mem.used',
+        'used_memory_lua': 'redis.mem.lua',
+        'used_memory_peak': 'redis.mem.peak',
+        'used_memory_rss': 'redis.mem.rss',
 
         # replication
-        'master_last_io_seconds_ago':   'redis.replication.last_io_seconds_ago',
-        'master_sync_in_progress':      'redis.replication.sync',
-        'master_sync_left_bytes':       'redis.replication.sync_left_bytes',
-
+        'master_last_io_seconds_ago': 'redis.replication.last_io_seconds_ago',
+        'master_sync_in_progress': 'redis.replication.sync',
+        'master_sync_left_bytes': 'redis.replication.sync_left_bytes',
     }
 
     RATE_KEYS = {
         # cpu
-        'used_cpu_sys':                 'redis.cpu.sys',
-        'used_cpu_sys_children':        'redis.cpu.sys_children',
-        'used_cpu_user':                'redis.cpu.user',
-        'used_cpu_user_children':       'redis.cpu.user_children',
+        'used_cpu_sys': 'redis.cpu.sys',
+        'used_cpu_sys_children': 'redis.cpu.sys_children',
+        'used_cpu_user': 'redis.cpu.user',
+        'used_cpu_user_children': 'redis.cpu.user_children',
     }
 
     def __init__(self, name, init_config, agent_config):
@@ -75,6 +74,7 @@ class Redis(AgentCheck):
     def get_library_versions():
         try:
             import redis
+
             version = redis.__version__
         except ImportError:
             version = "Not Found"
@@ -107,20 +107,22 @@ class Redis(AgentCheck):
 
     def _get_conn(self, instance):
         import redis
+
         key = self._generate_instance_key(instance)
         if key not in self.connections:
             try:
-                
+
                 # Only send useful parameters to the redis client constructor
                 list_params = ['host', 'port', 'db', 'password', 'socket_timeout',
-                    'connection_pool', 'charset', 'errors', 'unix_socket_path']
+                               'connection_pool', 'charset', 'errors', 'unix_socket_path']
 
                 connection_params = dict((k, instance[k]) for k in list_params if k in instance)
 
                 self.connections[key] = redis.Redis(**connection_params)
 
             except TypeError:
-                raise Exception("You need a redis library that supports authenticated connections. Try sudo easy_install redis.")
+                raise Exception(
+                    "You need a redis library that supports authenticated connections. Try sudo easy_install redis.")
 
         return self.connections[key]
 
@@ -143,12 +145,13 @@ class Redis(AgentCheck):
         try:
             info = conn.info()
         except ValueError, e:
-            # This is likely a know issue with redis library 2.0.0 
+            # This is likely a know issue with redis library 2.0.0
             # See https://github.com/DataDog/dd-agent/issues/374 for details
             import redis
+
             raise Exception("""Unable to run the info command. This is probably an issue with your version of the python-redis library.
                 Minimum required version: 2.4.11
-                Your current version: %s 
+                Your current version: %s
                 Please upgrade to a newer version by running sudo easy_install redis""" % redis.__version__)
 
         latency_ms = round((time.time() - start) * 1000, 2)
@@ -172,8 +175,10 @@ class Redis(AgentCheck):
                     self.gauge(metric, val, dimensions=db_dimensions)
 
         # Save a subset of db-wide statistics
-        [self.gauge(self.GAUGE_KEYS[k], info[k], dimensions=dimensions) for k in self.GAUGE_KEYS if k in info]
-        [self.rate (self.RATE_KEYS[k],  info[k], dimensions=dimensions) for k in self.RATE_KEYS  if k in info]
+        [self.gauge(self.GAUGE_KEYS[k], info[k], dimensions=dimensions)
+         for k in self.GAUGE_KEYS if k in info]
+        [self.rate(self.RATE_KEYS[k], info[k], dimensions=dimensions)
+         for k in self.RATE_KEYS if k in info]
 
         # Save the number of commands.
         self.rate('redis.net.commands', info['total_commands_processed'], dimensions=dimensions)
@@ -182,7 +187,8 @@ class Redis(AgentCheck):
         try:
             import redis
         except ImportError:
-            raise Exception('Python Redis Module can not be imported. Please check the installation instruction on the Datadog Website')
+            raise Exception(
+                'Python Redis Module can not be imported. Please check the installation instruction on the Datadog Website')
 
         if (not "host" in instance or not "port" in instance) and not "unix_socket_path" in instance:
             raise Exception("You must specify a host/port couple or a unix_socket_path")

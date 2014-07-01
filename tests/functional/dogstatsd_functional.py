@@ -1,13 +1,3 @@
 """
 Functional tests for dogstatsd.
 """
-
-
-
-
-
-
-
-
-
-

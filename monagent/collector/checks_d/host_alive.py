@@ -9,6 +9,7 @@ from monagent.collector.checks.services_checks import ServicesCheck, Status
 
 
 class HostAlive(ServicesCheck):
+
     """Inherit ServicesCheck class to test if a host is alive or not"""
 
     def __init__(self, name, init_config, agent_config, instances=None):
@@ -84,11 +85,11 @@ class HostAlive(ServicesCheck):
 
         if instance['alive_test'] == 'ssh':
             success = self._test_ssh(instance['host_name'],
-                      self.init_config.get('ssh_port'),
-                      self.init_config.get('ssh_timeout'))
+                                     self.init_config.get('ssh_port'),
+                                     self.init_config.get('ssh_timeout'))
         elif instance['alive_test'] == 'ping':
             success = self._test_ping(instance['host_name'],
-                self.init_config.get('ping_timeout'))
+                                      self.init_config.get('ping_timeout'))
         else:
             self.log.info("Unrecognized alive_test " + instance['alive_test'])
 
@@ -99,4 +100,3 @@ class HostAlive(ServicesCheck):
             self.gauge('host_alive', 1, dimensions=dimensions)
             self.log.error("Host down: " + instance['host_name'])
             return Status.DOWN, "DOWN"
-

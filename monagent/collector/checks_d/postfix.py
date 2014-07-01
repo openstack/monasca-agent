@@ -4,6 +4,7 @@ from monagent.collector.checks import AgentCheck
 
 
 class PostfixCheck(AgentCheck):
+
     """This check provides metrics on the number of messages in a given postfix queue
 
     WARNING: the user that dd-agent runs as must have sudo access for the 'find' command
@@ -16,6 +17,7 @@ class PostfixCheck(AgentCheck):
         "directory" - the value of 'postconf -h queue_directory'
         "queues" - the postfix mail queues you would like to get message count totals for
     """
+
     def check(self, instance):
         config = self._get_config(instance)
 
@@ -67,4 +69,3 @@ class PostfixCheck(AgentCheck):
             # these can be retrieved in a single graph statement
             # for example:
             #     sum:postfix.queue.size{instance:postfix-2,queue:incoming,host:hostname.domain.tld}
-
