@@ -22,6 +22,7 @@ class Skip(Exception):
     Raised by :class:`Jenkins` when it comes across
     a build or job that should be excluded from being checked.
     """
+
     def __init__(self, reason, dir_name):
         message = 'skipping build or job at %s because %s' % (dir_name, reason)
         Exception.__init__(self, message)
@@ -66,15 +67,15 @@ class Jenkins(AgentCheck):
             d = dict([(k, v.text) for k, v in kv_pairs if v is not None])
 
             try:
-                d['branch'] = tree.find('actions')\
-                    .find('hudson.plugins.git.util.BuildData')\
-                    .find('buildsByBranchName')\
-                    .find('entry')\
-                    .find('hudson.plugins.git.util.Build')\
-                    .find('revision')\
-                    .find('branches')\
-                    .find('hudson.plugins.git.Branch')\
-                    .find('name')\
+                d['branch'] = tree.find('actions') \
+                    .find('hudson.plugins.git.util.BuildData') \
+                    .find('buildsByBranchName') \
+                    .find('entry') \
+                    .find('hudson.plugins.git.util.Build') \
+                    .find('revision') \
+                    .find('branches') \
+                    .find('hudson.plugins.git.Branch') \
+                    .find('name') \
                     .text
             except Exception:
                 pass
@@ -104,9 +105,9 @@ class Jenkins(AgentCheck):
                             continue
 
                         output = {
-                            'job_name':     job_name,
-                            'timestamp':    timestamp,
-                            'event_type':   'build result'
+                            'job_name': job_name,
+                            'timestamp': timestamp,
+                            'event_type': 'build result'
                         }
                         output.update(build_metadata)
                         self.high_watermarks[instance_key][job_name] = timestamp
@@ -123,8 +124,8 @@ class Jenkins(AgentCheck):
             # so that we only send events that occured after the agent
             # started.
             # (Setting high_watermarks in the next statement prevents
-            #  any kind of infinite loop (assuming nothing ever sets
-            #  high_watermarks to None again!))
+            # any kind of infinite loop (assuming nothing ever sets
+            # high_watermarks to None again!))
             self.high_watermarks[instance.get('name')] = defaultdict(lambda: 0)
             self.check(instance, create_event=False)
 
@@ -150,7 +151,8 @@ class Jenkins(AgentCheck):
                     dimensions = {'job_name': output['job_name']}
                     if 'branch' in output:
                         dimensions['branch'] = output['branch']
-                    self.gauge("jenkins.job.duration", float(output['duration'])/1000.0, dimensions=dimensions)
+                    self.gauge("jenkins.job.duration", float(
+                        output['duration']) / 1000.0, dimensions=dimensions)
 
                     if output['result'] == 'SUCCESS':
                         self.increment('jenkins.job.success', dimensions=dimensions)
@@ -168,4 +170,3 @@ class Jenkins(AgentCheck):
                 'jenkins_home': agentConfig.get('hudson_home'),
             }]
         }
-

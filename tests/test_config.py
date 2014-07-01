@@ -1,4 +1,4 @@
-## -*- coding: latin-1 -*-
+# -*- coding: latin-1 -*-
 import unittest
 import os.path
 import tempfile
@@ -8,10 +8,12 @@ from monagent.common.util import PidFile, is_valid_hostname
 
 
 class TestConfig(unittest.TestCase):
+
     def testWhiteSpaceConfig(self):
         """Leading whitespace confuse ConfigParser
         """
-        agent_config = get_config(cfg_path=os.path.join(os.path.dirname(os.path.realpath(__file__)), "badconfig.conf"))
+        agent_config = get_config(
+            cfg_path=os.path.join(os.path.dirname(os.path.realpath(__file__)), "badconfig.conf"))
         self.assertEquals(agent_config["api_key"], "1234")
 
     def testGoodPidFie(self):
@@ -38,10 +40,10 @@ class TestConfig(unittest.TestCase):
             u'i-123445',
             u'5dfsdfsdrrfsv',
             u'432498234234A'
-            u'234234235235235235', # Couldn't find anything in the RFC saying it's not valid
+            u'234234235235235235',  # Couldn't find anything in the RFC saying it's not valid
             u'A45fsdff045-dsflk4dfsdc.ret43tjssfd',
             u'4354sfsdkfj4TEfdlv56gdgdfRET.dsf-dg',
-            u'r'*255,
+            u'r' * 255,
         ]
 
         not_valid_hostnames = [
@@ -60,4 +62,3 @@ class TestConfig(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

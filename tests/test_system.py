@@ -1,5 +1,4 @@
 import unittest
-import logging
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__file__)
@@ -7,13 +6,14 @@ logger = logging.getLogger(__file__)
 from monagent.collector.checks.system.unix import *
 from common import get_check
 
+
 class TestSystem(unittest.TestCase):
     def testCPU(self):
         global logger
         cpu = Cpu(logger)
         res = cpu.check()
         # Make sure we sum up to 100% (or 99% in the case of macs)
-        assert abs(reduce(lambda a,b:a+b, res.values(), 0) - 100) <= 5, res
+        assert abs(reduce(lambda a, b: a + b, res.values(), 0) - 100) <= 5, res
 
     lion_df_i = """Filesystem                        512-blocks      Used Available Capacity  iused    ifree %iused  Mounted onto
 /dev/disk1                         487932936 220080040 267340896    46% 27574003 33417612   45%   /
@@ -22,7 +22,7 @@ map -hosts                                 0         0         0   100%        0
 map auto_home                              0         0         0   100%        0        0  100%   /home
 localhost:/KJDS7Bgpbp1QglL9lBwOe6  487932936 487932936         0   100%        0        0  100%   /Volumes/MobileBackups
 /dev/disk2s1                        62309376   5013120  57296256     9%        0        0  100%   /Volumes/NO name"""
-        
+
     lion_df_k = """Filesystem                        1024-blocks      Used Available Capacity  Mounted onto
 /dev/disk1                          243966468 110040020 133670448    46%    /
 devfs                                     187       187         0   100%    /dev
@@ -87,7 +87,7 @@ none                  985964       1  985963    1% /lib/init/rw
         # Test parsing linux output.
         res = disk.parse_df_output(TestSystem.linux_df_k, 'linux2')
         assert len(res) == 22
-        assert res[0][:4] == ["/dev/sda1", 8256952, 5600592,  2236932], res[0]
+        assert res[0][:4] == ["/dev/sda1", 8256952, 5600592, 2236932], res[0]
         assert res[2][:4] == ["/dev/sdf", 52403200, 40909112, 11494088], res[2]
         assert res[3][:4] == ["nfs:/abc/def/ghi/jkl/mno/pqr", 52403200, 40909112, 11494088], res[3]
         assert res[4][:4] == ["/dev/sdg", 52403200, 40909112, 11494088], res[4]
@@ -95,21 +95,22 @@ none                  985964       1  985963    1% /lib/init/rw
         # Test parsing linux output but filter some of the nodes.
         blacklist_re = re.compile('/dev/xvdi.*')
         res = disk.parse_df_output(TestSystem.linux_df_k, 'linux2', blacklist_re=blacklist_re)
-        assert res[0][:4] == ["/dev/sda1", 8256952, 5600592,  2236932], res[0]
+        assert res[0][:4] == ["/dev/sda1", 8256952, 5600592, 2236932], res[0]
         assert len(res) == 15, len(res)
 
-        res = disk.parse_df_output(TestSystem.linux_df_i, 'linux2', inodes = True)
+        res = disk.parse_df_output(TestSystem.linux_df_i, 'linux2', inodes=True)
         assert res[0][:4] == ["/dev/sda1", 524288, 171642, 352646], res[0]
         assert res[1][:4] == ["/dev/sdb", 27525120, 147, 27524973], res[1]
         assert res[2][:4] == ["/dev/sdf", 46474080, 478386, 45995694], res[2]
 
-        res = disk.parse_df_output(TestSystem.linux_df_k, 'linux2', use_mount = True)
-        assert res[0][:4] == ["/", 8256952, 5600592,  2236932], res[0]
+        res = disk.parse_df_output(TestSystem.linux_df_k, 'linux2', use_mount=True)
+        assert res[0][:4] == ["/", 8256952, 5600592, 2236932], res[0]
         assert res[2][:4] == ["/data", 52403200, 40909112, 11494088], res[2]
         assert res[3][:4] == ["/data2", 52403200, 40909112, 11494088], res[3]
         assert res[4][:4] == ["/data3", 52403200, 40909112, 11494088], res[4]
-        assert res[-1][:4] == ["/var/lib/postgresql/9.1/index05", 31441920, 3519356, 27922564], res[-1]
-        
+        assert res[-1][:4] == ["/var/lib/postgresql/9.1/index05",
+                               31441920, 3519356, 27922564], res[-1]
+
     def test_collecting_disk_metrics(self):
         """Testing disk stats gathering"""
         if Platform.is_unix():
@@ -124,7 +125,10 @@ none                  985964       1  985963    1% /lib/init/rw
         global logger
         res = Memory(logger).check()
         if Platform.is_linux():
-            for k in ("swapTotal", "swapFree", "swapPctFree", "swapUsed", "physTotal", "physFree", "physUsed", "physBuffers", "physCached", "physUsable", "physPctUsable", "physShared"):
+            for k in (
+                    "swapTotal", "swapFree", "swapPctFree", "swapUsed", "physTotal", "physFree",
+                    "physUsed", "physBuffers", "physCached", "physUsable", "physPctUsable",
+                    "physShared"):
                 assert k in res, res
             assert res["swapTotal"] == res["swapFree"] + res["swapUsed"]
             assert res["physTotal"] == res["physFree"] + res["physUsed"]
@@ -150,7 +154,8 @@ sda               0.00     0.00    0.00    0.00     0.00     0.00     0.00     0
         checker = IO(logger)
         results = checker._parse_linux2(debian_iostat_output)
         self.assertTrue('sda' in results)
-        for key in ('io_read_req_sec', 'io_write_req_sec', 'io_read_kbytes_sec', 'io_write_kbytes_sec'):
+        for key in (
+                'io_read_req_sec', 'io_write_req_sec', 'io_read_kbytes_sec', 'io_write_kbytes_sec'):
             self.assertTrue(key in results['sda'], 'key %r not in results["sda"]' % key)
             self.assertEqual(results['sda'][key], '0.00')
 
@@ -171,16 +176,17 @@ sda               0.00     0.00  0.00  0.00     0.00     0.00     0.00     0.00 
         checker = IO(logger)
         results = checker._parse_linux2(centos_iostat_output)
         self.assertTrue('sda' in results)
-        for key in ('io_read_req_sec', 'io_write_req_sec', 'io_read_kbytes_sec', 'io_write_kbytes_sec'):
+        for key in (
+                'io_read_req_sec', 'io_write_req_sec', 'io_read_kbytes_sec', 'io_write_kbytes_sec'):
             self.assertTrue(key in results['sda'], 'key %r not in results["sda"]' % key)
             self.assertEqual(results['sda'][key], '0.00')
 
         # iostat -o -d -c 2 -w 1
         # OS X 10.8.3 (internal SSD + USB flash attached)
-        darwin_iostat_output = """          disk0           disk1 
-    KB/t tps  MB/s     KB/t tps  MB/s 
-   21.11  23  0.47    20.01   0  0.00 
-    6.67   3  0.02     0.00   0  0.00 
+        darwin_iostat_output = """          disk0           disk1
+    KB/t tps  MB/s     KB/t tps  MB/s
+   21.11  23  0.47    20.01   0  0.00
+    6.67   3  0.02     0.00   0  0.00
 """
         checker = IO(logger)
         results = checker._parse_darwin(darwin_iostat_output)
@@ -189,11 +195,11 @@ sda               0.00     0.00  0.00  0.00     0.00     0.00     0.00     0.00 
 
         self.assertEqual(
             results["disk0"],
-            {'system.io.bytes_per_s': float(0.02 * 10**6),}
+            {'system.io.bytes_per_s': float(0.02 * 10 ** 6), }
         )
         self.assertEqual(
             results["disk1"],
-            {'system.io.bytes_per_s': float(0),}
+            {'system.io.bytes_per_s': float(0), }
         )
 
     def testNetwork(self):

@@ -18,6 +18,7 @@ HAPROXY_OPEN_CFG = os.path.realpath(os.path.join(os.path.dirname(__file__), "hap
 
 
 class HaproxyTestCase(unittest.TestCase):
+
     def _wait(self, url):
         loop = 0
         while True:
@@ -28,13 +29,13 @@ class HaproxyTestCase(unittest.TestCase):
                 authhandler = urllib2.HTTPBasicAuthHandler(passman)
                 opener = urllib2.build_opener(authhandler)
                 urllib2.install_opener(opener)
-                url = "%s%s" % (url,STATS_URL)
+                url = "%s%s" % (url, STATS_URL)
                 req = urllib2.Request(url)
                 request = urllib2.urlopen(req)
                 break
             except Exception:
                 time.sleep(0.5)
-                loop+=1
+                loop += 1
                 if loop >= MAX_WAIT:
                     break
 
@@ -56,10 +57,10 @@ class HaproxyTestCase(unittest.TestCase):
             self.cfg.write(open(config_fn).read())
             self.cfg.flush()
             # Start haproxy
-            self.process = subprocess.Popen(["haproxy","-d", "-f", self.cfg.name],
-                        executable="haproxy",
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE)
+            self.process = subprocess.Popen(["haproxy", "-d", "-f", self.cfg.name],
+                                            executable="haproxy",
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE)
 
             # Wait for it to really start
             self._wait("http://localhost:3834/stats")
@@ -95,9 +96,9 @@ class HaproxyTestCase(unittest.TestCase):
         self.assertTrue(len(metrics) > 0)
 
         self.assertEquals(len([t for t in metrics
-            if t[0] == "haproxy.backend.bytes.in_rate"]), 4, metrics)
+                               if t[0] == "haproxy.backend.bytes.in_rate"]), 4, metrics)
         self.assertEquals(len([t for t in metrics
-            if t[0] == "haproxy.frontend.session.current"]), 1, metrics)
+                               if t[0] == "haproxy.frontend.session.current"]), 1, metrics)
 
         inst = config['instances'][0]
         data = self.check._fetch_data(inst['url'], inst['username'], inst['password'])
@@ -158,9 +159,9 @@ class HaproxyTestCase(unittest.TestCase):
         self.assertTrue(len(metrics) > 0)
 
         self.assertEquals(len([t for t in metrics
-            if t[0] == "haproxy.backend.bytes.in_rate"]), 4, metrics)
+                               if t[0] == "haproxy.backend.bytes.in_rate"]), 4, metrics)
         self.assertEquals(len([t for t in metrics
-            if t[0] == "haproxy.frontend.session.current"]), 1, metrics)
+                               if t[0] == "haproxy.frontend.session.current"]), 1, metrics)
 
     def tearDown(self):
         if self.process is not None:
@@ -169,4 +170,3 @@ class HaproxyTestCase(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

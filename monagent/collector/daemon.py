@@ -51,8 +51,10 @@ START_COMMANDS = ['start', 'restart', 'foreground']
 log = logging.getLogger('collector')
 
 
-# todo the collector has daemon code but is always run in foreground mode from the supervisor, is there a reason for the daemon code then?
+# todo the collector has daemon code but is always run in foreground mode
+# from the supervisor, is there a reason for the daemon code then?
 class CollectorDaemon(Daemon):
+
     """
     The agent class is a daemon that runs the collector in a background process.
     """
@@ -115,7 +117,7 @@ class CollectorDaemon(Daemon):
 
         # Run the main loop.
         while self.run_forever:
-            
+
             # enable profiler if needed
             profiled = False
             if config.get('profile', False) and config.get('profile').lower() == 'yes':
@@ -127,7 +129,7 @@ class CollectorDaemon(Daemon):
                     log.debug("Agent profiling is enabled")
                 except Exception:
                     log.warn("Cannot enable profiler")
-                    
+
             # Do the work.
             self.collector.run()
 
@@ -171,7 +173,7 @@ class CollectorDaemon(Daemon):
         watchdog = None
         if agentConfig.get("watchdog", True):
             watchdog = Watchdog(check_freq * WATCHDOG_MULTIPLIER,
-                max_mem_mb=agentConfig.get('limit_memory_consumption', None))
+                                max_mem_mb=agentConfig.get('limit_memory_consumption', None))
             watchdog.reset()
         return watchdog
 
@@ -185,6 +187,7 @@ class CollectorDaemon(Daemon):
         if self.collector:
             self.collector.stop()
         sys.exit(AgentSupervisor.RESTART_EXIT_STATUS)
+
 
 def main():
     options, args = get_parsed_args()
@@ -295,20 +298,20 @@ def main():
             return 0
         else:
             print("Fix the invalid yaml files above in order to start the Monitoring agent. "
-                    "A useful external tool for yaml parsing can be found at "
-                    "http://yaml-online-parser.appspot.com/")
+                  "A useful external tool for yaml parsing can be found at "
+                  "http://yaml-online-parser.appspot.com/")
             return 1
 
     elif 'jmx' == command:
         from collector.jmxfetch import JMX_LIST_COMMANDS, JMXFetch
-       
+
         if len(args) < 2 or args[1] not in JMX_LIST_COMMANDS.keys():
             print "#" * 80
             print "JMX tool to be used to help configuring your JMX checks."
             print "See http://docs.datadoghq.com/integrations/java/ for more information"
             print "#" * 80
             print "\n"
-            print "You have to specify one of the following command:" 
+            print "You have to specify one of the following command:"
             for command, desc in JMX_LIST_COMMANDS.iteritems():
                 print "      - %s [OPTIONAL: LIST OF CHECKS]: %s" % (command, desc)
             print "Example: sudo /etc/init.d/mon-agent jmx list_matching_attributes tomcat jmx solr"
@@ -318,11 +321,11 @@ def main():
             jmx_command = args[1]
             checks_list = args[2:]
             confd_directory = get_confd_path(get_os())
-            should_run  = JMXFetch.init(confd_directory, agentConfig, get_logging_config(), 15, jmx_command, checks_list, reporter="console")
+            should_run = JMXFetch.init(
+                confd_directory, agentConfig, get_logging_config(), 15, jmx_command, checks_list, reporter="console")
             if not should_run:
                 print "Couldn't find any valid JMX configuration in your conf.d directory: %s" % confd_directory
                 print "Have you enabled any JMX check ?"
-
 
     return 0
 

@@ -59,6 +59,7 @@ def get_parsed_args():
 def get_version():
     return __version__
 
+
 def skip_leading_wsp(f):
     "Works on a file, returns a file-like object"
     return StringIO("\n".join(map(string.strip, f.readlines())))
@@ -177,7 +178,8 @@ def get_config_path(cfg_path=None, os_name=None):
         return os.path.join(path, AGENT_CONF)
 
     # If all searches fail, exit the agent with an error
-    sys.stderr.write("Please supply a configuration file at %s or in the directory where the Agent is currently deployed.\n" % bad_path)
+    sys.stderr.write(
+        "Please supply a configuration file at %s or in the directory where the Agent is currently deployed.\n" % bad_path)
     sys.exit(3)
 
 
@@ -234,14 +236,16 @@ def get_config(parse_args=True, cfg_path=None, options=None):
 
         # Concerns only Windows
         if config.has_option('Main', 'use_web_info_page'):
-            agent_config['use_web_info_page'] = config.get('Main', 'use_web_info_page').lower() in ("yes", "true")
+            agent_config['use_web_info_page'] = config.get(
+                'Main', 'use_web_info_page').lower() in ("yes", "true")
         else:
             agent_config['use_web_info_page'] = True
 
         # local traffic only? Default to no
         agent_config['non_local_traffic'] = False
         if config.has_option('Main', 'non_local_traffic'):
-            agent_config['non_local_traffic'] = config.get('Main', 'non_local_traffic').lower() in ("yes", "true")
+            agent_config['non_local_traffic'] = config.get(
+                'Main', 'non_local_traffic').lower() in ("yes", "true")
 
         if config.has_option('Main', 'check_freq'):
             try:
@@ -267,14 +271,15 @@ def get_config(parse_args=True, cfg_path=None, options=None):
             else:
                 agent_config[key] = value
 
-        #Forwarding to external statsd server
+        # Forwarding to external statsd server
         if config.has_option('Main', 'statsd_forward_host'):
             agent_config['statsd_forward_host'] = config.get('Main', 'statsd_forward_host')
             if config.has_option('Main', 'statsd_forward_port'):
                 agent_config['statsd_forward_port'] = int(config.get('Main', 'statsd_forward_port'))
 
         # normalize 'yes'/'no' to boolean
-        monstatsd_defaults['monstatsd_normalize'] = _is_affirmative(monstatsd_defaults['monstatsd_normalize'])
+        monstatsd_defaults['monstatsd_normalize'] = _is_affirmative(
+            monstatsd_defaults['monstatsd_normalize'])
 
         # Optional config
         # FIXME not the prettiest code ever...
@@ -298,7 +303,8 @@ def get_config(parse_args=True, cfg_path=None, options=None):
             # Older version, single log support
             log_path = config.get("Main", "dogstream_log")
             if config.has_option("Main", "dogstream_line_parser"):
-                agent_config["dogstreams"] = ':'.join([log_path, config.get("Main", "dogstream_line_parser")])
+                agent_config["dogstreams"] = ':'.join(
+                    [log_path, config.get("Main", "dogstream_line_parser")])
             else:
                 agent_config["dogstreams"] = log_path
 
@@ -314,13 +320,15 @@ def get_config(parse_args=True, cfg_path=None, options=None):
                 agent_config['WMI'][key] = value
 
         if config.has_option("Main", "limit_memory_consumption") and \
-            config.get("Main", "limit_memory_consumption") is not None:
-            agent_config["limit_memory_consumption"] = int(config.get("Main", "limit_memory_consumption"))
+                config.get("Main", "limit_memory_consumption") is not None:
+            agent_config["limit_memory_consumption"] = int(
+                config.get("Main", "limit_memory_consumption"))
         else:
             agent_config["limit_memory_consumption"] = None
 
         if config.has_option("Main", "skip_ssl_validation"):
-            agent_config["skip_ssl_validation"] = _is_affirmative(config.get("Main", "skip_ssl_validation"))
+            agent_config["skip_ssl_validation"] = _is_affirmative(
+                config.get("Main", "skip_ssl_validation"))
 
         agent_config['Api'] = get_mon_api_config(config)
 
@@ -333,7 +341,8 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         sys.exit(2)
 
     except ConfigParser.NoOptionError, e:
-        sys.stderr.write('There are some items missing from your config file, but nothing fatal [%s]' % e)
+        sys.stderr.write(
+            'There are some items missing from your config file, but nothing fatal [%s]' % e)
 
     # Storing proxy settings in the agent_config
     agent_config['proxy_settings'] = get_proxy(agent_config)
@@ -357,10 +366,11 @@ def set_win32_cert_path():
     else:
         cur_path = os.path.dirname(__file__)
         crt_path = os.path.join(cur_path, 'packaging', 'mon-agent', 'win32',
-                'install_files', 'ca-certificates.crt')
+                                'install_files', 'ca-certificates.crt')
     import tornado.simple_httpclient
     log.info("Windows certificate path: %s" % crt_path)
     tornado.simple_httpclient._DEFAULT_CA_CERTS = crt_path
+
 
 def get_proxy(agent_config, use_system_settings=False):
     proxy_settings = {}
@@ -378,7 +388,8 @@ def get_proxy(agent_config, use_system_settings=False):
         proxy_settings['user'] = agent_config.get('proxy_user', None)
         proxy_settings['password'] = agent_config.get('proxy_password', None)
         proxy_settings['system_settings'] = False
-        log.debug("Proxy Settings: %s:%s@%s:%s" % (proxy_settings['user'], "*****", proxy_settings['host'], proxy_settings['port']))
+        log.debug("Proxy Settings: %s:%s@%s:%s" %
+                  (proxy_settings['user'], "*****", proxy_settings['host'], proxy_settings['port']))
         return proxy_settings
 
     # If no proxy configuration was specified in agent.conf
@@ -404,11 +415,13 @@ def get_proxy(agent_config, use_system_settings=False):
                 if len(creds) == 2:
                     proxy_settings['password'] = creds[1]
 
-            log.debug("Proxy Settings: %s:%s@%s:%s" % (proxy_settings['user'], "*****", proxy_settings['host'], proxy_settings['port']))
+            log.debug("Proxy Settings: %s:%s@%s:%s" % (
+                proxy_settings['user'], "*****", proxy_settings['host'], proxy_settings['port']))
             return proxy_settings
 
     except Exception, e:
-        log.debug("Error while trying to fetch proxy settings using urllib %s. Proxy is probably not set" % str(e))
+        log.debug(
+            "Error while trying to fetch proxy settings using urllib %s. Proxy is probably not set" % str(e))
 
     log.debug("No proxy configured")
 
@@ -486,11 +499,13 @@ def check_yaml(conf_path):
                     valid_instances = False
                     break
         if not valid_instances:
-            raise Exception('You need to have at least one instance defined in the YAML file for this check')
+            raise Exception(
+                'You need to have at least one instance defined in the YAML file for this check')
         else:
             return check_config
     finally:
         f.close()
+
 
 def load_check_directory(agent_config):
     ''' Return the initialized checks from checks_d, and a mapping of checks that failed to
@@ -514,11 +529,13 @@ def load_check_directory(agent_config):
     try:
         confd_path = get_confd_path(osname)
     except PathNotFound, e:
-        log.error("No conf.d folder found at '%s' or in the directory where the Agent is currently deployed.\n" % e.args[0])
+        log.error(
+            "No conf.d folder found at '%s' or in the directory where the Agent is currently deployed.\n" % e.args[0])
         sys.exit(3)
 
     # Start JMXFetch if needed
-    JMXFetch.init(confd_path, agent_config, get_logging_config(), DEFAULT_CHECK_FREQUENCY, JMX_COLLECT_COMMAND)
+    JMXFetch.init(confd_path, agent_config, get_logging_config(),
+                  DEFAULT_CHECK_FREQUENCY, JMX_COLLECT_COMMAND)
 
     # For backwards-compatability with old style checks, we have to load every
     # checks_d module and check for a corresponding config OR check if the old
@@ -529,7 +546,8 @@ def load_check_directory(agent_config):
     for check in itertools.chain(*checks_paths):
         check_name = os.path.basename(check).split('.')[0]
         if check_name in initialized_checks or check_name in init_failed_checks:
-            log.debug('Skipping check %s because it has already been loaded from another location', check)
+            log.debug(
+                'Skipping check %s because it has already been loaded from another location', check)
             continue
         try:
             check_module = imp.load_source('checksd_%s' % check_name, check)
@@ -540,9 +558,9 @@ def load_check_directory(agent_config):
             conf_path = os.path.join(confd_path, '%s.yaml' % check_name)
             if os.path.exists(conf_path):
                 # There is a configuration file for that check but the module can't be imported
-                init_failed_checks[check_name] = {'error':e, 'traceback':traceback_message}
+                init_failed_checks[check_name] = {'error': e, 'traceback': traceback_message}
                 log.exception('Unable to import check module %s.py from checks_d' % check_name)
-            else: # There is no conf for that check. Let's not spam the logs for it.
+            else:  # There is no conf for that check. Let's not spam the logs for it.
                 log.debug('Unable to import check module %s.py from checks_d' % check_name)
             continue
 
@@ -571,7 +589,7 @@ def load_check_directory(agent_config):
             except Exception, e:
                 log.exception("Unable to parse yaml config in %s" % conf_path)
                 traceback_message = traceback.format_exc()
-                init_failed_checks[check_name] = {'error':e, 'traceback':traceback_message}
+                init_failed_checks[check_name] = {'error': e, 'traceback': traceback_message}
                 continue
         elif hasattr(check_class, 'parse_agent_config'):
             # FIXME: Remove this check once all old-style checks are gone
@@ -618,7 +636,7 @@ def load_check_directory(agent_config):
         except Exception, e:
             log.exception('Unable to initialize check %s' % check_name)
             traceback_message = traceback.format_exc()
-            init_failed_checks[check_name] = {'error':e, 'traceback':traceback_message}
+            init_failed_checks[check_name] = {'error': e, 'traceback': traceback_message}
         else:
             initialized_checks[check_name] = c
 
@@ -633,8 +651,8 @@ def load_check_directory(agent_config):
 
     log.info('initialized checks_d checks: %s' % initialized_checks.keys())
     log.info('initialization failed checks_d checks: %s' % init_failed_checks.keys())
-    return {'initialized_checks':initialized_checks.values(),
-            'init_failed_checks':init_failed_checks,
+    return {'initialized_checks': initialized_checks.values(),
+            'init_failed_checks': init_failed_checks,
             }
 
 
@@ -643,6 +661,7 @@ def load_check_directory(agent_config):
 
 def get_log_date_format():
     return "%Y-%m-%d %H:%M:%S %Z"
+
 
 def get_log_format(logger_name):
     if get_os() != 'windows':
@@ -713,10 +732,12 @@ def get_logging_config(cfg_path=None):
         logging_config['log_level'] = levels.get(config.get('Main', 'log_level'))
 
     if config.has_option('Main', 'log_to_syslog'):
-        logging_config['log_to_syslog'] = config.get('Main', 'log_to_syslog').strip().lower() in ['yes', 'true', 1]
+        logging_config['log_to_syslog'] = config.get(
+            'Main', 'log_to_syslog').strip().lower() in ['yes', 'true', 1]
 
     if config.has_option('Main', 'log_to_event_viewer'):
-        logging_config['log_to_event_viewer'] = config.get('Main', 'log_to_event_viewer').strip().lower() in ['yes', 'true', 1]
+        logging_config['log_to_event_viewer'] = config.get(
+            'Main', 'log_to_event_viewer').strip().lower() in ['yes', 'true', 1]
 
     if config.has_option('Main', 'syslog_host'):
         host = config.get('Main', 'syslog_host').strip()
@@ -733,7 +754,8 @@ def get_logging_config(cfg_path=None):
             logging_config['syslog_port'] = None
 
     if config.has_option('Main', 'disable_file_logging'):
-        logging_config['disable_file_logging'] = config.get('Main', 'disable_file_logging').strip().lower() in ['yes', 'true', 1]
+        logging_config['disable_file_logging'] = config.get(
+            'Main', 'disable_file_logging').strip().lower() in ['yes', 'true', 1]
     else:
         logging_config['disable_file_logging'] = False
 
@@ -760,7 +782,8 @@ def initialize_logging(logger_name):
             # make sure the log directory is writeable
             # NOTE: the entire directory needs to be writable so that rotation works
             if os.access(os.path.dirname(log_file), os.R_OK | os.W_OK):
-                file_handler = logging.handlers.RotatingFileHandler(log_file, maxBytes=LOGGING_MAX_BYTES, backupCount=1)
+                file_handler = logging.handlers.RotatingFileHandler(
+                    log_file, maxBytes=LOGGING_MAX_BYTES, backupCount=1)
                 formatter = logging.Formatter(get_log_format(logger_name), get_log_date_format())
                 file_handler.setFormatter(formatter)
 
@@ -783,7 +806,8 @@ def initialize_logging(logger_name):
                         sys_log_addr = "/var/run/syslog"
 
                 handler = SysLogHandler(address=sys_log_addr, facility=SysLogHandler.LOG_DAEMON)
-                handler.setFormatter(logging.Formatter(get_syslog_format(logger_name), get_log_date_format()))
+                handler.setFormatter(
+                    logging.Formatter(get_syslog_format(logger_name), get_log_date_format()))
                 root_log = logging.getLogger()
                 root_log.addHandler(handler)
             except Exception, e:
@@ -794,8 +818,10 @@ def initialize_logging(logger_name):
         if get_os() == 'windows' and logging_config['log_to_event_viewer']:
             try:
                 from logging.handlers import NTEventLogHandler
-                nt_event_handler = NTEventLogHandler(logger_name,get_win32service_file('windows', 'win32service.pyd'), 'Application')
-                nt_event_handler.setFormatter(logging.Formatter(get_syslog_format(logger_name), get_log_date_format()))
+                nt_event_handler = NTEventLogHandler(
+                    logger_name, get_win32service_file('windows', 'win32service.pyd'), 'Application')
+                nt_event_handler.setFormatter(
+                    logging.Formatter(get_syslog_format(logger_name), get_log_date_format()))
                 nt_event_handler.setLevel(logging.ERROR)
                 app_log = logging.getLogger(logger_name)
                 app_log.addHandler(nt_event_handler)
@@ -834,8 +860,7 @@ def get_mon_api_config(config):
             dim_list = [dim.split(':') for dim in config.get('Main', 'dimensions').split(',')]
             mon_api_config['dimensions'] = {key.strip(): value.strip() for key, value in dim_list}
         except ValueError:
-            mon_api_config['dimensions'] = { }
-
+            mon_api_config['dimensions'] = {}
 
     if config.has_section("Api"):
         options = {"url": config.get,

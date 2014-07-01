@@ -6,9 +6,11 @@ from monagent.collector.checks import AgentCheck
 
 
 class CouchDb(AgentCheck):
+
     """Extracts stats from CouchDB via its REST API
     http://wiki.apache.org/couchdb/Runtime_Statistics
     """
+
     def _create_metric(self, data, dimensions=None):
         overall_stats = data.get('stats', {})
         for key, stats in overall_stats.items():
@@ -16,7 +18,7 @@ class CouchDb(AgentCheck):
                 if val['current'] is not None:
                     metric_name = '.'.join(['couchdb', key, metric])
                     self.gauge(metric_name, val['current'], dimensions=dimensions)
-        
+
         for db_name, db_stats in data.get('databases', {}).items():
             for name, val in db_stats.items():
                 if name in ['doc_count', 'disk_size'] and val is not None:
@@ -80,7 +82,6 @@ class CouchDb(AgentCheck):
         if not agentConfig.get('couchdb_server'):
             return False
 
-        
         return {
             'instances': [{
                 'server': agentConfig.get('couchdb_server'),

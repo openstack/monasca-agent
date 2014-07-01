@@ -21,7 +21,7 @@ class Transaction(object):
 
         self._id = None
         self._error_count = 0
-        self._next_flush = datetime.now()        
+        self._next_flush = datetime.now()
         self._size = None
 
     def get_id(self):
@@ -35,7 +35,7 @@ class Transaction(object):
         self._error_count += 1
 
     def get_error_count(self):
-        return self._error_count 
+        return self._error_count
 
     def get_size(self):
         if self._size is None:
@@ -64,6 +64,7 @@ class Transaction(object):
 
 
 class TransactionManager(object):
+
     """Holds any transaction derived object list and make sure they
        are all commited, without exceeding parameters (throttling, memory consumption) """
 
@@ -76,7 +77,7 @@ class TransactionManager(object):
 
         self._transactions = []  # List of all non commited transactions
         self._total_count = 0  # Maintain size/count not to recompute it everytime
-        self._total_size = 0 
+        self._total_size = 0
         self._flush_count = 0
         self._transactions_received = 0
         self._transactions_flushed = 0
@@ -96,7 +97,7 @@ class TransactionManager(object):
 
     def print_queue_stats(self):
         log.debug("Queue size: at %s, %s transaction(s), %s KB" %
-                  (time.time(), self._total_count, (self._total_size/1024)))
+                  (time.time(), self._total_count, (self._total_size / 1024)))
 
     def get_tr_id(self):
         self._counter += 1
@@ -110,8 +111,8 @@ class TransactionManager(object):
         # Check the size
         tr_size = tr.get_size()
 
-        log.debug("New transaction to add, total size of queue would be: %s KB" % 
-                  ((self._total_size + tr_size)/1024))
+        log.debug("New transaction to add, total size of queue would be: %s KB" %
+                  ((self._total_size + tr_size) / 1024))
 
         if (self._total_size + tr_size) > self._MAX_QUEUE_SIZE:
             log.warn("Queue is too big, removing old transactions...")
@@ -147,7 +148,7 @@ class TransactionManager(object):
 
         count = len(to_flush)
         should_log = self._flush_count + 1 <= FLUSH_LOGGING_INITIAL or \
-                     (self._flush_count + 1) % FLUSH_LOGGING_PERIOD == 0
+            (self._flush_count + 1) % FLUSH_LOGGING_PERIOD == 0
         if count > 0:
             if should_log:
                 log.info("Flushing %s transaction%s during flush #%s" %
@@ -165,7 +166,8 @@ class TransactionManager(object):
                 log.debug("No transaction to flush during flush #%s" % str(self._flush_count + 1))
 
         if self._flush_count + 1 == FLUSH_LOGGING_INITIAL:
-            log.info("First flushes done, next flushes will be logged every %s flushes." % FLUSH_LOGGING_PERIOD)
+            log.info("First flushes done, next flushes will be logged every %s flushes." %
+                     FLUSH_LOGGING_PERIOD)
 
         self._flush_count += 1
 
@@ -185,7 +187,7 @@ class TransactionManager(object):
             if hasattr(td, 'total_seconds'):
                 delay = td.total_seconds()
             else:
-                delay = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10.0**6
+                delay = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10 ** 6) / 10.0 ** 6
 
             if delay <= 0:
                 tr = self._trs_to_flush.pop()
@@ -203,7 +205,7 @@ class TransactionManager(object):
                 if tornado_ioloop._running:
                     tornado_ioloop.add_timeout(time.time() + delay, lambda: self.flush_next())
                 elif self._flush_without_ioloop:
-                    # Tornado is no started (ie, unittests), do it manually: BLOCKING                    
+                    # Tornado is no started (ie, unittests), do it manually: BLOCKING
                     time.sleep(delay)
                     self.flush_next()
         else:
@@ -213,7 +215,7 @@ class TransactionManager(object):
         tr.inc_error_count()
         tr.compute_next_flush(self._MAX_WAIT_FOR_REPLAY)
         log.warn("Transaction %d in error (%s error%s), it will be replayed after %s" %
-                 (tr.get_id(), tr.get_error_count(), plural(tr.get_error_count()),  tr.get_next_flush()))
+                 (tr.get_id(), tr.get_error_count(), plural(tr.get_error_count()), tr.get_next_flush()))
 
     def tr_success(self, tr):
         log.debug("Transaction %d completed" % tr.get_id())
@@ -222,5 +224,3 @@ class TransactionManager(object):
         self._total_size += - tr.get_size()
         self._transactions_flushed += 1
         self.print_queue_stats()
-
-

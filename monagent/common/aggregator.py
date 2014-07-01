@@ -22,6 +22,7 @@ RECENT_POINT_THRESHOLD_DEFAULT = 3600
 
 
 class Aggregator(object):
+
     """
     Abstract metric aggregator class.
     """
@@ -57,7 +58,7 @@ class Aggregator(object):
     def packets_per_second(self, interval):
         if interval == 0:
             return 0
-        return round(float(self.count)/interval, 2)
+        return round(float(self.count) / interval, 2)
 
     def submit_metric(self, name, value, mtype, dimensions=None, hostname=None, device_name=None, timestamp=None,
                       sample_rate=1):
@@ -108,12 +109,14 @@ class Aggregator(object):
 
 
 class MetricsBucketAggregator(Aggregator):
+
     """
     A metric aggregator class.
     """
 
     def __init__(self, hostname, interval=1.0, expiry_seconds=300, recent_point_threshold=None):
-        super(MetricsBucketAggregator, self).__init__(hostname, interval, expiry_seconds, recent_point_threshold)
+        super(MetricsBucketAggregator, self).__init__(
+            hostname, interval, expiry_seconds, recent_point_threshold)
         self.metric_by_bucket = {}
         self.last_sample_time_by_context = {}
         self.current_bucket = None
@@ -171,7 +174,8 @@ class MetricsBucketAggregator(Aggregator):
         #  (Set, Gauge, Histogram) do not report if no data is submitted
         for context, last_sample_time in sample_time_by_context.items():
             if last_sample_time < expiry_timestamp:
-                log.debug("%s hasn't been submitted in %ss. Expiring." % (context, self.expiry_seconds))
+                log.debug("%s hasn't been submitted in %ss. Expiring." %
+                          (context, self.expiry_seconds))
                 self.last_sample_time_by_context.pop(context, None)
             else:
                 # The expiration currently only applies to Counters
@@ -197,7 +201,8 @@ class MetricsBucketAggregator(Aggregator):
                     for context, metric in metric_by_context.items():
                         if metric.last_sample_time < expiry_timestamp:
                             # This should never happen
-                            log.warning("%s hasn't been submitted in %ss. Expiring." % (context, self.expiry_seconds))
+                            log.warning("%s hasn't been submitted in %ss. Expiring." %
+                                        (context, self.expiry_seconds))
                             not_sampled_in_this_bucket.pop(context, None)
                             self.last_sample_time_by_context.pop(context, None)
                         else:
@@ -205,21 +210,24 @@ class MetricsBucketAggregator(Aggregator):
                             if isinstance(metric, Counter):
                                 self.last_sample_time_by_context[context] = metric.last_sample_time
                                 not_sampled_in_this_bucket.pop(context, None)
-                    # We need to account for Metrics that have not expired and were not flushed for this bucket
+                    # We need to account for Metrics that have not expired and were not
+                    # flushed for this bucket
                     self.create_empty_metrics(not_sampled_in_this_bucket, expiry_timestamp, bucket_start_timestamp,
                                               metrics)
 
                     del self.metric_by_bucket[bucket_start_timestamp]
         else:
             # Even if there are no metrics in this flush, there may be some non-expired counters
-            #  We should only create these non-expired metrics if we've passed an interval since the last flush
+            # We should only create these non-expired metrics if we've passed an
+            # interval since the last flush
             if flush_cutoff_time >= self.last_flush_cutoff_time + self.interval:
                 self.create_empty_metrics(self.last_sample_time_by_context.copy(), expiry_timestamp,
-                                          flush_cutoff_time-self.interval, metrics)
+                                          flush_cutoff_time - self.interval, metrics)
 
         # Log a warning regarding metrics with old timestamps being submitted
         if self.num_discarded_old_points > 0:
-            log.warn('%s points were discarded as a result of having an old timestamp' % self.num_discarded_old_points)
+            log.warn('%s points were discarded as a result of having an old timestamp' %
+                     self.num_discarded_old_points)
             self.num_discarded_old_points = 0
 
         # Save some stats.
@@ -233,12 +241,14 @@ class MetricsBucketAggregator(Aggregator):
 
 
 class MetricsAggregator(Aggregator):
+
     """
     A metric aggregator class.
     """
 
     def __init__(self, hostname, interval=1.0, expiry_seconds=300, recent_point_threshold=None):
-        super(MetricsAggregator, self).__init__(hostname, interval, expiry_seconds, recent_point_threshold)
+        super(MetricsAggregator, self).__init__(
+            hostname, interval, expiry_seconds, recent_point_threshold)
         self.metrics = {}
         self.metric_type_to_class = {
             'g': Gauge,
@@ -294,14 +304,16 @@ class MetricsAggregator(Aggregator):
         metrics = []
         for context, metric in self.metrics.items():
             if metric.last_sample_time < expiry_timestamp:
-                log.debug("%s hasn't been submitted in %ss. Expiring." % (context, self.expiry_seconds))
+                log.debug("%s hasn't been submitted in %ss. Expiring." %
+                          (context, self.expiry_seconds))
                 del self.metrics[context]
             else:
                 metrics += metric.flush(timestamp, self.interval)
 
         # Log a warning regarding metrics with old timestamps being submitted
         if self.num_discarded_old_points > 0:
-            log.warn('%s points were discarded as a result of having an old timestamp' % self.num_discarded_old_points)
+            log.warn('%s points were discarded as a result of having an old timestamp' %
+                     self.num_discarded_old_points)
             self.num_discarded_old_points = 0
 
         # Save some stats.
@@ -309,4 +321,3 @@ class MetricsAggregator(Aggregator):
         self.total_count += self.count
         self.count = 0
         return metrics
-

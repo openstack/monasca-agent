@@ -8,10 +8,12 @@ log = logging.getLogger(__name__)
 
 
 class MonAPI(object):
+
     """Sends measurements to MonAPI
         Any errors should raise an exception so the transaction calling
         this is not committed
     """
+
     def __init__(self, config):
         """
         Initialize Mon api client connection.

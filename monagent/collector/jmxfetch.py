@@ -1,5 +1,6 @@
 # std
 import yaml
+
 try:
     from yaml import CLoader as Loader
 except ImportError:
@@ -37,13 +38,13 @@ JMX_CHECKS = [
 ]
 JMX_COLLECT_COMMAND = 'collect'
 JMX_LIST_COMMANDS = {
-        'list_everything': 'List every attributes available that has a type supported by JMXFetch',
-        'list_collected_attributes': 'List attributes that will actually be collected by your current instances configuration',
-        'list_matching_attributes': 'List attributes that match at least one of your instances configuration',
-        'list_not_matching_attributes': "List attributes that don't match any of your instances configuration",
-        'list_limited_attributes': "List attributes that do match one of your instances configuration but that are not being collected because it would exceed the number of metrics that can be collected",
-        JMX_COLLECT_COMMAND: "Start the collection of metrics based on your current configuration and display them in the console"
-        }
+    'list_everything': 'List every attributes available that has a type supported by JMXFetch',
+    'list_collected_attributes': 'List attributes that will actually be collected by your current instances configuration',
+    'list_matching_attributes': 'List attributes that match at least one of your instances configuration',
+    'list_not_matching_attributes': "List attributes that don't match any of your instances configuration",
+    'list_limited_attributes': "List attributes that do match one of your instances configuration but that are not being collected because it would exceed the number of metrics that can be collected",
+    JMX_COLLECT_COMMAND: "Start the collection of metrics based on your current configuration and display them in the console"
+}
 
 PYTHON_JMX_STATUS_FILE = 'jmx_status_python.yaml'
 
@@ -55,7 +56,6 @@ class InvalidJMXConfiguration(Exception):
 
 
 class JMXFetch(object):
-
     pid_file = PidFile("jmxfetch")
     pid_file_path = pid_file.get_path()
 
@@ -64,7 +64,8 @@ class JMXFetch(object):
              default_check_frequency, command=None, checks_list=None, reporter=None):
         try:
             command = command or JMX_COLLECT_COMMAND
-            jmx_checks, invalid_checks, java_bin_path, java_options = JMXFetch.should_run(confd_path, checks_list)
+            jmx_checks, invalid_checks, java_bin_path, java_options = JMXFetch.should_run(
+                confd_path, checks_list)
             if len(invalid_checks) > 0:
                 try:
                     JMXFetch.write_status_file(invalid_checks)
@@ -77,8 +78,8 @@ class JMXFetch(object):
                     JMXFetch.stop()
 
                 JMXFetch.start(confd_path, agentConfig, logging_config,
-                    java_bin_path, java_options, default_check_frequency,
-                    jmx_checks, command, reporter)
+                               java_bin_path, java_options, default_check_frequency,
+                               jmx_checks, command, reporter)
                 return True
         except Exception:
             log.exception("Error while initiating JMXFetch")
@@ -86,7 +87,7 @@ class JMXFetch(object):
     @classmethod
     def write_status_file(cls, invalid_checks):
         data = {
-            'timestamp':  time.time(),
+            'timestamp': time.time(),
             'invalid_checks': invalid_checks
         }
         stream = file(os.path.join(tempfile.gettempdir(), PYTHON_JMX_STATUS_FILE), 'w')
@@ -138,7 +139,8 @@ class JMXFetch(object):
                     continue
 
                 try:
-                    is_jmx, check_java_bin_path, check_java_options = JMXFetch.is_jmx_check(check_config, check_name, checks_list)
+                    is_jmx, check_java_bin_path, check_java_options = JMXFetch.is_jmx_check(
+                        check_config, check_name, checks_list)
                     if is_jmx:
                         jmx_checks.append(filename)
                         if java_bin_path is None and check_java_bin_path is not None:
@@ -170,11 +172,13 @@ class JMXFetch(object):
         if is_jmx:
             instances = check_config.get('instances', [])
             if type(instances) != list or len(instances) == 0:
-                raise InvalidJMXConfiguration('You need to have at least one instance defined in the YAML file for this check')
+                raise InvalidJMXConfiguration(
+                    'You need to have at least one instance defined in the YAML file for this check')
 
             for inst in instances:
                 if type(inst) != dict:
-                    raise InvalidJMXConfiguration("Each instance should be a dictionary. %s" % LINK_TO_DOC)
+                    raise InvalidJMXConfiguration(
+                        "Each instance should be a dictionary. %s" % LINK_TO_DOC)
                 host = inst.get('host', None)
                 port = inst.get('port', None)
                 conf = inst.get('conf', init_config.get('conf', None))
@@ -184,22 +188,28 @@ class JMXFetch(object):
                     raise InvalidJMXConfiguration("A numeric port must be specified")
 
                 if conf is None:
-                    log.warning("%s doesn't have a 'conf' section. Only basic JVM metrics will be collected. %s" % (inst, LINK_TO_DOC))
+                    log.warning(
+                        "%s doesn't have a 'conf' section. Only basic JVM metrics will be collected. %s" % (
+                            inst, LINK_TO_DOC))
                 else:
                     if type(conf) != list or len(conf) == 0:
-                        raise InvalidJMXConfiguration("'conf' section should be a list of configurations %s" % LINK_TO_DOC)
+                        raise InvalidJMXConfiguration(
+                            "'conf' section should be a list of configurations %s" % LINK_TO_DOC)
 
                     for config in conf:
                         include = config.get('include', None)
                         if include is None:
-                            raise InvalidJMXConfiguration("Each configuration must have an 'include' section. %s" % LINK_TO_DOC)
+                            raise InvalidJMXConfiguration(
+                                "Each configuration must have an 'include' section. %s" % LINK_TO_DOC)
 
                         if type(include) != dict:
-                            raise InvalidJMXConfiguration("'include' section must be a dictionary %s" % LINK_TO_DOC)
+                            raise InvalidJMXConfiguration(
+                                "'include' section must be a dictionary %s" % LINK_TO_DOC)
 
             if java_bin_path is None:
                 if init_config and init_config.get('java_bin_path'):
-                    # We get the java bin path from the yaml file for backward compatibility purposes
+                    # We get the java bin path from the yaml file for backward compatibility
+                    # purposes
                     java_bin_path = init_config.get('java_bin_path')
 
                 else:
@@ -235,12 +245,15 @@ class JMXFetch(object):
                 return True
             except Exception, e:
                 if "Errno 3" not in str(e):
-                    log.debug("Couldn't determine if JMXFetch is running. We suppose it's not. %s" % str(e))
+                    log.debug(
+                        "Couldn't determine if JMXFetch is running. We suppose it's not. %s" % str(
+                            e))
                 return False
 
         # Else we are on windows, we need another way to check if it's running
         try:
-            import ctypes # Available from python2.5
+            import ctypes  # Available from python2.5
+
             kernel32 = ctypes.windll.kernel32
             SYNCHRONIZE = 0x100000
 
@@ -281,13 +294,16 @@ class JMXFetch(object):
     @classmethod
     def get_path_to_jmxfetch(cls):
         if get_os() != 'windows':
-            return os.path.realpath(os.path.join(os.path.abspath(__file__), "..", "../collector/checks", "libs", JMX_FETCH_JAR_NAME))
+            return os.path.realpath(
+                os.path.join(os.path.abspath(__file__), "..", "../collector/checks", "libs",
+                             JMX_FETCH_JAR_NAME))
 
-        return os.path.realpath(os.path.join(os.path.abspath(__file__), "..", "../../", "jmxfetch", JMX_FETCH_JAR_NAME))
+        return os.path.realpath(
+            os.path.join(os.path.abspath(__file__), "..", "../../", "jmxfetch", JMX_FETCH_JAR_NAME))
 
     @classmethod
     def start(cls, confd_path, agentConfig, logging_config, path_to_java, java_run_opts,
-        default_check_frequency, jmx_checks, command, reporter=None):
+              default_check_frequency, jmx_checks, command, reporter=None):
         statsd_port = agentConfig.get('monstatsd_port', "8125")
 
         if reporter is None:
@@ -302,16 +318,21 @@ class JMXFetch(object):
             path_to_status_file = os.path.join(tempfile.gettempdir(), "jmx_status.yaml")
 
             subprocess_args = [
-                path_to_java, # Path to the java bin
+                path_to_java,  # Path to the java bin
                 '-jar',
-                r"%s" % path_to_jmxfetch, # Path to the jmxfetch jar
-                '--check_period', str(default_check_frequency * 1000),  # Period of the main loop of jmxfetch in ms
-                '--conf_directory', r"%s" % confd_path, # Path of the conf.d directory that will be read by jmxfetch,
-                '--log_level', JAVA_LOGGING_LEVEL.get(logging_config.get("log_level"), "INFO"),  # Log Level: Mapping from Python log level to log4j log levels
-                '--log_location', r"%s" % logging_config.get('jmxfetch_log_file'), # Path of the log file
-                '--reporter',  reporter, # Reporter to use
-                '--status_location', r"%s" % path_to_status_file, # Path to the status file to write
-                command, # Name of the command
+                r"%s" % path_to_jmxfetch,  # Path to the jmxfetch jar
+                # Period of the main loop of jmxfetch in ms
+                '--check_period', str(default_check_frequency * 1000),
+                # Path of the conf.d directory that will be read by jmxfetch,
+                '--conf_directory', r"%s" % confd_path,
+                # Log Level: Mapping from Python log level to log4j log levels
+                '--log_level', JAVA_LOGGING_LEVEL.get(logging_config.get("log_level"), "INFO"),
+                # Path of the log file
+                '--log_location', r"%s" % logging_config.get('jmxfetch_log_file'),
+                '--reporter', reporter,  # Reporter to use
+                # Path to the status file to write
+                '--status_location', r"%s" % path_to_status_file,
+                command,  # Name of the command
             ]
 
             subprocess_args.insert(3, '--check')
@@ -320,7 +341,7 @@ class JMXFetch(object):
 
             if java_run_opts:
                 for opt in java_run_opts.split():
-                    subprocess_args.insert(1,opt)
+                    subprocess_args.insert(1, opt)
 
             log.info("Running %s" % " ".join(subprocess_args))
             if reporter != "console":

@@ -4,6 +4,7 @@ import collections
 
 
 class Plugins(collections.defaultdict):
+
     """A container for the plugin configurations used by the mon-agent.
         This is essentially a defaultdict(dict) but put into a class primarily to make the interface clear, also
         to add a couple of helper methods.

@@ -15,17 +15,18 @@ from monagent.common.config import get_confd_path
 from monagent.common.exceptions import CheckException, NaN, Infinity, UnknownValue
 from monagent.common.util import LaconicFilter, get_hostname, get_os
 
+
 log = logging.getLogger(__name__)
 
 
 # todo convert all checks to the new interface then remove this. Is the LaconicFilter on logs used elsewhere?
-#==============================================================================
+# ==============================================================================
 # DEPRECATED
 # ------------------------------
 # If you are writing your own check, you should inherit from AgentCheck
 # and not this class. This class will be removed in a future version
 # of the agent.
-#==============================================================================
+# ==============================================================================
 class Check(object):
     """
     (Abstract) class for all checks with the ability to:
@@ -38,9 +39,9 @@ class Check(object):
     def __init__(self, logger, agent_config=None):
         # where to store samples, indexed by metric_name
         # metric_name: {("sorted", "dimensions"): [(ts, value), (ts, value)],
-        #                 tuple(dimensions) are stored as a key since lists are not hashable
-        #               None: [(ts, value), (ts, value)]}
-        #                 untagged values are indexed by None
+        # tuple(dimensions) are stored as a key since lists are not hashable
+        # None: [(ts, value), (ts, value)]}
+        # untagged values are indexed by None
         self.agent_config = agent_config
         self._sample_store = {}
         self._counters = {}  # metric_name: bool
@@ -103,13 +104,15 @@ class Check(object):
         "Get all metric names"
         return self._sample_store.keys()
 
-    def save_gauge(self, metric, value, timestamp=None, dimensions=None, hostname=None, device_name=None):
+    def save_gauge(self, metric, value, timestamp=None, dimensions=None, hostname=None,
+                   device_name=None):
         """ Save a gauge value. """
         if not self.is_gauge(metric):
             self.gauge(metric)
         self.save_sample(metric, value, timestamp, dimensions, hostname, device_name)
 
-    def save_sample(self, metric, value, timestamp=None, dimensions=None, hostname=None, device_name=None):
+    def save_sample(self, metric, value, timestamp=None, dimensions=None, hostname=None,
+                    device_name=None):
         """Save a simple sample, evict old values if needed
         """
         if dimensions is None:
@@ -137,8 +140,8 @@ class Check(object):
             if self._sample_store[metric].get(key) is None:
                 self._sample_store[metric][key] = [(timestamp, value, hostname, device_name)]
             else:
-                self._sample_store[metric][key] = self._sample_store[metric][key][-1:] + \
-                                                  [(timestamp, value, hostname, device_name)]
+                self._sample_store[metric][key] = self._sample_store[metric][key][-1:] + [
+                    (timestamp, value, hostname, device_name)]
         else:
             raise CheckException("%s must be either gauge or counter, skipping sample at %s" %
                                  (metric, time.ctime(timestamp)))
@@ -187,7 +190,8 @@ class Check(object):
             raise UnknownValue()
 
         elif self.is_counter(metric) and len(self._sample_store[metric][key]) >= 2:
-            res = self._rate(self._sample_store[metric][key][-2], self._sample_store[metric][key][-1])
+            res = self._rate(
+                self._sample_store[metric][key][-2], self._sample_store[metric][key][-1])
             if expire:
                 del self._sample_store[metric][key][:-1]
             return res
@@ -239,7 +243,8 @@ class Check(object):
                     dimensions_list, device_name = key
                     dimensions = dict(dimensions_list)
                     try:
-                        ts, val, hostname, device_name = self.get_sample_with_timestamp(m, dimensions, device_name, expire)
+                        ts, val, hostname, device_name = self.get_sample_with_timestamp(
+                            m, dimensions, device_name, expire)
                     except UnknownValue:
                         continue
                     attributes = {}
@@ -256,7 +261,6 @@ class Check(object):
 
 
 class AgentCheck(object):
-
     def __init__(self, name, init_config, agent_config, instances=None):
         """
         Initialize a new check.
@@ -275,7 +279,8 @@ class AgentCheck(object):
         self.log = logging.getLogger('%s.%s' % (__name__, name))
 
         self.aggregator = MetricsAggregator(self.hostname,
-                                            recent_point_threshold=agent_config.get('recent_point_threshold', None))
+                                            recent_point_threshold=agent_config.get(
+                                                'recent_point_threshold', None))
 
         self.events = []
         self.instances = instances or []
@@ -286,7 +291,8 @@ class AgentCheck(object):
         """ Return the number of instances that are configured for this check. """
         return len(self.instances)
 
-    def gauge(self, metric, value, dimensions=None, hostname=None, device_name=None, timestamp=None):
+    def gauge(self, metric, value, dimensions=None, hostname=None, device_name=None,
+              timestamp=None):
         """
         Record the value of a gauge, with optional dimensions, hostname and device
         name.
@@ -491,6 +497,7 @@ class AgentCheck(object):
         A method used for testing your check without running the agent.
         """
         import yaml
+
         try:
             from yaml import CLoader as Loader
         except ImportError:

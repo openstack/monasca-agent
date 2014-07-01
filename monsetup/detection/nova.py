@@ -6,6 +6,7 @@ log = logging.getLogger(__name__)
 
 
 class Nova(Plugin):
+
     """Detect Nova daemons and setup configuration to monitor them."""
 
     def _detect(self):
@@ -37,4 +38,3 @@ class Nova(Plugin):
 
     def dependencies_installed(self):
         return True
-

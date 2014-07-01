@@ -10,6 +10,7 @@ UDP_SOCKET_TIMEOUT = 5
 
 
 class Server(object):
+
     """
     A statsd udp server.
     """
@@ -55,9 +56,9 @@ class Server(object):
 
             event = {
                 'title': metadata[:title_length],
-                'text': (metadata[title_length+1:title_length+text_length+1]).replace('\\n', '\n')
+                'text': (metadata[title_length + 1:title_length + text_length + 1]).replace('\\n', '\n')
             }
-            meta = metadata[title_length+text_length+1:]
+            meta = metadata[title_length + text_length + 1:]
             for m in meta.split('|')[1:]:
                 if m[0] == u't':
                     event['alert_type'] = m[2:]
@@ -137,7 +138,8 @@ class Server(object):
                 # todo it seems like this count should be done in the submit_metric method
                 self.aggregator.count += 1
                 name, value, mtype, dimensions, sample_rate = self._parse_metric_packet(packet)
-                self.aggregator.submit_metric(name, value, mtype, dimensions=dimensions, sample_rate=sample_rate)
+                self.aggregator.submit_metric(
+                    name, value, mtype, dimensions=dimensions, sample_rate=sample_rate)
 
     def start(self):
         """ Run the server. """
@@ -149,7 +151,8 @@ class Server(object):
             open_socket.bind(self.address)
         except socket.gaierror:
             if self.address[0] == 'localhost':
-                log.warning("Warning localhost seems undefined in your host file, using 127.0.0.1 instead")
+                log.warning(
+                    "Warning localhost seems undefined in your host file, using 127.0.0.1 instead")
                 self.address = ('127.0.0.1', self.address[1])
                 open_socket.bind(self.address)
 

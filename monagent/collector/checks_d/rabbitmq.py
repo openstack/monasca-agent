@@ -11,7 +11,8 @@ QUEUE_TYPE = 'queues'
 NODE_TYPE = 'nodes'
 MAX_DETAILED_QUEUES = 200
 MAX_DETAILED_NODES = 100
-# Post an event in the stream when the number of queues or nodes to collect is above 90% of the limit
+# Post an event in the stream when the number of queues or nodes to
+# collect is above 90% of the limit
 ALERT_THRESHOLD = 0.9
 QUEUE_ATTRIBUTES = ['active_consumers',
                     'consumers',
@@ -39,6 +40,7 @@ METRIC_SUFFIX = {QUEUE_TYPE: "queue", NODE_TYPE: "node"}
 
 
 class RabbitMQ(AgentCheck):
+
     """This check is for gathering statistics from the RabbitMQ
     Management Plugin (http://www.rabbitmq.com/management.html)
     """
@@ -67,7 +69,7 @@ class RabbitMQ(AgentCheck):
         }
 
         # List of queues/nodes to collect metrics from
-        specified = { 
+        specified = {
             QUEUE_TYPE: instance.get('queues', []),
             NODE_TYPE: instance.get('nodes', []),
         }
@@ -78,16 +80,17 @@ class RabbitMQ(AgentCheck):
 
         # setup urllib2 for Basic Auth
         auth_handler = urllib2.HTTPBasicAuthHandler()
-        auth_handler.add_password(realm='RabbitMQ Management', uri=base_url, user=username, passwd=password)
+        auth_handler.add_password(
+            realm='RabbitMQ Management', uri=base_url, user=username, passwd=password)
         opener = urllib2.build_opener(auth_handler)
         urllib2.install_opener(opener)
 
         return base_url, max_detailed, specified
 
-
     def check(self, instance):
         base_url, max_detailed, specified = self._get_config(instance)
-        self.get_stats(instance, base_url, QUEUE_TYPE, max_detailed[QUEUE_TYPE], specified[QUEUE_TYPE])
+        self.get_stats(
+            instance, base_url, QUEUE_TYPE, max_detailed[QUEUE_TYPE], specified[QUEUE_TYPE])
         self.get_stats(instance, base_url, NODE_TYPE, max_detailed[NODE_TYPE], specified[NODE_TYPE])
 
     @staticmethod
@@ -100,7 +103,6 @@ class RabbitMQ(AgentCheck):
             raise Exception('Cannot parse JSON response from API url: %s %s' % (url, str(e)))
         return data
 
-
     def get_stats(self, instance, base_url, object_type, max_detailed, specified_list):
         """
         instance: the check instance
@@ -111,20 +113,23 @@ class RabbitMQ(AgentCheck):
         """
 
         data = self._get_data(urlparse.urljoin(base_url, object_type))
-        specified_items = list(specified_list) # Make a copy of this list as we will remove items from it at each iteration
+        # Make a copy of this list as we will remove items from it at each iteration
+        specified_items = list(specified_list)
 
         """ data is a list of nodes or queues:
         data = [
-            {'status': 'running', 'node': 'rabbit@host', 'name': 'queue1', 'consumers': 0, 'vhost': '/', 'backing_queue_status': {'q1': 0, 'q3': 0, 'q2': 0, 'q4': 0, 'avg_ack_egress_rate': 0.0, 'ram_msg_count': 0, 'ram_ack_count': 0, 'len': 0, 'persistent_count': 0, 'target_ram_count': 'infinity', 'next_seq_id': 0, 'delta': ['delta', 'undefined', 0, 'undefined'], 'pending_acks': 0, 'avg_ack_ingress_rate': 0.0, 'avg_egress_rate': 0.0, 'avg_ingress_rate': 0.0}, 'durable': True, 'idle_since': '2013-10-03 13:38:18', 'exclusive_consumer_tag': '', 'arguments': {}, 'memory': 10956, 'policy': '', 'auto_delete': False}, 
-            {'status': 'running', 'node': 'rabbit@host, 'name': 'queue10', 'consumers': 0, 'vhost': '/', 'backing_queue_status': {'q1': 0, 'q3': 0, 'q2': 0, 'q4': 0, 'avg_ack_egress_rate': 0.0, 'ram_msg_count': 0, 'ram_ack_count': 0, 'len': 0, 'persistent_count': 0, 'target_ram_count': 'infinity', 'next_seq_id': 0, 'delta': ['delta', 'undefined', 0, 'undefined'], 'pending_acks': 0, 'avg_ack_ingress_rate': 0.0, 'avg_egress_rate': 0.0, 'avg_ingress_rate': 0.0}, 'durable': True, 'idle_since': '2013-10-03 13:38:18', 'exclusive_consumer_tag': '', 'arguments': {}, 'memory': 10956, 'policy': '', 'auto_delete': False}, 
-            {'status': 'running', 'node': 'rabbit@host', 'name': 'queue11', 'consumers': 0, 'vhost': '/', 'backing_queue_status': {'q1': 0, 'q3': 0, 'q2': 0, 'q4': 0, 'avg_ack_egress_rate': 0.0, 'ram_msg_count': 0, 'ram_ack_count': 0, 'len': 0, 'persistent_count': 0, 'target_ram_count': 'infinity', 'next_seq_id': 0, 'delta': ['delta', 'undefined', 0, 'undefined'], 'pending_acks': 0, 'avg_ack_ingress_rate': 0.0, 'avg_egress_rate': 0.0, 'avg_ingress_rate': 0.0}, 'durable': True, 'idle_since': '2013-10-03 13:38:18', 'exclusive_consumer_tag': '', 'arguments': {}, 'memory': 10956, 'policy': '', 'auto_delete': False}, 
+            {'status': 'running', 'node': 'rabbit@host', 'name': 'queue1', 'consumers': 0, 'vhost': '/', 'backing_queue_status': {'q1': 0, 'q3': 0, 'q2': 0, 'q4': 0, 'avg_ack_egress_rate': 0.0, 'ram_msg_count': 0, 'ram_ack_count': 0, 'len': 0, 'persistent_count': 0, 'target_ram_count': 'infinity', 'next_seq_id': 0, 'delta': ['delta', 'undefined', 0, 'undefined'], 'pending_acks': 0, 'avg_ack_ingress_rate': 0.0, 'avg_egress_rate': 0.0, 'avg_ingress_rate': 0.0}, 'durable': True, 'idle_since': '2013-10-03 13:38:18', 'exclusive_consumer_tag': '', 'arguments': {}, 'memory': 10956, 'policy': '', 'auto_delete': False},
+            {'status': 'running', 'node': 'rabbit@host, 'name': 'queue10', 'consumers': 0, 'vhost': '/', 'backing_queue_status': {'q1': 0, 'q3': 0, 'q2': 0, 'q4': 0, 'avg_ack_egress_rate': 0.0, 'ram_msg_count': 0, 'ram_ack_count': 0, 'len': 0, 'persistent_count': 0, 'target_ram_count': 'infinity', 'next_seq_id': 0, 'delta': ['delta', 'undefined', 0, 'undefined'], 'pending_acks': 0, 'avg_ack_ingress_rate': 0.0, 'avg_egress_rate': 0.0, 'avg_ingress_rate': 0.0}, 'durable': True, 'idle_since': '2013-10-03 13:38:18', 'exclusive_consumer_tag': '', 'arguments': {}, 'memory': 10956, 'policy': '', 'auto_delete': False},
+            {'status': 'running', 'node': 'rabbit@host', 'name': 'queue11', 'consumers': 0, 'vhost': '/', 'backing_queue_status': {'q1': 0, 'q3': 0, 'q2': 0, 'q4': 0, 'avg_ack_egress_rate': 0.0, 'ram_msg_count': 0, 'ram_ack_count': 0, 'len': 0, 'persistent_count': 0, 'target_ram_count': 'infinity', 'next_seq_id': 0, 'delta': ['delta', 'undefined', 0, 'undefined'], 'pending_acks': 0, 'avg_ack_ingress_rate': 0.0, 'avg_egress_rate': 0.0, 'avg_ingress_rate': 0.0}, 'durable': True, 'idle_since': '2013-10-03 13:38:18', 'exclusive_consumer_tag': '', 'arguments': {}, 'memory': 10956, 'policy': '', 'auto_delete': False},
             ...
         ]
         """
         if len(specified_items) > max_detailed:
-            raise Exception("The maximum number of %s you can specify is %d." % (object_type, max_detailed))
+            raise Exception("The maximum number of %s you can specify is %d." %
+                            (object_type, max_detailed))
 
-        if specified_items is not None and len(specified_items) > 0: # a list of queues/nodes is specified. We process only those
+        # a list of queues/nodes is specified. We process only those
+        if specified_items is not None and len(specified_items) > 0:
             if object_type == NODE_TYPE:
                 for data_line in data:
                     name = data_line.get("name")
@@ -132,7 +137,7 @@ class RabbitMQ(AgentCheck):
                         self._get_metrics(data_line, object_type)
                         specified_items.remove(name)
 
-            else: # object_type == QUEUE_TYPE
+            else:  # object_type == QUEUE_TYPE
                 for data_line in data:
                     name = data_line.get("name")
                     absolute_name = '%s/%s' % (data_line.get("vhost"), name)
@@ -143,14 +148,16 @@ class RabbitMQ(AgentCheck):
                         self._get_metrics(data_line, object_type)
                         specified_items.remove(absolute_name)
 
-        else: # No queues/node are specified. We will process every queue/node if it's under the limit
+        # No queues/node are specified. We will process every queue/node if it's under the limit
+        else:
             if len(data) > ALERT_THRESHOLD * max_detailed:
                 # Post a message on the dogweb stream to warn
                 self.alert(base_url, max_detailed, len(data), object_type)
 
             if len(data) > max_detailed:
                 # Display a warning in the info page
-                self.warning("Too many queues to fetch. You must choose the %s you are interested in by editing the rabbitmq.yaml configuration file or get in touch with Datadog Support" % object_type)
+                self.warning(
+                    "Too many queues to fetch. You must choose the %s you are interested in by editing the rabbitmq.yaml configuration file or get in touch with Datadog Support" % object_type)
 
             for data_line in data[:max_detailed]:
                 # We truncate the list of nodes/queues if it's above the limit
@@ -168,9 +175,11 @@ class RabbitMQ(AgentCheck):
             value = data.get(attribute, None)
             if value is not None:
                 try:
-                    self.gauge('rabbitmq.%s.%s' % (METRIC_SUFFIX[object_type], attribute), float(value), dimensions=dimensions)
+                    self.gauge('rabbitmq.%s.%s' % (METRIC_SUFFIX[object_type], attribute), float(
+                        value), dimensions=dimensions)
                 except ValueError:
-                    self.log.debug("Caught ValueError for %s %s = %s  with dimensions: %s" % (METRIC_SUFFIX[object_type], attribute, value, dimensions))
+                    self.log.debug("Caught ValueError for %s %s = %s  with dimensions: %s" % (
+                        METRIC_SUFFIX[object_type], attribute, value, dimensions))
 
     def alert(self, base_url, max_detailed, size, object_type):
         key = "%s%s" % (base_url, object_type)
@@ -180,20 +189,21 @@ class RabbitMQ(AgentCheck):
 
         self.already_alerted.append(key)
 
-        title = "RabbitMQ integration is approaching the limit on the number of %s that can be collected from on %s" % (object_type, self.hostname)
-        msg = """%s %s are present. The limit is %s. 
+        title = "RabbitMQ integration is approaching the limit on the number of %s that can be collected from on %s" % (
+            object_type, self.hostname)
+        msg = """%s %s are present. The limit is %s.
         Please get in touch with Datadog support to increase the limit.""" % (size, object_type, max_detailed)
 
         event = {
-                "timestamp": int(time.time()), 
-                "event_type": EVENT_TYPE,
-                "msg_title": title,
-                "msg_text": msg,
-                "alert_type": 'warning',
-                "source_type_name": SOURCE_TYPE_NAME,
-                "host": self.hostname,
-                "dimensions": {"base_url": base_url, "host": self.hostname},
-                "event_object": "rabbitmq.limit.%s" % object_type,
-            }
+            "timestamp": int(time.time()),
+            "event_type": EVENT_TYPE,
+            "msg_title": title,
+            "msg_text": msg,
+            "alert_type": 'warning',
+            "source_type_name": SOURCE_TYPE_NAME,
+            "host": self.hostname,
+            "dimensions": {"base_url": base_url, "host": self.hostname},
+            "event_object": "rabbitmq.limit.%s" % object_type,
+        }
 
         self.event(event)

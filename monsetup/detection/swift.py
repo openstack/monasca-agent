@@ -6,6 +6,7 @@ log = logging.getLogger(__name__)
 
 
 class Swift(Plugin):
+
     """Detect Swift daemons and setup configuration to monitor them."""
 
     def _detect(self):
@@ -39,4 +40,3 @@ class Swift(Plugin):
 
     def dependencies_installed(self):
         return True
-

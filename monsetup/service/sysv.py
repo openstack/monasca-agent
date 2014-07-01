@@ -12,6 +12,7 @@ log = logging.getLogger(__name__)
 
 
 class SysV(Service):
+
     def __init__(self, init_template, config_dir, log_dir, name='mon-agent', username='mon-agent'):
         """Setup this service with the given init template"""
         super(SysV, self).__init__(config_dir, log_dir, name)
@@ -84,4 +85,3 @@ class SysV(Service):
             return True
         else:
             return False
-

@@ -4,6 +4,7 @@
 
 
 class Plugin(object):
+
     """Abstract class implemented by the mon-agent plugin detection classes
     """
     # todo these should include dependency detection
@@ -36,5 +37,3 @@ class Plugin(object):
             return self._name
         else:
             return self.__class__.__name__
-
-

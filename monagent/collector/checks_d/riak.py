@@ -49,11 +49,10 @@ class Riak(AgentCheck):
 
         self.prev_coord_redirs_total = -1
 
-
     def check(self, instance):
-        url             = instance['url']
+        url = instance['url']
         default_timeout = self.init_config.get('default_timeout', 5)
-        timeout         = float(instance.get('timeout', default_timeout))
+        timeout = float(instance.get('timeout', default_timeout))
 
         aggregation_key = md5(url).hexdigest()
 

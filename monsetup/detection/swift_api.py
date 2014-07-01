@@ -6,6 +6,7 @@ log = logging.getLogger(__name__)
 
 
 class SwiftAPI(Plugin):
+
     """Detect the Swift-API daemon and setup configuration to monitor it."""
 
     def _detect(self):
@@ -33,4 +34,3 @@ class SwiftAPI(Plugin):
 
     def dependencies_installed(self):
         return True
-

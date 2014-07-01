@@ -38,7 +38,9 @@ instances:
             - Information
 """
 
+
 class WinEventLogTest(unittest.TestCase):
+
     def setUp(self):
         raise SkipTest("Requires win32evtlog module")
         import win32evtlog
@@ -70,7 +72,7 @@ class WinEventLogTest(unittest.TestCase):
         data = "Application\0Data".encode("ascii")
 
         win32evtlogutil.ReportEvent(applicationName, eventID, eventCategory=category,
-            eventType=myType, strings=descr, data=data, sid=my_sid)
+                                    eventType=myType, strings=descr, data=data, sid=my_sid)
 
     @attr('windows')
     def test_windows_event_log(self):
@@ -89,7 +91,7 @@ class WinEventLogTest(unittest.TestCase):
         for msg, ev_type in self.LOG_EVENTS:
             self.write_event(msg, ev_type)
         self.write_event('do not pick me', win32evtlog.EVENTLOG_INFORMATION_TYPE,
-            source_name='EVENTLOGTESTBAD')
+                         source_name='EVENTLOGTESTBAD')
 
         # Run the checks again for them to pick up the new events
         inst1, inst2 = instances
@@ -97,7 +99,7 @@ class WinEventLogTest(unittest.TestCase):
         ev1 = check.get_events()
         assert len(ev1) > 0
         assert len(ev1) == len([ev for ev in self.LOG_EVENTS
-            if ev[1] == win32evtlog.EVENTLOG_WARNING_TYPE])
+                                if ev[1] == win32evtlog.EVENTLOG_WARNING_TYPE])
         for ev in ev1:
             # Make sure we only picked up our source
             assert 'EVENTLOGTESTBAD' not in ev['msg_title']
@@ -111,7 +113,7 @@ class WinEventLogTest(unittest.TestCase):
         ev2 = check.get_events()
         assert len(ev2) > 0
         assert len(ev2) == len([ev for ev in self.LOG_EVENTS
-            if ev[1] in (win32evtlog.EVENTLOG_ERROR_TYPE, win32evtlog.EVENTLOG_INFORMATION_TYPE)])
+                                if ev[1] in (win32evtlog.EVENTLOG_ERROR_TYPE, win32evtlog.EVENTLOG_INFORMATION_TYPE)])
         for ev in ev2:
             # Make sure we only picked up our source
             assert 'EVENTLOGTESTBAD' not in ev['msg_title']

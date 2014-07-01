@@ -6,6 +6,7 @@ log = logging.getLogger(__name__)
 
 
 class Cinder(Plugin):
+
     """Detect cinder daemons and setup configuration to monitor them."""
 
     def _detect(self):
@@ -33,4 +34,3 @@ class Cinder(Plugin):
 
     def dependencies_installed(self):
         return True
-

@@ -7,12 +7,13 @@ class ShouldRestartException(Exception):
 
 
 class PostgreSql(AgentCheck):
+
     """Collects per-database, and optionally per-relation metrics
     """
 
     RATE = AgentCheck.rate
     GAUGE = AgentCheck.gauge
-    
+
     # turning columns into dimensions
     DB_METRICS = {
         'descriptors': [('datname', 'db')],
@@ -133,7 +134,7 @@ SELECT relname,
             metric_scope = (self.DB_METRICS,)
         else:
             metric_scope = (self.DB_METRICS, self.REL_METRICS, self.IDX_METRICS)
-  
+
         for scope in metric_scope:
             # build query
             cols = scope['metrics'].keys()  # list of metrics to query, in some order
@@ -143,7 +144,7 @@ SELECT relname,
             except InterfaceError, e:
                 self.log.error("Connection seems broken: %s" % str(e))
                 raise ShouldRestartException
-            
+
             # if this is a relation-specific query, we need to list all relations last
             if scope['relation'] and len(relations) > 0:
                 query = scope['query'] % (", ".join(cols), "%s")  # Keep the last %s intact
@@ -156,7 +157,7 @@ SELECT relname,
 
             results = cursor.fetchall()
             cursor.close()
-                
+
             # parse & submit results
             # A row should look like this
             # (descriptor, descriptor, ..., value, value, value, value, ...)
@@ -166,7 +167,7 @@ SELECT relname,
                 desc = scope['descriptors']
                 # Check that all columns will be processed
                 assert len(row) == len(cols) + len(desc)
-                
+
                 # Build dimensions
                 # descriptors are: (pg_name, dd_tag_name): value
                 # Special-case the "db" tag, which overrides the one that is passed as instance_dimensions
@@ -181,13 +182,13 @@ SELECT relname,
                 # metric-map is: (dd_name, "rate"|"gauge")
                 # shift the results since the first columns will be the "descriptors"
                 values = zip([scope['metrics'][c] for c in cols], row[len(desc):])
-                
+
                 # To submit simply call the function for each value v
                 # v[0] == (metric_name, submit_function)
                 # v[1] == the actual value
                 # dimensions are
                 [v[0][1](self, v[0][0], v[1], dimensions=dimensions) for v in values]
-            
+
     def get_connection(self, key, host, port, user, password, dbname, use_cached=True):
         "Get and memoize connections to instances"
         if key in self.dbs and use_cached:
@@ -197,17 +198,18 @@ SELECT relname,
             try:
                 import psycopg2 as pg
             except ImportError:
-                raise ImportError("psycopg2 library cannot be imported. Please check the installation instruction on the Datadog Website.")
-            
+                raise ImportError(
+                    "psycopg2 library cannot be imported. Please check the installation instruction on the Datadog Website.")
+
             if host == 'localhost' and password == '':
                 # Use ident method
                 connection = pg.connect("user=%s dbname=%s" % (user, dbname))
             elif port != '':
                 connection = pg.connect(host=host, port=port, user=user,
-                    password=password, database=dbname)
+                                        password=password, database=dbname)
             else:
                 connection = pg.connect(host=host, user=user, password=password,
-                    database=dbname)
+                                        database=dbname)
         else:
             if not host:
                 raise CheckException("Please specify a Postgres host to connect to.")
@@ -220,7 +222,7 @@ SELECT relname,
             # connection.autocommit was added in version 2.4.2
             from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
             connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-        
+
         self.dbs[key] = connection
         return connection
 
@@ -233,21 +235,21 @@ SELECT relname,
         dbname = instance.get('dbname', 'postgres')
         relations = instance.get('relations', [])
 
-        key = '%s:%s:%s' % (host, port,dbname)
+        key = '%s:%s:%s' % (host, port, dbname)
         db = self.get_connection(key, host, port, user, password, dbname)
 
         # Clean up dimensions in case there was a None entry in the instance
         # e.g. if the yaml contains dimensions: but no actual dimensions
         if dimensions is None:
             dimensions = {}
-        
+
         # preset dimensions to the database name
         dimensions["db"] = dbname
 
         # Check version
         version = self._get_version(key, db)
         self.log.debug("Running check against version %s" % version)
-            
+
         # Collect metrics
         try:
             self._collect_stats(key, db, dimensions, relations)
@@ -258,10 +260,10 @@ SELECT relname,
 
     @staticmethod
     def parse_agent_config(agentConfig):
-        server = agentConfig.get('postgresql_server','')
-        port = agentConfig.get('postgresql_port','')
-        user = agentConfig.get('postgresql_user','')
-        passwd = agentConfig.get('postgresql_pass','')
+        server = agentConfig.get('postgresql_server', '')
+        port = agentConfig.get('postgresql_port', '')
+        user = agentConfig.get('postgresql_user', '')
+        passwd = agentConfig.get('postgresql_pass', '')
 
         if server != '' and user != '':
             return {

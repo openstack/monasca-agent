@@ -20,6 +20,7 @@ class TestPostfix(unittest.TestCase):
     #
     #     nosetests --nocapture --tests=dd-agent/tests/test_postfix.py
     #
+
     def setUp(self):
         self.queue_root = '/tmp/dd-postfix-test/var/spool/postfix'
 
@@ -35,11 +36,11 @@ class TestPostfix(unittest.TestCase):
 
         # create test queues
         for queue in self.queues:
-          try:
-              os.makedirs(os.path.join(self.queue_root, queue))
-              self.in_count[queue] = [0, 0]
-          except Exception:
-              pass
+            try:
+                os.makedirs(os.path.join(self.queue_root, queue))
+                self.in_count[queue] = [0, 0]
+            except Exception:
+                pass
 
     def tearDown(self):
         # clean up test queues
@@ -62,7 +63,7 @@ class TestPostfix(unittest.TestCase):
                   - incoming
                   - active
                   - deferred
-        """ % (self.queue_root) )
+        """ % (self.queue_root))
 
         # stuff 10K msgs in random queues
         for _ in xrange(1, 10000):
@@ -95,8 +96,7 @@ class TestPostfix(unittest.TestCase):
         #
         # uncomment this to see the raw dd-agent metric output
         #
-        #print out_count
+        # print out_count
 
 if __name__ == '__main__':
     unittest.main()
-

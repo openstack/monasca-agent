@@ -29,14 +29,14 @@ from spyderlib.widgets.sourcecode.codeeditor import CodeEditor
 
 # Datadog
 from common.util import get_os
-from config import (get_confd_path, get_config_path, get_config, 
-    _windows_commondata_path)
+from config import (get_confd_path, get_config_path, get_config,
+                    _windows_commondata_path)
 
 EXCLUDED_WINDOWS_CHECKS = [
     'cacti', 'directory', 'gearmand',
     'hdfs', 'kafka_consumer', 'mcache', 'network',
     'redis', 'postfix', 'process', 'gunicorn', 'zk',
-    ]
+]
 
 MAIN_WINDOW_TITLE = "Datadog Agent Manager"
 
@@ -81,8 +81,8 @@ def get_checks():
             continue
 
         agent_check = AgentCheck(filename, ext, conf_d_directory)
-        if (agent_check.enabled or agent_check.module_name not in checks or 
-            (not agent_check.is_example and not checks[agent_check.module_name].enabled)):
+        if (agent_check.enabled or agent_check.module_name not in checks or
+                (not agent_check.is_example and not checks[agent_check.module_name].enabled)):
             checks[agent_check.module_name] = agent_check
 
     checks_list = checks.values()
@@ -92,6 +92,7 @@ def get_checks():
 
 
 class EditorFile(object):
+
     def __init__(self, file_path, description):
         self.file_path = file_path
         self.description = description
@@ -101,7 +102,7 @@ class EditorFile(object):
 
     def save(self, content):
         try:
-            f = open(self.file_path,'w')
+            f = open(self.file_path, 'w')
             f.write(content)
             self.content = content
             info_popup("File saved.")
@@ -111,9 +112,10 @@ class EditorFile(object):
 
 
 class LogFile(EditorFile):
+
     def __init__(self):
         EditorFile.__init__(self, AGENT_LOG_FILE, "Agent log file")
-    
+
 
 class DatadogConf(EditorFile):
 
@@ -128,7 +130,7 @@ class DatadogConf(EditorFile):
     def check_api_key(self, editor):
         if self.api_key is None:
             api_key, ok = QInputDialog.getText(None, "Add your API KEY",
-            "You must first set your api key in this file. You can find it here: https://app.datadoghq.com/account/settings#api")
+                                               "You must first set your api key in this file. You can find it here: https://app.datadoghq.com/account/settings#api")
             if ok and api_key:
                 new_content = []
                 for line in self.content.splitlines():
@@ -149,12 +151,13 @@ class DatadogConf(EditorFile):
 
 
 class AgentCheck(EditorFile):
+
     def __init__(self, filename, ext, conf_d_directory):
         file_path = osp.join(conf_d_directory, filename)
         self.module_name = filename.split('.')[0]
 
         EditorFile.__init__(self, file_path, description=self.module_name.replace("_", " ").title())
-        
+
         self.enabled = ext == '.yaml'
         self.is_example = ext == '.example'
         self.enabled_name = osp.join(conf_d_directory, "%s.yaml" % self.module_name)
@@ -176,10 +179,11 @@ class AgentCheck(EditorFile):
 
 
 class PropertiesWidget(QWidget):
+
     def __init__(self, parent):
         QWidget.__init__(self, parent)
         font = QFont(get_family(MONOSPACE), 10, QFont.Normal)
-        
+
         info_icon = QLabel()
         icon = get_std_icon('MessageBoxInformation').pixmap(24, 24)
         info_icon.setPixmap(icon)
@@ -201,10 +205,10 @@ class PropertiesWidget(QWidget):
         layout.addWidget(info_icon)
         layout.addWidget(self.desc_label)
         layout.addStretch()
-        layout.addWidget(self.service_status_label  )
+        layout.addWidget(self.service_status_label)
 
         group_desc.setLayout(layout)
-        
+
         self.editor = CodeEditor(self)
         self.editor.setup_editor(linenumbers=True, font=font)
         self.editor.setReadOnly(False)
@@ -212,27 +216,24 @@ class PropertiesWidget(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(self.editor)
         group_code.setLayout(layout)
-        
+
         self.enable_button = QPushButton(get_icon("apply.png"),
-                                      "Enable", self)
+                                         "Enable", self)
 
         self.save_button = QPushButton(get_icon("filesave.png"),
-                                      "Save", self)
+                                       "Save", self)
 
         self.edit_datadog_conf_button = QPushButton(get_icon("edit.png"),
-                                      "Edit agent settings", self)
+                                                    "Edit agent settings", self)
 
         self.disable_button = QPushButton(get_icon("delete.png"),
-                                      "Disable", self)
+                                          "Disable", self)
 
-
-        self.view_log_button = QPushButton(get_icon("txt.png"), 
-                                      "View log", self)
+        self.view_log_button = QPushButton(get_icon("txt.png"),
+                                           "View log", self)
 
         self.menu_button = QPushButton(get_icon("settings.png"),
-                                      "Manager", self)
-
-
+                                       "Manager", self)
 
         hlayout = QHBoxLayout()
         hlayout.addWidget(self.save_button)
@@ -246,7 +247,7 @@ class PropertiesWidget(QWidget):
         hlayout.addWidget(self.view_log_button)
         hlayout.addStretch()
         hlayout.addWidget(self.menu_button)
-        
+
         vlayout = QVBoxLayout()
         vlayout.addWidget(group_desc)
         vlayout.addWidget(group_code)
@@ -254,7 +255,7 @@ class PropertiesWidget(QWidget):
         self.setLayout(vlayout)
 
         self.current_file = None
-        
+
     def set_item(self, check):
         self.current_file = check
         self.desc_label.setText(check.get_description())
@@ -288,28 +289,32 @@ class PropertiesWidget(QWidget):
 
 
 class MainWindow(QSplitter):
+
     def __init__(self, parent=None):
 
         QSplitter.__init__(self, parent)
         self.setWindowTitle(MAIN_WINDOW_TITLE)
         self.setWindowIcon(get_icon("agent.svg"))
-        
+
         self.sysTray = SystemTray(self)
 
-        self.connect(self.sysTray, SIGNAL("activated(QSystemTrayIcon::ActivationReason)"), self.__icon_activated)
+        self.connect(self.sysTray, SIGNAL(
+            "activated(QSystemTrayIcon::ActivationReason)"), self.__icon_activated)
 
         checks = get_checks()
-        datadog_conf = DatadogConf(get_config_path(), description="Agent settings file: datadog.conf")
+        datadog_conf = DatadogConf(
+            get_config_path(), description="Agent settings file: datadog.conf")
         self.log_file = LogFile()
 
         listwidget = QListWidget(self)
-        listwidget.addItems([osp.basename(check.module_name).replace("_", " ").title() for check in checks])
-        
+        listwidget.addItems(
+            [osp.basename(check.module_name).replace("_", " ").title() for check in checks])
+
         self.properties = PropertiesWidget(self)
-        
+
         self.addWidget(listwidget)
         self.addWidget(self.properties)
-        
+
         self.connect(self.properties.enable_button, SIGNAL("clicked()"),
                      lambda: enable_check(self.properties))
 
@@ -330,11 +335,10 @@ class MainWindow(QSplitter):
 
         self.manager_menu = Menu(self)
         self.connect(self.properties.menu_button, SIGNAL("clicked()"),
-            lambda: self.manager_menu.popup(self.properties.menu_button.mapToGlobal(QPoint(0,0))))
-
+                     lambda: self.manager_menu.popup(self.properties.menu_button.mapToGlobal(QPoint(0, 0))))
 
         listwidget.setCurrentRow(0)
-        
+
         self.setSizes([150, 1])
         self.setStretchFactor(1, 1)
         self.resize(QSize(950, 600))
@@ -355,12 +359,13 @@ class MainWindow(QSplitter):
 
     def closeEvent(self, event):
         self.hide()
-        self.sysTray.show() 
+        self.sysTray.show()
         event.ignore()
 
     def __icon_activated(self, reason):
         if reason == QSystemTrayIcon.DoubleClick:
             self.show()
+
 
 class Menu(QMenu):
 
@@ -374,7 +379,6 @@ class Menu(QMenu):
             self.options[name] = menu_action
 
         self.connect(self, SIGNAL("aboutToShow()"), lambda: self.update_options())
-
 
     def update_options(self):
         status = get_service_status()
@@ -403,7 +407,7 @@ class SystemTray(QSystemTrayIcon):
         menu = Menu(self.parent())
         self.setContextMenu(menu)
 
-    
+
 def disable_check(properties):
     check = properties.current_file
     new_content = properties.editor.toPlainText().__str__()
@@ -415,7 +419,8 @@ def disable_check(properties):
     properties.enable_button.setEnabled(True)
     properties.disable_button.setEnabled(False)
     check.disable()
-    
+
+
 def enable_check(properties):
     check = properties.current_file
 
@@ -427,20 +432,22 @@ def enable_check(properties):
     properties.enable_button.setEnabled(False)
     properties.disable_button.setEnabled(True)
     check.enable()
-    
+
 
 def save_file(properties):
     current_file = properties.current_file
     new_content = properties.editor.toPlainText().__str__()
     current_file.save(new_content)
-    
+
+
 def check_yaml_syntax(content):
     try:
         yaml.load(content, Loader=Loader)
     except Exception, e:
         warning_popup("Unable to parse yaml: \n %s" % str(e))
         raise
-    
+
+
 def _service_manager(action):
     try:
         if action == 'stop':
@@ -452,11 +459,13 @@ def _service_manager(action):
     except Exception, e:
         warning_popup("Couldn't %s service: \n %s" % (action, str(e)))
 
+
 def service_manager(action, async=True):
     if not async:
         _service_manager(action)
     else:
         thread.start_new_thread(_service_manager, (action,))
+
 
 def get_service_status():
     try:
@@ -464,23 +473,28 @@ def get_service_status():
     except Exception:
         return "Unknown"
 
-def is_service_running(status = None):
+
+def is_service_running(status=None):
     if status is None:
         status = get_service_status()
     return status == win32service.SERVICE_RUNNING
 
-def is_service_pending(status = None):
+
+def is_service_pending(status=None):
     if status is None:
         status = get_service_status()
     return status in [win32service.SERVICE_STOP_PENDING, win32service.SERVICE_START_PENDING]
 
-def is_service_stopped(status = None):
+
+def is_service_stopped(status=None):
     if status is None:
         status = get_service_status()
     return status == win32service.SERVICE_STOPPED
 
+
 def warning_popup(message, parent=None):
     QMessageBox.warning(parent, 'Message', message, QMessageBox.Ok)
+
 
 def info_popup(message, parent=None):
     QMessageBox.information(parent, 'Message', message, QMessageBox.Ok)

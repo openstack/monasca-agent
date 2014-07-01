@@ -11,6 +11,7 @@ from tests.common import load_check
 PORT = 9200
 MAX_WAIT = 150
 
+
 class TestElastic(unittest.TestCase):
 
     def _wait(self, url):
@@ -24,17 +25,16 @@ class TestElastic(unittest.TestCase):
                 time.sleep(0.5)
                 loop += 1
                 if loop >= MAX_WAIT:
-                    break              
+                    break
 
-    
     def setUp(self):
         self.process = None
         try:
             # Start elasticsearch
-            self.process = subprocess.Popen(["elasticsearch","-f","elasticsearch"],
-                        executable="elasticsearch",
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE)
+            self.process = subprocess.Popen(["elasticsearch", "-f", "elasticsearch"],
+                                            executable="elasticsearch",
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE)
 
             # Wait for it to really start
             self._wait("http://localhost:%s" % PORT)
@@ -44,16 +44,17 @@ class TestElastic(unittest.TestCase):
     def tearDown(self):
         if self.process is not None:
             self.process.terminate()
-    
+
     def testElasticChecksD(self):
         raise SkipTest("See https://github.com/DataDog/dd-agent/issues/825")
-        agent_config = {'elasticsearch': 'http://localhost:%s' % PORT, 'version': '0.1', 'api_key': 'toto'}
+        agent_config = {'elasticsearch': 'http://localhost:%s' %
+                        PORT, 'version': '0.1', 'api_key': 'toto'}
 
         # Initialize the check from checks_d
         c = load_check('elastic', {'init_config': {}, 'instances': {}}, agent_config)
         conf = c.parse_agent_config(agent_config)
         self.check = load_check('elastic', conf, agent_config)
-        
+
         self.check.check(conf['instances'][0])
         r = self.check.get_metrics()
 
@@ -68,16 +69,17 @@ class TestElastic(unittest.TestCase):
         self.assertEquals(len([t for t in r if t[0] == "jvm.threads.peak_count"]), 1, r)
         self.assertEquals(len([t for t in r if t[0] == "elasticsearch.transport.rx_count"]), 1, r)
         self.assertEquals(len([t for t in r if t[0] == "elasticsearch.transport.tx_size"]), 1, r)
-        self.assertEquals(len([t for t in r if t[0] == "elasticsearch.transport.server_open"]), 1, r)
-        self.assertEquals(len([t for t in r if t[0] == "elasticsearch.thread_pool.snapshot.queue"]), 1, r)
+        self.assertEquals(
+            len([t for t in r if t[0] == "elasticsearch.transport.server_open"]), 1, r)
+        self.assertEquals(
+            len([t for t in r if t[0] == "elasticsearch.thread_pool.snapshot.queue"]), 1, r)
         self.assertEquals(len([t for t in r if t[0] == "elasticsearch.active_shards"]), 1, r)
 
         self.check.cluster_status[conf['instances'][0].get('url')] = "red"
         self.check.check(conf['instances'][0])
         events = self.check.get_events()
-        self.assertEquals(len(events),1,events)
+        self.assertEquals(len(events), 1, events)
 
-        
 
 if __name__ == "__main__":
     unittest.main()

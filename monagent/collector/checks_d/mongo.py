@@ -6,7 +6,6 @@ from monagent.collector.checks import AgentCheck
 from monagent.common.util import get_hostname
 
 
-
 # When running with pymongo < 2.0
 # Not the full spec for mongo URIs -- just extract username and password
 # http://www.mongodb.org/display/DOCS/connections6
@@ -113,16 +112,26 @@ class MongoDb(AgentCheck):
             state of a mongo node"""
 
         def get_state_description(state):
-            if state == 0: return 'Starting Up'
-            elif state == 1: return 'Primary'
-            elif state == 2: return 'Secondary'
-            elif state == 3: return 'Recovering'
-            elif state == 4: return 'Fatal'
-            elif state == 5: return 'Starting up (forking threads)'
-            elif state == 6: return 'Unknown'
-            elif state == 7: return 'Arbiter'
-            elif state == 8: return 'Down'
-            elif state == 9: return 'Rollback'
+            if state == 0:
+                return 'Starting Up'
+            elif state == 1:
+                return 'Primary'
+            elif state == 2:
+                return 'Secondary'
+            elif state == 3:
+                return 'Recovering'
+            elif state == 4:
+                return 'Fatal'
+            elif state == 5:
+                return 'Starting up (forking threads)'
+            elif state == 6:
+                return 'Unknown'
+            elif state == 7:
+                return 'Arbiter'
+            elif state == 8:
+                return 'Down'
+            elif state == 9:
+                return 'Rollback'
 
         status = get_state_description(state)
         hostname = get_hostname(agentConfig)
@@ -152,7 +161,7 @@ class MongoDb(AgentCheck):
             'ssl': instance.get('ssl', None),
             'ssl_keyfile': instance.get('ssl_keyfile', None),
             'ssl_certfile': instance.get('ssl_certfile', None),
-            'ssl_cert_reqs':  instance.get('ssl_cert_reqs', None),
+            'ssl_cert_reqs': instance.get('ssl_cert_reqs', None),
             'ssl_ca_certs': instance.get('ssl_ca_certs', None)
         }
 
@@ -166,8 +175,10 @@ class MongoDb(AgentCheck):
         try:
             from pymongo import Connection
         except ImportError:
-            self.log.error('mongo.yaml exists but pymongo module can not be imported. Skipping check.')
-            raise Exception('Python PyMongo Module can not be imported. Please check the installation instruction on the Datadog Website')
+            self.log.error(
+                'mongo.yaml exists but pymongo module can not be imported. Skipping check.')
+            raise Exception(
+                'Python PyMongo Module can not be imported. Please check the installation instruction on the Datadog Website')
 
         try:
             from pymongo import uri_parser
@@ -194,7 +205,7 @@ class MongoDb(AgentCheck):
             do_auth = False
 
         conn = Connection(server, network_timeout=DEFAULT_TIMEOUT,
-            **ssl_params)
+                          **ssl_params)
         db = conn[db_name]
         if do_auth:
             if not db.authenticate(username, password):
@@ -204,7 +215,8 @@ class MongoDb(AgentCheck):
         status['stats'] = db.command('dbstats')
 
         # Handle replica data, if any
-        # See http://www.mongodb.org/display/DOCS/Replica+Set+Commands#ReplicaSetCommands-replSetGetStatus
+        # See
+        # http://www.mongodb.org/display/DOCS/Replica+Set+Commands#ReplicaSetCommands-replSetGetStatus
         try:
             data = {}
 
@@ -224,11 +236,11 @@ class MongoDb(AgentCheck):
                 if current is not None and primary is not None:
                     lag = current['optimeDate'] - primary['optimeDate']
                     # Python 2.7 has this built in, python < 2.7 don't...
-                    if hasattr(lag,'total_seconds'):
+                    if hasattr(lag, 'total_seconds'):
                         data['replicationLag'] = lag.total_seconds()
                     else:
-                        data['replicationLag'] = (lag.microseconds + \
-            (lag.seconds + lag.days * 24 * 3600) * 10**6) / 10.0**6
+                        data['replicationLag'] = (lag.microseconds +
+                                                  (lag.seconds + lag.days * 24 * 3600) * 10 ** 6) / 10.0 ** 6
 
                 if current is not None:
                     data['health'] = current['health']

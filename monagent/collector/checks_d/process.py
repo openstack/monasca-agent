@@ -93,7 +93,7 @@ class ProcessCheck(AgentCheck):
 
         # process metrics available for psutil versions 0.5.0 and later on UNIX
         extended_metrics_0_5_0_unix = self.is_psutil_version_later_than((0, 5, 0)) and \
-                                Platform.is_unix()
+            Platform.is_unix()
         if extended_metrics_0_5_0_unix:
             open_file_descriptors = 0
         else:
@@ -158,11 +158,12 @@ class ProcessCheck(AgentCheck):
                 pass
 
         if got_denied:
-            self.warning("The Monitoring Agent was denied access when trying to get the number of file descriptors")
+            self.warning(
+                "The Monitoring Agent was denied access when trying to get the number of file descriptors")
 
-        #Memory values are in Byte
+        # Memory values are in Byte
         return (thr, cpu, rss, vms, real, open_file_descriptors,
-            read_count, write_count, read_bytes, write_bytes, voluntary_ctx_switches, involuntary_ctx_switches)
+                read_count, write_count, read_bytes, write_bytes, voluntary_ctx_switches, involuntary_ctx_switches)
 
     def check(self, instance):
         try:
@@ -194,7 +195,7 @@ class ProcessCheck(AgentCheck):
         self.gauge('processes_pid_count', len(pids), dimensions=dimensions)
 
         metrics = dict(zip(ProcessCheck.PROCESS_GAUGE, self.get_process_metrics(pids,
-            psutil, cpu_check_interval)))
+                                                                                psutil, cpu_check_interval)))
 
         for metric, value in metrics.iteritems():
             if value is not None:

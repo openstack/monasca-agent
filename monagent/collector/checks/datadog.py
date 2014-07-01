@@ -33,6 +33,7 @@ class EventDefaults(object):
 
 
 class Dogstreams(object):
+
     @classmethod
     def init(cls, logger, config):
         dogstreams_config = config.get('dogstreams', None)
@@ -87,7 +88,8 @@ class Dogstreams(object):
             try:
                 result = dogstream.check(agentConfig, move_end)
                 # result may contain {"dogstream": [new]}.
-                # If output contains {"dogstream": [old]}, that old value will get concatenated with the new value
+                # If output contains {"dogstream": [old]}, that old value will get
+                # concatenated with the new value
                 assert type(result) == type(output), "dogstream.check must return a dictionary"
                 for k in result:
                     if k in output:
@@ -128,7 +130,8 @@ class Dogstream(object):
                     parser_spec,
                     os.environ.get('PYTHONPATH', ''))
                 )
-            logger.info("dogstream: parsing %s with %s (requested %s)" % (log_path, parse_func, parser_spec))
+            logger.info("dogstream: parsing %s with %s (requested %s)" %
+                        (log_path, parse_func, parser_spec))
         else:
             logger.info("dogstream: parsing %s with default parser" % log_path)
 
@@ -221,7 +224,8 @@ class Dogstream(object):
                     # FIXME when the backend treats those as true synonyms, we can
                     # deprecate event_object.
                     if 'event_object' in datum or 'aggregation_key' in datum:
-                        datum['aggregation_key'] = datum.get('event_object', datum.get('aggregation_key'))
+                        datum['aggregation_key'] = datum.get(
+                            'event_object', datum.get('aggregation_key'))
                     else:
                         datum['aggregation_key'] = EventDefaults.EVENT_OBJECT
                     datum['event_object'] = datum['aggregation_key']

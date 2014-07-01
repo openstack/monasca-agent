@@ -17,7 +17,9 @@ instances:
         rrd_whitelist: %s
 """ % (os.path.join(os.path.dirname(__file__), "cacti", "whitelist.txt"))
 
+
 class TestCacti(unittest.TestCase):
+
     def setUp(self):
         self.tmp_dir = '/tmp/cacti_test'
         self.rrd_dir = os.path.join(os.path.dirname(__file__), "cacti")
@@ -55,7 +57,7 @@ class TestCacti(unittest.TestCase):
 
         # Bump the last timestamps back 20 minutes so we have some actual data
         twenty_min = 20 * 60
-        for k,v in check.last_ts.items():
+        for k, v in check.last_ts.items():
             check.last_ts[k] = v - twenty_min
 
         # Do a first check

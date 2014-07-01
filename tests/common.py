@@ -26,7 +26,8 @@ def load_check(name, config, agent_config):
             else:
                 break
     if check_class is None:
-        raise Exception("Unable to import check %s. Missing a class that inherits AgentCheck" % name)
+        raise Exception(
+            "Unable to import check %s. Missing a class that inherits AgentCheck" % name)
 
     init_config = config.get('init_config', None)
     instances = config.get('instances')
@@ -51,7 +52,7 @@ def kill_subprocess(process_obj):
             import ctypes
             PROCESS_TERMINATE = 1
             handle = ctypes.windll.kernel32.OpenProcess(PROCESS_TERMINATE, False,
-                process_obj.pid)
+                                                        process_obj.pid)
             ctypes.windll.kernel32.TerminateProcess(handle, -1)
             ctypes.windll.kernel32.CloseHandle(handle)
         else:
@@ -70,7 +71,8 @@ def get_check(name, config_str):
             check_class = clsmember
             break
     if check_class is None:
-        raise Exception("Unable to import check %s. Missing a class that inherits AgentCheck" % name)
+        raise Exception(
+            "Unable to import check %s. Missing a class that inherits AgentCheck" % name)
 
     agent_config = {
         'version': '0.1',

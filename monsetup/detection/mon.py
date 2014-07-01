@@ -12,8 +12,10 @@ log = logging.getLogger(__name__)
 
 
 class MonPersister(Plugin):
+
     """Detect mon_persister and setup monitoring.
     """
+
     def _detect(self):
         """Run detection, set self.available True if the service is detected."""
         if find_process_cmdline('mon-persister') is not None:
@@ -26,16 +28,18 @@ class MonPersister(Plugin):
         return dropwizard_health_check('mon-persister', 'http://localhost:8091/healthcheck')
 
         # todo
-        #log.info("\tEnabling the mon persister metric collection")
-        #http://localhost:8091/metrics
+        # log.info("\tEnabling the mon persister metric collection")
+        # http://localhost:8091/metrics
 
     def dependencies_installed(self):
         return True
 
 
 class MonAPI(Plugin):
+
     """Detect mon_api and setup monitoring.
     """
+
     def _detect(self):
         """Run detection, set self.available True if the service is detected."""
         if find_process_cmdline('mon-api') is not None:
@@ -48,15 +52,17 @@ class MonAPI(Plugin):
         return dropwizard_health_check('mon-api', 'http://localhost:8081/healthcheck')
 
         # todo
-        #log.info("\tEnabling the mon api metric collection")
-        #http://localhost:8081/metrics
+        # log.info("\tEnabling the mon api metric collection")
+        # http://localhost:8081/metrics
 
     def dependencies_installed(self):
         return True
 
 
 class MonThresh(Plugin):
+
     """Detect the running mon-thresh and monitor"""
+
     def _detect(self):
         """Run detection, set self.available True if the service is detected."""
         if find_process_cmdline('mon-thresh') is not None:
