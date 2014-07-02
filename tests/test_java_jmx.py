@@ -67,7 +67,7 @@ class JMXTestCase(unittest.TestCase):
 
         metrics = self.reporter.metrics
 
-        self.assertTrue(type(metrics) == type([]))
+        self.assertTrue(isinstance(metrics, list))
         self.assertTrue(len(metrics) > 0)
         self.assertEquals(len([t for t in metrics if t[
                           'metric'] == "my.metric.buf" and "instance:jmx_instance1" in t['dimensions']]), 2, metrics)

@@ -64,7 +64,7 @@ class CouchbaseTestCase(unittest.TestCase):
 
         metrics = self.check.get_metrics()
 
-        self.assertTrue(type(metrics) == type([]), metrics)
+        self.assertTrue(isinstance(metrics, list), metrics)
         self.assertTrue(len(metrics) > 3)
         self.assertTrue(
             len([k for k in metrics if "instance:http://localhost:8091" in k[3]['dimensions']]) > 3)

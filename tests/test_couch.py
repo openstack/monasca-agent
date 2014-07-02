@@ -22,7 +22,7 @@ class CouchDBTestCase(unittest.TestCase):
         self.check.check(config['instances'][0])
 
         metrics = self.check.get_metrics()
-        self.assertTrue(type(metrics) == type([]), metrics)
+        self.assertTrue(isinstance(metrics, list), metrics)
         self.assertTrue(len(metrics) > 3)
         self.assertTrue(
             len([k for k in metrics if "instance:http://localhost:5984" in k[3]['dimensions']]) > 3)
