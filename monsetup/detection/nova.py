@@ -4,6 +4,7 @@ from monsetup import agent_config
 
 log = logging.getLogger(__name__)
 
+
 class Nova(Plugin):
     """Detect Nova daemons and setup configuration to monitor them."""
 

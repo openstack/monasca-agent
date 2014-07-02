@@ -131,9 +131,9 @@ setup(
     packages=find_packages(exclude=['tests', 'build*', 'packaging*']),
     entry_points={
         'console_scripts': [
-            'mon-forwarder = monagent.forwarder:main',
+            'mon-forwarder = monagent.forwarder.daemon:main',
             'mon-collector = monagent.collector.daemon:main',
-            'monstatsd = monagent.monstatsd:main',
+            'monstatsd = monagent.monstatsd.daemon:main',
             'mon-setup = monsetup.main:main'
         ],
     },

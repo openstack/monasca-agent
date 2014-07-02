@@ -4,6 +4,7 @@ from monsetup import agent_config
 
 log = logging.getLogger(__name__)
 
+
 class SwiftAPI(Plugin):
     """Detect the Swift-API daemon and setup configuration to monitor it."""
 
@@ -25,7 +26,8 @@ class SwiftAPI(Plugin):
 
         # Next setup an active http_status check on the API
         log.info("\tConfiguring an http_check for the swift API.")
-        config.merge(service_api_check(self.process_name, 'http://localhost:8080/healthcheck', '.*OK.*', self.service_name))
+        config.merge(
+            service_api_check(self.process_name, 'http://localhost:8080/healthcheck', '.*OK.*', self.service_name))
 
         return config
 
