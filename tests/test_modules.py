@@ -29,7 +29,7 @@ class TestModuleLoad(unittest.TestCase):
 
     def test_cache_population(self):
         """Python module cache should be populated"""
-        self.assertTrue(not 'tests.target_module' in sys.modules)
+        self.assertTrue('tests.target_module' not in sys.modules)
         modules.load('tests.target_module')
         self.assertTrue('tests.target_module' in sys.modules)
 

@@ -131,7 +131,7 @@ class HaproxyTestCase(unittest.TestCase):
             assert False, "Should raise an error"
         metrics = self.check.get_metrics()
         assert len(metrics) == 0
-        assert self.check.has_events() == False
+        assert self.check.has_events() is False
 
     @attr('haproxy')
     def testOpenConfig(self):

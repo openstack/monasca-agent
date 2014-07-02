@@ -190,7 +190,7 @@ class Redis(AgentCheck):
             raise Exception(
                 'Python Redis Module can not be imported. Please check the installation instruction on the Datadog Website')
 
-        if (not "host" in instance or not "port" in instance) and not "unix_socket_path" in instance:
+        if ("host" not in instance or "port" not in instance) and "unix_socket_path" not in instance:
             raise Exception("You must specify a host/port couple or a unix_socket_path")
         custom_dimensions = instance.get('dimensions', {})
         self._check_db(instance, custom_dimensions)

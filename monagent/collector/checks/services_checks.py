@@ -131,7 +131,7 @@ class ServicesCheck(AgentCheck):
 
             event = None
 
-            if not name in self.statuses:
+            if name not in self.statuses:
                 self.statuses[name] = []
 
             self.statuses[name].append(status)

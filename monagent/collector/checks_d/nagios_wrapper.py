@@ -39,7 +39,7 @@ class WrapNagios(ServicesCheck):
 
         dimensions = {'observer_host': socket.getfqdn()}
         # Add per-instance dimensions, if any
-        if instance.has_key('dimensions') and instance['dimensions'] is not None:
+        if 'dimensions' in instance.keys() and instance['dimensions'] is not None:
             dimensions.update(instance['dimensions'])
 
         if 'host_name' in instance:
