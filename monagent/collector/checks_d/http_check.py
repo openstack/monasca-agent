@@ -61,7 +61,7 @@ class HTTPCheck(ServicesCheck):
         content = ''
 
         new_dimensions = dimensions.copy()
-        if dimensions != None:
+        if dimensions is not None:
             new_dimensions.update(dimensions)
         new_dimensions['url'] = addr
 
