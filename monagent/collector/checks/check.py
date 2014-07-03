@@ -20,13 +20,13 @@ log = logging.getLogger(__name__)
 
 
 # todo convert all checks to the new interface then remove this. Is the LaconicFilter on logs used elsewhere?
-#==============================================================================
+# ==============================================================================
 # DEPRECATED
 # ------------------------------
 # If you are writing your own check, you should inherit from AgentCheck
 # and not this class. This class will be removed in a future version
 # of the agent.
-#==============================================================================
+# ==============================================================================
 class Check(object):
     """
     (Abstract) class for all checks with the ability to:
@@ -139,7 +139,7 @@ class Check(object):
                 self._sample_store[metric][key] = [(timestamp, value, hostname, device_name)]
             else:
                 self._sample_store[metric][key] = self._sample_store[metric][key][-1:] + \
-                                                  [(timestamp, value, hostname, device_name)]
+                    [(timestamp, value, hostname, device_name)]
         else:
             raise CheckException("%s must be either gauge or counter, skipping sample at %s" %
                                  (metric, time.ctime(timestamp)))
@@ -257,7 +257,7 @@ class Check(object):
 
 
 class AgentCheck(object):
-    
+
     keystone = None
 
     def __init__(self, name, init_config, agent_config, instances=None):
