@@ -5,7 +5,7 @@
 
 import logging
 
-from . import Plugin, find_process_cmdline, watch_process
+from monsetup.detection import Plugin, find_process_cmdline, watch_process
 from monsetup import agent_config
 
 log = logging.getLogger(__name__)
