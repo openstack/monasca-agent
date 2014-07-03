@@ -5,6 +5,7 @@ from monclient import client
 
 
 class Plugin(object):
+
     """Abstract class implemented by the mon-agent plugin detection classes
     """
     # todo these should include dependency detection

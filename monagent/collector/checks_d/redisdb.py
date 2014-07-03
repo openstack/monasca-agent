@@ -94,7 +94,7 @@ class Redis(AgentCheck):
                     except ValueError:
                         return v
             return default
-        except Exception, e:
+        except Exception as e:
             self.log.exception("Cannot parse dictionary string: %s" % string)
             return default
 
@@ -144,7 +144,7 @@ class Redis(AgentCheck):
         start = time.time()
         try:
             info = conn.info()
-        except ValueError, e:
+        except ValueError as e:
             # This is likely a know issue with redis library 2.0.0
             # See https://github.com/DataDog/dd-agent/issues/374 for details
             import redis

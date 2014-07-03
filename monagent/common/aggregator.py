@@ -41,7 +41,8 @@ class Aggregator(object):
         self.num_discarded_old_points = 0
 
     @staticmethod
-    def formatter(metric, value, timestamp, dimensions, hostname, device_name=None, metric_type=None, interval=None):
+    def formatter(metric, value, timestamp, dimensions, hostname,
+                  device_name=None, metric_type=None, interval=None):
         """ Formats metrics, put them into a Measurement class
             (metric, timestamp, value, {"dimensions": {"name1": "value1", "name2": "value2"}, ...})
             dimensions should be a dictionary
@@ -169,7 +170,8 @@ class MetricsBucketAggregator(Aggregator):
 
             metric_by_context[context].sample(value, sample_rate, timestamp)
 
-    def create_empty_metrics(self, sample_time_by_context, expiry_timestamp, flush_timestamp, metrics):
+    def create_empty_metrics(
+            self, sample_time_by_context, expiry_timestamp, flush_timestamp, metrics):
         # Even if no data is submitted, Counters keep reporting "0" for expiry_seconds.  The other Metrics
         #  (Set, Gauge, Histogram) do not report if no data is submitted
         for context, last_sample_time in sample_time_by_context.items():

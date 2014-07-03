@@ -35,6 +35,7 @@ def parse_function_plugin(logger, line, state):
 
 
 class ParseClassPlugin(object):
+
     """Class-based stateful parser"""
 
     def __init__(self, logger=None, user_args=(), **kwargs):
@@ -92,6 +93,7 @@ def repr_event_parser(logger, line):
 
 
 class TailTestCase(unittest.TestCase):
+
     def setUp(self):
         self.log_file = NamedTemporaryFile()
         self.logger = logging.getLogger('test.dogstream')
@@ -470,6 +472,7 @@ class TestDogstream(TailTestCase):
 
 
 class TestNagiosPerfData(TailTestCase):
+
     def setUp(self):
         TailTestCase.setUp(self)
         self.nagios_config = NamedTemporaryFile()

@@ -113,7 +113,7 @@ SELECT relname,
 
     def _is_9_2_or_above(self, key, db):
         version = self._get_version(key, db)
-        if type(version) == list:
+        if isinstance(version, list):
             return version >= [9, 2, 0]
 
         return False
@@ -141,7 +141,7 @@ SELECT relname,
             # we must remember that order to parse results
             try:
                 cursor = db.cursor()
-            except InterfaceError, e:
+            except InterfaceError as e:
                 self.log.error("Connection seems broken: %s" % str(e))
                 raise ShouldRestartException
 

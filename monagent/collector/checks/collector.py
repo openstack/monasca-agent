@@ -82,7 +82,7 @@ class Collector(object):
             emitter_status = EmitterStatus(name)
             try:
                 self.emitter(payload, log, self.agent_config['forwarder_url'])
-            except Exception, e:
+            except Exception as e:
                 log.exception("Error running emitter: %s" % self.emitter.__name__)
                 emitter_status = EmitterStatus(name, e)
             statuses.append(emitter_status)

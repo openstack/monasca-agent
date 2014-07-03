@@ -147,7 +147,7 @@ class JMXFetch(object):
                             java_bin_path = check_java_bin_path
                         if java_options is None and check_java_options is not None:
                             java_options = check_java_options
-                except InvalidJMXConfiguration, e:
+                except InvalidJMXConfiguration as e:
                     log.error("%s check is not a valid jmx configuration: %s" % (check_name, e))
                     invalid_checks[check_name] = e
 
@@ -171,12 +171,12 @@ class JMXFetch(object):
 
         if is_jmx:
             instances = check_config.get('instances', [])
-            if type(instances) != list or len(instances) == 0:
+            if not isinstance(instances, list) or len(instances) == 0:
                 raise InvalidJMXConfiguration(
                     'You need to have at least one instance defined in the YAML file for this check')
 
             for inst in instances:
-                if type(inst) != dict:
+                if not isinstance(inst, dict):
                     raise InvalidJMXConfiguration(
                         "Each instance should be a dictionary. %s" % LINK_TO_DOC)
                 host = inst.get('host', None)
@@ -184,7 +184,7 @@ class JMXFetch(object):
                 conf = inst.get('conf', init_config.get('conf', None))
                 if host is None:
                     raise InvalidJMXConfiguration("A host must be specified")
-                if port is None or type(port) != int:
+                if port is None or not isinstance(port, int):
                     raise InvalidJMXConfiguration("A numeric port must be specified")
 
                 if conf is None:
@@ -192,7 +192,7 @@ class JMXFetch(object):
                         "%s doesn't have a 'conf' section. Only basic JVM metrics will be collected. %s" % (
                             inst, LINK_TO_DOC))
                 else:
-                    if type(conf) != list or len(conf) == 0:
+                    if not isinstance(conf, list) or len(conf) == 0:
                         raise InvalidJMXConfiguration(
                             "'conf' section should be a list of configurations %s" % LINK_TO_DOC)
 
@@ -202,7 +202,7 @@ class JMXFetch(object):
                             raise InvalidJMXConfiguration(
                                 "Each configuration must have an 'include' section. %s" % LINK_TO_DOC)
 
-                        if type(include) != dict:
+                        if not isinstance(include, dict):
                             raise InvalidJMXConfiguration(
                                 "'include' section must be a dictionary %s" % LINK_TO_DOC)
 
@@ -243,7 +243,7 @@ class JMXFetch(object):
                 # and won't do anything otherwise
                 # It doesn't work on windows as signal.CTRL_C_EVENT is 0, it would quit the process
                 return True
-            except Exception, e:
+            except Exception as e:
                 if "Errno 3" not in str(e):
                     log.debug(
                         "Couldn't determine if JMXFetch is running. We suppose it's not. %s" % str(
@@ -264,7 +264,7 @@ class JMXFetch(object):
             else:
                 return False
 
-        except Exception, e:
+        except Exception as e:
             log.debug("Couldn't determine if JMXFetch is running. We suppose it's not. %s" % str(e))
             return False
 
@@ -365,6 +365,6 @@ class JMXFetch(object):
                 fp = open(JMXFetch.pid_file_path, 'w+')
                 fp.write(str(jmx_connector_pid))
                 fp.close()
-                os.chmod(JMXFetch.pid_file_path, 0644)
+                os.chmod(JMXFetch.pid_file_path, 0o644)
             except Exception:
                 log.exception("Unable to write jmxfetch pidfile: %s" % JMXFetch.pid_file_path)

@@ -9,6 +9,7 @@ from monagent.common.aggregator import MetricsAggregator
 
 
 class TestUnitMonStatsd(unittest.TestCase):
+
     @staticmethod
     def sort_metrics(metrics):
         def sort_by(m):

@@ -188,7 +188,7 @@ class MySql(AgentCheck):
             if (major, minor, patchlevel) > (5, 0, 2):
                 greater_502 = True
 
-        except Exception, exception:
+        except Exception as exception:
             self.warning("Cannot compute mysql version, assuming older than 5.0.2: %s" %
                          str(exception))
 

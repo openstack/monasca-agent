@@ -44,7 +44,7 @@ def http_emitter(message, log, url):
             log.debug('http_emitter: postback response: ' + str(response.read()))
         finally:
             response.close()
-    except urllib2.HTTPError, e:
+    except urllib2.HTTPError as e:
         if e.code == 202:
             log.debug("http payload accepted")
         else:

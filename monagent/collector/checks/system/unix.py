@@ -15,6 +15,7 @@ import time
 from monagent.collector.checks.check import Check
 from monagent.common.metrics import Measurement
 from monagent.common.util import Platform
+from functools import reduce
 
 
 # locale-resilient float converter
@@ -65,7 +66,8 @@ class Disk(Check):
             self.logger.exception('Error collecting disk stats')
             return {}
 
-    def parse_df_output(self, df_output, platform_name, inodes=False, use_mount=False, blacklist_re=None):
+    def parse_df_output(
+            self, df_output, platform_name, inodes=False, use_mount=False, blacklist_re=None):
         """
         Parse the output of the df command. If use_volume is true the volume
         is used to anchor the metric, otherwise false the mount
@@ -573,7 +575,7 @@ class Memory(Check):
                 top = sp.Popen(['top', '-l 1'], stdout=sp.PIPE, close_fds=True).communicate()[0]
                 sysctl = sp.Popen(
                     ['sysctl', 'vm.swapusage'], stdout=sp.PIPE, close_fds=True).communicate()[0]
-            except StandardError:
+            except Exception:
                 self.logger.exception('getMemoryUsage')
                 return {}
 
@@ -860,7 +862,8 @@ class Cpu(Check):
                 cpu_wait = 0
                 cpu_idle = get_value(headers, data, "id")
                 cpu_stol = 0
-                return format_results(cpu_user + cpu_nice, cpu_sys + cpu_intr, cpu_wait, cpu_idle, cpu_stol)
+                return format_results(
+                    cpu_user + cpu_nice, cpu_sys + cpu_intr, cpu_wait, cpu_idle, cpu_stol)
 
             else:
                 self.logger.warn("Expected to get at least 4 lines of data from iostat instead of just " +

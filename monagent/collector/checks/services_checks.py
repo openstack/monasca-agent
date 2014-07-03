@@ -110,7 +110,7 @@ class ServicesCheck(AgentCheck):
             # We put the results in the result queue
             self.resultsq.put(result)
 
-        except Exception, e:
+        except Exception as e:
             result = (FAILURE, FAILURE, FAILURE, FAILURE)
             self.resultsq.put(result)
 

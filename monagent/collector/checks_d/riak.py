@@ -60,15 +60,15 @@ class Riak(AgentCheck):
             h = Http(timeout=timeout)
             resp, content = h.request(url, "GET")
 
-        except socket.timeout, e:
+        except socket.timeout as e:
             self.timeout_event(url, timeout, aggregation_key)
             return
 
-        except socket.error, e:
+        except socket.error as e:
             self.timeout_event(url, timeout, aggregation_key)
             return
 
-        except HttpLib2Error, e:
+        except HttpLib2Error as e:
             self.timeout_event(url, timeout, aggregation_key)
             return
 

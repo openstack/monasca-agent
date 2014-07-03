@@ -18,6 +18,7 @@ from monagent.collector.checks import AgentCheck
 
 
 class Skip(Exception):
+
     """
     Raised by :class:`Jenkins` when it comes across
     a build or job that should be excluded from being checked.
@@ -115,7 +116,7 @@ class Jenkins(AgentCheck):
                     # If it not a new build, stop here
                     else:
                         break
-        except Exception, e:
+        except Exception as e:
             self.log.error("Error while working on job %s, exception: %s" % (job_name, e))
 
     def check(self, instance, create_event=True):

@@ -83,7 +83,8 @@ class HAProxy(AgentCheck):
         # Split the data by line
         return response.split('\n')
 
-    def _process_data(self, data, collect_aggregates_only, process_events, url=None, collect_status_metrics=False):
+    def _process_data(self, data, collect_aggregates_only, process_events,
+                      url=None, collect_status_metrics=False):
         ''' Main data-processing loop. For each piece of useful data, we'll
         either save a metric, save an event or both. '''
 

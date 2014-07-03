@@ -108,5 +108,5 @@ class Reporter(threading.Thread):
                 event_count=event_count,
             ).persist()
 
-        except Exception, e:
+        except Exception as e:
             log.exception("Error flushing metrics")

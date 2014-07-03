@@ -33,7 +33,7 @@ SENTINEL = "QUIT"
 def is_sentinel(obj):
     """Predicate to determine whether an item from the queue is the
     signal to stop"""
-    return type(obj) is str and obj == SENTINEL
+    return isinstance(obj, str) and obj == SENTINEL
 
 
 class TimeoutError(Exception):
@@ -54,7 +54,7 @@ class PoolWorker(threading.Thread):
 
     def run(self):
         """Process the work unit, or wait for sentinel to exit"""
-        while 1:
+        while True:
             self.running = True
             workunit = self._workq.get()
             if is_sentinel(workunit):
@@ -217,7 +217,7 @@ class Pool(object):
 
         # Clearing the job queue
         try:
-            while 1:
+            while True:
                 self._workq.get_nowait()
         except Queue.Empty:
             pass

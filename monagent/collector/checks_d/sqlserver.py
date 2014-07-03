@@ -74,7 +74,7 @@ class SQLServer(AgentCheck):
                 conn_str = self._conn_string(host, username, password, database)
                 conn = adodbapi.connect(conn_str)
                 self.connections[conn_key] = conn
-            except Exception, e:
+            except Exception as e:
                 cx = "%s - %s" % (host, database)
                 raise Exception("Unable to connect to SQL Server for instance %s.\n %s"
                                 % (cx, traceback.format_exc()))
@@ -100,7 +100,7 @@ class SQLServer(AgentCheck):
             if instance_n == ALL_INSTANCES:
                 try:
                     self._fetch_all_instances(metric, cursor, custom_dimensions)
-                except Exception, e:
+                except Exception as e:
                     self.log.exception('Unable to fetch metric: %s' % mname)
                     self.warning('Unable to fetch metric: %s' % mname)
             else:
@@ -112,7 +112,7 @@ class SQLServer(AgentCheck):
                         and instance_name = ?
                     """, (counter, instance_n))
                     (value,) = cursor.fetchone()
-                except Exception, e:
+                except Exception as e:
                     self.log.exception('Unable to fetch metric: %s' % mname)
                     self.warning('Unable to fetch metric: %s' % mname)
                     continue

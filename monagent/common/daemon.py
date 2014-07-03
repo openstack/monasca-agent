@@ -56,7 +56,7 @@ class AgentSupervisor(object):
                         child_func()
                     else:
                         break
-            except OSError, e:
+            except OSError as e:
                 msg = "Agent fork failed: %d (%s)" % (e.errno, e.strerror)
                 logging.error(msg)
                 sys.stderr.write(msg + "\n")
@@ -79,7 +79,8 @@ class Daemon(object):
     Usage: subclass the Daemon class and override the run() method
     """
 
-    def __init__(self, pidfile, stdin=os.devnull, stdout=os.devnull, stderr=os.devnull, autorestart=False):
+    def __init__(self, pidfile, stdin=os.devnull, stdout=os.devnull,
+                 stderr=os.devnull, autorestart=False):
         self.autorestart = autorestart
         self.stdin = stdin
         self.stdout = stdout
@@ -97,7 +98,7 @@ class Daemon(object):
             if pid > 0:
                 # Exit first parent
                 sys.exit(0)
-        except OSError, e:
+        except OSError as e:
             msg = "fork #1 failed: %d (%s)" % (e.errno, e.strerror)
             log.error(msg)
             sys.stderr.write(msg + "\n")
@@ -120,7 +121,7 @@ class Daemon(object):
                 if pid > 0:
                     # Exit from second parent
                     sys.exit(0)
-            except OSError, e:
+            except OSError as e:
                 msg = "fork #2 failed: %d (%s)" % (e.errno, e.strerror)
                 logging.error(msg)
                 sys.stderr.write(msg + "\n")
@@ -146,8 +147,8 @@ class Daemon(object):
             fp = open(self.pidfile, 'w+')
             fp.write(str(pid))
             fp.close()
-            os.chmod(self.pidfile, 0644)
-        except Exception, e:
+            os.chmod(self.pidfile, 0o644)
+        except Exception as e:
             msg = "Unable to write pidfile: %s" % self.pidfile
             log.exception(msg)
             sys.stderr.write(msg + "\n")
@@ -188,7 +189,7 @@ class Daemon(object):
                     # No supervising process present
                     os.kill(pid, signal.SIGTERM)
                 log.info("Daemon is stopped")
-            except OSError, err:
+            except OSError as err:
                 if str(err).find("No such process") <= 0:
                     log.exception("Cannot kill Agent daemon at pid %s" % pid)
                     sys.stderr.write(str(err) + "\n")
@@ -241,7 +242,7 @@ class Daemon(object):
                 # (from http://stackoverflow.com/questions/568271/check-if-pid-is-not-in-use-in-python,
                 #  Giampaolo's answer)
                 os.kill(pid, 0)
-            except OSError, e:
+            except OSError as e:
                 if e.errno != errno.EPERM:
                     message = '%s pidfile contains pid %s, but no running process could be found' % (
                         self.__class__.__name__, pid)

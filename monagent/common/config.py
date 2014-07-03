@@ -161,13 +161,13 @@ def get_config_path(cfg_path=None, os_name=None):
     if os_name == 'windows':
         try:
             return _windows_config_path()
-        except PathNotFound, e:
+        except PathNotFound as e:
             if len(e.args) > 0:
                 bad_path = e.args[0]
     else:
         try:
             return _unix_config_path()
-        except PathNotFound, e:
+        except PathNotFound as e:
             if len(e.args) > 0:
                 bad_path = e.args[0]
 
@@ -332,15 +332,15 @@ def get_config(parse_args=True, cfg_path=None, options=None):
 
         agent_config['Api'] = get_mon_api_config(config)
 
-    except ConfigParser.NoSectionError, e:
+    except ConfigParser.NoSectionError as e:
         sys.stderr.write('Config file not found or incorrectly formatted.\n')
         sys.exit(2)
 
-    except ConfigParser.ParsingError, e:
+    except ConfigParser.ParsingError as e:
         sys.stderr.write('Config file not found or incorrectly formatted.\n')
         sys.exit(2)
 
-    except ConfigParser.NoOptionError, e:
+    except ConfigParser.NoOptionError as e:
         sys.stderr.write(
             'There are some items missing from your config file, but nothing fatal [%s]' % e)
 
@@ -419,7 +419,7 @@ def get_proxy(agent_config, use_system_settings=False):
                 proxy_settings['user'], "*****", proxy_settings['host'], proxy_settings['port']))
             return proxy_settings
 
-    except Exception, e:
+    except Exception as e:
         log.debug(
             "Error while trying to fetch proxy settings using urllib %s. Proxy is probably not set" % str(e))
 
@@ -433,13 +433,13 @@ def get_confd_path(osname):
     if osname == 'windows':
         try:
             return _windows_confd_path()
-        except PathNotFound, e:
+        except PathNotFound as e:
             if len(e.args) > 0:
                 bad_path = e.args[0]
     else:
         try:
             return _unix_confd_path()
-        except PathNotFound, e:
+        except PathNotFound as e:
             if len(e.args) > 0:
                 bad_path = e.args[0]
 
@@ -522,13 +522,13 @@ def load_check_directory(agent_config):
     try:
         checksd_path = get_checksd_path(osname)
         checks_paths.append(glob.glob(os.path.join(checksd_path, '*.py')))
-    except PathNotFound, e:
+    except PathNotFound as e:
         log.error(e.args[0])
         sys.exit(3)
 
     try:
         confd_path = get_confd_path(osname)
-    except PathNotFound, e:
+    except PathNotFound as e:
         log.error(
             "No conf.d folder found at '%s' or in the directory where the Agent is currently deployed.\n" % e.args[0])
         sys.exit(3)
@@ -551,7 +551,7 @@ def load_check_directory(agent_config):
             continue
         try:
             check_module = imp.load_source('checksd_%s' % check_name, check)
-        except Exception, e:
+        except Exception as e:
             traceback_message = traceback.format_exc()
 
             # Let's see if there is a conf.d for this check
@@ -586,7 +586,7 @@ def load_check_directory(agent_config):
             f = open(conf_path)
             try:
                 check_config = check_yaml(conf_path)
-            except Exception, e:
+            except Exception as e:
                 log.exception("Unable to parse yaml config in %s" % conf_path)
                 traceback_message = traceback.format_exc()
                 init_failed_checks[check_name] = {'error': e, 'traceback': traceback_message}
@@ -595,7 +595,7 @@ def load_check_directory(agent_config):
             # FIXME: Remove this check once all old-style checks are gone
             try:
                 check_config = check_class.parse_agent_config(agent_config)
-            except Exception, e:
+            except Exception as e:
                 continue
             if not check_config:
                 continue
@@ -627,13 +627,13 @@ def load_check_directory(agent_config):
             try:
                 c = check_class(check_name, init_config=init_config,
                                 agent_config=agent_config, instances=instances)
-            except TypeError, e:
+            except TypeError as e:
                 # Backwards compatibility for checks which don't support the
                 # instances argument in the constructor.
                 c = check_class(check_name, init_config=init_config,
                                 agent_config=agent_config)
                 c.instances = instances
-        except Exception, e:
+        except Exception as e:
             log.exception('Unable to initialize check %s' % check_name)
             traceback_message = traceback.format_exc()
             init_failed_checks[check_name] = {'error': e, 'traceback': traceback_message}
@@ -704,7 +704,8 @@ def get_logging_config(cfg_path=None):
     config = ConfigParser.ConfigParser()
     config.readfp(skip_leading_wsp(open(config_path)))
 
-    if config.has_section('handlers') or config.has_section('loggers') or config.has_section('formatters'):
+    if config.has_section('handlers') or config.has_section(
+            'loggers') or config.has_section('formatters'):
         if system_os == 'windows':
             config_example_file = "https://github.com/DataDog/dd-agent/blob/master/packaging/datadog-agent/win32/install_files/datadog_win32.conf"
         else:
@@ -797,7 +798,8 @@ def initialize_logging(logger_name):
             try:
                 from logging.handlers import SysLogHandler
 
-                if logging_config['syslog_host'] is not None and logging_config['syslog_port'] is not None:
+                if logging_config['syslog_host'] is not None and logging_config[
+                        'syslog_port'] is not None:
                     sys_log_addr = (logging_config['syslog_host'], logging_config['syslog_port'])
                 else:
                     sys_log_addr = "/dev/log"
@@ -810,7 +812,7 @@ def initialize_logging(logger_name):
                     logging.Formatter(get_syslog_format(logger_name), get_log_date_format()))
                 root_log = logging.getLogger()
                 root_log.addHandler(handler)
-            except Exception, e:
+            except Exception as e:
                 sys.stderr.write("Error setting up syslog: '%s'\n" % str(e))
                 traceback.print_exc()
 
@@ -825,11 +827,11 @@ def initialize_logging(logger_name):
                 nt_event_handler.setLevel(logging.ERROR)
                 app_log = logging.getLogger(logger_name)
                 app_log.addHandler(nt_event_handler)
-            except Exception, e:
+            except Exception as e:
                 sys.stderr.write("Error setting up Event viewer logging: '%s'\n" % str(e))
                 traceback.print_exc()
 
-    except Exception, e:
+    except Exception as e:
         sys.stderr.write("Couldn't initialize logging: %s\n" % str(e))
         traceback.print_exc()
 

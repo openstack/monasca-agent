@@ -106,7 +106,7 @@ class EditorFile(object):
             f.write(content)
             self.content = content
             info_popup("File saved.")
-        except Exception, e:
+        except Exception as e:
             warning_popup("Unable to save file: \n %s" % str(e))
             raise
 
@@ -352,7 +352,8 @@ class MainWindow(QSplitter):
                 service_status = get_service_status()
                 self.properties.service_status_label.setText(HUMAN_SERVICE_STATUS[service_status])
 
-                if not is_service_stopped(service_status) and self.properties.current_file == self.log_file:
+                if not is_service_stopped(
+                        service_status) and self.properties.current_file == self.log_file:
                     self.properties.set_log_file(self.log_file)
         finally:
             QTimer.singleShot(REFRESH_PERIOD, self.do_refresh)
@@ -443,7 +444,7 @@ def save_file(properties):
 def check_yaml_syntax(content):
     try:
         yaml.load(content, Loader=Loader)
-    except Exception, e:
+    except Exception as e:
         warning_popup("Unable to parse yaml: \n %s" % str(e))
         raise
 
@@ -456,7 +457,7 @@ def _service_manager(action):
             win32serviceutil.StartService(DATADOG_SERVICE)
         elif action == 'restart':
             win32serviceutil.RestartService(DATADOG_SERVICE)
-    except Exception, e:
+    except Exception as e:
         warning_popup("Couldn't %s service: \n %s" % (action, str(e)))
 
 

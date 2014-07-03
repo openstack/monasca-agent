@@ -2,6 +2,7 @@ from monsetup.detection import ServicePlugin
 
 
 class Neutron(ServicePlugin):
+
     """Detect Neutron daemons and setup configuration to monitor them."""
 
     def __init__(self, template_dir, overwrite=True):

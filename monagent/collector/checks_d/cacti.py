@@ -52,14 +52,14 @@ class Cacti(AgentCheck):
         # The rrdtool module is required for the check to work
         try:
             import rrdtool
-        except ImportError, e:
+        except ImportError as e:
             raise Exception(
                 "Cannot import rrdtool module. Check the instructions to install this module at https://app.datadoghq.com/account/settings#integrations/cacti")
 
         # Try importing MySQL
         try:
             import MySQLdb
-        except ImportError, e:
+        except ImportError as e:
             raise Exception(
                 "Cannot import MySQLdb module. Check the instructions to install this module at https://app.datadoghq.com/account/settings#integrations/cacti")
 

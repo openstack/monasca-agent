@@ -23,7 +23,7 @@ class HostAlive(ServicesCheck):
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             if timeout is not None:
                 sock.settimeout(timeout)
-        except socket.error, msg:
+        except socket.error as msg:
             self.log.error("Error creating socket: " + str(msg[0]) + msg[1])
             return False
 

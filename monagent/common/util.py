@@ -115,7 +115,8 @@ def cast_metric_val(val):
 
 
 def is_valid_hostname(hostname):
-    if hostname.lower() in {'localhost', 'localhost.localdomain', 'localhost6.localdomain6', 'ip6-localhost'}:
+    if hostname.lower() in {'localhost', 'localhost.localdomain',
+                            'localhost6.localdomain6', 'ip6-localhost'}:
         log.warning("Hostname: %s is local" % hostname)
         return False
     if len(hostname) > MAX_HOSTNAME_LEN:
@@ -171,7 +172,7 @@ def get_hostname(config=None):
     if hostname is None:
         try:
             socket_hostname = socket.gethostname()
-        except socket.error, e:
+        except socket.error as e:
             socket_hostname = None
         if socket_hostname and is_valid_hostname(socket_hostname):
             hostname = socket_hostname

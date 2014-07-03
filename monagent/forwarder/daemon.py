@@ -18,7 +18,7 @@ initialize_logging('forwarder')
 from monagent.common.config import get_logging_config
 
 import os
-os.umask(022)
+os.umask(0o22)
 
 # Standard imports
 import logging
@@ -159,7 +159,8 @@ class AgentInputHandler(tornado.web.RequestHandler):
 
 class Forwarder(tornado.web.Application):
 
-    def __init__(self, port, agent_config, watchdog=True, skip_ssl_validation=False, use_simple_http_client=False):
+    def __init__(self, port, agent_config, watchdog=True, skip_ssl_validation=False,
+                 use_simple_http_client=False):
         self._port = int(port)
         self._agentConfig = agent_config
         self._metrics = {}
@@ -232,13 +233,13 @@ class Forwarder(tornado.web.Application):
                     log.warning(
                         "localhost seems undefined in your host file, using 127.0.0.1 instead")
                     http_server.listen(self._port, address="127.0.0.1")
-                except socket_error, e:
+                except socket_error as e:
                     if "Errno 99" in str(e):
                         log.warning("IPv6 doesn't seem to be fully supported. Falling back to IPv4")
                         http_server.listen(self._port, address="127.0.0.1")
                     else:
                         raise
-        except socket_error, e:
+        except socket_error as e:
             log.exception(
                 "Socket error %s. Is another application listening on the same port ? Exiting", e)
             sys.exit(1)

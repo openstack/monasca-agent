@@ -2,6 +2,7 @@ from monsetup.detection import ServicePlugin
 
 
 class Keystone(ServicePlugin):
+
     """Detect Keystone daemons and setup configuration to monitor them."""
 
     def __init__(self, template_dir, overwrite=True):

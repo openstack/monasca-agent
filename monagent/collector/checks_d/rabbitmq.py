@@ -75,7 +75,7 @@ class RabbitMQ(AgentCheck):
         }
 
         for object_type, specified_objects in specified.iteritems():
-            if type(specified_objects) != list:
+            if not isinstance(specified_objects, list):
                 raise TypeError("%s parameter must be a list" % object_type)
 
         # setup urllib2 for Basic Auth
@@ -97,9 +97,9 @@ class RabbitMQ(AgentCheck):
     def _get_data(url):
         try:
             data = json.loads(urllib2.urlopen(url).read())
-        except urllib2.URLError, e:
+        except urllib2.URLError as e:
             raise Exception('Cannot open RabbitMQ API url: %s %s' % (url, str(e)))
-        except ValueError, e:
+        except ValueError as e:
             raise Exception('Cannot parse JSON response from API url: %s %s' % (url, str(e)))
         return data
 

@@ -47,7 +47,7 @@ class DirectoryCheck(AgentCheck):
                 try:
                     file_stat = stat(filename)
 
-                except OSError, ose:
+                except OSError as ose:
                     self.warning("DirectoryCheck: could not stat file %s - %s" % (filename, ose))
                 else:
                     directory_files += 1

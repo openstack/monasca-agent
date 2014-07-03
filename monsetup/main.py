@@ -77,7 +77,7 @@ def main(argv=None):
         with open(agent_conf_path, 'w') as agent_conf:
             agent_conf.write(agent_template.read().format(args=args, hostname=socket.gethostname()))
     os.chown(agent_conf_path, 0, gid)
-    os.chmod(agent_conf_path, 0640)
+    os.chmod(agent_conf_path, 0o640)
     # Link the supervisor.conf
     supervisor_path = os.path.join(args.config_dir, 'supervisor.conf')
     if os.path.exists(supervisor_path):
@@ -122,7 +122,7 @@ def main(argv=None):
                 agent_config.deep_merge(old_config, value)
                 value = old_config
         with open(config_path, 'w') as config_file:
-            os.chmod(config_path, 0640)
+            os.chmod(config_path, 0o640)
             os.chown(config_path, 0, gid)
             config_file.write(yaml.dump(value))
 

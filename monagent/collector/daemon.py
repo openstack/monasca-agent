@@ -15,7 +15,7 @@ from monagent.common.config import get_version, initialize_logging
 initialize_logging('collector')
 
 import os
-os.umask(022)
+os.umask(0o22)
 
 # Core modules
 import logging
@@ -288,7 +288,7 @@ def main():
             basename = os.path.basename(conf_path)
             try:
                 check_yaml(conf_path)
-            except Exception, e:
+            except Exception as e:
                 all_valid = False
                 print "%s contains errors:\n    %s" % (basename, e)
             else:
@@ -333,7 +333,7 @@ def main():
 if __name__ == '__main__':
     try:
         sys.exit(main())
-    except StandardError:
+    except Exception:
         # Try our best to log the error.
         try:
             log.exception("Uncaught error running the Agent")

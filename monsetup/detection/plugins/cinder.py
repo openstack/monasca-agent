@@ -2,6 +2,7 @@ from monsetup.detection import ServicePlugin
 
 
 class Cinder(ServicePlugin):
+
     """Detect Cinder daemons and setup configuration to monitor them."""
 
     def __init__(self, template_dir, overwrite=True):

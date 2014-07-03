@@ -90,7 +90,7 @@ class Dogstreams(object):
                 # result may contain {"dogstream": [new]}.
                 # If output contains {"dogstream": [old]}, that old value will get
                 # concatenated with the new value
-                assert type(result) == type(output), "dogstream.check must return a dictionary"
+                assert isinstance(result, type(output)), "dogstream.check must return a dictionary"
                 for k in result:
                     if k in output:
                         output[k].extend(result[k])
@@ -151,8 +151,8 @@ class Dogstream(object):
         self._gen = None
         self._values = None
         self._freq = 15  # Will get updated on each check()
-        self._error_count = 0L
-        self._line_count = 0L
+        self._error_count = 0
+        self._line_count = 0
         self.parser_state = {}
 
     def check(self, agentConfig, move_end=True):
@@ -171,7 +171,7 @@ class Dogstream(object):
                 self._gen.next()
                 self.logger.debug("Done dogstream check for file %s, found %s metric points" % (self.log_path,
                                                                                                 len(self._values)))
-            except StopIteration, e:
+            except StopIteration as e:
                 self.logger.exception(e)
                 self.logger.warn("Can't tail %s file" % self.log_path)
 
@@ -196,7 +196,7 @@ class Dogstream(object):
             else:
                 try:
                     parsed = self.parse_func(self.logger, line, self.parser_state, *self.parse_args)
-                except TypeError, e:
+                except TypeError as e:
                     # Arity of parse_func is 3 (old-style), not 4
                     parsed = self.parse_func(self.logger, line)
 
@@ -259,7 +259,7 @@ class Dogstream(object):
                                       repr(datum), ', '.join(invalid_reasons), line)
                 else:
                     self._values.append((metric, ts, value, attrs))
-        except Exception, e:
+        except Exception as e:
             self.logger.debug("Error while parsing line %s" % line, exc_info=True)
             self._error_count += 1
             self.logger.error("Parser error: %s out of %s" % (self._error_count, self._line_count))
@@ -278,7 +278,7 @@ class Dogstream(object):
                 keyval, _, line = partition(line.strip(), sep)
                 key, val = keyval.split('=', 1)
                 attributes[key] = val
-        except Exception, e:
+        except Exception as e:
             logger.debug(traceback.format_exc())
 
         return metric, timestamp, value, attributes
@@ -367,7 +367,7 @@ class NagiosPerfData(object):
             regex = re.sub(r'[[\]*]', r'.', file_template)
             regex = re.sub(r'\$([^\$]*)\$', r'(?P<\1>[^\$]*)', regex)
             return re.compile(regex)
-        except Exception, e:
+        except Exception as e:
             raise InvalidDataTemplate("%s (%s)" % (file_template, e))
 
     @staticmethod

@@ -11,7 +11,7 @@ from monagent.monstatsd.udp import Server
 initialize_logging('monstatsd')
 
 import os
-os.umask(022)
+os.umask(0o22)
 
 # stdlib
 import logging
@@ -55,7 +55,7 @@ class Monstatsd(Daemon):
         try:
             try:
                 self.server.start()
-            except Exception, e:
+            except Exception as e:
                 log.exception('Error starting server')
                 raise e
         finally:

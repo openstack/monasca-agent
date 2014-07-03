@@ -13,6 +13,7 @@ from monagent.collector.checks.check import AgentCheck
 
 
 class HTTPCheck(ServicesCheck):
+
     def __init__(self, name, init_config, agent_config, instances=None):
         super(HTTPCheck, self).__init__(name, init_config, agent_config, instances)
 
@@ -72,7 +73,7 @@ class HTTPCheck(ServicesCheck):
                     h.add_credentials(username, password)
                 resp, content = h.request(addr, "GET", headers=headers)
 
-            except socket.timeout, e:
+            except socket.timeout as e:
                 length = int((time.time() - start) * 1000)
                 self.log.info(
                     "%s is DOWN, error: %s. Connection failed after %s ms" % (addr, str(e), length))
@@ -80,7 +81,7 @@ class HTTPCheck(ServicesCheck):
                 return Status.DOWN, "%s is DOWN, error: %s. Connection failed after %s ms" % (
                     addr, str(e), length)
 
-            except HttpLib2Error, e:
+            except HttpLib2Error as e:
                 length = int((time.time() - start) * 1000)
                 self.log.info(
                     "%s is DOWN, error: %s. Connection failed after %s ms" % (addr, str(e), length))
@@ -88,7 +89,7 @@ class HTTPCheck(ServicesCheck):
                 return Status.DOWN, "%s is DOWN, error: %s. Connection failed after %s ms" % (
                     addr, str(e), length)
 
-            except socket.error, e:
+            except socket.error as e:
                 length = int((time.time() - start) * 1000)
                 self.log.info("%s is DOWN, error: %s. Connection failed after %s ms" % (
                     addr, repr(e), length))
@@ -96,7 +97,7 @@ class HTTPCheck(ServicesCheck):
                 return Status.DOWN, "%s is DOWN, error: %s. Connection failed after %s ms" % (
                     addr, str(e), length)
 
-            except httplib.ResponseNotReady, e:
+            except httplib.ResponseNotReady as e:
                 length = int((time.time() - start) * 1000)
                 self.log.info("%s is DOWN, error: %s. Network is not routable after %s ms" % (
                     addr, repr(e), length))
@@ -104,7 +105,7 @@ class HTTPCheck(ServicesCheck):
                 return Status.DOWN, "%s is DOWN, error: %s. Network is not routable after %s ms" % (
                     addr, str(e), length)
 
-            except Exception, e:
+            except Exception as e:
                 length = int((time.time() - start) * 1000)
                 self.log.error(
                     "Unhandled exception %s. Connection failed after %s ms" % (str(e), length))

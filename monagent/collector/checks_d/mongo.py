@@ -248,7 +248,7 @@ class MongoDb(AgentCheck):
                 data['state'] = replSet['myState']
                 self.check_last_state(data['state'], server, self.agent_config)
                 status['replSet'] = data
-        except Exception, e:
+        except Exception as e:
             if "OperationFailure" in repr(e) and "replSetGetStatus" in str(e):
                 pass
             else:

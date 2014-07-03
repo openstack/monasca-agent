@@ -39,13 +39,13 @@ Node count: 487
             ('zookeeper.latency.min', -10),
             ('zookeeper.latency.avg', 0),
             ('zookeeper.latency.max', 20007),
-            ('zookeeper.bytes_received', 101032173L),
-            ('zookeeper.bytes_sent', 0L),
+            ('zookeeper.bytes_received', 101032173),
+            ('zookeeper.bytes_sent', 0),
             ('zookeeper.connections', 6),
-            ('zookeeper.bytes_outstanding', 0L),
+            ('zookeeper.bytes_outstanding', 0),
             ('zookeeper.zxid.epoch', 1),
             ('zookeeper.zxid.count', 55024071),
-            ('zookeeper.nodes', 487L),
+            ('zookeeper.nodes', 487),
         ]
 
         buf = StringIO(stat_response)
@@ -78,13 +78,13 @@ Node count: 487
             ('zookeeper.latency.min', -10),
             ('zookeeper.latency.avg', 0),
             ('zookeeper.latency.max', 20007),
-            ('zookeeper.bytes_received', 101032173L),
-            ('zookeeper.bytes_sent', 0L),
+            ('zookeeper.bytes_received', 101032173),
+            ('zookeeper.bytes_sent', 0),
             ('zookeeper.connections', 1),
-            ('zookeeper.bytes_outstanding', 0L),
+            ('zookeeper.bytes_outstanding', 0),
             ('zookeeper.zxid.epoch', 1),
             ('zookeeper.zxid.count', 55024071),
-            ('zookeeper.nodes', 487L),
+            ('zookeeper.nodes', 487),
         ]
 
         buf = StringIO(stat_response)

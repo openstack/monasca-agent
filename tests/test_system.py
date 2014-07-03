@@ -1,4 +1,5 @@
 import unittest
+from functools import reduce
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__file__)
@@ -8,6 +9,7 @@ from common import get_check
 
 
 class TestSystem(unittest.TestCase):
+
     def testCPU(self):
         global logger
         cpu = Cpu(logger)

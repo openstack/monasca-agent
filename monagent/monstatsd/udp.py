@@ -37,7 +37,7 @@ class Server(object):
             try:
                 self.forward_udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 self.forward_udp_sock.connect((forward_to_host, forward_to_port))
-            except Exception, e:
+            except Exception as e:
                 log.exception("Error while setting up connection to external statsd server")
 
     @staticmethod
@@ -75,7 +75,7 @@ class Server(object):
                 elif m[0] == u'#':
                     event['dimensions'] = sorted(m[1:].split(u','))
             return event
-        except IndexError, ValueError:
+        except IndexError as ValueError:
             raise Exception(u'Unparseable event packet: %s' % packet)
 
     @staticmethod
@@ -179,14 +179,14 @@ class Server(object):
 
                     if should_forward:
                         forward_udp_sock.send(message)
-            except select_error, se:
+            except select_error as se:
                 # Ignore interrupted system calls from sigterm.
                 errno = se[0]
                 if errno != 4:
                     raise
             except (KeyboardInterrupt, SystemExit):
                 break
-            except Exception, e:
+            except Exception as e:
                 log.exception('Error receiving datagram')
 
     def stop(self):

@@ -10,6 +10,7 @@ whitespace = re.compile(r'\s')
 
 
 class KyotoTycoonCheck(AgentCheck):
+
     """Report statistics about the Kyoto Tycoon DBM-style
     database server (http://fallabs.com/kyototycoon/)
     """

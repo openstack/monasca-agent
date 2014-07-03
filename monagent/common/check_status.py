@@ -336,7 +336,7 @@ class CollectorStatus(AgentStatus):
             ntp_offset, ntp_styles = get_ntp_info()
             lines.append('  ' + style('NTP offset', *ntp_styles) + ': ' +
                          style('%s s' % round(ntp_offset, 4), *ntp_styles))
-        except Exception, e:
+        except Exception as e:
             lines.append('  NTP offset: Unkwown (%s)' % str(e))
         lines.append('  System UTC time: ' + datetime.datetime.utcnow().__str__())
         lines.append('')
@@ -516,7 +516,8 @@ class MonstatsdStatus(AgentStatus):
 
     NAME = 'Monstatsd'
 
-    def __init__(self, flush_count=0, packet_count=0, packets_per_second=0, metric_count=0, event_count=0):
+    def __init__(self, flush_count=0, packet_count=0,
+                 packets_per_second=0, metric_count=0, event_count=0):
         AgentStatus.__init__(self)
         self.flush_count = flush_count
         self.packet_count = packet_count
@@ -686,6 +687,6 @@ def get_jmx_status():
 
         return check_statuses
 
-    except Exception, e:
+    except Exception as e:
         log.exception("Couldn't load latest jmx status")
         return []

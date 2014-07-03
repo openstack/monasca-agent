@@ -111,7 +111,7 @@ class KafkaCheck(AgentCheck):
             assert isinstance(topic, (str, unicode))
             assert isinstance(partitions, (list, tuple))
             return val
-        except Exception, e:
+        except Exception as e:
             self.log.exception(e)
             raise Exception('''The `consumer_groups` value must be a mapping of mappings, like this:
 consumer_groups:
@@ -130,7 +130,7 @@ consumer_groups:
                 host, port = hp.strip().split(':')
                 host_ports.append((host, int(port)))
             return host_ports
-        except Exception, e:
+        except Exception as e:
             self.log.exception(e)
             raise Exception(
                 'Could not parse %s. Must be in the form of `host0:port0,host1:port1,host2:port2`' % val)

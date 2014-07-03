@@ -2,6 +2,7 @@ from monsetup.detection import ServicePlugin
 
 
 class Ceilometer(ServicePlugin):
+
     """Detect Ceilometer daemons and setup configuration to monitor them."""
 
     def __init__(self, template_dir, overwrite=True):

@@ -70,8 +70,7 @@ class TestCore(unittest.TestCase):
             CheckException, self.c.save_sample, "test-metric", 4.0, now + 5, dimensions="abc")
         # This is a different combination of dimensions
         self.c.save_sample("test-metric", 3.0, now, dimensions={"dim5": "value5", "dim3": "value3"})
-        results = self.c.get_metrics()
-        results.sort()
+        results = sorted(self.c.get_metrics())
         self.assertEquals(results,
                           [("test-counter", 2.0, 1.0, {"dimensions": {"dim1": "value1", "dim2": "value2"}}),
                            ("test-metric", now, 3.0,
