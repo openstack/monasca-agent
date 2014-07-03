@@ -1,7 +1,7 @@
 import os
 import yaml
 
-from . import Plugin, find_process_name
+from monsetup.detection import Plugin, find_process_name
 from monsetup import agent_config
 
 

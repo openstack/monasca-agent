@@ -14,11 +14,11 @@
 PATH=$PATH:/sbin # add the location of start-stop-daemon on Debian
 export PYTHONPATH=$PYTHONPATH:/usr/share/mon/agent/
 
-AGENTPATH="/usr/bin/mon-collector"
+AGENTPATH="/usr/local/bin/mon-collector"
 AGENTCONF="/etc/mon-agent/agent.conf"
-MONSTATSDPATH="/usr/bin/monstatsd"
+MONSTATSDPATH="/usr/local/bin/monstatsd"
 AGENTUSER="mon-agent"
-FORWARDERPATH="/usr/bin/mon-forwarder"
+FORWARDERPATH="/usr/local/bin/mon-forwarder"
 NAME="mon-agent"
 DESC="Monitoring Agent"
 AGENT_PID_PATH="/var/run/mon-agent.pid"

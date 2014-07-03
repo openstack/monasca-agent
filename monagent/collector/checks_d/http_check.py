@@ -8,15 +8,13 @@ import re
 
 from httplib2 import Http, HttpLib2Error, httplib
 from monagent.collector.checks.services_checks import ServicesCheck, Status
-from monagent.common.keystone import Keystone
+from monagent.collector.checks.check import AgentCheck
 from monagent.common.config import get_config
-
-token = None
 
 class HTTPCheck(ServicesCheck):
 
     def __init__(self, name, init_config, agent_config, instances=None):
-        ServicesCheck.__init__(self, name, init_config, agent_config, instances)
+        super(HTTPCheck, self).__init__(name, init_config, agent_config, instances)
 
     @staticmethod
     def _load_conf(instance):
@@ -34,28 +32,17 @@ class HTTPCheck(ServicesCheck):
             raise Exception("Bad configuration. You must specify a url")
         include_content = instance.get('include_content', False)
         ssl = instance.get('disable_ssl_validation', True)
-        config = get_config()
-        api_config = config['Api']
-        if use_keystone:
-            keystone = Keystone(api_config['keystone_url'],
-                                api_config['username'],
-                                api_config['password'],
-                                api_config['project_name'])
-        else:
-            keystone = None
+        token = AgentCheck.keystone.get_token()
 
-        return url, username, password, timeout, include_content, headers, response_time, dimensions, ssl, pattern, use_keystone, keystone
+        return url, username, password, timeout, include_content, headers, response_time, dimensions, ssl, pattern, use_keystone, token
 
     def _create_status_event(self, status, msg, instance):
         """Does nothing: status events are not yet supported by Mon API"""
         return
 
     def _check(self, instance):
-        addr, username, password, timeout, include_content, headers, response_time, dimensions, disable_ssl_validation, pattern, use_keystone, keystone = self._load_conf(instance)
+        addr, username, password, timeout, include_content, headers, response_time, dimensions, disable_ssl_validation, pattern, use_keystone, token = self._load_conf(instance)
         
-        global token
-
-        self.keystone = keystone
         content = ''
 
         new_dimensions = dimensions.copy()
@@ -65,10 +52,9 @@ class HTTPCheck(ServicesCheck):
 
         start = time.time()
         done = False
-        while not done:
+        retry = False
+        while not done or retry:
             if use_keystone:
-                if not token:
-                    token = self.keystone.get_token()
                 if token:
                     headers["X-Auth-Token"] = token
                     headers["Content-type"] = "application/json"
@@ -125,13 +111,18 @@ class HTTPCheck(ServicesCheck):
 
             if int(resp.status) >= 400:
                 if use_keystone and int(resp.status) == 401:
-                    # Get a new token and retry
-                    token = self.keystone.refresh_token()
-                    continue
+                    if retry:
+                        return Status.DOWN, "%s is DOWN, unable to get a valid token to connect with" % (addr)
+                    else:
+                        # Get a new token and retry
+                        self.log.warning("Token expired, getting new token and retrying...")
+                        HTTPCheck.token = self.keystone.refresh_token()
+                        retry = True
+                        continue
                 else:
                     self.log.info("%s is DOWN, error code: %s" % (addr, str(resp.status)))
                     self.gauge('http_status', 1, dimensions=new_dimensions)
-                    return
+                    return Status.DOWN, "%s is DOWN, error code: %s" % (addr, str(resp.status))
     
             if pattern is not None:
                 if re.search(pattern, content, re.DOTALL):
