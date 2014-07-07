@@ -133,8 +133,8 @@ class MySql(AgentCheck):
                 'Innodb_buffer_pool_pages_free', results)
             innodb_buffer_pool_pages_total = innodb_buffer_pool_pages_total * page_size
             innodb_buffer_pool_pages_free = innodb_buffer_pool_pages_free * page_size
-            innodb_buffer_pool_pages_used = innodb_buffer_pool_pages_total - \
-                innodb_buffer_pool_pages_free
+            innodb_buffer_pool_pages_used = (innodb_buffer_pool_pages_total -
+                                             innodb_buffer_pool_pages_free)
 
             self.gauge("mysql.innodb.buffer_pool_free",
                        innodb_buffer_pool_pages_free, dimensions=dimensions)

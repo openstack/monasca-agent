@@ -301,8 +301,7 @@ class IO(Check):
                 # sdb           0.00     0.00    0.00    2.97     0.00    11.88     8.00     0.00    0.00   0.00   0.00
                 # sdg           0.00     0.00    0.00    0.00     0.00     0.00     0.00     0.00    0.00   0.00   0.00
                 # sdf           0.00     0.00    0.00    0.00     0.00     0.00     0.00     0.00    0.00   0.00   0.00
-                # md0           0.00     0.00    0.00    0.00     0.00     0.00     0.00
-                # 0.00    0.00   0.00   0.00
+                # md0           0.00     0.00    0.00    0.00     0.00     0.00     0.00     0.00    0.00   0.00   0.00
                 io.update(self._parse_linux2(stdout))
 
             elif sys.platform == "sunos5":
@@ -709,8 +708,7 @@ class Memory(Check):
                 # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:snaptime  16787393.9439095
                 # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:swap      91828224   <--
                 # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:swapcap   1073741824 <--
-                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:zonename
-                # 53aa9b7e-48ba-4152-a52b-a6368c3d9e7c
+                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:zonename  53aa9b7e-48ba-4152-a52b-a6368c3d9e7c
 
                 # turn memory_cap:360:zone_name:key value
                 # into { "key": value, ...}

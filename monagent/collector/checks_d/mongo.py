@@ -215,8 +215,7 @@ class MongoDb(AgentCheck):
         status['stats'] = db.command('dbstats')
 
         # Handle replica data, if any
-        # See
-        # http://www.mongodb.org/display/DOCS/Replica+Set+Commands#ReplicaSetCommands-replSetGetStatus
+        # See http://www.mongodb.org/display/DOCS/Replica+Set+Commands#ReplicaSetCommands-replSetGetStatus
         try:
             data = {}
 

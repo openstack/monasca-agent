@@ -245,9 +245,8 @@ class JMXFetch(object):
                 return True
             except Exception as e:
                 if "Errno 3" not in str(e):
-                    log.debug(
-                        "Couldn't determine if JMXFetch is running. We suppose it's not. %s" % str(
-                            e))
+                    log.debug("Couldn't determine if JMXFetch is running. We suppose it's not. %s"
+                              % str(e))
                 return False
 
         # Else we are on windows, we need another way to check if it's running
