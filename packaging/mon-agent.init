@@ -11,6 +11,7 @@
 ### END INIT INFO
 
 . /lib/lsb/init-functions
+PATH=$PATH:/usr/local/bin # supervisord might live here
 PATH=$PATH:/sbin # add the location of start-stop-daemon on Debian
 
 AGENTPATH="/usr/local/bin/mon-collector"
