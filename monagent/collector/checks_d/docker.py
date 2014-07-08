@@ -68,8 +68,10 @@ DOCKER_TAGS = [
 
 
 class UnixHTTPConnection(httplib.HTTPConnection, object):
+
     """Class used in conjuction with UnixSocketHandler to make urllib2
     compatible with Unix sockets."""
+
     def __init__(self, unix_socket):
         self._unix_socket = unix_socket
 
@@ -84,8 +86,10 @@ class UnixHTTPConnection(httplib.HTTPConnection, object):
 
 
 class UnixSocketHandler(urllib2.AbstractHTTPHandler):
+
     """Class that makes Unix sockets work with urllib2 without any additional
     dependencies."""
+
     def unix_open(self, req):
         full_path = "%s%s" % urlsplit(req.get_full_url())[1:3]
         path = os.path.sep
@@ -104,6 +108,7 @@ class UnixSocketHandler(urllib2.AbstractHTTPHandler):
 
 
 class Docker(AgentCheck):
+
     def __init__(self, *args, **kwargs):
         super(Docker, self).__init__(*args, **kwargs)
         urllib2.install_opener(urllib2.build_opener(UnixSocketHandler()))
@@ -121,7 +126,8 @@ class Docker(AgentCheck):
 
         if not instance.get("exclude") or not instance.get("include"):
             if len(containers) > max_containers:
-                self.warning("Too many containers to collect. Please refine the containers to collect by editing the configuration file. Truncating to %s containers" % max_containers)
+                self.warning(
+                    "Too many containers to collect. Please refine the containers to collect by editing the configuration file. Truncating to %s containers" % max_containers)
                 containers = containers[:max_containers]
 
         collected_containers = 0
@@ -136,19 +142,22 @@ class Docker(AgentCheck):
 
             collected_containers += 1
             if collected_containers > max_containers:
-                self.warning("Too many containers are matching the current configuration. Some containers will not be collected. Please refine your configuration")
+                self.warning(
+                    "Too many containers are matching the current configuration. Some containers will not be collected. Please refine your configuration")
                 break
 
             for key, (dd_key, metric_type) in DOCKER_METRICS.items():
                 if key in container:
-                    getattr(self, metric_type)(dd_key, int(container[key]), dimensions=container_dimensions)
+                    getattr(self, metric_type)(
+                        dd_key, int(container[key]), dimensions=container_dimensions)
             for metric in LXC_METRICS:
                 mountpoint = self._mounpoints[metric["cgroup"]]
                 stat_file = os.path.join(mountpoint, metric["file"] % container["Id"])
                 stats = self._parse_cgroup_file(stat_file)
                 for key, (dd_key, metric_type) in metric["metrics"].items():
                     if key in stats:
-                        getattr(self, metric_type)(dd_key, int(stats[key]), dimensions=container_dimensions)
+                        getattr(self, metric_type)(
+                            dd_key, int(stats[key]), dimensions=container_dimensions)
 
     @staticmethod
     def _make_tag(key, value):
@@ -185,9 +194,10 @@ class Docker(AgentCheck):
         req = urllib2.Request(uri, None)
         try:
             request = urllib2.urlopen(req)
-        except urllib2.URLError, e:
+        except urllib2.URLError as e:
             if "Errno 13" in str(e):
-                raise Exception("Unable to connect to socket. dd-agent user must be part of the 'docker' group")
+                raise Exception(
+                    "Unable to connect to socket. dd-agent user must be part of the 'docker' group")
             raise
         response = request.read()
         return json.loads(response)
@@ -217,7 +227,8 @@ class Docker(AgentCheck):
             try:
                 fp = open(file_)
             except IOError:
-                raise IOError("Can't open %s. If you are using Docker 0.9.0 or higher, the Datadog agent is not yet compatible with these versions. Please get in touch with Datadog Support for more information" % file_)
+                raise IOError(
+                    "Can't open %s. If you are using Docker 0.9.0 or higher, the Datadog agent is not yet compatible with these versions. Please get in touch with Datadog Support for more information" % file_)
             return dict(map(lambda x: x.split(), fp.read().splitlines()))
 
         finally:

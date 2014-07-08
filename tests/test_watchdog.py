@@ -12,6 +12,7 @@ from monagent.common.util import Watchdog
 
 
 class TestWatchdog(unittest.TestCase):
+
     """Test watchdog in various conditions
     """
 
@@ -23,7 +24,8 @@ class TestWatchdog(unittest.TestCase):
         """
         start = time.time()
         try:
-            subprocess.check_call(["python", "tests/test_watchdog.py", "busy"], stderr=subprocess.STDOUT)
+            subprocess.check_call(
+                ["python", "tests/test_watchdog.py", "busy"], stderr=subprocess.STDOUT)
             raise Exception("Should have died with an error")
         except subprocess.CalledProcessError:
             duration = int(time.time() - start)
@@ -71,21 +73,27 @@ class TestWatchdog(unittest.TestCase):
         # process should be killed well before the restart interval of 30.
         assert duration < 20
 
+
 class MockTxManager(object):
+
     @staticmethod
     def flush():
         "Pretend to flush for a long time"
         time.sleep(5)
         sys.exit(0)
 
+
 class MemoryHogTxManager(object):
+
     @staticmethod
     def flush():
         rand_data = []
         while True:
-          rand_data.append('%030x' % randrange(256**15))
+            rand_data.append('%030x' % randrange(256 ** 15))
+
 
 class PseudoAgent(object):
+
     """Same logic as the agent, simplified"""
     @staticmethod
     def busy_run():
@@ -128,7 +136,8 @@ class PseudoAgent(object):
     @staticmethod
     def use_lots_of_memory():
         # Skip this step on travis
-        if os.environ.get('TRAVIS', False): return
+        if os.environ.get('TRAVIS', False):
+            return
         a = CollectorDaemon(12345, {})
         a._watchdog = Watchdog(30, 50)
         a._tr_manager = MemoryHogTxManager()

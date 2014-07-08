@@ -12,33 +12,33 @@ class DummyAgentCheck(AgentCheck):
             raise Exception("failure")
 
 
-
 def test_check_status_fail():
     instances = [
-        {'pass':True},
-        {'pass':False},
-        {'pass':True}
+        {'pass': True},
+        {'pass': False},
+        {'pass': True}
     ]
-        
+
     check = DummyAgentCheck('dummy_agent_check', {}, {}, instances)
     instance_statuses = check.run()
     assert len(instance_statuses) == 3
     assert instance_statuses[0].status == STATUS_OK
     assert instance_statuses[1].status == STATUS_ERROR
     assert instance_statuses[2].status == STATUS_OK
-        
+
 
 def test_check_status_pass():
     instances = [
-        {'pass':True},
-        {'pass':True},
+        {'pass': True},
+        {'pass': True},
     ]
-        
+
     check = DummyAgentCheck('dummy_agent_check', {}, {}, instances)
     instances_status = check.run()
     assert len(instances_status) == 2
     for i in instances_status:
         assert i.status == STATUS_OK
+
 
 def test_persistence():
     i1 = InstanceStatus(1, STATUS_OK)
@@ -53,6 +53,7 @@ def test_persistence():
     assert chk2.status == chk2.status
     assert chk2.metric_count == 1
     assert chk2.event_count == 2
+
 
 def test_persistence_fail():
 

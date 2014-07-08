@@ -7,6 +7,7 @@ from monagent.collector.checks import AgentCheck
 
 class Varnish(AgentCheck):
     # XML parsing bits, a.k.a. Kafka in Code
+
     def _reset(self):
         self._current_element = ""
         self._current_metric = "varnish"
@@ -92,7 +93,7 @@ class Varnish(AgentCheck):
 
         # Assumptions regarding varnish's version
         use_xml = True
-        arg = "-x" # varnishstat argument
+        arg = "-x"  # varnishstat argument
         version = 3
 
         m1 = re.search(r"varnish-(\d+)", output, re.MULTILINE)
@@ -123,7 +124,7 @@ class Varnish(AgentCheck):
             dimensions[u'varnish_name': 'default']
         try:
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE)
+                                    stderr=subprocess.PIPE)
             output, error = proc.communicate()
         except Exception:
             self.log.error(u"Failed to run %s" % repr(cmd))

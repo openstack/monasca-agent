@@ -16,6 +16,7 @@ KB2MB = B2KB = float(1024)
 
 
 class Processes(Check):
+
     def __init__(self, logger):
         Check.__init__(self, logger)
         self.gauge('system.proc.queue_length')
@@ -44,6 +45,7 @@ class Processes(Check):
 
 
 class Memory(Check):
+
     def __init__(self, logger):
         Check.__init__(self, logger)
         self.logger = logger
@@ -83,6 +85,7 @@ class Memory(Check):
 
 
 class Cpu(Check):
+
     def __init__(self, logger):
         Check.__init__(self, logger)
         self.logger = logger
@@ -140,6 +143,7 @@ class Cpu(Check):
 
 
 class Network(Check):
+
     def __init__(self, logger):
         Check.__init__(self, logger)
         self.logger = logger
@@ -166,6 +170,7 @@ class Network(Check):
 
 
 class Disk(Check):
+
     def __init__(self, logger):
         Check.__init__(self, logger)
         self.logger = logger
@@ -199,6 +204,7 @@ class Disk(Check):
 
 
 class IO(Check):
+
     def __init__(self, logger):
         Check.__init__(self, logger)
         self.logger = logger

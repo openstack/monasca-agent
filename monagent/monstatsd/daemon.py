@@ -11,7 +11,7 @@ from monagent.monstatsd.udp import Server
 initialize_logging('monstatsd')
 
 import os
-os.umask(022)
+os.umask(0o22)
 
 # stdlib
 import logging
@@ -30,6 +30,7 @@ log = logging.getLogger('monstatsd')
 
 
 class Monstatsd(Daemon):
+
     """ This class is the monstatsd daemon. """
 
     def __init__(self, pid_file, server, reporter, autorestart):
@@ -54,7 +55,7 @@ class Monstatsd(Daemon):
         try:
             try:
                 self.server.start()
-            except Exception, e:
+            except Exception as e:
                 log.exception('Error starting server')
                 raise e
         finally:
@@ -107,7 +108,8 @@ def init_monstatsd(config_path=None, use_watchdog=False):
     if non_local_traffic:
         server_host = ''
 
-    server = Server(aggregator, server_host, port, forward_to_host=forward_to_host, forward_to_port=forward_to_port)
+    server = Server(aggregator, server_host, port, forward_to_host=forward_to_host,
+                    forward_to_port=forward_to_port)
 
     return reporter, server, c
 

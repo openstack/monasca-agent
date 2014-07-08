@@ -17,7 +17,8 @@ try:
 except ImportError:
     pass  # We are likely running the agent without the forwarder and tornado is not installed
 
-VALID_HOSTNAME_RFC_1123_PATTERN = re.compile(r"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$")
+VALID_HOSTNAME_RFC_1123_PATTERN = re.compile(
+    r"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$")
 MAX_HOSTNAME_LEN = 255
 
 import logging
@@ -94,7 +95,7 @@ def isnan(val):
 
     # for py < 2.6, use a different check
     # http://stackoverflow.com/questions/944700/how-to-check-for-nan-in-python
-    return str(val) == str(1e400*0)
+    return str(val) == str(1e400 * 0)
 
 
 def cast_metric_val(val):
@@ -114,11 +115,13 @@ def cast_metric_val(val):
 
 
 def is_valid_hostname(hostname):
-    if hostname.lower() in {'localhost', 'localhost.localdomain', 'localhost6.localdomain6', 'ip6-localhost'}:
+    if hostname.lower() in {'localhost', 'localhost.localdomain',
+                            'localhost6.localdomain6', 'ip6-localhost'}:
         log.warning("Hostname: %s is local" % hostname)
         return False
     if len(hostname) > MAX_HOSTNAME_LEN:
-        log.warning("Hostname: %s is too long (max length is  %s characters)" % (hostname, MAX_HOSTNAME_LEN))
+        log.warning("Hostname: %s is too long (max length is  %s characters)" %
+                    (hostname, MAX_HOSTNAME_LEN))
         return False
     if VALID_HOSTNAME_RFC_1123_PATTERN.match(hostname) is None:
         log.warning("Hostname: %s is not complying with RFC 1123" % hostname)
@@ -169,29 +172,33 @@ def get_hostname(config=None):
     if hostname is None:
         try:
             socket_hostname = socket.gethostname()
-        except socket.error, e:
+        except socket.error as e:
             socket_hostname = None
         if socket_hostname and is_valid_hostname(socket_hostname):
             hostname = socket_hostname
 
     if hostname is None:
-        log.critical('Unable to reliably determine host name. You can define one in agent.conf or in your hosts file')
-        raise Exception('Unable to reliably determine host name. You can define one in agent.conf or in your hosts file')
+        log.critical(
+            'Unable to reliably determine host name. You can define one in agent.conf or in your hosts file')
+        raise Exception(
+            'Unable to reliably determine host name. You can define one in agent.conf or in your hosts file')
     else:
         return hostname
 
 
 class Watchdog(object):
+
     """Simple signal-based watchdog that will scuttle the current process
     if it has not been reset every N seconds, or if the processes exceeds
     a specified memory threshold.
     Can only be invoked once per process, so don't use with multiple threads.
     If you instantiate more than one, you're also asking for trouble.
     """
-    def __init__(self, duration, max_mem_mb = None):
+
+    def __init__(self, duration, max_mem_mb=None):
         import resource
 
-        #Set the duration
+        # Set the duration
         self._duration = int(duration)
         signal.signal(signal.SIGALRM, Watchdog.self_destruct)
 
@@ -213,7 +220,6 @@ class Watchdog(object):
         finally:
             os.kill(os.getpid(), signal.SIGKILL)
 
-
     def reset(self):
         # self destruct if using too much memory, as tornado will swallow MemoryErrors
         mem_usage_kb = int(os.popen('ps -p %d -o %s | tail -1' % (os.getpid(), 'rss')).read())
@@ -225,6 +231,7 @@ class Watchdog(object):
 
 
 class PidFile(object):
+
     """ A small helper class for pidfiles. """
 
     PID_DIR = '/var/run/mon-agent'
@@ -283,6 +290,7 @@ class PidFile(object):
 
 
 class LaconicFilter(logging.Filter):
+
     """
     Filters messages, only print them once while keeping memory under control
     """
@@ -312,6 +320,7 @@ class LaconicFilter(logging.Filter):
 
 
 class Timer(object):
+
     """ Helper class """
 
     def __init__(self):
@@ -328,7 +337,7 @@ class Timer(object):
 
     def step(self):
         now = self._now()
-        step =  now - self.last
+        step = now - self.last
         self.last = now
         return step
 
@@ -337,6 +346,7 @@ class Timer(object):
 
 
 class Platform(object):
+
     """
     Return information about the given platform.
     """
@@ -373,7 +383,7 @@ class Platform(object):
         return (Platform.is_darwin()
                 or Platform.is_linux()
                 or Platform.is_freebsd()
-        )
+                )
 
     @staticmethod
     def is_win32(name=None):
@@ -383,6 +393,7 @@ class Platform(object):
 """
 Iterable Recipes
 """
+
 
 def chunks(iterable, chunk_size):
     """Generate sequences of `chunk_size` elements from `iterable`."""

@@ -29,15 +29,19 @@ log = logging.getLogger(__name__)
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Detect running daemons then configure and start the agent.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-u', '--username', help="Keystone username used to post metrics", required=True)
-    parser.add_argument('-p', '--password', help="Keystone password used to post metrics", required=True)
+    parser.add_argument(
+        '-u', '--username', help="Keystone username used to post metrics", required=True)
+    parser.add_argument(
+        '-p', '--password', help="Keystone password used to post metrics", required=True)
     parser.add_argument('--project_name', help="Keystone project/tenant name", required=True)
-    parser.add_argument('-s', '--service', help="Service this node is associated with.", required=True)
+    parser.add_argument(
+        '-s', '--service', help="Service this node is associated with.", required=True)
     parser.add_argument('--keystone_url', help="Keystone url", required=True)
     parser.add_argument('--mon_url', help="Mon API url", required=True)
     parser.add_argument('--config_dir', help="Configuration directory", default='/etc/mon-agent')
     parser.add_argument('--log_dir', help="mon-agent log directory", default='/var/log/mon-agent')
-    parser.add_argument('--template_dir', help="Alternative template directory", default='/usr/local/share/mon/agent')
+    parser.add_argument(
+        '--template_dir', help="Alternative template directory", default='/usr/local/share/mon/agent')
     parser.add_argument('--headless', help="Run in a non-interactive mode", action="store_true")
     parser.add_argument('--overwrite',
                         help="Overwrite existing plugin configuration." +
@@ -58,7 +62,8 @@ def main(argv=None):
     # Detect os
     detected_os = 'linux'  # todo add detection
 
-    # Service enable, includes setup of users/config directories so must be done before configuration
+    # Service enable, includes setup of users/config directories so must be
+    # done before configuration
     agent_service = OS_SERVICE_MAP[detected_os](os.path.join(args.template_dir, 'mon-agent.init'), args.config_dir,
                                                 args.log_dir, username=args.user)
     if not args.skip_enable:
@@ -72,7 +77,7 @@ def main(argv=None):
         with open(agent_conf_path, 'w') as agent_conf:
             agent_conf.write(agent_template.read().format(args=args, hostname=socket.gethostname()))
     os.chown(agent_conf_path, 0, gid)
-    os.chmod(agent_conf_path, 0640)
+    os.chmod(agent_conf_path, 0o640)
     # Link the supervisor.conf
     supervisor_path = os.path.join(args.config_dir, 'supervisor.conf')
     if os.path.exists(supervisor_path):
@@ -102,21 +107,22 @@ def main(argv=None):
                 if not detect.configure_alarms(args.mon_url, token):
                     log.warn('Unable to configure alarms for {0}'.format(detect.name))
 
-        #todo add option to install dependencies
+        # todo add option to install dependencies
 
     # Write out the plugin config
     for key, value in plugin_config.iteritems():
         # todo if overwrite is set I should either warn or just delete any config files not in the new config
         # todo add the ability to show a diff before overwriting or merging config
         config_path = os.path.join(args.config_dir, 'conf.d', key + '.yaml')
-        if (not args.overwrite) and os.path.exists(config_path):  # merge old and new config, new has precedence
+        # merge old and new config, new has precedence
+        if (not args.overwrite) and os.path.exists(config_path):
             with open(config_path, 'r') as config_file:
                 old_config = yaml.load(config_file.read())
             if old_config is not None:
                 agent_config.deep_merge(old_config, value)
                 value = old_config
         with open(config_path, 'w') as config_file:
-            os.chmod(config_path, 0640)
+            os.chmod(config_path, 0o640)
             os.chown(config_path, 0, gid)
             config_file.write(yaml.dump(value))
 

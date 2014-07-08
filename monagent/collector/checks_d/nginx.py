@@ -7,6 +7,7 @@ from monagent.collector.checks.utils import add_basic_auth
 
 
 class Nginx(AgentCheck):
+
     """Tracks basic nginx metrics via the status module
     * number of connections
     * number of requets per second
@@ -21,6 +22,7 @@ class Nginx(AgentCheck):
     Reading: 0 Writing: 2 Waiting: 6
 
     """
+
     def check(self, instance):
         if 'nginx_status_url' not in instance:
             raise Exception('NginX instance missing "nginx_status_url" value.')
@@ -36,7 +38,6 @@ class Nginx(AgentCheck):
             add_basic_auth(req, instance['user'], instance['password'])
         request = urllib2.urlopen(req)
         return request.read()
-
 
     def _get_metrics(self, response, dimensions):
         # Thanks to http://hostingfu.com/files/nginx/nginxstats.py for this code
@@ -85,7 +86,7 @@ class Nginx(AgentCheck):
                     'nginx_status_url': ":".join(instance[:-1]),
                     'dimensions': {'instance': instance[-1]}
                 })
-                load_conf(index+1)
+                load_conf(index + 1)
 
         load_conf()
 

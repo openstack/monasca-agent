@@ -19,6 +19,7 @@ instances:
 
 
 class IISTestCase(unittest.TestCase):
+
     @attr('windows')
     def testIIS(self):
         raise SkipTest('Requires IIS and wmi')

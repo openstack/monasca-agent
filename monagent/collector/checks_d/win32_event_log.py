@@ -15,6 +15,7 @@ EVENT_TYPE = 'win32_log_event'
 
 
 class Win32EventLog(AgentCheck):
+
     def __init__(self, name, init_config, agent_config):
         AgentCheck.__init__(self, name, init_config, agent_config)
         self.last_ts = {}
@@ -81,8 +82,9 @@ class Win32EventLog(AgentCheck):
 
 
 class EventLogQuery(object):
+
     def __init__(self, ltype=None, user=None, source_name=None, log_file=None,
-        start_ts=None, message_filters=None):
+                 start_ts=None, message_filters=None):
         self.filters = [
             ('Type', self._convert_event_types(ltype)),
             ('User', user),
@@ -139,8 +141,8 @@ class EventLogQuery(object):
             time struct.
         '''
         return wmi.from_time(year=dt.year, month=dt.month, day=dt.day,
-            hours=dt.hour, minutes=dt.minute, seconds=dt.second, microseconds=0,
-            timezone=0)
+                             hours=dt.hour, minutes=dt.minute, seconds=dt.second, microseconds=0,
+                             timezone=0)
 
     @staticmethod
     def _convert_event_types(types):
@@ -149,7 +151,9 @@ class EventLogQuery(object):
         '''
         return types
 
+
 class LogEvent(object):
+
     def __init__(self, ev, api_key, hostname, tags, notify_list):
         self.event = ev
         self.api_key = api_key
@@ -183,9 +187,9 @@ class LogEvent(object):
         ''' Convert a wmi formatted timestamp into an epoch using wmi.to_time().
         '''
         year, month, day, hour, minute, second, microsecond, tz = \
-                                                            wmi.to_time(wmi_ts)
+            wmi.to_time(wmi_ts)
         dt = datetime(year=year, month=month, day=day, hour=hour, minute=minute,
-            second=second, microsecond=microsecond)
+                      second=second, microsecond=microsecond)
         return int(calendar.timegm(dt.timetuple()))
 
     @staticmethod

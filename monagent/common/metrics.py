@@ -12,7 +12,8 @@ log = logging.getLogger(__name__)
 
 # todo it would be best to implement a Measurement group/list container, it could then have methods for converting to json
 # in the current setup both the emitter and the mon api are converting to json in for loops
-# A Measurement is the standard format used to pass data from the collector and monstatsd to the forwarder
+# A Measurement is the standard format used to pass data from the
+# collector and monstatsd to the forwarder
 Measurement = namedtuple('Measurement', ['name', 'timestamp', 'value', 'dimensions'])
 
 
@@ -23,6 +24,7 @@ class MetricTypes(object):
 
 
 class Metric(object):
+
     """
     A base metric class that accepts points, slices them into time intervals
     and performs roll-ups within those intervals.
@@ -38,6 +40,7 @@ class Metric(object):
 
 
 class Gauge(Metric):
+
     """ A metric that tracks a value at particular points in time. """
 
     def __init__(self, formatter, name, dimensions, hostname, device_name):
@@ -74,6 +77,7 @@ class Gauge(Metric):
 
 
 class BucketGauge(Gauge):
+
     """ A metric that tracks a value at particular points in time.
     The difference beween this class and Gauge is that this class will
     report that gauge sample time as the time that Metric is flushed, as
@@ -100,6 +104,7 @@ class BucketGauge(Gauge):
 
 
 class Counter(Metric):
+
     """ A metric that tracks a counter value. """
 
     def __init__(self, formatter, name, dimensions, hostname, device_name):
@@ -133,6 +138,7 @@ class Counter(Metric):
 
 
 class Histogram(Metric):
+
     """ A metric to track the distribution of a set of values. """
 
     def __init__(self, formatter, name, dimensions, hostname, device_name):
@@ -159,26 +165,26 @@ class Histogram(Metric):
         length = len(self.samples)
 
         max_ = self.samples[-1]
-        med = self.samples[int(round(length/2 - 1))]
+        med = self.samples[int(round(length / 2 - 1))]
         avg = sum(self.samples) / float(length)
 
         metric_aggrs = [
             ('max', max_, MetricTypes.GAUGE),
             ('median', med, MetricTypes.GAUGE),
             ('avg', avg, MetricTypes.GAUGE),
-            ('count', self.count/interval, MetricTypes.RATE)
+            ('count', self.count / interval, MetricTypes.RATE)
         ]
 
         metrics = [self.formatter(
-                hostname=self.hostname,
-                device_name=self.device_name,
-                dimensions=self.dimensions,
-                metric='%s.%s' % (self.name, suffix),
-                value=value,
-                timestamp=ts,
-                metric_type=metric_type,
-                interval=interval,
-            ) for suffix, value, metric_type in metric_aggrs
+            hostname=self.hostname,
+            device_name=self.device_name,
+            dimensions=self.dimensions,
+            metric='%s.%s' % (self.name, suffix),
+            value=value,
+            timestamp=ts,
+            metric_type=metric_type,
+            interval=interval,
+        ) for suffix, value, metric_type in metric_aggrs
         ]
 
         for p in self.percentiles:
@@ -202,6 +208,7 @@ class Histogram(Metric):
 
 
 class Set(Metric):
+
     """ A metric to track the number of unique elements in a set. """
 
     def __init__(self, formatter, name, dimensions, hostname, device_name):
@@ -236,6 +243,7 @@ class Set(Metric):
 
 
 class Rate(Metric):
+
     """ Track the rate of metrics over each flush interval """
 
     def __init__(self, formatter, name, dimensions, hostname, device_name):

@@ -6,8 +6,10 @@ from collector.checks import LaconicFilter
 
 
 class TestLaconic(unittest.TestCase):
+
     """Verify that we only output messages once
     """
+
     def setUp(self):
         self.l = logging.getLogger("test_laconic")
         self.sio = StringIO()
@@ -35,11 +37,13 @@ class TestLaconic(unittest.TestCase):
     def testRepeatingErrors(self):
         for i in range(10):
             self.l.error("Cannot find nagios.log")
-        self.assertEquals(self.sio.getvalue().count("Cannot find nagios.log"), 1, self.sio.getvalue())
+        self.assertEquals(
+            self.sio.getvalue().count("Cannot find nagios.log"), 1, self.sio.getvalue())
 
         for i in range(10):
             self.l.warn("Cannot find ganglia.log")
-        self.assertEquals(self.sio.getvalue().count("Cannot find ganglia.log"), 1, self.sio.getvalue())
+        self.assertEquals(
+            self.sio.getvalue().count("Cannot find ganglia.log"), 1, self.sio.getvalue())
 
         for i in range(10):
             try:
@@ -47,14 +51,14 @@ class TestLaconic(unittest.TestCase):
             except Exception:
                 self.l.exception("Caught!")
 
-        self.assertEquals(self.sio.getvalue().count("Ka-boom"), 2) # once for the traceback, once for the message
+        # once for the traceback, once for the message
+        self.assertEquals(self.sio.getvalue().count("Ka-boom"), 2)
 
     def testNonRepeat(self):
         for i in range(10):
             self.l.error("Cannot find nagios.log %d" % i)
         self.assertEquals(self.sio.getvalue().count(" nagios.log"), 10)
         self.assertEquals(self.sio.getvalue().count(" 7"), 1)
-
 
     def testBlowUp(self):
         """Try to use a lot of memory"""

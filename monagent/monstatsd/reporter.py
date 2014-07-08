@@ -19,6 +19,7 @@ EVENT_CHUNK_SIZE = 50
 
 
 class Reporter(threading.Thread):
+
     """
     The reporter periodically sends the aggregated metrics to the
     server.
@@ -107,5 +108,5 @@ class Reporter(threading.Thread):
                 event_count=event_count,
             ).persist()
 
-        except Exception, e:
+        except Exception as e:
             log.exception("Error flushing metrics")

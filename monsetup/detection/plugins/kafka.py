@@ -8,6 +8,7 @@ log = logging.getLogger(__name__)
 
 
 class Kafka(Plugin):
+
     """Detect Kafka daemons and sets up configuration to monitor them.
         This plugin configures the kafka_consumer plugin and does not configure any jmx based checks against kafka.
         Note this plugin will pull the same information from kafka on each node in the cluster it runs on.
@@ -32,7 +33,8 @@ class Kafka(Plugin):
             import kazoo
             from kazoo.client import KazooClient
 
-            logging.getLogger('kazoo').setLevel(logging.WARN)  # kazoo fills up the console without this
+            # kazoo fills up the console without this
+            logging.getLogger('kazoo').setLevel(logging.WARN)
 
             zk = KazooClient(hosts='127.0.0.1:2181', read_only=True)
             zk.start()
@@ -40,7 +42,8 @@ class Kafka(Plugin):
             for topic in zk.get_children('/brokers/topics'):
                 topics[topic] = zk.get_children('/brokers/topics/%s/partitions' % topic)
 
-            consumers = collections.defaultdict(dict)  # {'consumer_group_name': { 'topic1': [ 0, 1, 2] # partitions }}
+            # {'consumer_group_name': { 'topic1': [ 0, 1, 2] # partitions }}
+            consumers = collections.defaultdict(dict)
             for consumer in zk.get_children('/consumers'):
                 try:
                     for topic in zk.get_children('/consumers/%s/offsets' % consumer):

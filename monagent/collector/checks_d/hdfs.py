@@ -2,6 +2,7 @@ from monagent.collector.checks import AgentCheck
 
 
 class HDFSCheck(AgentCheck):
+
     """Report on free space and space used in HDFS.
     """
 

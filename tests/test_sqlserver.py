@@ -42,6 +42,7 @@ instances:
 
 
 class SQLServerTestCase(unittest.TestCase):
+
     @attr('windows')
     def testSqlServer(self):
         raise SkipTest('Requires adodbapi')
@@ -62,7 +63,7 @@ class SQLServerTestCase(unittest.TestCase):
 
         # Make sure the ALL custom metric is tagged
         tagged_metrics = [m for m in metrics
-            if m[0] == 'sqlserver.db.commit_table_entries']
+                          if m[0] == 'sqlserver.db.commit_table_entries']
         for metric in tagged_metrics:
             for tag in metric[3]['dimensions']:
                 assert tag.startswith('db')
