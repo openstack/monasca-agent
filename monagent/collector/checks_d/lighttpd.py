@@ -6,6 +6,7 @@ from monagent.collector.checks.utils import add_basic_auth
 
 
 class Lighttpd(AgentCheck):
+
     """Tracks basic connection/requests/workers metrics
 
     See http://redmine.lighttpd.net/projects/1/wiki/Docs_ModStatus for Lighttpd details
@@ -112,12 +113,15 @@ class Lighttpd(AgentCheck):
 
         if metric_count == 0:
             url_suffix = self.URL_SUFFIX_PER_VERSION[server_version]
-            if self.assumed_url.get(instance['lighttpd_status_url'], None) is None and url[-len(url_suffix):] != url_suffix:
+            if self.assumed_url.get(
+                    instance['lighttpd_status_url'], None) is None and url[-len(url_suffix):] != url_suffix:
                 self.assumed_url[instance['lighttpd_status_url']] = '%s%s' % (url, url_suffix)
-                self.warning("Assuming url was not correct. Trying to add %s suffix to the url" % url_suffix)
+                self.warning(
+                    "Assuming url was not correct. Trying to add %s suffix to the url" % url_suffix)
                 self.check(instance)
             else:
-                raise Exception("No metrics were fetched for this instance. Make sure that %s is the proper url." % instance['lighttpd_status_url'])
+                raise Exception("No metrics were fetched for this instance. Make sure that %s is the proper url." % instance[
+                                'lighttpd_status_url'])
 
     def _get_server_version(self, headers):
         for h in headers:
@@ -125,7 +129,7 @@ class Lighttpd(AgentCheck):
                 continue
             try:
                 version = int(h.split('/')[1][0])
-            except Exception, e:
+            except Exception as e:
                 self.log.debug("Error while trying to get server version %s" % str(e))
                 version = "Unknown"
             self.log.debug("Lighttpd server version is %s" % version)
@@ -133,4 +137,3 @@ class Lighttpd(AgentCheck):
 
         self.log.debug("Lighttpd server version is Unknown")
         return "Unknown"
-

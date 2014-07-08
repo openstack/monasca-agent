@@ -49,11 +49,10 @@ class Riak(AgentCheck):
 
         self.prev_coord_redirs_total = -1
 
-
     def check(self, instance):
-        url             = instance['url']
+        url = instance['url']
         default_timeout = self.init_config.get('default_timeout', 5)
-        timeout         = float(instance.get('timeout', default_timeout))
+        timeout = float(instance.get('timeout', default_timeout))
 
         aggregation_key = md5(url).hexdigest()
 
@@ -61,15 +60,15 @@ class Riak(AgentCheck):
             h = Http(timeout=timeout)
             resp, content = h.request(url, "GET")
 
-        except socket.timeout, e:
+        except socket.timeout as e:
             self.timeout_event(url, timeout, aggregation_key)
             return
 
-        except socket.error, e:
+        except socket.error as e:
             self.timeout_event(url, timeout, aggregation_key)
             return
 
-        except HttpLib2Error, e:
+        except HttpLib2Error as e:
             self.timeout_event(url, timeout, aggregation_key)
             return
 

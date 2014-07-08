@@ -11,7 +11,7 @@ setup_requires = [
 ]
 
 # Prereqs of the install. Will install when deploying the egg.
-install_requires=[
+install_requires = [
     'requests',
     'gearman',
     'httplib2',
@@ -78,8 +78,9 @@ if sys.platform == 'win32':
     ]
 
     class Target(object):
+
         def __init__(self, **kw):
-            self.__dict__.update(kw) 
+            self.__dict__.update(kw)
             self.version = '1.0.0'
             self.cmdline_style = 'pywin32'
 
@@ -100,7 +101,8 @@ if sys.platform == 'win32':
         'service': [agent_svc],
         'windows': [{'script': 'win32\gui.py',
                      'dest_base': "agent-manager",
-                     'uac_info': "requireAdministrator", # The manager needs to be administrator to stop/start the service
+                     # The manager needs to be administrator to stop/start the service
+                     'uac_info': "requireAdministrator",
                      'icon_resources': [(1, r"packaging\mon-agent\win32\install_files\dd_agent_win_256.ico")],
                      }],
         'data_files': [

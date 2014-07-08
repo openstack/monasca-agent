@@ -9,6 +9,7 @@ from monagent.collector.checks.services_checks import ServicesCheck, Status
 
 
 class HostAlive(ServicesCheck):
+
     """Inherit ServicesCheck class to test if a host is alive or not"""
 
     def __init__(self, name, init_config, agent_config, instances=None):
@@ -22,7 +23,7 @@ class HostAlive(ServicesCheck):
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             if timeout is not None:
                 sock.settimeout(timeout)
-        except socket.error, msg:
+        except socket.error as msg:
             self.log.error("Error creating socket: " + str(msg[0]) + msg[1])
             return False
 
@@ -77,18 +78,18 @@ class HostAlive(ServicesCheck):
 
         dimensions = {'target_host': instance['host_name'], 'observer_host': socket.getfqdn()}
         # Add per-instance dimensions, if any
-        if instance.has_key('dimensions') and instance['dimensions'] is not None:
+        if 'dimensions' in instance.keys() and instance['dimensions'] is not None:
             dimensions.update(instance['dimensions'])
 
         success = False
 
         if instance['alive_test'] == 'ssh':
             success = self._test_ssh(instance['host_name'],
-                      self.init_config.get('ssh_port'),
-                      self.init_config.get('ssh_timeout'))
+                                     self.init_config.get('ssh_port'),
+                                     self.init_config.get('ssh_timeout'))
         elif instance['alive_test'] == 'ping':
             success = self._test_ping(instance['host_name'],
-                self.init_config.get('ping_timeout'))
+                                      self.init_config.get('ping_timeout'))
         else:
             self.log.info("Unrecognized alive_test " + instance['alive_test'])
 
@@ -99,4 +100,3 @@ class HostAlive(ServicesCheck):
             self.gauge('host_alive', 1, dimensions=dimensions)
             self.log.error("Host down: " + instance['host_name'])
             return Status.DOWN, "DOWN"
-

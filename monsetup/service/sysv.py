@@ -12,6 +12,7 @@ log = logging.getLogger(__name__)
 
 
 class SysV(Service):
+
     def __init__(self, init_template, config_dir, log_dir, name='mon-agent', username='mon-agent'):
         """Setup this service with the given init template"""
         super(SysV, self).__init__(config_dir, log_dir, name)
@@ -34,7 +35,7 @@ class SysV(Service):
         # todo log dir is hardcoded
         for path in (self.log_dir, self.config_dir, '%s/conf.d' % self.config_dir):
             if not os.path.exists(path):
-                os.mkdir(path, 0755)
+                os.mkdir(path, 0o755)
                 os.chown(path, 0, user.pw_gid)
         # the log dir needs to be writable by the user
         os.chown(self.log_dir, user.pw_uid, user.pw_gid)
@@ -42,7 +43,7 @@ class SysV(Service):
         # link the init script, then enable
         if not os.path.exists(self.init_script):
             os.symlink(self.init_template, self.init_script)
-            os.chmod(self.init_script, 0755)
+            os.chmod(self.init_script, 0o755)
 
         for runlevel in ['2', '3', '4', '5']:
             link_path = '/etc/rc%s.d/S10mon-agent' % runlevel
@@ -84,4 +85,3 @@ class SysV(Service):
             return True
         else:
             return False
-

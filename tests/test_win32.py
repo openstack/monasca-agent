@@ -5,7 +5,7 @@ import gc
 import sys
 
 # 3p
-#from nose.plugins.attrib import attr
+# from nose.plugins.attrib import attr
 
 # project
 from monagent.collector import checks as w32
@@ -15,9 +15,11 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__file__)
 
 
-AGENT_CONFIG = {} # None of the windows checks use this.
+AGENT_CONFIG = {}  # None of the windows checks use this.
+
 
 class TestWin32(unittest.TestCase):
+
     def _checkMemoryLeak(self, func):
         # FIXME: This should use @attr('windows')instead of checking for the
         # platform, but just importing nose.plugins.attrib causes all the tests

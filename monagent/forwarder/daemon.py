@@ -18,7 +18,7 @@ initialize_logging('forwarder')
 from monagent.common.config import get_logging_config
 
 import os
-os.umask(022)
+os.umask(0o22)
 
 # Standard imports
 import logging
@@ -54,7 +54,7 @@ MAX_WAIT_FOR_REPLAY = timedelta(seconds=90)
 # Maximum queue size in bytes (when this is reached, old messages are dropped)
 MAX_QUEUE_SIZE = 30 * 1024 * 1024  # 30MB
 
-THROTTLING_DELAY = timedelta(microseconds=1000000/2)  # 2 msg/second
+THROTTLING_DELAY = timedelta(microseconds=1000000 / 2)  # 2 msg/second
 
 
 class MetricTransaction(Transaction):
@@ -116,7 +116,8 @@ class StatusHandler(tornado.web.RequestHandler):
 
         m = MetricTransaction.get_tr_manager()
 
-        self.write("<table><tr><td>Id</td><td>Size</td><td>Error count</td><td>Next flush</td></tr>")
+        self.write(
+            "<table><tr><td>Id</td><td>Size</td><td>Error count</td><td>Next flush</td></tr>")
         transactions = m.get_transactions()
         for tr in transactions:
             self.write("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>" %
@@ -135,7 +136,8 @@ class AgentInputHandler(tornado.web.RequestHandler):
             The message is expected to follow the format:
 
         """
-        # read the message it should be a list of monagent.common.metrics.Measurements expressed as a dict
+        # read the message it should be a list of
+        # monagent.common.metrics.Measurements expressed as a dict
         msg = tornado.escape.json_decode(self.request.body)
         try:
             log.debug(msg)
@@ -157,7 +159,8 @@ class AgentInputHandler(tornado.web.RequestHandler):
 
 class Forwarder(tornado.web.Application):
 
-    def __init__(self, port, agent_config, watchdog=True, skip_ssl_validation=False, use_simple_http_client=False):
+    def __init__(self, port, agent_config, watchdog=True, skip_ssl_validation=False,
+                 use_simple_http_client=False):
         self._port = int(port)
         self._agentConfig = agent_config
         self._metrics = {}
@@ -167,14 +170,16 @@ class Forwarder(tornado.web.Application):
         MetricTransaction.set_tr_manager(self._tr_manager)
 
         self._watchdog = None
-        self.skip_ssl_validation = skip_ssl_validation or agent_config.get('skip_ssl_validation', False)
+        self.skip_ssl_validation = skip_ssl_validation or agent_config.get(
+            'skip_ssl_validation', False)
         self.use_simple_http_client = use_simple_http_client
         if self.skip_ssl_validation:
             log.info("Skipping SSL hostname validation, useful when using a transparent proxy")
 
         if watchdog:
             watchdog_timeout = TRANSACTION_FLUSH_INTERVAL * WATCHDOG_INTERVAL_MULTIPLIER
-            self._watchdog = Watchdog(watchdog_timeout, max_mem_mb=agent_config.get('limit_memory_consumption', None))
+            self._watchdog = Watchdog(
+                watchdog_timeout, max_mem_mb=agent_config.get('limit_memory_consumption', None))
 
     def _post_metrics(self):
 
@@ -225,16 +230,18 @@ class Forwarder(tornado.web.Application):
                 try:
                     http_server.listen(self._port, address="localhost")
                 except gaierror:
-                    log.warning("localhost seems undefined in your host file, using 127.0.0.1 instead")
+                    log.warning(
+                        "localhost seems undefined in your host file, using 127.0.0.1 instead")
                     http_server.listen(self._port, address="127.0.0.1")
-                except socket_error, e:
+                except socket_error as e:
                     if "Errno 99" in str(e):
                         log.warning("IPv6 doesn't seem to be fully supported. Falling back to IPv4")
                         http_server.listen(self._port, address="127.0.0.1")
                     else:
                         raise
-        except socket_error, e:
-            log.exception("Socket error %s. Is another application listening on the same port ? Exiting", e)
+        except socket_error as e:
+            log.exception(
+                "Socket error %s. Is another application listening on the same port ? Exiting", e)
             sys.exit(1)
         except Exception:
             log.exception("Uncaught exception. Forwarder is exiting.")
@@ -253,7 +260,8 @@ class Forwarder(tornado.web.Application):
             self._post_metrics()
             self._tr_manager.flush()
 
-        tr_sched = tornado.ioloop.PeriodicCallback(flush_trs, TRANSACTION_FLUSH_INTERVAL, io_loop=self.mloop)
+        tr_sched = tornado.ioloop.PeriodicCallback(
+            flush_trs, TRANSACTION_FLUSH_INTERVAL, io_loop=self.mloop)
 
         # Start everything
         if self._watchdog:
@@ -291,7 +299,8 @@ def init_forwarder(skip_ssl_validation=False, use_simple_http_client=False):
 
 def main():
     define("sslcheck", default=1, help="Verify SSL hostname, on by default")
-    define("use_simple_http_client", default=0, help="Use Tornado SimpleHTTPClient instead of CurlAsyncHTTPClient")
+    define("use_simple_http_client", default=0,
+           help="Use Tornado SimpleHTTPClient instead of CurlAsyncHTTPClient")
     args = parse_command_line()
     skip_ssl_validation = False
     use_simple_http_client = False

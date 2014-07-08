@@ -102,6 +102,7 @@ def get_ntp_info():
 
 
 class AgentStatus(object):
+
     """
     A small class used to load and save status messages to the filesystem.
     """
@@ -162,7 +163,7 @@ class AgentStatus(object):
                 style("Status date", *styles),
                 style("%s (%ss ago)" %
                       (self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                      self.created_seconds_ago()), *styles)
+                       self.created_seconds_ago()), *styles)
             )
         ]
 
@@ -188,14 +189,11 @@ class AgentStatus(object):
     def _not_running_message(cls):
         lines = cls._title_lines() + [
             style("  %s is not running." % cls.NAME, 'red'),
-            style("""  You can get more details in the logs: 
-    %s""" % logger_info(), 'red'),
+            style("""  You can get more details in the logs: %s""" % logger_info(), 'red'),
             "",
             ""
         ]
         return "\n".join(lines)
-
-
 
     @classmethod
     def remove_latest_status(cls):
@@ -204,7 +202,6 @@ class AgentStatus(object):
             os.remove(cls._get_pickle_path())
         except OSError:
             pass
-
 
     @classmethod
     def load_latest_status(cls):
@@ -217,7 +214,6 @@ class AgentStatus(object):
         except IOError:
             log.info("Couldn't load latest status")
             return None
-
 
     @classmethod
     def print_latest_status(cls, verbose=False):
@@ -340,7 +336,7 @@ class CollectorStatus(AgentStatus):
             ntp_offset, ntp_styles = get_ntp_info()
             lines.append('  ' + style('NTP offset', *ntp_styles) + ': ' +
                          style('%s s' % round(ntp_offset, 4), *ntp_styles))
-        except Exception, e:
+        except Exception as e:
             lines.append('  NTP offset: Unkwown (%s)' % str(e))
         lines.append('  System UTC time: ' + datetime.datetime.utcnow().__str__())
         lines.append('')
@@ -358,7 +354,7 @@ class CollectorStatus(AgentStatus):
             confd_path = config.get_confd_path(osname)
         except config.PathNotFound:
             confd_path = 'Not found'
-        
+
         try:
             checksd_path = config.get_checksd_path(osname)
         except config.PathNotFound:
@@ -393,7 +389,7 @@ class CollectorStatus(AgentStatus):
                 if cs.init_failed_error:
                     check_lines.append("    - initialize check class [%s]: %s" %
                                        (style(STATUS_ERROR, 'red'),
-                                       repr(cs.init_failed_error)))
+                                        repr(cs.init_failed_error)))
                     if self.verbose and cs.init_failed_traceback:
                         check_lines.extend('      ' + line for line in
                                            cs.init_failed_traceback.split('\n'))
@@ -417,13 +413,15 @@ class CollectorStatus(AgentStatus):
                                 warn = warning.split('\n')
                                 if not len(warn):
                                     continue
-                                check_lines.append(u"        %s: %s" % (style("Warning", 'yellow'), warn[0]))
+                                check_lines.append(u"        %s: %s" %
+                                                   (style("Warning", 'yellow'), warn[0]))
                                 check_lines.extend(u"        %s" % l for l in warn[1:])
                         if self.verbose and s.traceback is not None:
                             check_lines.extend('      ' + line for line in s.traceback.split('\n'))
 
                     check_lines += [
-                        "    - Collected %s metrics & %s events" % (cs.metric_count, cs.event_count),
+                        "    - Collected %s metrics & %s events" % (
+                            cs.metric_count, cs.event_count),
                     ]
 
                     if cs.library_versions is not None:
@@ -481,9 +479,11 @@ class CollectorStatus(AgentStatus):
                         'has_warnings': s.has_warnings(),
                     }
                     if s.has_error():
-                        status_info['checks'][cs.name]['instances'][s.instance_id]['error'] = s.error
+                        status_info['checks'][cs.name]['instances'][
+                            s.instance_id]['error'] = s.error
                     if s.has_warnings():
-                        status_info['checks'][cs.name]['instances'][s.instance_id]['warnings'] = s.warnings
+                        status_info['checks'][cs.name]['instances'][
+                            s.instance_id]['warnings'] = s.warnings
                 status_info['checks'][cs.name]['metric_count'] = cs.metric_count
                 status_info['checks'][cs.name]['event_count'] = cs.event_count
 
@@ -503,7 +503,7 @@ class CollectorStatus(AgentStatus):
             status_info['confd_path'] = config.get_confd_path(osname)
         except config.PathNotFound:
             status_info['confd_path'] = 'Not found'
-        
+
         try:
             status_info['checksd_path'] = config.get_checksd_path(osname)
         except config.PathNotFound:
@@ -516,7 +516,8 @@ class MonstatsdStatus(AgentStatus):
 
     NAME = 'Monstatsd'
 
-    def __init__(self, flush_count=0, packet_count=0, packets_per_second=0, metric_count=0, event_count=0):
+    def __init__(self, flush_count=0, packet_count=0,
+                 packets_per_second=0, metric_count=0, event_count=0):
         AgentStatus.__init__(self)
         self.flush_count = flush_count
         self.packet_count = packet_count
@@ -554,7 +555,7 @@ class ForwarderStatus(AgentStatus):
     NAME = 'Forwarder'
 
     def __init__(self, queue_length=0, queue_size=0, flush_count=0, transactions_received=0,
-            transactions_flushed=0):
+                 transactions_flushed=0):
         AgentStatus.__init__(self)
         self.queue_length = queue_length
         self.queue_size = queue_size
@@ -587,10 +588,12 @@ class ForwarderStatus(AgentStatus):
 
 def get_jmx_instance_status(instance_name, status, message, metric_count):
     if status == STATUS_ERROR:
-        instance_status = InstanceStatus(instance_name, STATUS_ERROR, error=message, metric_count=metric_count)
+        instance_status = InstanceStatus(
+            instance_name, STATUS_ERROR, error=message, metric_count=metric_count)
 
     elif status == STATUS_WARNING:
-        instance_status = InstanceStatus(instance_name, STATUS_WARNING, warnings=[message], metric_count=metric_count)
+        instance_status = InstanceStatus(
+            instance_name, STATUS_WARNING, warnings=[message], metric_count=metric_count)
 
     elif status == STATUS_OK:
         instance_status = InstanceStatus(instance_name, STATUS_OK, metric_count=metric_count)
@@ -616,7 +619,7 @@ def get_jmx_status():
 
         - One generated by jmxfetch that return information about the collection of metrics
         its format is as following:
-    
+
         ###
         timestamp: 1391037347435
         checks:
@@ -632,7 +635,8 @@ def get_jmx_status():
     java_status_path = os.path.join(tempfile.gettempdir(), "jmx_status.yaml")
     python_status_path = os.path.join(tempfile.gettempdir(), "jmx_status_python.yaml")
     if not os.path.exists(java_status_path) and not os.path.exists(python_status_path):
-        log.debug("There is no jmx_status file at: %s or at: %s" % (java_status_path, python_status_path))
+        log.debug("There is no jmx_status file at: %s or at: %s" %
+                  (java_status_path, python_status_path))
         return []
 
     check_data = defaultdict(lambda: defaultdict(list))
@@ -640,12 +644,13 @@ def get_jmx_status():
         if os.path.exists(java_status_path):
             java_jmx_stats = yaml.load(file(java_status_path))
 
-            status_age = time.time() - java_jmx_stats.get('timestamp')/1000  # JMX timestamp is saved in milliseconds
+            # JMX timestamp is saved in milliseconds
+            status_age = time.time() - java_jmx_stats.get('timestamp') / 1000
             jmx_checks = java_jmx_stats.get('checks', {})
 
             if status_age > 60:
                 check_statuses.append(CheckStatus("jmx", [InstanceStatus(0, STATUS_ERROR,
-                                                  error="JMXfetch didn't return any metrics during the last minute")],
+                                                                         error="JMXfetch didn't return any metrics during the last minute")],
                                                   0, 0))
             else:
 
@@ -658,7 +663,7 @@ def get_jmx_status():
                         check_data[check_name]['statuses'].append(get_jmx_instance_status(instance_name, status,
                                                                                           message, metric_count))
                         check_data[check_name]['metric_count'].append(metric_count)
-               
+
                 for check_name, instances in jmx_checks.get('initialized_checks', {}).iteritems():
                     for info in instances:
                         message = info.get('message', None)
@@ -670,7 +675,8 @@ def get_jmx_status():
                         check_data[check_name]['metric_count'].append(metric_count)
 
                 for check_name, data in check_data.iteritems():
-                    check_status = CheckStatus(check_name, data['statuses'], sum(data['metric_count']), 0)
+                    check_status = CheckStatus(
+                        check_name, data['statuses'], sum(data['metric_count']), 0)
                     check_statuses.append(check_status)
 
         if os.path.exists(python_status_path):
@@ -681,6 +687,6 @@ def get_jmx_status():
 
         return check_statuses
 
-    except Exception, e:
+    except Exception as e:
         log.exception("Couldn't load latest jmx status")
         return []

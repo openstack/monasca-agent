@@ -86,7 +86,7 @@ class Network(AgentCheck):
 
         # For reasons i don't understand only these metrics are skipped if a
         # particular interface is in the `excluded_interfaces` config list.
-        # Not sure why the others aren't included. Until I understand why, I'm 
+        # Not sure why the others aren't included. Until I understand why, I'm
         # going to keep the same behaviour.
         exclude_iface_metrics = [
             'packets_in',
@@ -103,7 +103,6 @@ class Network(AgentCheck):
             self.rate('net_%s' % metric, val, device_name=iface)
             count += 1
         self.log.debug("tracked %s network metrics for interface %s" % (count, iface))
-
 
     @staticmethod
     def _parse_value(v):
@@ -149,7 +148,6 @@ class Network(AgentCheck):
 
             for metric, value in metrics.iteritems():
                 self.gauge(metric, value)
-
 
         proc = open('/proc/net/dev', 'r')
         try:

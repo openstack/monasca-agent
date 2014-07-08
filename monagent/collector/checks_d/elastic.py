@@ -21,35 +21,35 @@ class ElasticSearch(AgentCheck):
         "elasticsearch.docs.deleted": ("gauge", "indices.docs.deleted"),
         "elasticsearch.store.size": ("gauge", "indices.store.size_in_bytes"),
         "elasticsearch.indexing.index.total": ("gauge", "indices.indexing.index_total"),
-        "elasticsearch.indexing.index.time": ("gauge", "indices.indexing.index_time_in_millis", lambda v: float(v)/1000),
+        "elasticsearch.indexing.index.time": ("gauge", "indices.indexing.index_time_in_millis", lambda v: float(v) / 1000),
         "elasticsearch.indexing.index.current": ("gauge", "indices.indexing.index_current"),
         "elasticsearch.indexing.delete.total": ("gauge", "indices.indexing.delete_total"),
-        "elasticsearch.indexing.delete.time": ("gauge", "indices.indexing.delete_time_in_millis", lambda v: float(v)/1000),
+        "elasticsearch.indexing.delete.time": ("gauge", "indices.indexing.delete_time_in_millis", lambda v: float(v) / 1000),
         "elasticsearch.indexing.delete.current": ("gauge", "indices.indexing.delete_current"),
         "elasticsearch.get.total": ("gauge", "indices.get.total"),
-        "elasticsearch.get.time": ("gauge", "indices.get.time_in_millis", lambda v: float(v)/1000),
+        "elasticsearch.get.time": ("gauge", "indices.get.time_in_millis", lambda v: float(v) / 1000),
         "elasticsearch.get.current": ("gauge", "indices.get.current"),
         "elasticsearch.get.exists.total": ("gauge", "indices.get.exists_total"),
-        "elasticsearch.get.exists.time": ("gauge", "indices.get.exists_time_in_millis", lambda v: float(v)/1000),
+        "elasticsearch.get.exists.time": ("gauge", "indices.get.exists_time_in_millis", lambda v: float(v) / 1000),
         "elasticsearch.get.missing.total": ("gauge", "indices.get.missing_total"),
-        "elasticsearch.get.missing.time": ("gauge", "indices.get.missing_time_in_millis", lambda v: float(v)/1000),
+        "elasticsearch.get.missing.time": ("gauge", "indices.get.missing_time_in_millis", lambda v: float(v) / 1000),
         "elasticsearch.search.query.total": ("gauge", "indices.search.query_total"),
-        "elasticsearch.search.query.time": ("gauge", "indices.search.query_time_in_millis", lambda v: float(v)/1000),
+        "elasticsearch.search.query.time": ("gauge", "indices.search.query_time_in_millis", lambda v: float(v) / 1000),
         "elasticsearch.search.query.current": ("gauge", "indices.search.query_current"),
         "elasticsearch.search.fetch.total": ("gauge", "indices.search.fetch_total"),
-        "elasticsearch.search.fetch.time": ("gauge", "indices.search.fetch_time_in_millis", lambda v: float(v)/1000),
+        "elasticsearch.search.fetch.time": ("gauge", "indices.search.fetch_time_in_millis", lambda v: float(v) / 1000),
         "elasticsearch.search.fetch.current": ("gauge", "indices.search.fetch_current"),
         "elasticsearch.merges.current": ("gauge", "indices.merges.current"),
         "elasticsearch.merges.current.docs": ("gauge", "indices.merges.current_docs"),
         "elasticsearch.merges.current.size": ("gauge", "indices.merges.current_size_in_bytes"),
         "elasticsearch.merges.total": ("gauge", "indices.merges.total"),
-        "elasticsearch.merges.total.time": ("gauge", "indices.merges.total_time_in_millis", lambda v: float(v)/1000),
+        "elasticsearch.merges.total.time": ("gauge", "indices.merges.total_time_in_millis", lambda v: float(v) / 1000),
         "elasticsearch.merges.total.docs": ("gauge", "indices.merges.total_docs"),
         "elasticsearch.merges.total.size": ("gauge", "indices.merges.total_size_in_bytes"),
         "elasticsearch.refresh.total": ("gauge", "indices.refresh.total"),
-        "elasticsearch.refresh.total.time": ("gauge", "indices.refresh.total_time_in_millis", lambda v: float(v)/1000),
+        "elasticsearch.refresh.total.time": ("gauge", "indices.refresh.total_time_in_millis", lambda v: float(v) / 1000),
         "elasticsearch.flush.total": ("gauge", "indices.flush.total"),
-        "elasticsearch.flush.total.time": ("gauge", "indices.flush.total_time_in_millis", lambda v: float(v)/1000),
+        "elasticsearch.flush.total.time": ("gauge", "indices.flush.total_time_in_millis", lambda v: float(v) / 1000),
         "elasticsearch.process.open_fd": ("gauge", "process.open_file_descriptors"),
         "elasticsearch.transport.rx_count": ("gauge", "transport.rx_count"),
         "elasticsearch.transport.tx_count": ("gauge", "transport.tx_count"),
@@ -92,9 +92,9 @@ class ElasticSearch(AgentCheck):
         "elasticsearch.http.current_open": ("gauge", "http.current_open"),
         "elasticsearch.http.total_opened": ("gauge", "http.total_opened"),
         "jvm.gc.concurrent_mark_sweep.count": ("gauge", "jvm.gc.collectors.ConcurrentMarkSweep.collection_count"),
-        "jvm.gc.concurrent_mark_sweep.collection_time": ("gauge", "jvm.gc.collectors.ConcurrentMarkSweep.collection_time_in_millis", lambda v: float(v)/1000),
+        "jvm.gc.concurrent_mark_sweep.collection_time": ("gauge", "jvm.gc.collectors.ConcurrentMarkSweep.collection_time_in_millis", lambda v: float(v) / 1000),
         "jvm.gc.par_new.count": ("gauge", "jvm.gc.collectors.ParNew.collection_count"),
-        "jvm.gc.par_new.collection_time": ("gauge", "jvm.gc.collectors.ParNew.collection_time_in_millis", lambda v: float(v)/1000),
+        "jvm.gc.par_new.collection_time": ("gauge", "jvm.gc.collectors.ParNew.collection_time_in_millis", lambda v: float(v) / 1000),
         "jvm.mem.heap_committed": ("gauge", "jvm.mem.heap_committed_in_bytes"),
         "jvm.mem.heap_used": ("gauge", "jvm.mem.heap_used_in_bytes"),
         "jvm.mem.non_heap_committed": ("gauge", "jvm.mem.non_heap_committed_in_bytes"),
@@ -153,7 +153,6 @@ class ElasticSearch(AgentCheck):
         health_data = self._get_data(url, auth)
         self._process_health_data(config_url, health_data, dimensions=dimensions)
 
-
     def _get_es_version(self, config_url, auth=None):
         """
             Get the running version of Elastic Search
@@ -162,8 +161,9 @@ class ElasticSearch(AgentCheck):
         try:
             data = self._get_data(config_url, auth)
             version = map(int, data['version']['number'].split('.'))
-        except Exception, e:
-            self.warning("Error while trying to get Elasticsearch version from %s %s" % (config_url, str(e)))
+        except Exception as e:
+            self.warning("Error while trying to get Elasticsearch version from %s %s" %
+                         (config_url, str(e)))
             version = [0, 0, 0]
 
         self.log.debug("Elasticsearch version is %s" % version)
@@ -174,7 +174,7 @@ class ElasticSearch(AgentCheck):
             Define the set of URLs and METRICS to use depending on the running ES version
         """
 
-        if version >= [0,90,10]:
+        if version >= [0, 90, 10]:
             # ES versions 0.90.10 and above
             # Metrics architecture changed starting with version 0.90.10
             self.HEALTH_URL = "/_cluster/health?pretty=true"
@@ -185,9 +185,9 @@ class ElasticSearch(AgentCheck):
                 "elasticsearch.search.fetch.open_contexts": ("gauge", "indices.search.open_contexts"),
                 "elasticsearch.cache.filter.evictions": ("gauge", "indices.filter_cache.evictions"),
                 "elasticsearch.cache.filter.size": ("gauge", "indices.filter_cache.memory_size_in_bytes"),
-                "elasticsearch.id_cache.size": ("gauge","indices.id_cache.memory_size_in_bytes"),
-                "elasticsearch.fielddata.size": ("gauge","indices.fielddata.memory_size_in_bytes"),
-                "elasticsearch.fielddata.evictions": ("gauge","indices.fielddata.evictions")
+                "elasticsearch.id_cache.size": ("gauge", "indices.id_cache.memory_size_in_bytes"),
+                "elasticsearch.fielddata.size": ("gauge", "indices.fielddata.memory_size_in_bytes"),
+                "elasticsearch.fielddata.evictions": ("gauge", "indices.fielddata.evictions")
             }
 
         else:
@@ -206,9 +206,9 @@ class ElasticSearch(AgentCheck):
                 "elasticsearch.thread_pool.cache.threads": ("gauge", "thread_pool.cache.threads"),
                 "elasticsearch.thread_pool.cache.queue": ("gauge", "thread_pool.cache.queue"),
                 "jvm.gc.collection_count": ("gauge", "jvm.gc.collection_count"),
-                "jvm.gc.collection_time": ("gauge", "jvm.gc.collection_time_in_millis", lambda v: float(v)/1000),
+                "jvm.gc.collection_time": ("gauge", "jvm.gc.collection_time_in_millis", lambda v: float(v) / 1000),
                 "jvm.gc.copy.count": ("gauge", "jvm.gc.collectors.Copy.collection_count"),
-                "jvm.gc.copy.collection_time": ("gauge", "jvm.gc.collectors.Copy.collection_time_in_millis", lambda v: float(v)/1000)
+                "jvm.gc.copy.collection_time": ("gauge", "jvm.gc.collectors.Copy.collection_time_in_millis", lambda v: float(v) / 1000)
             }
 
         self.METRICS.update(additional_metrics)
@@ -278,8 +278,8 @@ class ElasticSearch(AgentCheck):
         if node_name in data['nodes']:
             node = data['nodes'][node_name]
             if 'network' in node\
-            and 'primary_interface' in node['network']\
-            and 'address' in node['network']['primary_interface']:
+                    and 'primary_interface' in node['network']\
+                    and 'address' in node['network']['primary_interface']:
                 return node['network']['primary_interface']['address']
 
         raise NodeNotFound()
@@ -295,7 +295,7 @@ class ElasticSearch(AgentCheck):
         else:
             ifaces = subprocess.Popen(['ip', 'addr'], stdout=subprocess.PIPE)
         grepper = subprocess.Popen(['grep', 'inet'], stdin=ifaces.stdout,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         ifaces.stdout.close()
         out, err = grepper.communicate()
@@ -305,7 +305,7 @@ class ElasticSearch(AgentCheck):
         for iface in out.split("\n"):
             iface = iface.strip()
             if iface:
-                ips.append( iface.split(' ')[1].split('/')[0] )
+                ips.append(iface.split(' ')[1].split('/')[0])
 
         # Check the interface addresses against the primary address
         return primary_addrs in ips
@@ -326,7 +326,8 @@ class ElasticSearch(AgentCheck):
                 break
 
         if value is not None:
-            if xform: value = xform(value)
+            if xform:
+                value = xform(value)
             if self.METRICS[metric][0] == "gauge":
                 self.gauge(metric, value, dimensions=dimensions)
             else:
@@ -346,7 +347,6 @@ class ElasticSearch(AgentCheck):
             event = self._create_event(data['status'])
             self.event(event)
 
-
         def process_metric(metric, xtype, path, xform=None):
             # closure over data
             self._process_metric(data, metric, path, xform, dimensions=dimensions)
@@ -355,7 +355,6 @@ class ElasticSearch(AgentCheck):
             # metric description
             desc = self.METRICS[metric]
             process_metric(metric, *desc)
-
 
     def _metric_not_found(self, metric, path):
         self.log.debug("Metric not found: %s -> %s", path, metric)
@@ -377,15 +376,15 @@ class ElasticSearch(AgentCheck):
 
         msg = "ElasticSearch: %s just reported as %s" % (hostname, status)
 
-        return { 'timestamp': int(time.time()),
-                 'event_type': 'elasticsearch',
-                 'host': hostname,
-                 'msg_text':msg,
-                 'msg_title': msg_title,
-                 "alert_type": alert_type,
-                 "source_type_name": "elasticsearch",
-                 "event_object": hostname
-            }
+        return {'timestamp': int(time.time()),
+                'event_type': 'elasticsearch',
+                'host': hostname,
+                'msg_text': msg,
+                'msg_title': msg_title,
+                "alert_type": alert_type,
+                "source_type_name": "elasticsearch",
+                "event_object": hostname
+                }
 
     @staticmethod
     def parse_agent_config(agentConfig):
@@ -397,4 +396,3 @@ class ElasticSearch(AgentCheck):
                 'url': agentConfig.get('elasticsearch'),
             }]
         }
-

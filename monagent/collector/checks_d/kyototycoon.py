@@ -10,36 +10,37 @@ whitespace = re.compile(r'\s')
 
 
 class KyotoTycoonCheck(AgentCheck):
+
     """Report statistics about the Kyoto Tycoon DBM-style
     database server (http://fallabs.com/kyototycoon/)
     """
 
     GAUGES = {
-        'repl_delay':         'replication.delay',
-        'serv_thread_count':  'threads',
+        'repl_delay': 'replication.delay',
+        'serv_thread_count': 'threads',
     }
 
     RATES = {
-        'serv_conn_count':    'connections',
-        'cnt_get':            'ops.get.hits',
-        'cnt_get_misses':     'ops.get.misses',
-        'cnt_set':            'ops.set.hits',
-        'cnt_set_misses':     'ops.set.misses',
-        'cnt_remove':         'ops.del.hits',
-        'cnt_remove_misses':  'ops.del.misses',
+        'serv_conn_count': 'connections',
+        'cnt_get': 'ops.get.hits',
+        'cnt_get_misses': 'ops.get.misses',
+        'cnt_set': 'ops.set.hits',
+        'cnt_set_misses': 'ops.set.misses',
+        'cnt_remove': 'ops.del.hits',
+        'cnt_remove_misses': 'ops.del.misses',
     }
 
     DB_GAUGES = {
-        'count':              'records',
-        'size':               'size',
+        'count': 'records',
+        'size': 'size',
     }
     TOTALS = {
-        'cnt_get':            'ops.get.total',
-        'cnt_get_misses':     'ops.get.total',
-        'cnt_set':            'ops.set.total',
-        'cnt_set_misses':     'ops.set.total',
-        'cnt_remove':         'ops.del.total',
-        'cnt_remove_misses':  'ops.del.total',
+        'cnt_get': 'ops.get.total',
+        'cnt_get_misses': 'ops.get.total',
+        'cnt_set': 'ops.set.total',
+        'cnt_set_misses': 'ops.set.total',
+        'cnt_remove': 'ops.del.total',
+        'cnt_remove_misses': 'ops.del.total',
     }
 
     def check(self, instance):
@@ -65,7 +66,7 @@ class KyotoTycoonCheck(AgentCheck):
             if key in self.GAUGES:
                 name = self.GAUGES[key]
                 self.gauge('kyototycoon.%s' % name, float(value), dimensions=dimensions)
-            
+
             elif key in self.RATES:
                 name = self.RATES[key]
                 self.rate('kyototycoon.%s_per_s' % name, float(value), dimensions=dimensions)

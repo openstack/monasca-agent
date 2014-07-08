@@ -13,6 +13,7 @@ from monagent.collector.checks.services_checks import ServicesCheck, Status
 
 
 class WrapNagios(ServicesCheck):
+
     """Inherit ServicesCheck class to process Nagios checks"""
 
     def __init__(self, name, init_config, agent_config, instances=None):
@@ -38,7 +39,7 @@ class WrapNagios(ServicesCheck):
 
         dimensions = {'observer_host': socket.getfqdn()}
         # Add per-instance dimensions, if any
-        if instance.has_key('dimensions') and instance['dimensions'] is not None:
+        if 'dimensions' in instance.keys() and instance['dimensions'] is not None:
             dimensions.update(instance['dimensions'])
 
         if 'host_name' in instance:
@@ -55,7 +56,8 @@ class WrapNagios(ServicesCheck):
 
         if last_run_path.endswith('/') is False:
             last_run_path += '/'
-        last_run_file = (last_run_path + 'nagios_wrapper_' + hashlib.md5(instance['service_name']).hexdigest() + '.pck')
+        last_run_file = (
+            last_run_path + 'nagios_wrapper_' + hashlib.md5(instance['service_name']).hexdigest() + '.pck')
 
         # Load last-run data from shared memory file
         last_run_data = {}

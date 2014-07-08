@@ -8,10 +8,12 @@ log = logging.getLogger(__name__)
 
 
 class MonAPI(object):
+
     """Sends measurements to MonAPI
         Any errors should raise an exception so the transaction calling
         this is not committed
     """
+
     def __init__(self, config):
         """
         Initialize Mon api client connection.
@@ -22,7 +24,7 @@ class MonAPI(object):
         self.default_dimensions = config['dimensions']
         self.token_expiration = 1438
         # Verify the hostname is set as a dimension
-        if not 'hostname' in self.default_dimensions:
+        if 'hostname' not in self.default_dimensions:
             self.default_dimensions['hostname'] = get_hostname()
 
         log.debug("Getting token from Keystone")
@@ -86,7 +88,7 @@ class MonAPI(object):
         # Add default dimensions
         for measurement in measurements:
             for dimension in self.default_dimensions.keys():
-                if not measurement.dimensions.has_key(dimension):
+                if dimension not in measurement.dimensions.keys():
                     measurement.dimensions.update({dimension: self.default_dimensions[dimension]})
 
         self._post(measurements)

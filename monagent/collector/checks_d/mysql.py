@@ -45,6 +45,7 @@ STATUS_VARS = {
 
 
 class MySql(AgentCheck):
+
     def __init__(self, name, init_config, agent_config):
         AgentCheck.__init__(self, name, init_config, agent_config)
         self.mysql_version = {}
@@ -63,7 +64,8 @@ class MySql(AgentCheck):
         return {"MySQLdb": version}
 
     def check(self, instance):
-        host, port, user, password, mysql_sock, defaults_file, dimensions, options = self._get_config(instance)
+        host, port, user, password, mysql_sock, defaults_file, dimensions, options = self._get_config(
+            instance)
 
         if (not host or not user) and not defaults_file:
             raise Exception("Mysql host and user are needed.")
@@ -92,23 +94,23 @@ class MySql(AgentCheck):
             import MySQLdb
         except ImportError:
             raise Exception("Cannot import MySQLdb module. Check the instructions "
-                "to install this module at https://app.datadoghq.com/account/settings#integrations/mysql")
+                            "to install this module at https://app.datadoghq.com/account/settings#integrations/mysql")
 
         if defaults_file != '':
             db = MySQLdb.connect(read_default_file=defaults_file)
-        elif  mysql_sock != '':
+        elif mysql_sock != '':
             db = MySQLdb.connect(unix_socket=mysql_sock,
-                                    user=user,
-                                    passwd=password)
+                                 user=user,
+                                 passwd=password)
         elif port:
             db = MySQLdb.connect(host=host,
-                                    port=port,
-                                    user=user,
-                                    passwd=password)
+                                 port=port,
+                                 user=user,
+                                 passwd=password)
         else:
             db = MySQLdb.connect(host=host,
-                                    user=user,
-                                    passwd=password)
+                                 user=user,
+                                 passwd=password)
         self.log.debug("Connected to MySQL")
 
         return db
@@ -125,15 +127,21 @@ class MySql(AgentCheck):
         # Be sure InnoDB is enabled
         if 'Innodb_page_size' in results:
             page_size = self._collect_scalar('Innodb_page_size', results)
-            innodb_buffer_pool_pages_total = self._collect_scalar('Innodb_buffer_pool_pages_total', results)
-            innodb_buffer_pool_pages_free = self._collect_scalar('Innodb_buffer_pool_pages_free', results)
+            innodb_buffer_pool_pages_total = self._collect_scalar(
+                'Innodb_buffer_pool_pages_total', results)
+            innodb_buffer_pool_pages_free = self._collect_scalar(
+                'Innodb_buffer_pool_pages_free', results)
             innodb_buffer_pool_pages_total = innodb_buffer_pool_pages_total * page_size
             innodb_buffer_pool_pages_free = innodb_buffer_pool_pages_free * page_size
-            innodb_buffer_pool_pages_used = innodb_buffer_pool_pages_total - innodb_buffer_pool_pages_free
+            innodb_buffer_pool_pages_used = (innodb_buffer_pool_pages_total -
+                                             innodb_buffer_pool_pages_free)
 
-            self.gauge("mysql.innodb.buffer_pool_free", innodb_buffer_pool_pages_free, dimensions=dimensions)
-            self.gauge("mysql.innodb.buffer_pool_used", innodb_buffer_pool_pages_used, dimensions=dimensions)
-            self.gauge("mysql.innodb.buffer_pool_total", innodb_buffer_pool_pages_total, dimensions=dimensions)
+            self.gauge("mysql.innodb.buffer_pool_free",
+                       innodb_buffer_pool_pages_free, dimensions=dimensions)
+            self.gauge("mysql.innodb.buffer_pool_used",
+                       innodb_buffer_pool_pages_used, dimensions=dimensions)
+            self.gauge("mysql.innodb.buffer_pool_total",
+                       innodb_buffer_pool_pages_total, dimensions=dimensions)
 
         if 'galera_cluster' in options and options['galera_cluster']:
             value = self._collect_scalar('wsrep_cluster_size', results)
@@ -180,8 +188,9 @@ class MySql(AgentCheck):
             if (major, minor, patchlevel) > (5, 0, 2):
                 greater_502 = True
 
-        except Exception, exception:
-            self.warning("Cannot compute mysql version, assuming older than 5.0.2: %s" % str(exception))
+        except Exception as exception:
+            self.warning("Cannot compute mysql version, assuming older than 5.0.2: %s" %
+                         str(exception))
 
         self.greater_502[host] = greater_502
 
@@ -250,7 +259,8 @@ class MySql(AgentCheck):
                         else:
                             self.log.debug("Received value is None for index %d" % col_idx)
                     except ValueError:
-                        self.log.exception("Cannot find %s in the columns %s" % (field, cursor.description))
+                        self.log.exception("Cannot find %s in the columns %s" %
+                                           (field, cursor.description))
             cursor.close()
             del cursor
         except Exception:
@@ -281,10 +291,13 @@ class MySql(AgentCheck):
                 # Convert time to s (number of second of CPU used by mysql)
                 # It's a counter, it will be divided by the period, multiply by 100
                 # to get the percentage of CPU used by mysql over the period
-                self.rate("mysql.performance.user_time", int((float(ucpu)/float(clk_tck)) * 100), dimensions=dimensions)
-                self.rate("mysql.performance.kernel_time", int((float(kcpu)/float(clk_tck)) * 100), dimensions=dimensions)
+                self.rate("mysql.performance.user_time", int(
+                    (float(ucpu) / float(clk_tck)) * 100), dimensions=dimensions)
+                self.rate("mysql.performance.kernel_time", int(
+                    (float(kcpu) / float(clk_tck)) * 100), dimensions=dimensions)
             except Exception:
-                self.warning("Error while reading mysql (pid: %s) procfs data\n%s" % (pid, traceback.format_exc()))
+                self.warning("Error while reading mysql (pid: %s) procfs data\n%s" %
+                             (pid, traceback.format_exc()))
 
     def _get_server_pid(self, db):
         pid = None
@@ -331,10 +344,10 @@ class MySql(AgentCheck):
 
         return {
             'instances': [{
-                'server': agent_config.get('mysql_server',''),
-                'sock': agent_config.get('mysql_sock',''),
-                'user': agent_config.get('mysql_user',''),
-                'pass': agent_config.get('mysql_pass',''),
+                'server': agent_config.get('mysql_server', ''),
+                'sock': agent_config.get('mysql_sock', ''),
+                'user': agent_config.get('mysql_user', ''),
+                'pass': agent_config.get('mysql_pass', ''),
                 'options': {'replication': True},
             }]
         }

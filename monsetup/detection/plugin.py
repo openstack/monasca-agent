@@ -1,9 +1,11 @@
 """Classes for detection of running resources to be monitored.
     Detection classes should be platform independent
 """
-from monclient import exc as exc, client
+from monclient import client
+
 
 class Plugin(object):
+
     """Abstract class implemented by the mon-agent plugin detection classes
     """
     # todo these should include dependency detection
@@ -33,7 +35,7 @@ class Plugin(object):
     def configure_alarms(self, mon_url, token):
         """Create default alarms.
         """
-        if(self.alarms):
+        if (self.alarms):
             kwargs = {
                 'token': token
             }

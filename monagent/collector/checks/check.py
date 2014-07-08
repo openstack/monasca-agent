@@ -20,14 +20,15 @@ log = logging.getLogger(__name__)
 
 
 # todo convert all checks to the new interface then remove this. Is the LaconicFilter on logs used elsewhere?
-#==============================================================================
+# ==============================================================================
 # DEPRECATED
 # ------------------------------
 # If you are writing your own check, you should inherit from AgentCheck
 # and not this class. This class will be removed in a future version
 # of the agent.
-#==============================================================================
+# ==============================================================================
 class Check(object):
+
     """
     (Abstract) class for all checks with the ability to:
     * store 1 (and only 1) sample for gauges per metric/tag combination
@@ -104,13 +105,15 @@ class Check(object):
         "Get all metric names"
         return self._sample_store.keys()
 
-    def save_gauge(self, metric, value, timestamp=None, dimensions=None, hostname=None, device_name=None):
+    def save_gauge(self, metric, value, timestamp=None,
+                   dimensions=None, hostname=None, device_name=None):
         """ Save a gauge value. """
         if not self.is_gauge(metric):
             self.gauge(metric)
         self.save_sample(metric, value, timestamp, dimensions, hostname, device_name)
 
-    def save_sample(self, metric, value, timestamp=None, dimensions=None, hostname=None, device_name=None):
+    def save_sample(self, metric, value, timestamp=None,
+                    dimensions=None, hostname=None, device_name=None):
         """Save a simple sample, evict old values if needed
         """
         if dimensions is None:
@@ -123,7 +126,7 @@ class Check(object):
             raise CheckException("Saving a sample for an undefined metric: %s" % metric)
         try:
             value = cast_metric_val(value)
-        except ValueError, ve:
+        except ValueError as ve:
             raise NaN(ve)
 
         # Sort and validate dimensions
@@ -139,7 +142,7 @@ class Check(object):
                 self._sample_store[metric][key] = [(timestamp, value, hostname, device_name)]
             else:
                 self._sample_store[metric][key] = self._sample_store[metric][key][-1:] + \
-                                                  [(timestamp, value, hostname, device_name)]
+                    [(timestamp, value, hostname, device_name)]
         else:
             raise CheckException("%s must be either gauge or counter, skipping sample at %s" %
                                  (metric, time.ctime(timestamp)))
@@ -167,7 +170,7 @@ class Check(object):
             raise
         except UnknownValue:
             raise
-        except Exception, e:
+        except Exception as e:
             raise NaN(e)
 
     def get_sample_with_timestamp(self, metric, dimensions=None, device_name=None, expire=True):
@@ -188,7 +191,8 @@ class Check(object):
             raise UnknownValue()
 
         elif self.is_counter(metric) and len(self._sample_store[metric][key]) >= 2:
-            res = self._rate(self._sample_store[metric][key][-2], self._sample_store[metric][key][-1])
+            res = self._rate(
+                self._sample_store[metric][key][-2], self._sample_store[metric][key][-1])
             if expire:
                 del self._sample_store[metric][key][:-1]
             return res
@@ -240,7 +244,8 @@ class Check(object):
                     dimensions_list, device_name = key
                     dimensions = dict(dimensions_list)
                     try:
-                        ts, val, hostname, device_name = self.get_sample_with_timestamp(m, dimensions, device_name, expire)
+                        ts, val, hostname, device_name = self.get_sample_with_timestamp(
+                            m, dimensions, device_name, expire)
                     except UnknownValue:
                         continue
                     attributes = {}
@@ -257,7 +262,7 @@ class Check(object):
 
 
 class AgentCheck(object):
-    
+
     keystone = None
 
     def __init__(self, name, init_config, agent_config, instances=None):
@@ -295,7 +300,8 @@ class AgentCheck(object):
         """ Return the number of instances that are configured for this check. """
         return len(self.instances)
 
-    def gauge(self, metric, value, dimensions=None, hostname=None, device_name=None, timestamp=None):
+    def gauge(self, metric, value, dimensions=None,
+              hostname=None, device_name=None, timestamp=None):
         """
         Record the value of a gauge, with optional dimensions, hostname and device
         name.
@@ -470,7 +476,7 @@ class AgentCheck(object):
                                                                   warnings=self.get_warnings())
                 else:
                     instance_status = check_status.InstanceStatus(i, check_status.STATUS_OK)
-            except Exception, e:
+            except Exception as e:
                 self.log.exception("Check '%s' instance #%s failed" % (self.name, i))
                 instance_status = check_status.InstanceStatus(i,
                                                               check_status.STATUS_ERROR,

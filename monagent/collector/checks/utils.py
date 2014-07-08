@@ -41,11 +41,11 @@ class TailFile(object):
         self._crc = None
         self._log = logger
         self._callback = callback
-   
+
     def _open_file(self, move_end=False, pos=False):
 
         already_open = False
-        #close and reopen to handle logrotate
+        # close and reopen to handle logrotate
         if self._f is not None:
             self._f.close()
             self._f = None
@@ -122,7 +122,7 @@ class TailFile(object):
                     assert pos == self._f.tell()
                     self._open_file(move_end=False, pos=pos)
 
-        except Exception, e:
+        except Exception as e:
             # log but survive
             self._log.exception(e)
             raise StopIteration(e)

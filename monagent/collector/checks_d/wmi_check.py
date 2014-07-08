@@ -17,6 +17,7 @@ SEARCH_WILDCARD = '*'
 
 
 class WMICheck(AgentCheck):
+
     def __init__(self, name, init_config, agent_config):
         AgentCheck.__init__(self, name, init_config, agent_config)
         self.wmi_conns = {}
@@ -30,7 +31,7 @@ class WMICheck(AgentCheck):
     def check(self, instance):
         if wmi is None:
             raise Exception("Missing 'wmi' module")
-        
+
         host = instance.get('host', None)
         user = instance.get('username', None)
         password = instance.get('password', None)
@@ -62,7 +63,8 @@ class WMICheck(AgentCheck):
 
     def _extract_metrics(self, results, metrics, tag_by):
         if len(results) > 1 and tag_by is None:
-            raise Exception('WMI query returned multiple rows but no `tag_by` value was given. metrics=%s' % metrics)
+            raise Exception(
+                'WMI query returned multiple rows but no `tag_by` value was given. metrics=%s' % metrics)
 
         for wmi_property, name, mtype in metrics:
             for res in results:

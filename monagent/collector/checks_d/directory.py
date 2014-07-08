@@ -7,6 +7,7 @@ from monagent.collector.checks import AgentCheck
 
 
 class DirectoryCheck(AgentCheck):
+
     """This check is for monitoring and reporting metrics on the files for a provided directory
 
     WARNING: the user/group that dd-agent runs as must have access to stat the files in the desired directory
@@ -17,6 +18,7 @@ class DirectoryCheck(AgentCheck):
         "pattern" - string, the `fnmatch` pattern to use when reading the "directory"'s files. default "*"
         "recursive" - boolean, when true the stats will recurse into directories. default False
     """
+
     def check(self, instance):
         if "directory" not in instance:
             raise Exception('DirectoryCheck: missing "directory" in config')
@@ -45,13 +47,14 @@ class DirectoryCheck(AgentCheck):
                 try:
                     file_stat = stat(filename)
 
-                except OSError, ose:
+                except OSError as ose:
                     self.warning("DirectoryCheck: could not stat file %s - %s" % (filename, ose))
                 else:
                     directory_files += 1
                     directory_bytes += file_stat.st_size
                     # file specific metrics
-                    self.histogram("system.disk.directory.file.bytes", file_stat.st_size, dimensions=dimensions)
+                    self.histogram(
+                        "system.disk.directory.file.bytes", file_stat.st_size, dimensions=dimensions)
                     self.histogram("system.disk.directory.file.modified_sec_ago", time.time() - file_stat.st_mtime,
                                    dimensions=dimensions)
                     self.histogram("system.disk.directory.file.created_sec_ago", time.time() - file_stat.st_ctime,

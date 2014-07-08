@@ -1,22 +1,27 @@
-import psutil
 import logging
+
 from plugin import Plugin
 from monsetup import agent_config
 from monsetup.detection import find_process_cmdline, watch_process, service_api_check
 
+
 log = logging.getLogger(__name__)
 
+
 class ServicePlugin(Plugin):
+
     """Base class implemented by the mon-agent plugin detection classes
        for OpenStack Services
     """
+
     def __init__(self, kwargs):
         self.service_name = kwargs['service_name']
         self.process_names = kwargs['process_names']
         self.service_api_url = kwargs['service_api_url']
         self.search_pattern = kwargs['search_pattern']
 
-        super(ServicePlugin, self).__init__(kwargs['template_dir'], kwargs['overwrite'], kwargs['alarms'])
+        super(ServicePlugin, self).__init__(kwargs['template_dir'], kwargs['overwrite'],
+                                            kwargs['alarms'])
 
     def _detect(self):
         """Run detection"""
@@ -44,7 +49,6 @@ class ServicePlugin(Plugin):
                                            self.search_pattern, self.service_name))
 
         return config
-
 
     def dependencies_installed(self):
         """return True if dependencies are installed

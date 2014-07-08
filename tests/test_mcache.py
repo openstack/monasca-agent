@@ -8,6 +8,7 @@ from nose.plugins.skip import SkipTest
 
 
 class TestMemCache(unittest.TestCase):
+
     def setUp(self):
         self.agent_config = {
             "memcache_server": "localhost",
@@ -20,7 +21,7 @@ class TestMemCache(unittest.TestCase):
     def _countConnections(self, port):
         pid = os.getpid()
         p1 = Popen(['lsof', '-a', '-p%s' %
-            pid, '-i4'], stdout=PIPE)
+                    pid, '-i4'], stdout=PIPE)
         p2 = Popen(["grep", ":%s" % port], stdin=p1.stdout, stdout=PIPE)
         p3 = Popen(["wc", "-l"], stdin=p2.stdout, stdout=PIPE)
         output = p3.communicate()[0]
@@ -50,7 +51,8 @@ class TestMemCache(unittest.TestCase):
         self.assertEquals(len([t for t in r if t[0] == "memcache.total_items"]), 3, r)
 
         # Check that we got 21 metrics for a specific host
-        self.assertEquals(len([t for t in r if t[3].get('dimensions') == {"instance": mythirdtag}]), 21, r)
+        self.assertEquals(
+            len([t for t in r if t[3].get('dimensions') == {"instance": mythirdtag}]), 21, r)
 
     def testDimensions(self):
         raise SkipTest('Requires mcache')
@@ -68,7 +70,8 @@ class TestMemCache(unittest.TestCase):
         r = self.c.get_metrics()
 
         # Check the dimensions
-        self.assertEquals(len([t for t in r if t[3].get('dimensions') == {"regular_old": "dimensions"}]), 21, r)
+        self.assertEquals(
+            len([t for t in r if t[3].get('dimensions') == {"regular_old": "dimensions"}]), 21, r)
 
         conf = {
             'memcache_server': 'localhost',
@@ -84,7 +87,8 @@ class TestMemCache(unittest.TestCase):
         r = self.c.get_metrics()
 
         # Check the dimensions
-        self.assertEquals(len([t for t in r if t[3].get('dimensions') == {"instance": "localhost_11211"}]), 21, r)
+        self.assertEquals(
+            len([t for t in r if t[3].get('dimensions') == {"instance": "localhost_11211"}]), 21, r)
 
     def testDummyHost(self):
         new_conf = self.c.parse_agent_config({"memcache_instance_1": "dummy:11211:myothertag"})

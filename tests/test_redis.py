@@ -17,7 +17,7 @@ MAX_WAIT = 20
 NOAUTH_PORT = 16379
 AUTH_PORT = 26379
 DEFAULT_PORT = 6379
-MISSING_KEY_TOLERANCE= 0.5
+MISSING_KEY_TOLERANCE = 0.5
 
 
 class TestRedis(unittest.TestCase):
@@ -41,12 +41,15 @@ class TestRedis(unittest.TestCase):
                 loop += 1
                 if loop >= MAX_WAIT:
                     break
+
     def setUp(self):
         raise SkipTest("Requires Redis installed")
         if not self.is_travis():
-            self.redis_noauth = subprocess.Popen(["redis-server", "tests/redisnoauth.cfg"], stdout=subprocess.PIPE)
+            self.redis_noauth = subprocess.Popen(
+                ["redis-server", "tests/redisnoauth.cfg"], stdout=subprocess.PIPE)
             self.wait4(self.redis_noauth, "The server is now ready to accept connections")
-            self.redis_auth = subprocess.Popen(["redis-server", "tests/redisauth.cfg"], stdout=subprocess.PIPE)
+            self.redis_auth = subprocess.Popen(
+                ["redis-server", "tests/redisauth.cfg"], stdout=subprocess.PIPE)
             self.wait4(self.redis_auth, "The server is now ready to accept connections")
 
     def tearDown(self):
@@ -85,7 +88,8 @@ class TestRedis(unittest.TestCase):
                 r = load_check('redisdb', {}, {})
                 r.check(instance)
                 metrics = self._sort_metrics(r.get_metrics())
-                assert len(metrics) == 0, "Should have failed with bad password; got %s instead" % metrics
+                assert len(
+                    metrics) == 0, "Should have failed with bad password; got %s instead" % metrics
 
     def test_redis_default(self):
         # Base test, uses the noauth instance
@@ -99,7 +103,7 @@ class TestRedis(unittest.TestCase):
             'port': port
         }
 
-        db = redis.Redis(port=port, db=14) # Datadog's test db
+        db = redis.Redis(port=port, db=14)  # Datadog's test db
         db.flushdb()
         db.set("key1", "value")
         db.set("key2", "value")
@@ -133,14 +137,14 @@ class TestRedis(unittest.TestCase):
         # Assert that the keys metrics are tagged by db. just check db0, since
         # it's the only one we can guarantee is there.
         db_metrics = self._sort_metrics([m for m in metrics if m[0] in ['redis.keys',
-        'redis.expires'] and "redis_db:db14" in m[3]["dimensions"]])
+                                                                        'redis.expires'] and "redis_db:db14" in m[3]["dimensions"]])
         self.assertEquals(2, len(db_metrics))
 
         self.assertEquals('redis.expires', db_metrics[0][0])
-        self.assertEquals(1, db_metrics[0][2]) 
+        self.assertEquals(1, db_metrics[0][2])
 
         self.assertEquals('redis.keys', db_metrics[1][0])
-        self.assertEquals(3, db_metrics[1][2]) 
+        self.assertEquals(3, db_metrics[1][2])
 
         # Run one more check and ensure we get total command count
         # and other rates

@@ -11,13 +11,15 @@ from collector.dogstream import cassandra, supervisord_log, common
 log = logging.getLogger('datadog.test')
 NAGIOS_TEST_HOST = os.path.join(os.path.dirname(__file__), "host-perfdata")
 NAGIOS_TEST_SVC = os.path.join(os.path.dirname(__file__), "service-perfdata")
-NAGIOS_TEST_HOST_TEMPLATE="[HOSTPERFDATA]\t$TIMET$\t$HOSTNAME$\t$HOSTEXECUTIONTIME$\t$HOSTOUTPUT$\t$HOSTPERFDATA$"
-NAGIOS_TEST_SVC_TEMPLATE="[SERVICEPERFDATA]\t$TIMET$\t$HOSTNAME$\t$SERVICEDESC$\t$SERVICEEXECUTIONTIME$\t$SERVICELATENCY$\t$SERVICEOUTPUT$\t$SERVICEPERFDATA$"
+NAGIOS_TEST_HOST_TEMPLATE = "[HOSTPERFDATA]\t$TIMET$\t$HOSTNAME$\t$HOSTEXECUTIONTIME$\t$HOSTOUTPUT$\t$HOSTPERFDATA$"
+NAGIOS_TEST_SVC_TEMPLATE = "[SERVICEPERFDATA]\t$TIMET$\t$HOSTNAME$\t$SERVICEDESC$\t$SERVICEEXECUTIONTIME$\t$SERVICELATENCY$\t$SERVICEOUTPUT$\t$SERVICEPERFDATA$"
+
 
 def parse_ancient_function_plugin(logger, line):
     """Ancient stateless parser"""
     res = line.split()
     res[3] = {'metric_type': 'gauge'}
+
 
 def parse_function_plugin(logger, line, state):
     """Simple stateful parser"""
@@ -31,13 +33,17 @@ def parse_function_plugin(logger, line, state):
     res[3] = {'metric_type': 'counter'}
     return tuple(res)
 
+
 class ParseClassPlugin(object):
+
     """Class-based stateful parser"""
+
     def __init__(self, logger=None, user_args=(), **kwargs):
         self.logger = logger
         self.args = '.'.join(user_args)
         self.acc = 0
         self.logger.info('Completed initialization')
+
     def parse_line(self, line):
         self.logger.info('Parsing line %r; counter is %r', line, self.acc)
         self.acc += 1
@@ -47,21 +53,24 @@ class ParseClassPlugin(object):
         res[3] = {'metric_type': 'counter'}
         return tuple(res)
 
+
 import time
 from datetime import datetime
 import calendar
 
 log_event_pattern = re.compile("".join([
-    r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) ", # iso timestamp
-    r"\[(?P<alert_type>(ERROR)|(RECOVERY))\] - ", # alert type
+    r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) ",  # iso timestamp
+    r"\[(?P<alert_type>(ERROR)|(RECOVERY))\] - ",  # alert type
     r"(?P<msg_title>(?P<host>[^ ]*).*)"
 ]))
 alert_types = {
     "ERROR": "error",
     "RECOVERY": "success"
 }
+
+
 def parse_events(logger, line):
-    """ Expecting lines like this: 
+    """ Expecting lines like this:
         2012-05-14 12:46:01 [ERROR] - host0 is down (broke its collarbone)
     """
     match = log_event_pattern.match(line)
@@ -69,22 +78,26 @@ def parse_events(logger, line):
         groups = match.groupdict()
         groups.update({
             'alert_type': alert_types.get(groups['alert_type'], ''),
-            'timestamp':  calendar.timegm(datetime.strptime(groups['timestamp'], '%Y-%m-%d %H:%M:%S').timetuple()),
+            'timestamp': calendar.timegm(
+                datetime.strptime(groups['timestamp'], '%Y-%m-%d %H:%M:%S').timetuple()),
             'msg_text': line
-            })
+        })
 
         return groups
     else:
         return None
 
+
 def repr_event_parser(logger, line):
     return eval(line)
 
+
 class TailTestCase(unittest.TestCase):
+
     def setUp(self):
         self.log_file = NamedTemporaryFile()
         self.logger = logging.getLogger('test.dogstream')
-    
+
     def _write_log(self, log_data):
         for data in log_data:
             print >> self.log_file, data
@@ -92,6 +105,7 @@ class TailTestCase(unittest.TestCase):
 
     def tearDown(self):
         self.log_file.close()
+
 
 class TestDogstream(TailTestCase):
     gauge = {'metric_type': 'gauge'}
@@ -107,7 +121,7 @@ class TestDogstream(TailTestCase):
         log.info("Test config: %s" % self.config)
         self.dogstream = Dogstreams.init(self.logger, self.config)
         self.maxDiff = None
-    
+
     def test_dogstream_gauge(self):
         log_data = [
             # bucket 0
@@ -122,21 +136,21 @@ class TestDogstream(TailTestCase):
             ('test.metric.a', '1000000006', '7', 'metric_type=gauge'),
             ('test.metric.a', '1000000007', '8', 'metric_type=gauge'),
         ]
-        
+
         expected_output = {
             "dogstream": [
                 ('test.metric.a', 1000000000, 5.0, self.gauge),
                 ('test.metric.a', 1000000005, 8.0, self.gauge),
             ]
         }
-        
+
         self._write_log((' '.join(data) for data in log_data))
 
         actual_output = self.dogstream.check(self.config, move_end=False)
         self.assertEquals(expected_output, actual_output)
         for metric, timestamp, val, attr in expected_output['dogstream']:
             assert isinstance(val, float)
-    
+
     def test_dogstream_counter(self):
         log_data = [
             # bucket 0
@@ -151,14 +165,14 @@ class TestDogstream(TailTestCase):
             ('test.metric.a', '1000000006', '7', 'metric_type=counter'),
             ('test.metric.a', '1000000007', '8', 'metric_type=counter'),
         ]
-        
+
         expected_output = {
             "dogstream": [
                 ('test.metric.a', 1000000000, 42, self.counter),
                 ('test.metric.a', 1000000005, 27, self.counter),
             ]
         }
-        
+
         self._write_log((' '.join(data) for data in log_data))
 
         actual_output = self.dogstream.check(self.config, move_end=False)
@@ -173,12 +187,10 @@ class TestDogstream(TailTestCase):
             ('test_metric.e 1 1000000002 metric_type=gauge'),
             ('test_metric.e 1000000002 10 metric_type=gauge'),
         ]
-        expected_output = {"dogstream":
-            [('test_metric.e', 1000000000, 10, self.gauge)]
-        }
-        
+        expected_output = {"dogstream": [('test_metric.e', 1000000000, 10, self.gauge)]}
+
         self._write_log(log_data)
-        
+
         actual_output = self.dogstream.check(self.config, move_end=False)
         self.assertEquals(expected_output, actual_output)
 
@@ -194,7 +206,9 @@ class TestDogstream(TailTestCase):
                 ('test.metric.simple', 1100000000, 1, self.gauge)]
         }
         self._write_log(log_data)
-        plugdog = Dogstreams.init(self.logger, {'dogstreams': '%s:tests.test_datadog:parse_ancient_function_plugin' % self.log_file.name})
+        plugdog = Dogstreams.init(
+            self.logger, {
+                'dogstreams': '%s:tests.test_datadog:parse_ancient_function_plugin' % self.log_file.name})
         actual_output = plugdog.check(self.config, move_end=False)
 
     def test_dogstream_function_plugin(self):
@@ -210,7 +224,9 @@ class TestDogstream(TailTestCase):
         }
         self._write_log(log_data)
 
-        statedog = Dogstreams.init(self.logger, {'dogstreams': '%s:tests.test_datadog:parse_function_plugin' % self.log_file.name})
+        statedog = Dogstreams.init(
+            self.logger,
+            {'dogstreams': '%s:tests.test_datadog:parse_function_plugin' % self.log_file.name})
         actual_output = statedog.check(self.config, move_end=False)
         self.assertEquals(expected_output, actual_output)
 
@@ -227,7 +243,9 @@ class TestDogstream(TailTestCase):
         }
         self._write_log(log_data)
 
-        statedog = Dogstreams.init(self.logger, {'dogstreams': '%s:tests.test_datadog:ParseClassPlugin:foo:bar' % self.log_file.name})
+        statedog = Dogstreams.init(
+            self.logger,
+            {'dogstreams': '%s:tests.test_datadog:ParseClassPlugin:foo:bar' % self.log_file.name})
         actual_output = statedog.check(self.config, move_end=False)
         self.assertEquals(expected_output, actual_output)
 
@@ -289,7 +307,8 @@ class TestDogstream(TailTestCase):
 
         self._write_log(log_data)
 
-        dogstream = Dogstreams.init(self.logger, {'dogstreams': '%s:tests.test_datadog:parse_events' % self.log_file.name})
+        dogstream = Dogstreams.init(
+            self.logger, {'dogstreams': '%s:tests.test_datadog:parse_events' % self.log_file.name})
         actual_output = dogstream.check(self.config, move_end=False)
         self.assertEquals(expected_output, actual_output)
 
@@ -323,7 +342,9 @@ class TestDogstream(TailTestCase):
 
         self._write_log([repr(d) for d in log_data])
 
-        dogstream = Dogstreams.init(self.logger, {'dogstreams': '%s:tests.test_datadog:repr_event_parser' % self.log_file.name})
+        dogstream = Dogstreams.init(
+            self.logger,
+            {'dogstreams': '%s:tests.test_datadog:repr_event_parser' % self.log_file.name})
         actual_output = dogstream.check(self.config, move_end=False)
         self.assertEquals(expected_output, actual_output)
 
@@ -347,55 +368,60 @@ class TestDogstream(TailTestCase):
         event_object = EventDefaults.EVENT_OBJECT
 
         expected_output = {
-            "dogstreamEvents":[
-            {
-                "timestamp": cassandra.parse_date("2012-05-12 21:10:48,058"),
-                "msg_title": "Compacting [SSTableReader(path='/var/cassandra/data/test_data/series-hc-6528-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6531-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6529-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6530-Data.db')]"[0:common.MAX_TITLE_LEN],
-                "msg_text": "Compacting [SSTableReader(path='/var/cassandra/data/test_data/series-hc-6528-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6531-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6529-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6530-Data.db')]",
-                "alert_type": alert_type,
-                "auto_priority": 0,
-                "event_type": event_type,
-                "aggregation_key": event_object,
-                "event_object": event_object,
-            },  {
-                "timestamp": cassandra.parse_date("2012-05-12 21:10:54,851"),
-                "msg_title": "Compacted to [/var/cassandra/a-hc-65-Data.db,].  102,079,134 to 101,546,397",
-                "alert_type": alert_type,
-                "auto_priority": 0,
-                "event_type": event_type,
-                "aggregation_key": event_object,
-                "event_object": event_object,
-            },  {
-                "timestamp": cassandra.parse_date("2012-05-13 13:15:01,927"),
-                "msg_title": "Compacting [SSTableReader(path='/var/cassandra/data/test_data/series-hc-6527-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6522-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6532-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6517-Data.db')]"[0:common.MAX_TITLE_LEN],
-                "msg_text": "Compacting [SSTableReader(path='/var/cassandra/data/test_data/series-hc-6527-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6522-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6532-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6517-Data.db')]",
-                "alert_type": alert_type,
-                "event_type": event_type,
-                "auto_priority": 0,
-                "aggregation_key": event_object,
-                "event_object": event_object,
-            },  {
-                "timestamp": cassandra.parse_date("2012-05-13 13:27:17,685"),
-                "msg_title": "Compacting large row test_data/series:6c6f677c32 (782001077 bytes) incrementally",
-                "alert_type": alert_type,
-                "event_type": event_type,
-                "auto_priority": 0,
-                "aggregation_key": event_object,
-                "event_object": event_object,
-            },  {
-                "timestamp": cassandra.parse_date(datetime.utcnow().strftime("%Y-%m-%d") + " 13:27:17,685"),
-                "msg_title": "Compacting large row test_data/series:6c6f677c32 (782001077 bytes) incrementally",
-                "alert_type": alert_type,
-                "event_type": event_type,
-                "auto_priority": 0,
-                "aggregation_key": event_object,
-                "event_object": event_object,
-            },
-        ]}
+            "dogstreamEvents": [
+                {
+                    "timestamp": cassandra.parse_date("2012-05-12 21:10:48,058"),
+                    "msg_title": "Compacting [SSTableReader(path='/var/cassandra/data/test_data/series-hc-6528-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6531-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6529-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6530-Data.db')]"[
+                                 0:common.MAX_TITLE_LEN],
+                    "msg_text": "Compacting [SSTableReader(path='/var/cassandra/data/test_data/series-hc-6528-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6531-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6529-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6530-Data.db')]",
+                    "alert_type": alert_type,
+                    "auto_priority": 0,
+                    "event_type": event_type,
+                    "aggregation_key": event_object,
+                    "event_object": event_object,
+                }, {
+                    "timestamp": cassandra.parse_date("2012-05-12 21:10:54,851"),
+                    "msg_title": "Compacted to [/var/cassandra/a-hc-65-Data.db,].  102,079,134 to 101,546,397",
+                    "alert_type": alert_type,
+                    "auto_priority": 0,
+                    "event_type": event_type,
+                    "aggregation_key": event_object,
+                    "event_object": event_object,
+                }, {
+                    "timestamp": cassandra.parse_date("2012-05-13 13:15:01,927"),
+                    "msg_title": "Compacting [SSTableReader(path='/var/cassandra/data/test_data/series-hc-6527-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6522-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6532-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6517-Data.db')]"[
+                                 0:common.MAX_TITLE_LEN],
+                    "msg_text": "Compacting [SSTableReader(path='/var/cassandra/data/test_data/series-hc-6527-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6522-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6532-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6517-Data.db')]",
+                    "alert_type": alert_type,
+                    "event_type": event_type,
+                    "auto_priority": 0,
+                    "aggregation_key": event_object,
+                    "event_object": event_object,
+                }, {
+                    "timestamp": cassandra.parse_date("2012-05-13 13:27:17,685"),
+                    "msg_title": "Compacting large row test_data/series:6c6f677c32 (782001077 bytes) incrementally",
+                    "alert_type": alert_type,
+                    "event_type": event_type,
+                    "auto_priority": 0,
+                    "aggregation_key": event_object,
+                    "event_object": event_object,
+                }, {
+                    "timestamp": cassandra.parse_date(
+                        datetime.utcnow().strftime("%Y-%m-%d") + " 13:27:17,685"),
+                    "msg_title": "Compacting large row test_data/series:6c6f677c32 (782001077 bytes) incrementally",
+                    "alert_type": alert_type,
+                    "event_type": event_type,
+                    "auto_priority": 0,
+                    "aggregation_key": event_object,
+                    "event_object": event_object,
+                },
+            ]}
 
         self._write_log(log_data.split("\n"))
 
-        dogstream = Dogstreams.init(self.logger, {'dogstreams': '%s:dogstream.cassandra:parse_cassandra' % self.log_file.name})
+        dogstream = Dogstreams.init(
+            self.logger,
+            {'dogstreams': '%s:dogstream.cassandra:parse_cassandra' % self.log_file.name})
         actual_output = dogstream.check(self.config, move_end=False)
         self.assertEquals(expected_output, actual_output)
 
@@ -408,7 +434,7 @@ class TestDogstream(TailTestCase):
         event_type = supervisord_log.EVENT_TYPE
 
         expected_output = {
-            "dogstreamEvents":[
+            "dogstreamEvents": [
                 {
                     "alert_type": "info", "event_type": event_type,
                     "aggregation_key": "monitor",
@@ -420,7 +446,7 @@ class TestDogstream(TailTestCase):
                     "aggregation_key": "foo_bar",
                     "event_object": "foo_bar",
                     "msg_title": "success: foo_bar entered RUNNING state, "
-                    "process has stayed up for > than 2 seconds (startsecs)",
+                                 "process has stayed up for > than 2 seconds (startsecs)",
                     "timestamp": int(time.mktime(datetime(2012, 7, 14, 3, 2, 47).timetuple())),
                 }, {
                     "alert_type": "error", "event_type": event_type,
@@ -438,11 +464,15 @@ class TestDogstream(TailTestCase):
             ]}
         self._write_log(log_data.split("\n"))
 
-        dogstream = Dogstreams.init(self.logger, {'dogstreams': '%s:dogstream.supervisord_log:parse_supervisord' % self.log_file.name})
+        dogstream = Dogstreams.init(
+            self.logger,
+            {'dogstreams': '%s:dogstream.supervisord_log:parse_supervisord' % self.log_file.name})
         actual_output = dogstream.check(self.config, move_end=False)
         self.assertEquals(expected_output, actual_output)
 
+
 class TestNagiosPerfData(TailTestCase):
+
     def setUp(self):
         TailTestCase.setUp(self)
         self.nagios_config = NamedTemporaryFile()
@@ -457,7 +487,7 @@ class TestNagiosPerfData(TailTestCase):
         for data in config_data:
             print >> self.nagios_config, data
         self.nagios_config.flush()
-    
+
     def tearDown(self):
         TailTestCase.tearDown(self)
         self.nagios_config.close()
@@ -474,72 +504,73 @@ class TestNagiosPerfData(TailTestCase):
         self.assertEquals([NagiosServicePerfData], [d.__class__ for d in dogstream.dogstreams])
 
         log_data = [
-            ("DATATYPE::SERVICEPERFDATA", 
-             "TIMET::1000000000", 
-             "HOSTNAME::myhost0", 
-             "SERVICEDESC::Pgsql Backends", 
-             "SERVICEPERFDATA::" + " ".join([
-                "time=0.06", 
-                "db0=33;180;190;0;200", 
-                "db1=1;150;190;0;200",
-                "db2=0;120;290;1;200", 
-                "db3=0;110;195;5;100"
-             ]),
-             "SERVICECHECKCOMMAND::check_nrpe_1arg!check_postgres_backends",
-             "HOSTSTATE::UP",   
-             "HOSTSTATETYPE::HARD",
-             "SERVICESTATE::OK",
-             "SERVICESTATETYPE::HARD",
+            (
+                "DATATYPE::SERVICEPERFDATA",
+                "TIMET::1000000000",
+                "HOSTNAME::myhost0",
+                "SERVICEDESC::Pgsql Backends",
+                "SERVICEPERFDATA::" + " ".join([
+                    "time=0.06",
+                    "db0=33;180;190;0;200",
+                    "db1=1;150;190;0;200",
+                    "db2=0;120;290;1;200",
+                    "db3=0;110;195;5;100"
+                ]),
+                "SERVICECHECKCOMMAND::check_nrpe_1arg!check_postgres_backends",
+                "HOSTSTATE::UP",
+                "HOSTSTATETYPE::HARD",
+                "SERVICESTATE::OK",
+                "SERVICESTATETYPE::HARD",
             ),
         ]
-        
+
         expected_output = [
             ('nagios.pgsql_backends.time', 1000000000, 0.06, {
                 'metric_type': 'gauge',
                 'host_name': 'myhost0',
             }),
-            ('nagios.pgsql_backends.db0',  1000000000,   33., {
+            ('nagios.pgsql_backends.db0', 1000000000, 33., {
                 'metric_type': 'gauge',
                 'host_name': 'myhost0',
                 'warn': '180',
                 'crit': '190',
-                'min':    '0',
-                'max':  '200',
+                'min': '0',
+                'max': '200',
             }),
-            ('nagios.pgsql_backends.db1',  1000000000,    1., {
+            ('nagios.pgsql_backends.db1', 1000000000, 1., {
                 'metric_type': 'gauge',
                 'host_name': 'myhost0',
                 'warn': '150',
                 'crit': '190',
-                'min':    '0',
-                'max':  '200',
+                'min': '0',
+                'max': '200',
             }),
-            ('nagios.pgsql_backends.db2',  1000000000,    0., {
+            ('nagios.pgsql_backends.db2', 1000000000, 0., {
                 'metric_type': 'gauge',
                 'host_name': 'myhost0',
                 'warn': '120',
                 'crit': '290',
-                'min':    '1',
-                'max':  '200',
+                'min': '1',
+                'max': '200',
             }),
-            ('nagios.pgsql_backends.db3',  1000000000,    0., {
+            ('nagios.pgsql_backends.db3', 1000000000, 0., {
                 'metric_type': 'gauge',
                 'host_name': 'myhost0',
                 'warn': '110',
                 'crit': '195',
-                'min':    '5',
-                'max':  '100',
+                'min': '5',
+                'max': '100',
             }),
         ]
         expected_output.sort(key=point_sorter)
 
-        self._write_log(('\t'.join(data) for data in log_data))        
+        self._write_log(('\t'.join(data) for data in log_data))
 
         actual_output = dogstream.check(self.agent_config, move_end=False)['dogstream']
         actual_output.sort(key=point_sorter)
 
         self.assertEquals(expected_output, actual_output)
-    
+
     def test_service_perfdata_special_cases(self):
         from collector.checks.datadog import NagiosServicePerfData
 
@@ -552,7 +583,8 @@ class TestNagiosPerfData(TailTestCase):
         self.assertEquals([NagiosServicePerfData], [d.__class__ for d in dogstream.dogstreams])
 
         log_data = [
-            (   "DATATYPE::SERVICEPERFDATA",
+            (
+                "DATATYPE::SERVICEPERFDATA",
                 "TIMET::1000000000",
                 "HOSTNAME::myhost2",
                 "SERVICEDESC::Disk Space",
@@ -573,7 +605,7 @@ class TestNagiosPerfData(TailTestCase):
                 "SERVICESTATETYPE::HARD",
             )
         ]
-        
+
         expected_output = [
             ('nagios.disk_space', 1000000000, 5477., {
                 'metric_type': 'gauge',
@@ -658,12 +690,13 @@ class TestNagiosPerfData(TailTestCase):
         ]
         expected_output.sort(key=point_sorter)
 
-        self._write_log(('\t'.join(data) for data in log_data))        
+        self._write_log(('\t'.join(data) for data in log_data))
 
         actual_output = dogstream.check(self.agent_config, move_end=False)['dogstream']
         actual_output.sort(key=point_sorter)
 
         self.assertEquals(expected_output, actual_output)
+
     def test_host_perfdata(self):
         from collector.checks.datadog import NagiosHostPerfData
 
@@ -676,19 +709,20 @@ class TestNagiosPerfData(TailTestCase):
         self.assertEquals([NagiosHostPerfData], [d.__class__ for d in dogstream.dogstreams])
 
         log_data = [
-            ("DATATYPE::HOSTPERFDATA", 
-             "TIMET::1000000010", 
-             "HOSTNAME::myhost1", 
-             "HOSTPERFDATA::" + " ".join([
-                "rta=0.978000ms;5000.000000;5000.000000;0.000000", 
-                "pl=0%;100;100;0", 
-             ]),
-             "HOSTCHECKCOMMAND::check-host-alive",
-             "HOSTSTATE::UP",   
-             "HOSTSTATETYPE::HARD",
+            (
+                "DATATYPE::HOSTPERFDATA",
+                "TIMET::1000000010",
+                "HOSTNAME::myhost1",
+                "HOSTPERFDATA::" + " ".join([
+                    "rta=0.978000ms;5000.000000;5000.000000;0.000000",
+                    "pl=0%;100;100;0",
+                ]),
+                "HOSTCHECKCOMMAND::check-host-alive",
+                "HOSTSTATE::UP",
+                "HOSTSTATETYPE::HARD",
             ),
         ]
-        
+
         expected_output = [
             ('nagios.host.rta', 1000000010, 0.978, {
                 'metric_type': 'gauge',
@@ -698,7 +732,7 @@ class TestNagiosPerfData(TailTestCase):
                 'crit': '5000.000000',
                 'min': '0.000000'
             }),
-            ('nagios.host.pl',  1000000010, 0., {
+            ('nagios.host.pl', 1000000010, 0., {
                 'metric_type': 'gauge',
                 'host_name': 'myhost1',
                 'unit': '%',
@@ -709,7 +743,7 @@ class TestNagiosPerfData(TailTestCase):
         ]
         expected_output.sort(key=point_sorter)
 
-        self._write_log(('\t'.join(data) for data in log_data))        
+        self._write_log(('\t'.join(data) for data in log_data))
 
         actual_output = dogstream.check(self.agent_config, move_end=False)['dogstream']
         actual_output.sort(key=point_sorter)
@@ -728,7 +762,23 @@ class TestNagiosPerfData(TailTestCase):
         self.assertEquals([NagiosServicePerfData], [d.__class__ for d in dogstream.dogstreams])
         actual_output = dogstream.check(self.agent_config, move_end=False)
 
-        expected_output = {'dogstream': [('nagios.current_users.users', 1339511440, 1.0, {'metric_type': 'gauge', 'warn': '20', 'host_name': 'localhost', 'crit': '50', 'min': '0'}), ('nagios.ping.pl', 1339511500, 0.0, {'warn': '20', 'metric_type': 'gauge', 'host_name': 'localhost', 'min': '0', 'crit': '60', 'unit': '%'}), ('nagios.ping.rta', 1339511500, 0.065, {'warn': '100.000000', 'metric_type': 'gauge', 'host_name': 'localhost', 'min': '0.000000', 'crit': '500.000000', 'unit': 'ms'}), ('nagios.root_partition', 1339511560, 2470.0, {'min': '0', 'max': '7315', 'device_name': '/', 'warn': '5852', 'metric_type': 'gauge', 'host_name': 'localhost', 'crit': '6583', 'unit': 'MB'})]}
+        expected_output = {'dogstream': [('nagios.current_users.users', 1339511440, 1.0,
+                                          {'metric_type': 'gauge', 'warn': '20',
+                                           'host_name': 'localhost', 'crit': '50', 'min': '0'}),
+                                         ('nagios.ping.pl', 1339511500, 0.0,
+                                          {'warn': '20', 'metric_type': 'gauge',
+                                           'host_name': 'localhost', 'min': '0', 'crit': '60',
+                                           'unit': '%'}),
+                                         ('nagios.ping.rta', 1339511500, 0.065,
+                                          {'warn': '100.000000', 'metric_type': 'gauge',
+                                           'host_name': 'localhost',
+                                           'min': '0.000000', 'crit': '500.000000',
+                                           'unit': 'ms'}),
+                                         ('nagios.root_partition', 1339511560, 2470.0,
+                                          {'min': '0', 'max': '7315', 'device_name': '/',
+                                           'warn': '5852', 'metric_type': 'gauge',
+                                           'host_name': 'localhost', 'crit': '6583',
+                                           'unit': 'MB'})]}
         self.assertEquals(expected_output, actual_output)
 
     def test_alt_host_perfdata(self):
@@ -743,8 +793,16 @@ class TestNagiosPerfData(TailTestCase):
         self.assertEquals([NagiosHostPerfData], [d.__class__ for d in dogstream.dogstreams])
         actual_output = dogstream.check(self.agent_config, move_end=False)
 
-        expected_output = {'dogstream': [('nagios.host.pl', 1339511440, 0.0, {'warn': '80', 'metric_type': 'gauge', 'host_name': 'localhost', 'min': '0', 'crit': '100', 'unit': '%'}), ('nagios.host.rta', 1339511440, 0.048, {'warn': '3000.000000', 'metric_type': 'gauge', 'host_name': 'localhost', 'min': '0.000000', 'crit': '5000.000000', 'unit': 'ms'})]}
+        expected_output = {'dogstream': [('nagios.host.pl', 1339511440, 0.0,
+                                          {'warn': '80', 'metric_type': 'gauge',
+                                           'host_name': 'localhost', 'min': '0', 'crit': '100',
+                                           'unit': '%'}),
+                                         ('nagios.host.rta', 1339511440, 0.048,
+                                          {'warn': '3000.000000', 'metric_type': 'gauge',
+                                           'host_name': 'localhost', 'min': '0.000000',
+                                           'crit': '5000.000000', 'unit': 'ms'})]}
         self.assertEquals(expected_output, actual_output)
+
 
 if __name__ == '__main__':
     logging.basicConfig(format="%(asctime)s %(levelname)s %(filename)s:%(lineno)d %(message)s")
