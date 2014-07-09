@@ -16,8 +16,7 @@ class Nova(ServicePlugin):
                               'nova-xvpncproxy', 'nova-consoleauth',
                               'nova-objectstore', 'nova-api'],
             'service_api_url': 'http://localhost:8774/v2.0',
-            'search_pattern': '.*version=2.*',
-            'alarms': []
+            'search_pattern': '.*version=2.*'
         }
 
         super(Nova, self).__init__(service_params)

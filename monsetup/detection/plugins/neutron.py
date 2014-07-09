@@ -15,8 +15,7 @@ class Neutron(ServicePlugin):
                               'neutron-vpn-agent', 'neutron-metadata-agent',
                               'neutron-metering-agent', 'neutron-ns-metadata-proxy'],
             'service_api_url': 'http://localhost:9696',
-            'search_pattern': '.*v2.0.*',
-            'alarms': []
+            'search_pattern': '.*v2.0.*'
         }
 
         super(Neutron, self).__init__(service_params)

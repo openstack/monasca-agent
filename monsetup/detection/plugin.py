@@ -32,19 +32,6 @@ class Plugin(object):
         """
         raise NotImplementedError
 
-    def configure_alarms(self, mon_url, token):
-        """Create default alarms.
-        """
-        if (self.alarms):
-            kwargs = {
-                'token': token
-            }
-            my_client = client.Client('2_0', mon_url, **kwargs)
-            for alarm in self.alarms:
-                # Create the alarm here
-                pass
-        return True
-
     @property
     def name(self):
         """Return _name if set otherwise the class name"""

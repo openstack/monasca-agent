@@ -18,8 +18,7 @@ class Swift(ServicePlugin):
                               'swift-object-server', 'swift-account-server',
                               'swift-container-server', 'swift-proxy-server'],
             'service_api_url': 'http://localhost:8080/healthcheck',
-            'search_pattern': '.*OK.*',
-            'alarms': []
+            'search_pattern': '.*OK.*'
         }
 
         super(Swift, self).__init__(service_params)
