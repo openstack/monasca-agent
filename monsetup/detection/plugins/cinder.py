@@ -13,8 +13,7 @@ class Cinder(ServicePlugin):
             'process_names': ['cinder-volume', 'cinder-scheduler',
                               'cinder-api'],
             'service_api_url': 'http://localhost:8776/v2.0',
-            'search_pattern': '.*version=1.*',
-            'alarms': []
+            'search_pattern': '.*version=1.*'
         }
 
         super(Cinder, self).__init__(service_params)

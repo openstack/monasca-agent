@@ -13,8 +13,7 @@ class Glance(ServicePlugin):
             'process_names': ['glance-registry',
                               'glance-api'],
             'service_api_url': 'http://localhost:9292',
-            'search_pattern': '.*v2.0.*',
-            'alarms': []
+            'search_pattern': '.*v2.0.*'
         }
 
         super(Glance, self).__init__(service_params)

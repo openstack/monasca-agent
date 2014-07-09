@@ -18,8 +18,7 @@ class Ceilometer(ServicePlugin):
             # 'service_api_url': 'http://localhost:8777/v2/health',
             # 'search_pattern' : '.*200 OK.*',
             'service_api_url': '',
-            'search_pattern': '',
-            'alarms': []
+            'search_pattern': ''
         }
 
         super(Ceilometer, self).__init__(service_params)

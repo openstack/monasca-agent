@@ -20,8 +20,7 @@ class ServicePlugin(Plugin):
         self.service_api_url = kwargs['service_api_url']
         self.search_pattern = kwargs['search_pattern']
 
-        super(ServicePlugin, self).__init__(kwargs['template_dir'], kwargs['overwrite'],
-                                            kwargs['alarms'])
+        super(ServicePlugin, self).__init__(kwargs['template_dir'], kwargs['overwrite'])
 
     def _detect(self):
         """Run detection"""

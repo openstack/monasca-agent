@@ -10,7 +10,6 @@ import socket
 import subprocess
 import sys
 import yaml
-from monagent.common.keystone import Keystone
 
 import agent_config
 from detection.plugins import kafka, mon, mysql, network, zookeeper, nova, glance, cinder, neutron, swift, ceilometer, keystone
@@ -84,17 +83,6 @@ def main(argv=None):
         os.remove(supervisor_path)
     os.symlink(os.path.join(args.template_dir, 'supervisor.conf'), supervisor_path)
 
-    # Create the keystone object to use for alarm creation
-    token = None
-    try:
-        keystone = Keystone(args.keystone_url,
-                            args.username,
-                            args.password,
-                            args.project_name)
-        token = keystone.get_token()
-    except:
-        log.exception('Unable to get Keystone Token, skipping alarm configuration...')
-
     # Run through detection and config building for the plugins
     plugin_config = agent_config.Plugins()
     for detect_class in DETECTION_PLUGINS:
@@ -103,9 +91,6 @@ def main(argv=None):
             log.info('Configuring {0}'.format(detect.name))
             new_config = detect.build_config()
             plugin_config.merge(new_config)
-            if token and args.mon_url:
-                if not detect.configure_alarms(args.mon_url, token):
-                    log.warn('Unable to configure alarms for {0}'.format(detect.name))
 
         # todo add option to install dependencies
 

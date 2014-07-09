@@ -12,8 +12,7 @@ class Keystone(ServicePlugin):
             'service_name': 'keystone',
             'process_names': ['keystone-all'],
             'service_api_url': 'http://localhost:35357/v3',
-            'search_pattern': '.*v3.0.*',
-            'alarms': []
+            'search_pattern': '.*v3.0.*'
         }
 
         super(Keystone, self).__init__(service_params)
