@@ -1,6 +1,17 @@
 Change Log
 =======
 
+# 1.0.7 / 2014-07-14
+## Changes
+- Added additional support for Ceilometer, Neutron, Keystone, and Glance auto-configuration
+- Increased PEP8 compliance and Python 3 compatibility
+- Fixed Laconic filter import
+- Fixed mon-agent not (re)starting on boot
+- Fixed process plugin not returning data
+- Keystone code cleanup
+- Fixed one minor bug in MonAPI class
+- Fixed __init__ in mon-setup
+
 # 1.0.6 / 2014-06-19
 ## Changes
 - Improved token handling in forwarder and http_status check.
