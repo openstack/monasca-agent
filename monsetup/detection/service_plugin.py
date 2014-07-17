@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 class ServicePlugin(Plugin):
 
-    """Base class implemented by the mon-agent plugin detection classes
+    """Base class implemented by the monasca-agent plugin detection classes
        for OpenStack Services
     """
 

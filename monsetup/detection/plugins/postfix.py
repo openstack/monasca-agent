@@ -10,7 +10,7 @@ class Postfix(Plugin):
     """If postfix is running install the default config
     """
     # todo this is is disabled as postfix requires passwordless sudo for the
-    # mon-agent user, a bad practice
+    # monasca-agent user, a bad practice
 
     def _detect(self):
         """Run detection, set self.available True if the service is detected."""

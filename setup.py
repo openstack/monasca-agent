@@ -26,7 +26,7 @@ install_requires = [
     'simplejson',
     'supervisor',
     'tornado',
-    'python-monclient',
+    'python-monascaclient',
 ]
 
 if sys.platform == 'win32':
@@ -84,7 +84,7 @@ if sys.platform == 'win32':
             self.version = '1.0.0'
             self.cmdline_style = 'pywin32'
 
-    agent_svc = Target(name='Mon Agent', modules='win32.agent', dest_base='ddagent')
+    agent_svc = Target(name='Monasca Agent', modules='win32.agent', dest_base='monascaagent')
 
     from monagent.collector.jmxfetch import JMX_FETCH_JAR_NAME
 
@@ -103,7 +103,7 @@ if sys.platform == 'win32':
                      'dest_base': "agent-manager",
                      # The manager needs to be administrator to stop/start the service
                      'uac_info': "requireAdministrator",
-                     'icon_resources': [(1, r"packaging\mon-agent\win32\install_files\dd_agent_win_256.ico")],
+                     'icon_resources': [(1, r"packaging\monasca-agent\win32\install_files\dd_agent_win_256.ico")],
                      }],
         'data_files': [
             ("Microsoft.VC90.CRT", glob(r'C:\Python27\redist\*.*')),
@@ -115,11 +115,11 @@ if sys.platform == 'win32':
     }
 
 setup(
-    name='mon-agent',
+    name='monasca-agent',
     maintainer="Tim Kuhlman",
     maintainer_email="tim.kuhlman@hp.com",
     version=__version__,
-    description="Collects metrics from the host it is installed on and sends to the monitroing api",
+    description="Collects metrics from the host it is installed on and sends to the monitoring api",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "License :: OSI Approved :: Apache Software License",
@@ -129,18 +129,18 @@ setup(
     keywords="openstack monitoring",
     install_requires=install_requires,
     setup_requires=setup_requires,
-    url="https://github.com/hpcloud-mon/mon-agent",
+    url="https://github.com/stackforge/monasca-agent",
     packages=find_packages(exclude=['tests', 'build*', 'packaging*']),
     entry_points={
         'console_scripts': [
-            'mon-forwarder = monagent.forwarder.daemon:main',
-            'mon-collector = monagent.collector.daemon:main',
-            'monstatsd = monagent.monstatsd.daemon:main',
-            'mon-setup = monsetup.main:main'
+            'monasca-forwarder = monagent.forwarder.daemon:main',
+            'monasca-collector = monagent.collector.daemon:main',
+            'monasca-statsd = monagent.monstatsd.daemon:main',
+            'monasca-setup = monsetup.main:main'
         ],
     },
     include_package_data=True,
-    data_files=[('share/mon/agent', ['agent.conf.template', 'packaging/supervisor.conf', 'packaging/mon-agent.init']),
-                ('share/mon/agent/conf.d', glob('conf.d/*'))],
+    data_files=[('share/monasca/agent', ['agent.conf.template', 'packaging/supervisor.conf', 'packaging/monasca-agent.init']),
+                ('share/monasca/agent/conf.d', glob('conf.d/*'))],
     test_suite='nose.collector'
 )

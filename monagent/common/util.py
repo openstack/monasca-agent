@@ -234,7 +234,7 @@ class PidFile(object):
 
     """ A small helper class for pidfiles. """
 
-    PID_DIR = '/var/run/mon-agent'
+    PID_DIR = '/var/run/monasca-agent'
 
     def __init__(self, program, pid_dir=None):
         self.pid_file = "%s.pid" % program

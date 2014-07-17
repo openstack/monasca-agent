@@ -149,8 +149,9 @@ class ProcessCheck(AgentCheck):
                         read_bytes += io_counters.read_bytes
                         write_bytes += io_counters.write_bytes
                     except psutil.AccessDenied:
-                        self.log.debug('mon-agent user does not have access ' +
-                                       'to I/O counters for process %d: %s'
+                        self.log.debug('monasca-agent user does not have ' +
+                                       'access to I/O counters for process' +
+                                       ' %d: %s'
                                        % (pid, p.name))
                         read_count = None
                         write_count = None
@@ -163,7 +164,7 @@ class ProcessCheck(AgentCheck):
                 pass
 
         if got_denied:
-            self.warning("The Monitoring Agent was denied access",
+            self.warning("The Monitoring Agent was denied access " +
                          "when trying to get the number of file descriptors")
 
         # Memory values are in Byte

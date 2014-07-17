@@ -1,6 +1,6 @@
-# mon-setup
+# monasca-setup
 
-This script will detect running services and configure mon-agent to watch them as well as starting the agent and
+This script will detect running services and configure monasca-agent to watch them as well as starting the agent and
 configuring it to start up on boot.
 
 

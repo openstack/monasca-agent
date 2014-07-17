@@ -1,6 +1,6 @@
 import logging
 
-from monclient import exc as exc, client
+from monascaclient import exc as exc, client
 from monagent.common.keystone import Keystone
 from monagent.common.util import get_hostname
 
@@ -64,7 +64,7 @@ class MonAPI(object):
                     # with the data
                     if response.status_code == 401:
                         # Get a new token/client and retry
-                        self.mon_client = self.get_client()
+                        self.mon_client.replace_token(self.keystone.refresh_token())
                         continue
                     else:
                         error_msg = "Successful web service call but there" + \

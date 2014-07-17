@@ -1,9 +1,9 @@
 #!/bin/sh
 
 ### BEGIN INIT INFO
-# Provides: mon-agent
-# Short-Description: Start and start mon-agent
-# Description: mon-agent is the monitoring Agent component OpenStack Monitoring
+# Provides: monasca-agent
+# Short-Description: Start and start monasca-agent
+# Description: monasca-agent is the monitoring Agent component OpenStack Monitoring
 # Required-Start: $remote_fs
 # Required-Stop: $remote_fs
 # Default-Start: 2 3 4 5
@@ -11,20 +11,20 @@
 ### END INIT INFO
 
 . /lib/lsb/init-functions
+PATH=$PATH:/usr/local/bin # supervisord might live here
 PATH=$PATH:/sbin # add the location of start-stop-daemon on Debian
-export PYTHONPATH=$PYTHONPATH:/usr/share/mon/agent/
 
-AGENTPATH="/usr/local/bin/mon-collector"
-AGENTCONF="/etc/mon-agent/agent.conf"
-MONSTATSDPATH="/usr/local/bin/monstatsd"
-AGENTUSER="mon-agent"
-FORWARDERPATH="/usr/local/bin/mon-forwarder"
-NAME="mon-agent"
-DESC="Monitoring Agent"
-AGENT_PID_PATH="/var/run/mon-agent.pid"
-SUPERVISOR_PIDFILE="/var/run/mon-agent-supervisord.pid"
-SUPERVISOR_FILE="/etc/mon-agent/supervisor.conf"
-SUPERVISOR_SOCK="/var/tmp/mon-agent-supervisor.sock"
+AGENTPATH="/usr/local/bin/monasca-collector"
+AGENTCONF="/etc/monasca/agent/agent.conf"
+MONSTATSDPATH="/usr/local/bin/monasca-statsd"
+AGENTUSER="monasca-agent"
+FORWARDERPATH="/usr/local/bin/monasca-forwarder"
+NAME="monasca-agent"
+DESC="Monasca Monitoring Agent"
+AGENT_PID_PATH="/var/tmp/monasca-agent.pid"
+SUPERVISOR_PIDFILE="/var/tmp/monasca-agent-supervisord.pid"
+SUPERVISOR_FILE="/etc/monasca/agent/supervisor.conf"
+SUPERVISOR_SOCK="/var/tmp/monasca-agent-supervisor.sock"
 SUPERVISORD=$(which supervisord)
 
 # This script is considered a configuration file and will not be
@@ -81,13 +81,13 @@ case "$1" in
 
         su $AGENTUSER -c "$AGENTPATH configcheck" > /dev/null
         if [ $? -ne 0 ]; then
-            log_daemon_msg "Invalid check configuration. Please run sudo /etc/init.d/mon-agent configtest for more details."
+            log_daemon_msg "Invalid check configuration. Please run sudo /etc/init.d/monasca-agent configtest for more details."
             log_daemon_msg "Resuming starting process."
         fi
 
        
         log_daemon_msg "Starting $DESC (using supervisord)" "$NAME"
-        start-stop-daemon --start --quiet --oknodo --exec $SUPERVISORD -- -c $SUPERVISOR_FILE --pidfile $SUPERVISOR_PIDFILE
+        start-stop-daemon --start --quiet --oknodo --exec $SUPERVISORD -- -c $SUPERVISOR_FILE -u $AGENTUSER --pidfile $SUPERVISOR_PIDFILE
         if [ $? -ne 0 ]; then
             log_end_msg 1
         fi
@@ -122,7 +122,7 @@ case "$1" in
     info)
         shift # Shift 'info' out of args so we can pass any
               # addtional options to the real command
-              # (right now only mon-agent supports additional flags)
+              # (right now only monasca-agent supports additional flags)
         su $AGENTUSER -c "$AGENTPATH info $@"
         COLLECTOR_RETURN=$?
         su $AGENTUSER -c "$MONSTATSDPATH info"

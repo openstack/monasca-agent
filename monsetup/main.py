@@ -12,7 +12,9 @@ import sys
 import yaml
 
 import agent_config
-from detection.plugins import kafka, mon, mysql, network, zookeeper, nova, glance, cinder, neutron, swift, ceilometer, keystone
+from detection.plugins import kafka, mon, mysql, network, zookeeper
+from detection.plugins import nova, glance, cinder, neutron, swift
+from detection.plugins import keystone, ceilometer
 from service import sysv
 
 # List of all detection plugins to run
@@ -36,11 +38,11 @@ def main(argv=None):
     parser.add_argument(
         '-s', '--service', help="Service this node is associated with.", required=True)
     parser.add_argument('--keystone_url', help="Keystone url", required=True)
-    parser.add_argument('--mon_url', help="Mon API url", required=True)
-    parser.add_argument('--config_dir', help="Configuration directory", default='/etc/mon-agent')
-    parser.add_argument('--log_dir', help="mon-agent log directory", default='/var/log/mon-agent')
+    parser.add_argument('--monasca_url', help="Monasca API url", required=True)
+    parser.add_argument('--config_dir', help="Configuration directory", default='/etc/monasca/agent')
+    parser.add_argument('--log_dir', help="monasca-agent log directory", default='/var/log/monasca/agent')
     parser.add_argument(
-        '--template_dir', help="Alternative template directory", default='/usr/local/share/mon/agent')
+        '--template_dir', help="Alternative template directory", default='/usr/local/share/monasca/agent')
     parser.add_argument('--headless', help="Run in a non-interactive mode", action="store_true")
     parser.add_argument('--overwrite',
                         help="Overwrite existing plugin configuration." +
@@ -49,7 +51,7 @@ def main(argv=None):
     parser.add_argument('--skip_enable', help="By default the service is enabled," +
                                               " which requires the script run as root. Set this to skip that step.",
                         action="store_true")
-    parser.add_argument('--user', help="User name to run mon-agent as", default='mon-agent')
+    parser.add_argument('--user', help="User name to run monasca-agent as", default='monasca-agent')
     parser.add_argument('-v', '--verbose', help="Verbose Output", action="store_true")
     args = parser.parse_args()
 
@@ -63,7 +65,8 @@ def main(argv=None):
 
     # Service enable, includes setup of users/config directories so must be
     # done before configuration
-    agent_service = OS_SERVICE_MAP[detected_os](os.path.join(args.template_dir, 'mon-agent.init'), args.config_dir,
+    agent_service = OS_SERVICE_MAP[detected_os](os.path.join(args.template_dir, 'monasca-agent.init'),
+                                                args.config_dir,
                                                 args.log_dir, username=args.user)
     if not args.skip_enable:
         agent_service.enable()

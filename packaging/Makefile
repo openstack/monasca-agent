@@ -37,7 +37,7 @@ source:
 	cp -r $(SRC)/monagent $(ROOT)/
 	cp -r $(SRC)/conf.d $(ROOT)/
 	cp -r $(SRC)/LICENSE* $(ROOT)/
-	cp -r $(SRC)/agent.conf.example $(ROOT)/
+	cp -r $(SRC)/agent.conf.template $(ROOT)/
 	find $(ROOT) -name "*.pyc" -exec rm {} \;
 
 
@@ -45,20 +45,21 @@ source:
 # the build directory.
 install_full: source
 	mkdir -p $(BUILD)
-	mkdir -p $(BUILD)/usr/share/mon/agent
-	mkdir -p $(BUILD)/etc/mon-agent
-	mkdir -p $(BUILD)/etc/mon-agent/conf.d
+	mkdir -p $(BUILD)/usr/monasca/agent
+	mkdir -p $(BUILD)/etc/monasca/agent
+	mkdir -p $(BUILD)/etc/monasca/agent/conf.d
 	mkdir -p $(BUILD)/usr/bin
-	mkdir -p $(BUILD)/var/log/mon-agent
+	mkdir -p $(BUILD)/var/log/monasca/agent
+	mkdir -p $(BUILD)/usr/share/monasca/agent
 	# Install the source to usr/share
-	cp -r $(ROOT)/*		 $(BUILD)/usr/share/mon/agent/
+	cp -r $(ROOT)/* $(BUILD)/usr/share/monasca/agent
 	# Install the common executables.
-	ln -sf ../share/mon/agent/monagent/monstatsd/daemon.py $(BUILD)/usr/bin/monstatsd
-	ln -sf ../share/mon/agent/monagent/forwarder/daemon.py $(BUILD)/usr/bin/mon-forwarder
-	ln -sf ../share/mon/agent/monagent/collector/daemon.py $(BUILD)/usr/bin/mon-collector
-	chmod 755 $(BUILD)/usr/bin/monstatsd
-	chmod 755 $(BUILD)/usr/bin/mon-forwarder
-	chmod 755 $(BUILD)/usr/bin/mon-collector
+	ln -sf ../share/monasca/agent/monagent/monstatsd/daemon.py $(BUILD)/usr/bin/monasca-statsd
+	ln -sf ../share/monasca/agent/monagent/forwarder/daemon.py $(BUILD)/usr/bin/monasca-forwarder
+	ln -sf ../share/monasca/agent/monagent/collector/daemon.py $(BUILD)/usr/bin/monasca-collector
+	chmod 755 $(BUILD)/usr/bin/monasca-statsd
+	chmod 755 $(BUILD)/usr/bin/monasca-forwarder
+	chmod 755 $(BUILD)/usr/bin/monasca-collector
 
 # =====================
 # DEBIAN
@@ -66,18 +67,18 @@ install_full: source
 
 install_deb: install_full
 	mkdir -p $(BUILD)/etc/init.d
-	cp mon-agent-deb/mon-agent.init $(BUILD)/etc/init.d/mon-agent
-	chmod 755 $(BUILD)/etc/init.d/mon-agent
+	cp monasca-agent-deb/monasca-agent.init $(BUILD)/etc/init.d/monasca-agent
+	chmod 755 $(BUILD)/etc/init.d/monasca-agent
 	# Install supervisor config.
-	cp mon-agent-deb/supervisor.conf $(BUILD)/etc/mon-agent/supervisor.conf
+	cp monasca-agent-deb/supervisor.conf $(BUILD)/etc/monasca/agent/supervisor.conf
 
 
-# Make the mon agent debian package that includes supervisor, the forwarder
+# Make the monasca agent debian package that includes supervisor, the forwarder
 # etc.
-mon_agent_deb: clean install_deb
-	FPM_EDITOR="echo 'Replaces: mon-agent (<= $(VERSION)), mon-agent, mon-agent-base (<= $(VERSION)), mon-agent-lib' >>" \
+monasca_agent_deb: clean install_deb
+	FPM_EDITOR="echo 'Replaces: monasca-agent (<= $(VERSION)), monasca-agent, monasca-agent-base (<= $(VERSION)), monasca-agent-lib' >>" \
 $(FPM_BUILD) -t deb \
--n mon-agent \
+-n monasca-agent \
 -d "python (>= 2.6)" \
 -d "python-tornado (>= 2.3)" \
 -d "supervisor (>= 3.0)" \
@@ -89,12 +90,11 @@ $(FPM_BUILD) -t deb \
 -d "python-httplib2" \
 -d "python-ntplib" \
 -d "python-yaml" \
--d "python-monclient" \
---post-install mon-agent-deb/postinst \
---post-uninstall mon-agent-deb/postrm \
---pre-uninstall  mon-agent-deb/prerm \
+-d "python-monascaclient" \
+--post-install monasca-agent-deb/postinst \
+--post-uninstall monasca-agent-deb/postrm \
+--pre-uninstall  monasca-agent-deb/prerm \
 .
-
 
 #===================
 # JENKINS TARGETS
@@ -102,11 +102,11 @@ $(FPM_BUILD) -t deb \
 
 deb:
 	mkdir -p ../artifacts
-	make mon_agent_deb
+	make monasca_agent_deb
 	cp *.deb ../artifacts
 
 installdeb:
-	dpkg -i --force-confdef --force-confnew `ls -t ../artifacts/mon-agent_*.deb | head -1`
+	dpkg -i --force-confdef --force-confnew `ls -t ../artifacts/monasca-agent_*.deb | head -1`
 
 deb_repo:
 	rm Packages.gz

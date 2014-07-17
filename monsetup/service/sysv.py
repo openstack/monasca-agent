@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 class SysV(Service):
 
-    def __init__(self, init_template, config_dir, log_dir, name='mon-agent', username='mon-agent'):
+    def __init__(self, init_template, config_dir, log_dir, name='monasca-agent', username='monasca-agent'):
         """Setup this service with the given init template"""
         super(SysV, self).__init__(config_dir, log_dir, name)
         self.init_script = '/etc/init.d/%s' % self.name
@@ -21,10 +21,10 @@ class SysV(Service):
         self.username = username
 
     def enable(self):
-        """Sets mon-agent to start on boot.
+        """Sets monasca-agent to start on boot.
             Generally this requires running as super user
         """
-        # Create mon-agent user/group if needed
+        # Create monasca-agent user/group if needed
         try:
             user = pwd.getpwnam(self.username)
         except KeyError:
@@ -35,7 +35,7 @@ class SysV(Service):
         # todo log dir is hardcoded
         for path in (self.log_dir, self.config_dir, '%s/conf.d' % self.config_dir):
             if not os.path.exists(path):
-                os.mkdir(path, 0o755)
+                os.makedirs(path, 0o755)
                 os.chown(path, 0, user.pw_gid)
         # the log dir needs to be writable by the user
         os.chown(self.log_dir, user.pw_uid, user.pw_gid)
@@ -46,14 +46,14 @@ class SysV(Service):
             os.chmod(self.init_script, 0o755)
 
         for runlevel in ['2', '3', '4', '5']:
-            link_path = '/etc/rc%s.d/S10mon-agent' % runlevel
+            link_path = '/etc/rc%s.d/S10monasca-agent' % runlevel
             if not os.path.exists(link_path):
                 os.symlink(self.init_script, link_path)
 
         log.info('Enabled {0} service via SysV init script'.format(self.name))
 
     def start(self, restart=True):
-        """Starts mon-agent
+        """Starts monasca-agent
             If the agent is running and restart is True, restart
         """
         if not self.is_enabled():
@@ -65,7 +65,7 @@ class SysV(Service):
         return True
 
     def stop(self):
-        """Stops mon-agent
+        """Stops monasca-agent
         """
         if not self.is_enabled():
             log.error('The service is not enabled')
@@ -76,12 +76,12 @@ class SysV(Service):
         return True
 
     def is_enabled(self):
-        """Returns True if mon-agent is setup to start on boot, false otherwise
+        """Returns True if monasca-agent is setup to start on boot, false otherwise
         """
         if not os.path.exists(self.init_script):
             return False
 
-        if len(glob('/etc/rc?.d/S??mon-agent')) > 0:
+        if len(glob('/etc/rc?.d/S??monasca-agent')) > 0:
             return True
         else:
             return False

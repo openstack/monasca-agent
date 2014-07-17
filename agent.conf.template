@@ -1,7 +1,7 @@
 [Api]
 # Monitoring API URL: URL for the monitoring API
 # Example: https://region-a.geo-1.monitoring.hpcloudsvc.com/v1.1/metrics
-url: {args.mon_url}
+url: {args.monasca_url}
 # Keystone Username
 username: {args.username}
 # Keystone Password
@@ -33,7 +33,7 @@ use_mount: no
 # listen_port: 17123
 
 # Additional directory to look for checks
-# additional_checksd: /etc/mon-agent/checks.d/
+# additional_checksd: /etc/monasca/agent/checks.d/
 
 # Allow non-local traffic to this Agent
 # This is required when using this Agent as a proxy for other Agents
@@ -117,9 +117,9 @@ monstatsd_port : 8125
 
 log_level: INFO
 
-collector_log_file: /var/log/mon-agent/collector.log
-forwarder_log_file: /var/log/mon-agent/forwarder.log
-monstatsd_log_file: /var/log/mon-agent/monstatsd.log
+collector_log_file: /var/log/monasca/agent/collector.log
+forwarder_log_file: /var/log/monasca/agent/forwarder.log
+monstatsd_log_file: /var/log/monasca/agent/monstatsd.log
 
 # if syslog is enabled but a host and port are not set, a local domain socket
 # connection will be attempted

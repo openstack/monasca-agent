@@ -33,6 +33,8 @@ DEFAULT_CHECK_FREQUENCY = 15  # seconds
 DEFAULT_STATSD_FREQUENCY = 2  # seconds
 DEFAULT_STATSD_BUCKET_SIZE = 10  # seconds
 LOGGING_MAX_BYTES = 5 * 1024 * 1024
+DEFAULT_CONFIG_DIR = '/etc/monasca/agent'
+DEFAULT_LOG_DIR = '/var/log/monasca/agent'
 
 log = logging.getLogger(__name__)
 windows_file_handler_added = False
@@ -118,7 +120,7 @@ def _windows_checksd_path():
 
 
 def _unix_config_path():
-    path = os.path.join('/etc/mon-agent', AGENT_CONF)
+    path = os.path.join(DEFAULT_CONFIG_DIR, AGENT_CONF)
     if os.path.exists(path):
         return path
     elif os.path.exists('./%s' % AGENT_CONF):
@@ -127,7 +129,7 @@ def _unix_config_path():
 
 
 def _unix_confd_path():
-    path = os.path.join('/etc/mon-agent', 'conf.d')
+    path = os.path.join(DEFAULT_CONFIG_DIR, 'conf.d')
     if os.path.exists(path):
         return path
     raise PathNotFound(path)
@@ -200,7 +202,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         'listen_port': None,
         'version': get_version(),
         'watchdog': True,
-        'additional_checksd': '/etc/mon-agent/checks_d/',
+        'additional_checksd': DEFAULT_CONFIG_DIR + '/checks_d/',
     }
 
     monstatsd_interval = DEFAULT_STATSD_FREQUENCY
@@ -366,7 +368,7 @@ def set_win32_cert_path():
         crt_path = os.path.join(prog_path, 'ca-certificates.crt')
     else:
         cur_path = os.path.dirname(__file__)
-        crt_path = os.path.join(cur_path, 'packaging', 'mon-agent', 'win32',
+        crt_path = os.path.join(cur_path, 'packaging', 'monasca-agent', 'win32',
                                 'install_files', 'ca-certificates.crt')
     import tornado.simple_httpclient
     log.info("Windows certificate path: %s" % crt_path)
@@ -681,10 +683,10 @@ def get_logging_config(cfg_path=None):
     if system_os != 'windows':
         logging_config = {
             'log_level': None,
-            'collector_log_file': '/var/log/mon-agent/collector.log',
-            'forwarder_log_file': '/var/log/mon-agent/forwarder.log',
-            'monstatsd_log_file': '/var/log/mon-agent/monstatsd.log',
-            'jmxfetch_log_file': '/var/log/mon-agent/jmxfetch.log',
+            'collector_log_file': DEFAULT_LOG_DIR + '/collector.log',
+            'forwarder_log_file': DEFAULT_LOG_DIR + '/forwarder.log',
+            'monstatsd_log_file': DEFAULT_LOG_DIR + '/monstatsd.log',
+            'jmxfetch_log_file': DEFAULT_LOG_DIR + '/jmxfetch.log',
             'log_to_event_viewer': False,
             'log_to_syslog': True,
             'syslog_host': None,

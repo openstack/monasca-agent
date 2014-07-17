@@ -4,11 +4,8 @@
 .settings
 *.pyc
 agent.conf
-Monitoring_Agent.egg-info
 build
 dist
-mon-agent_4.2.0-0_all.deb
 artifacts
 root
-mon_agent.egg-info
 .tox/

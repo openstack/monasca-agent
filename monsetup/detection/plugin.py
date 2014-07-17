@@ -1,12 +1,10 @@
 """Classes for detection of running resources to be monitored.
     Detection classes should be platform independent
 """
-from monclient import client
-
 
 class Plugin(object):
 
-    """Abstract class implemented by the mon-agent plugin detection classes
+    """Abstract class implemented by the monasca-agent plugin detection classes
     """
     # todo these should include dependency detection
 

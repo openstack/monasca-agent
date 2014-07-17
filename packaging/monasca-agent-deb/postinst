@@ -1,0 +1,47 @@
+#! /bin/bash
+
+set -e
+
+case "$1" in
+    configure)
+        update-rc.d monasca-agent defaults
+        adduser --system monasca-agent --disabled-login --shell /bin/sh --no-create-home --quiet
+        usermod -d /usr/share/monasca/agent monasca-agent
+        chown root:root /etc/init.d/monasca-agent
+        chown -R monasca-agent:root /etc/monasca/agent
+        chown -R monasca-agent:root /var/log/monasca/agent
+        chown -R root:root /usr/share/monasca/agent
+        chown -h root:root /usr/bin/monasca-statsd
+        chown -h root:root /usr/bin/monasca-collector
+        chown -h root:root /usr/bin/monasca-forwarder
+
+        set +e
+
+        if which invoke-rc.d >/dev/null 2>&1; then
+            invoke-rc.d monasca-agent restart
+        else
+            /etc/init.d/monasca-agent restart
+        fi
+
+        RETVAL=$?
+        if [ $RETVAL -ne 0 ]; then
+          if [ $RETVAL -eq 3 ]; then
+            # No agent.conf file is present. The user is probably following
+            # the step-by-step instructions and will add the config file next.
+            echo "No /etc/monasca/agent/agent.conf found, exiting"
+            exit 0
+          else
+            exit $?
+          fi
+        fi
+    ;;
+    abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+
+    *)
+    ;;
+esac
+
+#DEBHELPER#
+
+exit 0

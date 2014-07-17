@@ -1,14 +1,4 @@
 #!/usr/bin/env python
-'''
-    Datadog
-    www.datadoghq.com
-    ----
-    Make sense of your IT Data
-
-    Licensed under Simplified BSD License (see LICENSE)
-    (C) Boxed Ice 2010 all rights reserved
-    (C) Datadog, Inc. 2010-2013 all rights reserved
-'''
 
 # set up logging before importing any other components
 from monagent.common.config import get_version, initialize_logging
@@ -28,7 +18,7 @@ import glob
 # Check we're not using an old version of Python. We need 2.4 above because some modules (like subprocess)
 # were only introduced in 2.4.
 if int(sys.version_info[1]) <= 3:
-    sys.stderr.write("Mon Agent requires python 2.4 or later.\n")
+    sys.stderr.write("Monasca Agent requires python 2.4 or later.\n")
     sys.exit(2)
 
 # Custom modules
@@ -38,11 +28,11 @@ from monagent.common.config import get_config, get_parsed_args, load_check_direc
 from monagent.common.daemon import Daemon, AgentSupervisor
 from monagent.common.emitter import http_emitter
 from monagent.common.util import Watchdog, PidFile, get_os
-from jmxfetch import JMXFetch
+from jmxfetch import JMXFetch, JMX_LIST_COMMANDS
 
 
 # Constants
-PID_NAME = "mon-agent"
+PID_NAME = "monasca-agent"
 WATCHDOG_MULTIPLIER = 10
 RESTART_INTERVAL = 4 * 24 * 60 * 60  # Defaults to 4 days
 START_COMMANDS = ['start', 'restart', 'foreground']
@@ -216,7 +206,7 @@ def main():
         sys.stderr.write("Unknown command: %s\n" % command)
         return 3
 
-    pid_file = PidFile('mon-agent')
+    pid_file = PidFile('monasca-agent')
 
     if options.clean:
         pid_file.clean()
@@ -303,7 +293,6 @@ def main():
             return 1
 
     elif 'jmx' == command:
-        from collector.jmxfetch import JMX_LIST_COMMANDS, JMXFetch
 
         if len(args) < 2 or args[1] not in JMX_LIST_COMMANDS.keys():
             print "#" * 80
@@ -314,7 +303,7 @@ def main():
             print "You have to specify one of the following command:"
             for command, desc in JMX_LIST_COMMANDS.iteritems():
                 print "      - %s [OPTIONAL: LIST OF CHECKS]: %s" % (command, desc)
-            print "Example: sudo /etc/init.d/mon-agent jmx list_matching_attributes tomcat jmx solr"
+            print "Example: sudo /etc/init.d/monasca-agent jmx list_matching_attributes tomcat jmx solr"
             print "\n"
 
         else:
