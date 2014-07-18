@@ -133,4 +133,5 @@ consumer_groups:
         except Exception as e:
             self.log.exception(e)
             raise Exception(
-                'Could not parse %s. Must be in the form of `host0:port0,host1:port1,host2:port2`' % val)
+                'Could not parse %s. Must be in the form of `host0:port0,host1:port1,host2:port2`' %
+                val)

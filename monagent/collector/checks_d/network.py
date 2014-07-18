@@ -158,7 +158,8 @@ class Network(AgentCheck):
         #  face |bytes     packets errs drop fifo frame compressed multicast|bytes       packets errs drop fifo colls carrier compressed
         #     lo:45890956   112797   0    0    0     0          0         0    45890956   112797    0    0    0     0       0          0
         #   eth0:631947052 1042233   0   19    0   184          0      1206  1208625538  1320529    0    0    0     0       0          0
-        #   eth1:       0        0   0    0    0     0          0         0           0        0    0    0    0     0       0          0
+        # eth1:       0        0   0    0    0     0          0         0
+        # 0        0    0    0    0     0       0          0
         for l in lines[2:]:
             cols = l.split(':', 1)
             x = cols[1].split()
@@ -196,7 +197,8 @@ class Network(AgentCheck):
         # ham0  1404  <Link#6>    7a:79:05:4d:bf:f5    30100     0    6815204    18742     0    8494811     0
         # ham0  1404  5             5.77.191.245       30100     -    6815204    18742     -    8494811     -
         # ham0  1404  seneca.loca fe80:6::7879:5ff:    30100     -    6815204    18742     -    8494811     -
-        # ham0  1404  2620:9b::54 2620:9b::54d:bff5    30100     -    6815204    18742     -    8494811     -
+        # ham0  1404  2620:9b::54 2620:9b::54d:bff5    30100     -    6815204
+        # 18742     -    8494811     -
 
         lines = netstat.split("\n")
         headers = lines[0].split()

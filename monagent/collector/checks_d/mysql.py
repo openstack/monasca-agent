@@ -93,8 +93,9 @@ class MySql(AgentCheck):
         try:
             import MySQLdb
         except ImportError:
-            raise Exception("Cannot import MySQLdb module. Check the instructions "
-                            "to install this module at https://app.datadoghq.com/account/settings#integrations/mysql")
+            raise Exception(
+                "Cannot import MySQLdb module. Check the instructions "
+                "to install this module at https://app.datadoghq.com/account/settings#integrations/mysql")
 
         if defaults_file != '':
             db = MySQLdb.connect(read_default_file=defaults_file)
@@ -156,8 +157,11 @@ class MySql(AgentCheck):
                 else:
                     slave_running = 0
                 self.gauge("mysql.replication.slave_running", slave_running, dimensions=dimensions)
-            self._collect_dict(GAUGE, {"Seconds_behind_master": "mysql.replication.seconds_behind_master"},
-                               "SHOW SLAVE STATUS", db, dimensions=dimensions)
+            self._collect_dict(GAUGE,
+                               {"Seconds_behind_master": "mysql.replication.seconds_behind_master"},
+                               "SHOW SLAVE STATUS",
+                               db,
+                               dimensions=dimensions)
 
     def _rate_or_gauge_statuses(self, statuses, dbResults, dimensions):
         for status, metric in statuses.iteritems():
@@ -326,7 +330,12 @@ class MySql(AgentCheck):
         if pid is None:
             try:
                 if sys.platform.startswith("linux"):
-                    ps = subprocess.Popen(['ps', '-C', 'mysqld', '-o', 'pid'], stdout=subprocess.PIPE,
+                    ps = subprocess.Popen(['ps',
+                                           '-C',
+                                           'mysqld',
+                                           '-o',
+                                           'pid'],
+                                          stdout=subprocess.PIPE,
                                           close_fds=True).communicate()[0]
                     pslines = ps.strip().split('\n')
                     # First line is header, second line is mysql pid

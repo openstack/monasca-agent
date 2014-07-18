@@ -101,8 +101,11 @@ class TestCore(unittest.TestCase):
         self.assertEquals(self.c.normalize("__metric__", "prefix"), "prefix.metric")
         self.assertEquals(
             self.c.normalize("abc.metric(a+b+c{}/5)", "prefix"), "prefix.abc.metric_a_b_c_5")
-        self.assertEquals(self.c.normalize(
-            "VBE.default(127.0.0.1,,8080).happy", "varnish"), "varnish.VBE.default_127.0.0.1_8080.happy")
+        self.assertEquals(
+            self.c.normalize(
+                "VBE.default(127.0.0.1,,8080).happy",
+                "varnish"),
+            "varnish.VBE.default_127.0.0.1_8080.happy")
 
 
 class TestAggregator(unittest.TestCase):

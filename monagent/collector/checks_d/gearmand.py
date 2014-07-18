@@ -19,8 +19,9 @@ class Gearman(AgentCheck):
         try:
             import gearman
         except ImportError:
-            raise Exception("Cannot import Gearman module. Check the instructions to install" +
-                            "this module at https://app.datadoghq.com/account/settings#integrations/gearman")
+            raise Exception(
+                "Cannot import Gearman module. Check the instructions to install" +
+                "this module at https://app.datadoghq.com/account/settings#integrations/gearman")
 
         self.log.debug("Connecting to gearman at address %s:%s" % (host, port))
         return gearman.GearmanAdminClient(["%s:%s" % (host, port)])

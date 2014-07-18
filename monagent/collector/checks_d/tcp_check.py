@@ -131,14 +131,21 @@ class TCPCheck(ServicesCheck):
             alert_type = "error"
             msg = """%s %s %s reported that %s (%s:%s) failed %s time(s) within %s last attempt(s).
                 Last error: %s""" % (notify_message,
-                                     custom_message, self.hostname, name, host, port, nb_failures, nb_tries, msg)
+                                     custom_message,
+                                     self.hostname,
+                                     name,
+                                     host,
+                                     port,
+                                     nb_failures,
+                                     nb_tries,
+                                     msg)
             event_type = EventType.DOWN
 
         else:  # Status is UP
             title = "[Recovered] %s reported that %s is up" % (self.hostname, name)
             alert_type = "success"
-            msg = "%s %s %s reported that %s (%s:%s) recovered." % (notify_message,
-                                                                    custom_message, self.hostname, name, host, port)
+            msg = "%s %s %s reported that %s (%s:%s) recovered." % (
+                notify_message, custom_message, self.hostname, name, host, port)
             event_type = EventType.UP
 
         return {

@@ -64,7 +64,8 @@ class WMICheck(AgentCheck):
     def _extract_metrics(self, results, metrics, tag_by):
         if len(results) > 1 and tag_by is None:
             raise Exception(
-                'WMI query returned multiple rows but no `tag_by` value was given. metrics=%s' % metrics)
+                'WMI query returned multiple rows but no `tag_by` value was given. metrics=%s' %
+                metrics)
 
         for wmi_property, name, mtype in metrics:
             for res in results:

@@ -208,7 +208,8 @@ class TestDogstream(TailTestCase):
         self._write_log(log_data)
         plugdog = Dogstreams.init(
             self.logger, {
-                'dogstreams': '%s:tests.test_datadog:parse_ancient_function_plugin' % self.log_file.name})
+                'dogstreams': '%s:tests.test_datadog:parse_ancient_function_plugin' %
+                self.log_file.name})
         actual_output = plugdog.check(self.config, move_end=False)
 
     def test_dogstream_function_plugin(self):
@@ -256,54 +257,43 @@ class TestDogstream(TailTestCase):
             '2012-05-14 12:52:03 [RECOVERY] - host0 is up (collarbone healed)',
             '2012-05-14 12:59:09 [RECOVERY] - host1 is up (nose stopped bleeding)',
         ]
-        expected_output = {
-            "dogstreamEvents": [
-                {
-                    "timestamp": 1336999561,
-                    "alert_type": "error",
-                    "host": "host0",
-                    "msg_title": "host0 is down (broke its collarbone)",
-                    "msg_text": "2012-05-14 12:46:01 [ERROR] - host0 is down (broke its collarbone)",
-                    "event_type": EventDefaults.EVENT_TYPE,
-                    "aggregation_key": EventDefaults.EVENT_OBJECT,
-                    "event_object": EventDefaults.EVENT_OBJECT,
-                },
-
-                {
-                    "timestamp": 1336999687,
-                    "alert_type": "error",
-                    "host": "host1",
-                    "msg_title": "host1 is down (got a bloody nose)",
-                    "msg_text": "2012-05-14 12:48:07 [ERROR] - host1 is down (got a bloody nose)",
-                    "event_type": EventDefaults.EVENT_TYPE,
-                    "aggregation_key": EventDefaults.EVENT_OBJECT,
-                    "event_object": EventDefaults.EVENT_OBJECT,
-                },
-
-                {
-                    "timestamp": 1336999923,
-                    "alert_type": "success",
-                    "host": "host0",
-                    "msg_title": "host0 is up (collarbone healed)",
-                    "msg_text": "2012-05-14 12:52:03 [RECOVERY] - host0 is up (collarbone healed)",
-                    "event_type": EventDefaults.EVENT_TYPE,
-                    "aggregation_key": EventDefaults.EVENT_OBJECT,
-                    "event_object": EventDefaults.EVENT_OBJECT,
-                },
-
-                {
-                    "timestamp": 1337000349,
-                    "alert_type": "success",
-                    "host": "host1",
-                    "msg_title": "host1 is up (nose stopped bleeding)",
-                    "msg_text": "2012-05-14 12:59:09 [RECOVERY] - host1 is up (nose stopped bleeding)",
-                    "event_type": EventDefaults.EVENT_TYPE,
-                    "aggregation_key": EventDefaults.EVENT_OBJECT,
-                    "event_object": EventDefaults.EVENT_OBJECT,
-                },
-
-            ]
-        }
+        expected_output = {"dogstreamEvents": [{"timestamp": 1336999561,
+                                                "alert_type": "error",
+                                                "host": "host0",
+                                                "msg_title": "host0 is down (broke its collarbone)",
+                                                "msg_text": "2012-05-14 12:46:01 [ERROR] - host0 is down (broke its collarbone)",
+                                                "event_type": EventDefaults.EVENT_TYPE,
+                                                "aggregation_key": EventDefaults.EVENT_OBJECT,
+                                                "event_object": EventDefaults.EVENT_OBJECT,
+                                                },
+                                               {"timestamp": 1336999687,
+                                                "alert_type": "error",
+                                                "host": "host1",
+                                                "msg_title": "host1 is down (got a bloody nose)",
+                                                "msg_text": "2012-05-14 12:48:07 [ERROR] - host1 is down (got a bloody nose)",
+                                                "event_type": EventDefaults.EVENT_TYPE,
+                                                "aggregation_key": EventDefaults.EVENT_OBJECT,
+                                                "event_object": EventDefaults.EVENT_OBJECT,
+                                                },
+                                               {"timestamp": 1336999923,
+                                                "alert_type": "success",
+                                                "host": "host0",
+                                                "msg_title": "host0 is up (collarbone healed)",
+                                                "msg_text": "2012-05-14 12:52:03 [RECOVERY] - host0 is up (collarbone healed)",
+                                                "event_type": EventDefaults.EVENT_TYPE,
+                                                "aggregation_key": EventDefaults.EVENT_OBJECT,
+                                                "event_object": EventDefaults.EVENT_OBJECT,
+                                                },
+                                               {"timestamp": 1337000349,
+                                                "alert_type": "success",
+                                                "host": "host1",
+                                                "msg_title": "host1 is up (nose stopped bleeding)",
+                                                "msg_text": "2012-05-14 12:59:09 [RECOVERY] - host1 is up (nose stopped bleeding)",
+                                                "event_type": EventDefaults.EVENT_TYPE,
+                                                "aggregation_key": EventDefaults.EVENT_OBJECT,
+                                                "event_object": EventDefaults.EVENT_OBJECT,
+                                                },
+                                               ]}
 
         self._write_log(log_data)
 
@@ -367,55 +357,49 @@ class TestDogstream(TailTestCase):
         event_type = cassandra.EVENT_TYPE
         event_object = EventDefaults.EVENT_OBJECT
 
-        expected_output = {
-            "dogstreamEvents": [
-                {
-                    "timestamp": cassandra.parse_date("2012-05-12 21:10:48,058"),
-                    "msg_title": "Compacting [SSTableReader(path='/var/cassandra/data/test_data/series-hc-6528-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6531-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6529-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6530-Data.db')]"[
-                                 0:common.MAX_TITLE_LEN],
-                    "msg_text": "Compacting [SSTableReader(path='/var/cassandra/data/test_data/series-hc-6528-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6531-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6529-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6530-Data.db')]",
-                    "alert_type": alert_type,
-                    "auto_priority": 0,
-                    "event_type": event_type,
-                    "aggregation_key": event_object,
-                    "event_object": event_object,
-                }, {
-                    "timestamp": cassandra.parse_date("2012-05-12 21:10:54,851"),
-                    "msg_title": "Compacted to [/var/cassandra/a-hc-65-Data.db,].  102,079,134 to 101,546,397",
-                    "alert_type": alert_type,
-                    "auto_priority": 0,
-                    "event_type": event_type,
-                    "aggregation_key": event_object,
-                    "event_object": event_object,
-                }, {
-                    "timestamp": cassandra.parse_date("2012-05-13 13:15:01,927"),
-                    "msg_title": "Compacting [SSTableReader(path='/var/cassandra/data/test_data/series-hc-6527-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6522-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6532-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6517-Data.db')]"[
-                                 0:common.MAX_TITLE_LEN],
-                    "msg_text": "Compacting [SSTableReader(path='/var/cassandra/data/test_data/series-hc-6527-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6522-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6532-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6517-Data.db')]",
-                    "alert_type": alert_type,
-                    "event_type": event_type,
-                    "auto_priority": 0,
-                    "aggregation_key": event_object,
-                    "event_object": event_object,
-                }, {
-                    "timestamp": cassandra.parse_date("2012-05-13 13:27:17,685"),
-                    "msg_title": "Compacting large row test_data/series:6c6f677c32 (782001077 bytes) incrementally",
-                    "alert_type": alert_type,
-                    "event_type": event_type,
-                    "auto_priority": 0,
-                    "aggregation_key": event_object,
-                    "event_object": event_object,
-                }, {
-                    "timestamp": cassandra.parse_date(
-                        datetime.utcnow().strftime("%Y-%m-%d") + " 13:27:17,685"),
-                    "msg_title": "Compacting large row test_data/series:6c6f677c32 (782001077 bytes) incrementally",
-                    "alert_type": alert_type,
-                    "event_type": event_type,
-                    "auto_priority": 0,
-                    "aggregation_key": event_object,
-                    "event_object": event_object,
-                },
-            ]}
+        expected_output = {"dogstreamEvents": [{"timestamp": cassandra.parse_date("2012-05-12 21:10:48,058"),
+                                                "msg_title": "Compacting [SSTableReader(path='/var/cassandra/data/test_data/series-hc-6528-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6531-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6529-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6530-Data.db')]"[0:common.MAX_TITLE_LEN],
+                                                "msg_text": "Compacting [SSTableReader(path='/var/cassandra/data/test_data/series-hc-6528-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6531-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6529-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6530-Data.db')]",
+                                                "alert_type": alert_type,
+                                                "auto_priority": 0,
+                                                "event_type": event_type,
+                                                "aggregation_key": event_object,
+                                                "event_object": event_object,
+                                                },
+                                               {"timestamp": cassandra.parse_date("2012-05-12 21:10:54,851"),
+                                                "msg_title": "Compacted to [/var/cassandra/a-hc-65-Data.db,].  102,079,134 to 101,546,397",
+                                                "alert_type": alert_type,
+                                                "auto_priority": 0,
+                                                "event_type": event_type,
+                                                "aggregation_key": event_object,
+                                                "event_object": event_object,
+                                                },
+                                               {"timestamp": cassandra.parse_date("2012-05-13 13:15:01,927"),
+                                                "msg_title": "Compacting [SSTableReader(path='/var/cassandra/data/test_data/series-hc-6527-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6522-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6532-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6517-Data.db')]"[0:common.MAX_TITLE_LEN],
+                                                "msg_text": "Compacting [SSTableReader(path='/var/cassandra/data/test_data/series-hc-6527-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6522-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6532-Data.db'), SSTableReader(path='/var/cassandra/data/test_data/series-hc-6517-Data.db')]",
+                                                "alert_type": alert_type,
+                                                "event_type": event_type,
+                                                "auto_priority": 0,
+                                                "aggregation_key": event_object,
+                                                "event_object": event_object,
+                                                },
+                                               {"timestamp": cassandra.parse_date("2012-05-13 13:27:17,685"),
+                                                "msg_title": "Compacting large row test_data/series:6c6f677c32 (782001077 bytes) incrementally",
+                                                "alert_type": alert_type,
+                                                "event_type": event_type,
+                                                "auto_priority": 0,
+                                                "aggregation_key": event_object,
+                                                "event_object": event_object,
+                                                },
+                                               {"timestamp": cassandra.parse_date(datetime.utcnow().strftime("%Y-%m-%d") + " 13:27:17,685"),
+                                                "msg_title": "Compacting large row test_data/series:6c6f677c32 (782001077 bytes) incrementally",
+                                                "alert_type": alert_type,
+                                                "event_type": event_type,
+                                                "auto_priority": 0,
+                                                "aggregation_key": event_object,
+                                                "event_object": event_object,
+                                                },
+                                               ]}
 
         self._write_log(log_data.split("\n"))
 

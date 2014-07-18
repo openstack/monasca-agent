@@ -112,8 +112,8 @@ class WinEventLogTest(unittest.TestCase):
         check.check(inst2)
         ev2 = check.get_events()
         assert len(ev2) > 0
-        assert len(ev2) == len([ev for ev in self.LOG_EVENTS
-                                if ev[1] in (win32evtlog.EVENTLOG_ERROR_TYPE, win32evtlog.EVENTLOG_INFORMATION_TYPE)])
+        assert len(ev2) == len([ev for ev in self.LOG_EVENTS if ev[1] in (
+            win32evtlog.EVENTLOG_ERROR_TYPE, win32evtlog.EVENTLOG_INFORMATION_TYPE)])
         for ev in ev2:
             # Make sure we only picked up our source
             assert 'EVENTLOGTESTBAD' not in ev['msg_title']

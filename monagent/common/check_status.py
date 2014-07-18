@@ -649,9 +649,11 @@ def get_jmx_status():
             jmx_checks = java_jmx_stats.get('checks', {})
 
             if status_age > 60:
-                check_statuses.append(CheckStatus("jmx", [InstanceStatus(0, STATUS_ERROR,
-                                                                         error="JMXfetch didn't return any metrics during the last minute")],
-                                                  0, 0))
+                check_statuses.append(
+                    CheckStatus(
+                        "jmx", [
+                            InstanceStatus(
+                                0, STATUS_ERROR, error="JMXfetch didn't return any metrics during the last minute")], 0, 0))
             else:
 
                 for check_name, instances in jmx_checks.get('failed_checks', {}).iteritems():
@@ -660,8 +662,12 @@ def get_jmx_status():
                         metric_count = info.get('metric_count', 0)
                         status = info.get('status')
                         instance_name = info.get('instance_name', None)
-                        check_data[check_name]['statuses'].append(get_jmx_instance_status(instance_name, status,
-                                                                                          message, metric_count))
+                        check_data[check_name]['statuses'].append(
+                            get_jmx_instance_status(
+                                instance_name,
+                                status,
+                                message,
+                                metric_count))
                         check_data[check_name]['metric_count'].append(metric_count)
 
                 for check_name, instances in jmx_checks.get('initialized_checks', {}).iteritems():
@@ -670,8 +676,12 @@ def get_jmx_status():
                         metric_count = info.get('metric_count', 0)
                         status = info.get('status')
                         instance_name = info.get('instance_name', None)
-                        check_data[check_name]['statuses'].append(get_jmx_instance_status(instance_name, status,
-                                                                                          message, metric_count))
+                        check_data[check_name]['statuses'].append(
+                            get_jmx_instance_status(
+                                instance_name,
+                                status,
+                                message,
+                                metric_count))
                         check_data[check_name]['metric_count'].append(metric_count)
 
                 for check_name, data in check_data.iteritems():

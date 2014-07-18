@@ -218,8 +218,9 @@ class IO(Check):
         try:
             disk = w.Win32_PerfFormattedData_PerfDisk_LogicalDisk()
         except AttributeError:
-            self.logger.info('Missing Win32_PerfFormattedData_PerfDisk_LogicalDiskUnable WMI class.' +
-                             ' No I/O metrics will be returned.')
+            self.logger.info(
+                'Missing Win32_PerfFormattedData_PerfDisk_LogicalDiskUnable WMI class.' +
+                ' No I/O metrics will be returned.')
             return
 
         for device in disk:

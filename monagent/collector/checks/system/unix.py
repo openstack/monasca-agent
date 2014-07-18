@@ -58,8 +58,12 @@ class Disk(Check):
             # parse into a list of Measurements
             stats.update(inodes)
             timestamp = time.time()
-            measurements = [Measurement(key.split('.', 1)[1], timestamp, value, {'device': key.split('.', 1)[0]})
-                            for key, value in stats.iteritems()]
+            measurements = [
+                Measurement(
+                    key.split(
+                        '.', 1)[1], timestamp, value, {
+                        'device': key.split(
+                            '.', 1)[0]}) for key, value in stats.iteritems()]
             return measurements
 
         except Exception:
@@ -301,7 +305,8 @@ class IO(Check):
                 # sdb           0.00     0.00    0.00    2.97     0.00    11.88     8.00     0.00    0.00   0.00   0.00
                 # sdg           0.00     0.00    0.00    0.00     0.00     0.00     0.00     0.00    0.00   0.00   0.00
                 # sdf           0.00     0.00    0.00    0.00     0.00     0.00     0.00     0.00    0.00   0.00   0.00
-                # md0           0.00     0.00    0.00    0.00     0.00     0.00     0.00     0.00    0.00   0.00   0.00
+                # md0           0.00     0.00    0.00    0.00     0.00     0.00     0.00
+                # 0.00    0.00   0.00   0.00
                 io.update(self._parse_linux2(stdout))
 
             elif sys.platform == "sunos5":
@@ -708,7 +713,8 @@ class Memory(Check):
                 # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:snaptime  16787393.9439095
                 # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:swap      91828224   <--
                 # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:swapcap   1073741824 <--
-                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:zonename  53aa9b7e-48ba-4152-a52b-a6368c3d9e7c
+                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:zonename
+                # 53aa9b7e-48ba-4152-a52b-a6368c3d9e7c
 
                 # turn memory_cap:360:zone_name:key value
                 # into { "key": value, ...}
@@ -822,8 +828,14 @@ class Cpu(Check):
         elif sys.platform == 'darwin':
             # generate 3 seconds of data
             # ['          disk0           disk1       cpu     load average', '    KB/t tps  MB/s     KB/t tps  MB/s  us sy id   1m   5m   15m', '   21.23  13  0.27    17.85   7  0.13  14  7 79  1.04 1.27 1.31', '    4.00   3  0.01     5.00   8  0.04  12 10 78  1.04 1.27 1.31', '']
-            iostats = sp.Popen(
-                ['iostat', '-C', '-w', '3', '-c', '2'], stdout=sp.PIPE, close_fds=True).communicate()[0]
+            iostats = sp.Popen(['iostat',
+                                '-C',
+                                '-w',
+                                '3',
+                                '-c',
+                                '2'],
+                               stdout=sp.PIPE,
+                               close_fds=True).communicate()[0]
             lines = [l for l in iostats.split("\n") if len(l) > 0]
             legend = [l for l in lines if "us" in l]
             if len(legend) == 1:
@@ -836,8 +848,13 @@ class Cpu(Check):
                 cpu_st = 0
                 return format_results(cpu_user, cpu_sys, cpu_wait, cpu_idle, cpu_st)
             else:
-                self.logger.warn("Expected to get at least 4 lines of data from iostat instead of just " +
-                                 str(iostats[: max(80, len(iostats))]))
+                self.logger.warn(
+                    "Expected to get at least 4 lines of data from iostat instead of just " +
+                    str(
+                        iostats[
+                            : max(
+                                80,
+                                len(iostats))]))
                 return {}
 
         elif sys.platform.startswith("freebsd"):
@@ -864,8 +881,13 @@ class Cpu(Check):
                     cpu_user + cpu_nice, cpu_sys + cpu_intr, cpu_wait, cpu_idle, cpu_stol)
 
             else:
-                self.logger.warn("Expected to get at least 4 lines of data from iostat instead of just " +
-                                 str(iostats[:max(80, len(iostats))]))
+                self.logger.warn(
+                    "Expected to get at least 4 lines of data from iostat instead of just " +
+                    str(
+                        iostats[
+                            :max(
+                                80,
+                                len(iostats))]))
                 return {}
 
         elif sys.platform == 'sunos5':

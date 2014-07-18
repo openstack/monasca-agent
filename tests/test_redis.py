@@ -136,8 +136,8 @@ class TestRedis(unittest.TestCase):
 
         # Assert that the keys metrics are tagged by db. just check db0, since
         # it's the only one we can guarantee is there.
-        db_metrics = self._sort_metrics([m for m in metrics if m[0] in ['redis.keys',
-                                                                        'redis.expires'] and "redis_db:db14" in m[3]["dimensions"]])
+        db_metrics = self._sort_metrics(
+            [m for m in metrics if m[0] in ['redis.keys', 'redis.expires'] and "redis_db:db14" in m[3]["dimensions"]])
         self.assertEquals(2, len(db_metrics))
 
         self.assertEquals('redis.expires', db_metrics[0][0])

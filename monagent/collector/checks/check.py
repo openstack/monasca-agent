@@ -282,8 +282,11 @@ class AgentCheck(object):
         self.hostname = get_hostname(agent_config)
         self.log = logging.getLogger('%s.%s' % (__name__, name))
 
-        self.aggregator = MetricsAggregator(self.hostname,
-                                            recent_point_threshold=agent_config.get('recent_point_threshold', None))
+        self.aggregator = MetricsAggregator(
+            self.hostname,
+            recent_point_threshold=agent_config.get(
+                'recent_point_threshold',
+                None))
 
         self.events = []
         self.instances = instances or []

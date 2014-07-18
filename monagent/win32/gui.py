@@ -129,8 +129,8 @@ class DatadogConf(EditorFile):
 
     def check_api_key(self, editor):
         if self.api_key is None:
-            api_key, ok = QInputDialog.getText(None, "Add your API KEY",
-                                               "You must first set your api key in this file. You can find it here: https://app.datadoghq.com/account/settings#api")
+            api_key, ok = QInputDialog.getText(
+                None, "Add your API KEY", "You must first set your api key in this file. You can find it here: https://app.datadoghq.com/account/settings#api")
             if ok and api_key:
                 new_content = []
                 for line in self.content.splitlines():
@@ -334,8 +334,14 @@ class MainWindow(QSplitter):
                      lambda: self.properties.set_log_file(self.log_file))
 
         self.manager_menu = Menu(self)
-        self.connect(self.properties.menu_button, SIGNAL("clicked()"),
-                     lambda: self.manager_menu.popup(self.properties.menu_button.mapToGlobal(QPoint(0, 0))))
+        self.connect(
+            self.properties.menu_button,
+            SIGNAL("clicked()"),
+            lambda: self.manager_menu.popup(
+                self.properties.menu_button.mapToGlobal(
+                    QPoint(
+                        0,
+                        0))))
 
         listwidget.setCurrentRow(0)
 

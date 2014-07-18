@@ -43,8 +43,7 @@ JMX_LIST_COMMANDS = {
     'list_matching_attributes': 'List attributes that match at least one of your instances configuration',
     'list_not_matching_attributes': "List attributes that don't match any of your instances configuration",
     'list_limited_attributes': "List attributes that do match one of your instances configuration but that are not being collected because it would exceed the number of metrics that can be collected",
-    JMX_COLLECT_COMMAND: "Start the collection of metrics based on your current configuration and display them in the console"
-}
+    JMX_COLLECT_COMMAND: "Start the collection of metrics based on your current configuration and display them in the console"}
 
 PYTHON_JMX_STATUS_FILE = 'jmx_status_python.yaml'
 
@@ -189,8 +188,8 @@ class JMXFetch(object):
 
                 if conf is None:
                     log.warning(
-                        "%s doesn't have a 'conf' section. Only basic JVM metrics will be collected. %s" % (
-                            inst, LINK_TO_DOC))
+                        "%s doesn't have a 'conf' section. Only basic JVM metrics will be collected. %s" %
+                        (inst, LINK_TO_DOC))
                 else:
                     if not isinstance(conf, list) or len(conf) == 0:
                         raise InvalidJMXConfiguration(
@@ -200,7 +199,8 @@ class JMXFetch(object):
                         include = config.get('include', None)
                         if include is None:
                             raise InvalidJMXConfiguration(
-                                "Each configuration must have an 'include' section. %s" % LINK_TO_DOC)
+                                "Each configuration must have an 'include' section. %s" %
+                                LINK_TO_DOC)
 
                         if not isinstance(include, dict):
                             raise InvalidJMXConfiguration(

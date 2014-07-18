@@ -163,14 +163,20 @@ class Dogstream(object):
 
             # Build our tail -f
             if self._gen is None:
-                self._gen = TailFile(self.logger, self.log_path, self._line_parser).tail(line_by_line=False,
-                                                                                         move_end=move_end)
+                self._gen = TailFile(
+                    self.logger,
+                    self.log_path,
+                    self._line_parser).tail(
+                    line_by_line=False,
+                    move_end=move_end)
 
             # read until the end of file
             try:
                 self._gen.next()
-                self.logger.debug("Done dogstream check for file %s, found %s metric points" % (self.log_path,
-                                                                                                len(self._values)))
+                self.logger.debug(
+                    "Done dogstream check for file %s, found %s metric points" %
+                    (self.log_path, len(
+                        self._values)))
             except StopIteration as e:
                 self.logger.exception(e)
                 self.logger.warn("Can't tail %s file" % self.log_path)

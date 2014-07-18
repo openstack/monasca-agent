@@ -95,8 +95,12 @@ def init_monstatsd(config_path=None, use_watchdog=False):
     # server and reporting threads.
     assert 0 < interval
 
-    aggregator = MetricsBucketAggregator(hostname, aggregator_interval,
-                                         recent_point_threshold=c.get('recent_point_threshold', None))
+    aggregator = MetricsBucketAggregator(
+        hostname,
+        aggregator_interval,
+        recent_point_threshold=c.get(
+            'recent_point_threshold',
+            None))
 
     # Start the reporting thread.
     reporter = Reporter(interval, aggregator, target, use_watchdog, event_chunk_size)

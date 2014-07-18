@@ -214,8 +214,13 @@ class TransactionManager(object):
     def tr_error(self, tr):
         tr.inc_error_count()
         tr.compute_next_flush(self._MAX_WAIT_FOR_REPLAY)
-        log.warn("Transaction %d in error (%s error%s), it will be replayed after %s" %
-                 (tr.get_id(), tr.get_error_count(), plural(tr.get_error_count()), tr.get_next_flush()))
+        log.warn(
+            "Transaction %d in error (%s error%s), it will be replayed after %s" %
+            (tr.get_id(),
+             tr.get_error_count(),
+             plural(
+                tr.get_error_count()),
+                tr.get_next_flush()))
 
     def tr_success(self, tr):
         log.debug("Transaction %d completed" % tr.get_id())

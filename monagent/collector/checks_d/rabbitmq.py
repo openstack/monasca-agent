@@ -157,7 +157,8 @@ class RabbitMQ(AgentCheck):
             if len(data) > max_detailed:
                 # Display a warning in the info page
                 self.warning(
-                    "Too many queues to fetch. You must choose the %s you are interested in by editing the rabbitmq.yaml configuration file or get in touch with Datadog Support" % object_type)
+                    "Too many queues to fetch. You must choose the %s you are interested in by editing the rabbitmq.yaml configuration file or get in touch with Datadog Support" %
+                    object_type)
 
             for data_line in data[:max_detailed]:
                 # We truncate the list of nodes/queues if it's above the limit

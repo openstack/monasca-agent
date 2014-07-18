@@ -63,7 +63,7 @@ class ProcessCheck(AgentCheck):
                         except psutil.NoSuchProcess:
                             self.warning('Process disappeared while scanning')
                             pass
-                        except psutil.AccessDenied, e:
+                        except psutil.AccessDenied as e:
                             self.log.error('Access denied to %s process'
                                            % string)
                             self.log.error('Error: %s' % e)

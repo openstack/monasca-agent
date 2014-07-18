@@ -127,7 +127,8 @@ class Docker(AgentCheck):
         if not instance.get("exclude") or not instance.get("include"):
             if len(containers) > max_containers:
                 self.warning(
-                    "Too many containers to collect. Please refine the containers to collect by editing the configuration file. Truncating to %s containers" % max_containers)
+                    "Too many containers to collect. Please refine the containers to collect by editing the configuration file. Truncating to %s containers" %
+                    max_containers)
                 containers = containers[:max_containers]
 
         collected_containers = 0
@@ -228,7 +229,8 @@ class Docker(AgentCheck):
                 fp = open(file_)
             except IOError:
                 raise IOError(
-                    "Can't open %s. If you are using Docker 0.9.0 or higher, the Datadog agent is not yet compatible with these versions. Please get in touch with Datadog Support for more information" % file_)
+                    "Can't open %s. If you are using Docker 0.9.0 or higher, the Datadog agent is not yet compatible with these versions. Please get in touch with Datadog Support for more information" %
+                    file_)
             return dict(map(lambda x: x.split(), fp.read().splitlines()))
 
         finally:

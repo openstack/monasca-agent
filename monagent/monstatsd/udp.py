@@ -32,8 +32,9 @@ class Server(object):
             if forward_to_port is None:
                 forward_to_port = 8125
 
-            log.info("External statsd forwarding enabled. All packets received will be forwarded to %s:%s" %
-                     (forward_to_host, forward_to_port))
+            log.info(
+                "External statsd forwarding enabled. All packets received will be forwarded to %s:%s" %
+                (forward_to_host, forward_to_port))
             try:
                 self.forward_udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 self.forward_udp_sock.connect((forward_to_host, forward_to_port))
@@ -55,9 +56,16 @@ class Server(object):
             text_length = int(text_length[:-1])
 
             event = {
-                'title': metadata[:title_length],
-                'text': (metadata[title_length + 1:title_length + text_length + 1]).replace('\\n', '\n')
-            }
+                'title': metadata[
+                    :title_length],
+                'text': (
+                    metadata[
+                        title_length +
+                        1:title_length +
+                        text_length +
+                        1]).replace(
+                    '\\n',
+                    '\n')}
             meta = metadata[title_length + text_length + 1:]
             for m in meta.split('|')[1:]:
                 if m[0] == u't':

@@ -57,7 +57,11 @@ class WrapNagios(ServicesCheck):
         if last_run_path.endswith('/') is False:
             last_run_path += '/'
         last_run_file = (
-            last_run_path + 'nagios_wrapper_' + hashlib.md5(instance['service_name']).hexdigest() + '.pck')
+            last_run_path +
+            'nagios_wrapper_' +
+            hashlib.md5(
+                instance['service_name']).hexdigest() +
+            '.pck')
 
         # Load last-run data from shared memory file
         last_run_data = {}

@@ -182,13 +182,13 @@ class ElasticSearch(AgentCheck):
             self.NODES_URL = "/_nodes?network=true"
 
             additional_metrics = {
-                "elasticsearch.search.fetch.open_contexts": ("gauge", "indices.search.open_contexts"),
-                "elasticsearch.cache.filter.evictions": ("gauge", "indices.filter_cache.evictions"),
-                "elasticsearch.cache.filter.size": ("gauge", "indices.filter_cache.memory_size_in_bytes"),
-                "elasticsearch.id_cache.size": ("gauge", "indices.id_cache.memory_size_in_bytes"),
-                "elasticsearch.fielddata.size": ("gauge", "indices.fielddata.memory_size_in_bytes"),
-                "elasticsearch.fielddata.evictions": ("gauge", "indices.fielddata.evictions")
-            }
+                "elasticsearch.search.fetch.open_contexts": (
+                    "gauge", "indices.search.open_contexts"), "elasticsearch.cache.filter.evictions": (
+                    "gauge", "indices.filter_cache.evictions"), "elasticsearch.cache.filter.size": (
+                    "gauge", "indices.filter_cache.memory_size_in_bytes"), "elasticsearch.id_cache.size": (
+                    "gauge", "indices.id_cache.memory_size_in_bytes"), "elasticsearch.fielddata.size": (
+                        "gauge", "indices.fielddata.memory_size_in_bytes"), "elasticsearch.fielddata.evictions": (
+                            "gauge", "indices.fielddata.evictions")}
 
         else:
             # ES version 0.90.9 and below
@@ -197,19 +197,19 @@ class ElasticSearch(AgentCheck):
             self.NODES_URL = "/_cluster/nodes?network=true"
 
             additional_metrics = {
-                "elasticsearch.cache.field.evictions": ("gauge", "indices.cache.field_evictions"),
-                "elasticsearch.cache.field.size": ("gauge", "indices.cache.field_size_in_bytes"),
-                "elasticsearch.cache.filter.count": ("gauge", "indices.cache.filter_count"),
-                "elasticsearch.cache.filter.evictions": ("gauge", "indices.cache.filter_evictions"),
-                "elasticsearch.cache.filter.size": ("gauge", "indices.cache.filter_size_in_bytes"),
-                "elasticsearch.thread_pool.cache.active": ("gauge", "thread_pool.cache.active"),
-                "elasticsearch.thread_pool.cache.threads": ("gauge", "thread_pool.cache.threads"),
-                "elasticsearch.thread_pool.cache.queue": ("gauge", "thread_pool.cache.queue"),
-                "jvm.gc.collection_count": ("gauge", "jvm.gc.collection_count"),
-                "jvm.gc.collection_time": ("gauge", "jvm.gc.collection_time_in_millis", lambda v: float(v) / 1000),
-                "jvm.gc.copy.count": ("gauge", "jvm.gc.collectors.Copy.collection_count"),
-                "jvm.gc.copy.collection_time": ("gauge", "jvm.gc.collectors.Copy.collection_time_in_millis", lambda v: float(v) / 1000)
-            }
+                "elasticsearch.cache.field.evictions": (
+                    "gauge", "indices.cache.field_evictions"), "elasticsearch.cache.field.size": (
+                    "gauge", "indices.cache.field_size_in_bytes"), "elasticsearch.cache.filter.count": (
+                    "gauge", "indices.cache.filter_count"), "elasticsearch.cache.filter.evictions": (
+                    "gauge", "indices.cache.filter_evictions"), "elasticsearch.cache.filter.size": (
+                        "gauge", "indices.cache.filter_size_in_bytes"), "elasticsearch.thread_pool.cache.active": (
+                            "gauge", "thread_pool.cache.active"), "elasticsearch.thread_pool.cache.threads": (
+                                "gauge", "thread_pool.cache.threads"), "elasticsearch.thread_pool.cache.queue": (
+                                    "gauge", "thread_pool.cache.queue"), "jvm.gc.collection_count": (
+                                        "gauge", "jvm.gc.collection_count"), "jvm.gc.collection_time": (
+                                            "gauge", "jvm.gc.collection_time_in_millis", lambda v: float(v) / 1000), "jvm.gc.copy.count": (
+                                                "gauge", "jvm.gc.collectors.Copy.collection_count"), "jvm.gc.copy.collection_time": (
+                                                    "gauge", "jvm.gc.collectors.Copy.collection_time_in_millis", lambda v: float(v) / 1000)}
 
         self.METRICS.update(additional_metrics)
 

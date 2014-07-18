@@ -61,7 +61,8 @@ class Zookeeper(AgentCheck):
                     if num_reads > max_reads:
                         # Safeguard against an infinite loop
                         raise Exception(
-                            "Read %s bytes before exceeding max reads of %s. " % (buf.tell(), max_reads))
+                            "Read %s bytes before exceeding max reads of %s. " %
+                            (buf.tell(), max_reads))
                     chunk = sock.recv(chunk_size)
                     buf.write(chunk)
                     num_reads += 1

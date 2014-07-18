@@ -76,8 +76,9 @@ class Apache(AgentCheck):
                 self.warning("Assuming url was not correct. Trying to add ?auto suffix to the url")
                 self.check(instance)
             else:
-                raise Exception("No metrics were fetched for this instance. Make sure that %s is the proper url."
-                                % instance['apache_status_url'])
+                raise Exception(
+                    "No metrics were fetched for this instance. Make sure that %s is the proper url." %
+                    instance['apache_status_url'])
 
     @staticmethod
     def parse_agent_config(agentConfig):

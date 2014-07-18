@@ -44,7 +44,15 @@ class TestMongo(unittest.TestCase):
         dir1 = mkdtemp()
         dir2 = mkdtemp()
         try:
-            self.p1 = subprocess.Popen(["mongod", "--dbpath", dir1, "--port", str(PORT1), "--replSet", "testset/%s:%d" % (socket.gethostname(), PORT2), "--rest"],
+            self.p1 = subprocess.Popen(["mongod",
+                                        "--dbpath",
+                                        dir1,
+                                        "--port",
+                                        str(PORT1),
+                                        "--replSet",
+                                        "testset/%s:%d" % (socket.gethostname(),
+                                                           PORT2),
+                                        "--rest"],
                                        executable="mongod",
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
@@ -53,7 +61,15 @@ class TestMongo(unittest.TestCase):
             if self.p1:
                 # Set up replication
                 c1 = pymongo.Connection('localhost:%s' % PORT1, slave_okay=True)
-                self.p2 = subprocess.Popen(["mongod", "--dbpath", dir2, "--port", str(PORT2), "--replSet", "testset/%s:%d" % (socket.gethostname(), PORT1), "--rest"],
+                self.p2 = subprocess.Popen(["mongod",
+                                            "--dbpath",
+                                            dir2,
+                                            "--port",
+                                            str(PORT2),
+                                            "--replSet",
+                                            "testset/%s:%d" % (socket.gethostname(),
+                                                               PORT1),
+                                            "--rest"],
                                            executable="mongod",
                                            stdout=subprocess.PIPE,
                                            stderr=subprocess.PIPE)

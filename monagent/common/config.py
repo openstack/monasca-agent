@@ -179,7 +179,8 @@ def get_config_path(cfg_path=None, os_name=None):
 
     # If all searches fail, exit the agent with an error
     sys.stderr.write(
-        "Please supply a configuration file at %s or in the directory where the Agent is currently deployed.\n" % bad_path)
+        "Please supply a configuration file at %s or in the directory where the Agent is currently deployed.\n" %
+        bad_path)
     sys.exit(3)
 
 
@@ -421,7 +422,8 @@ def get_proxy(agent_config, use_system_settings=False):
 
     except Exception as e:
         log.debug(
-            "Error while trying to fetch proxy settings using urllib %s. Proxy is probably not set" % str(e))
+            "Error while trying to fetch proxy settings using urllib %s. Proxy is probably not set" %
+            str(e))
 
     log.debug("No proxy configured")
 
@@ -530,7 +532,8 @@ def load_check_directory(agent_config):
         confd_path = get_confd_path(osname)
     except PathNotFound as e:
         log.error(
-            "No conf.d folder found at '%s' or in the directory where the Agent is currently deployed.\n" % e.args[0])
+            "No conf.d folder found at '%s' or in the directory where the Agent is currently deployed.\n" %
+            e.args[0])
         sys.exit(3)
 
     # Start JMXFetch if needed
@@ -821,7 +824,11 @@ def initialize_logging(logger_name):
             try:
                 from logging.handlers import NTEventLogHandler
                 nt_event_handler = NTEventLogHandler(
-                    logger_name, get_win32service_file('windows', 'win32service.pyd'), 'Application')
+                    logger_name,
+                    get_win32service_file(
+                        'windows',
+                        'win32service.pyd'),
+                    'Application')
                 nt_event_handler.setFormatter(
                     logging.Formatter(get_syslog_format(logger_name), get_log_date_format()))
                 nt_event_handler.setLevel(logging.ERROR)

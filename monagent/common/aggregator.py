@@ -61,13 +61,30 @@ class Aggregator(object):
             return 0
         return round(float(self.count) / interval, 2)
 
-    def submit_metric(self, name, value, mtype, dimensions=None, hostname=None, device_name=None, timestamp=None,
-                      sample_rate=1):
+    def submit_metric(
+            self,
+            name,
+            value,
+            mtype,
+            dimensions=None,
+            hostname=None,
+            device_name=None,
+            timestamp=None,
+            sample_rate=1):
         """ Add a metric to be aggregated """
         raise NotImplementedError()
 
-    def event(self, title, text, date_happened=None, alert_type=None, aggregation_key=None, source_type_name=None,
-              priority=None, dimensions=None, hostname=None):
+    def event(
+            self,
+            title,
+            text,
+            date_happened=None,
+            alert_type=None,
+            aggregation_key=None,
+            source_type_name=None,
+            priority=None,
+            dimensions=None,
+            hostname=None):
         event = {
             'msg_title': title,
             'msg_text': text,
@@ -214,8 +231,11 @@ class MetricsBucketAggregator(Aggregator):
                                 not_sampled_in_this_bucket.pop(context, None)
                     # We need to account for Metrics that have not expired and were not
                     # flushed for this bucket
-                    self.create_empty_metrics(not_sampled_in_this_bucket, expiry_timestamp, bucket_start_timestamp,
-                                              metrics)
+                    self.create_empty_metrics(
+                        not_sampled_in_this_bucket,
+                        expiry_timestamp,
+                        bucket_start_timestamp,
+                        metrics)
 
                     del self.metric_by_bucket[bucket_start_timestamp]
         else:

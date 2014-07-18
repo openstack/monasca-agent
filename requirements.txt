@@ -1,0 +1,14 @@
+requests
+gearman
+httplib2
+ntplib
+pymongo
+pylint
+psutil
+python-memcached
+PyYAML
+redis
+simplejson
+supervisor
+tornado
+python-monclient

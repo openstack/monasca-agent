@@ -38,8 +38,13 @@ class CouchbaseTestCase(unittest.TestCase):
 
         for test_input, expected_output in test_pairs.items():
             test_output = self.check.camel_case_to_joined_lower(test_input)
-            self.assertEqual(test_output, expected_output,
-                             'Input was %s, expected output was %s, actual output was %s' % (test_input, expected_output, test_output))
+            self.assertEqual(
+                test_output,
+                expected_output,
+                'Input was %s, expected output was %s, actual output was %s' %
+                (test_input,
+                 expected_output,
+                 test_output))
 
     @attr('couchbase')
     def test_metrics_casing(self):
