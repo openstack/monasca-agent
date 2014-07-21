@@ -11,4 +11,4 @@ redis
 simplejson
 supervisor
 tornado
-python-monclient
+python-monascaclient

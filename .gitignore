@@ -9,3 +9,7 @@ dist
 artifacts
 root
 .tox/
+AUTHORS
+ChangeLog
+monasca_agent.egg-info
+pbr-0.9.0-py2.7.egg
