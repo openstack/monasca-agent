@@ -2,6 +2,7 @@
     Detection classes should be platform independent
 """
 
+
 class Plugin(object):
 
     """Abstract class implemented by the monasca-agent plugin detection classes
