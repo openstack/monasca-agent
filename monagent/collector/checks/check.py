@@ -3,6 +3,9 @@
 If you are writing your own checks you should subclass the AgentCheck class.
 The Check class is being deprecated so don't write new checks with it.
 """
+# This file uses 'print' as a function rather than a statement, a la Python3
+from __future__ import print_function
+
 import logging
 import os
 from pprint import pprint
@@ -19,7 +22,8 @@ from monagent.common.util import LaconicFilter, get_hostname, get_os
 log = logging.getLogger(__name__)
 
 
-# todo convert all checks to the new interface then remove this. Is the LaconicFilter on logs used elsewhere?
+# todo convert all checks to the new interface then remove this.
+#      Is the LaconicFilter on logs used elsewhere?
 # ==============================================================================
 # DEPRECATED
 # ------------------------------
@@ -235,7 +239,8 @@ class Check(object):
         This is the preferred method to retrieve metrics
 
         @return the list of samples
-        @rtype [(metric_name, timestamp, value, {"dimensions": {"name1": "key1", "name2": "key2"}}), ...]
+        @rtype [(metric_name, timestamp, value,
+                {"dimensions": {"name1": "key1", "name2": "key2"}}), ...]
         """
         metrics = []
         for m in self._sample_store:
@@ -258,6 +263,8 @@ class Check(object):
                     metrics.append((m, int(ts), val, attributes))
             except Exception:
                 pass
+            if prettyprint:
+                print("Metrics: {}".format(metrics))
         return metrics
 
 
@@ -413,13 +420,27 @@ class AgentCheck(object):
         """
         return len(self.events) > 0
 
-    def get_metrics(self):
+    def get_metrics(self, prettyprint=False):
         """
         Get all metrics, including the ones that are tagged.
 
         @return the list of samples
         @rtype list of Measurement objects from monagent.common.metrics
         """
+        if prettyprint:
+            metrics = self.aggregator.flush()
+            for metric in metrics:
+                print(" Timestamp:  {}".format(metric.timestamp))
+                print(" Name:       {}".format(metric.name))
+                print(" Value:      {}".format(metric.value))
+                print(" Dimensions: ", end='')
+                line = 0
+                for name in metric.dimensions:
+                    if line != 0:
+                        print(" " * 13, end='')
+                    print("{0}={1}".format(name, metric.dimensions[name]))
+                    line += 1
+                print("-" * 24)
         return self.aggregator.flush()
 
     def get_events(self):

@@ -571,6 +571,18 @@ class ForwarderStatus(AgentStatus):
             "Transactions received: %s" % self.transactions_received,
             "Transactions flushed: %s" % self.transactions_flushed
         ]
+        if self.transactions_flushed == 0:
+            lines.append("[%s]: Unable to flush transactions\n           %s" %
+                         (style(STATUS_ERROR, 'red'),
+                          "Please verify monasca-api is running as configured"))
+        elif self.transactions_flushed != self.transactions_received:
+            lines.append("[%s]: Transactions out of sync\n             %s" %
+                         (style(STATUS_WARNING, 'yellow'),
+                          "Likely contact interruption with monasca-api"))
+        else:
+            lines.append("[%s]: Transactions up to date" %
+                         style(STATUS_OK, 'green'))
+
         return lines
 
     def has_error(self):

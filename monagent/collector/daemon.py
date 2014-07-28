@@ -15,15 +15,15 @@ import sys
 import time
 import glob
 
-# Check we're not using an old version of Python. We need 2.4 above because some modules (like subprocess)
-# were only introduced in 2.4.
+# Check we're not using an old version of Python. We need 2.4 above because
+# some modules (like subprocess) were only introduced in 2.4.
 if int(sys.version_info[1]) <= 3:
     sys.stderr.write("Monasca Agent requires python 2.4 or later.\n")
     sys.exit(2)
 
 # Custom modules
 from checks.collector import Collector
-from monagent.common.check_status import CollectorStatus
+from monagent.common.check_status import CollectorStatus, ForwarderStatus
 from monagent.common.config import get_config, get_parsed_args, load_check_directory, get_confd_path, check_yaml, get_logging_config
 from monagent.common.daemon import Daemon, AgentSupervisor
 from monagent.common.emitter import http_emitter
@@ -193,6 +193,7 @@ def main():
         'status',
         'info',
         'check',
+        'check_all',
         'configcheck',
         'jmx',
     ]
@@ -262,14 +263,26 @@ def main():
             for check in checks['initialized_checks']:
                 if check.name == check_name:
                     check.run()
-                    print(check.get_metrics())
-                    print(check.get_events())
+                    print("Metrics: ")
+                    check.get_metrics(prettyprint=True)
                     if len(args) == 3 and args[2] == 'check_rate':
                         print("Running 2nd iteration to capture rate metrics")
                         time.sleep(1)
                         check.run()
-                        print(check.get_metrics())
-                        print(check.get_events())
+                        print("Metrics: ")
+                        check.get_metrics(prettyprint=True)
+
+    elif 'check_all' == command:
+        print("Loading check directory...")
+        checks = load_check_directory(agentConfig)
+        print("...directory loaded.\n")
+        for check in checks['initialized_checks']:
+            print("#" * 80)
+            print("Check name: '{}'\n".format(check.name))
+            check.run()
+            print("Metrics: ")
+            check.get_metrics(prettyprint=True)
+            print("#" * 80 + "\n\n")
 
     elif 'configcheck' == command or 'configtest' == command:
         osname = get_os()
