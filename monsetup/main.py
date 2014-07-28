@@ -9,30 +9,19 @@ import pwd
 import socket
 import subprocess
 import sys
+import yaml
 import platform
 
-import yaml
 import agent_config
-from detection.plugins import kafka
-from detection.plugins import mon
-from detection.plugins import mysql
-from detection.plugins import rabbitmq
-from detection.plugins import network
-from detection.plugins import zookeeper
-from detection.plugins import nova
-from detection.plugins import glance
-from detection.plugins import cinder
-from detection.plugins import neutron
-from detection.plugins import swift
-from detection.plugins import keystone
-from detection.plugins import ceilometer
+from detection.plugins import kafka_consumer, mon, mysql, network, zookeeper
+from detection.plugins import nova, glance, cinder, neutron, swift
+from detection.plugins import keystone, ceilometer
 from service import sysv
 
 # List of all detection plugins to run
-DETECTION_PLUGINS = [kafka.Kafka, mon.MonAPI, mon.MonPersister, mon.MonThresh, mysql.MySQL,
-                     rabbitmq.RabbitMQ, network.Network, nova.Nova, cinder.Cinder, swift.Swift,
-                     glance.Glance, ceilometer.Ceilometer, neutron.Neutron, keystone.Keystone,
-                     zookeeper.Zookeeper]
+DETECTION_PLUGINS = [kafka_consumer.Kafka, mon.MonAPI, mon.MonPersister, mon.MonThresh, mysql.MySQL,
+                     network.Network, nova.Nova, cinder.Cinder, swift.Swift, glance.Glance,
+                     ceilometer.Ceilometer, neutron.Neutron, keystone.Keystone, zookeeper.Zookeeper]
 # Map OS to service type
 OS_SERVICE_MAP = {'Linux': sysv.SysV}
 
@@ -134,7 +123,7 @@ def main(argv=None):
         with open(config_path, 'w') as config_file:
             os.chmod(config_path, 0o640)
             os.chown(config_path, 0, gid)
-            config_file.write(yaml.dump(value))
+            config_file.write(yaml.safe_dump(value, encoding='utf-8', allow_unicode=True))
 
     # Now that the config is build start the service
     try:

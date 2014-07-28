@@ -7,7 +7,6 @@ from monsetup import agent_config
 
 def find_process_cmdline(search_string):
     """Simple function to search running process for one with cmdline containing.
-
     """
     for process in psutil.process_iter():
         for arg in process.cmdline():
@@ -19,7 +18,6 @@ def find_process_cmdline(search_string):
 
 def find_process_name(pname):
     """Simple function to search running process for one with pname.
-
     """
     for process in psutil.process_iter():
         if pname == process.name():
@@ -28,9 +26,15 @@ def find_process_name(pname):
     return None
 
 
+def find_addr_listening_on_port(port):
+    """Return the IP address which is listening on the specified TCP port."""
+    for conn in psutil.net_connections(kind='tcp'):
+        if conn.laddr[1] == port and conn.status == psutil.CONN_LISTEN:
+            return conn.laddr[0].lstrip("::ffff:")
+
+
 def watch_process(search_strings, service=None, component=None):
     """Takes a list of process search strings and returns a Plugins object with the config set.
-
         This was built as a helper as many plugins setup process watching
     """
     config = agent_config.Plugins()
@@ -48,7 +52,6 @@ def watch_process(search_strings, service=None, component=None):
 
 def service_api_check(name, url, pattern, service=None, component=None):
     """Setup a service api to be watched by the http_check plugin.
-
     """
     config = agent_config.Plugins()
     parameters = {'name': name,
