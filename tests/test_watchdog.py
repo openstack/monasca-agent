@@ -108,7 +108,7 @@ class PseudoAgent(object):
         w = Watchdog(5)
         w.reset()
         x = url.urlopen("http://localhost:31834")
-        print "ERROR Net call returned", x
+        print("ERROR Net call returned", x)
         return True
 
     @staticmethod

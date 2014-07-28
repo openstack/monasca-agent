@@ -1,3 +1,4 @@
+from __future__ import print_function
 import logging
 import unittest
 from tempfile import NamedTemporaryFile
@@ -100,7 +101,7 @@ class TailTestCase(unittest.TestCase):
 
     def _write_log(self, log_data):
         for data in log_data:
-            print >> self.log_file, data
+            print(data, file=self.log_file)
         self.log_file.flush()
 
     def tearDown(self):
@@ -469,7 +470,7 @@ class TestNagiosPerfData(TailTestCase):
 
     def _write_nagios_config(self, config_data):
         for data in config_data:
-            print >> self.nagios_config, data
+            print(data, file=self.nagios_config)
         self.nagios_config.flush()
 
     def tearDown(self):

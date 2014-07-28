@@ -326,10 +326,10 @@ def main():
             logging.getLogger().setLevel(logging.ERROR)
             return ForwarderStatus.print_latest_status()
         elif command == 'help':
-            print usage
+            print(usage)
         else:
-            print "Unknown command: %s" % command
-            print usage
+            print("Unknown command: %s" % command)
+            print(usage)
             return -1
     return 0
 

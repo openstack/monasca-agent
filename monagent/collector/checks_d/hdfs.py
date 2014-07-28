@@ -45,5 +45,5 @@ if __name__ == '__main__':
     check, instances = HDFSCheck.from_yaml('./hdfs.yaml')
     for instance in instances:
         check.check(instance)
-        print "Events: %r" % check.get_events()
-        print "Metrics: %r" % check.get_metrics()
+        print("Events: %r" % check.get_events())
+        print("Metrics: %r" % check.get_metrics())
