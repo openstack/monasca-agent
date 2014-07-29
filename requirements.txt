@@ -4,7 +4,7 @@ httplib2
 ntplib
 pymongo
 pylint
-psutil
+psutil>=2.0
 python-memcached
 PyYAML
 redis

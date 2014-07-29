@@ -38,10 +38,7 @@ class ProcessCheck(AgentCheck):
             for string in search_string:
                 if exact_match:
                     try:
-                        if proc.name() == string:  # psutil >= 2.0
-                            found = True
-                    except TypeError:
-                        if proc.name == string:  # psutil < 2.0
+                        if proc.name() == string:
                             found = True
                     except psutil.NoSuchProcess:
                         self.log.warning('Process disappeared while scanning')
@@ -53,10 +50,7 @@ class ProcessCheck(AgentCheck):
                 else:
                     if not found:
                         try:
-                            try:
-                                cmdline = proc.cmdline()  # psutil >= 2.0
-                            except TypeError:
-                                cmdline = proc.cmdline  # psutil < 2.0
+                            cmdline = proc.cmdline()
 
                             if string in ' '.join(cmdline):
                                 found = True

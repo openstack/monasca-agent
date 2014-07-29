@@ -86,7 +86,6 @@ $(FPM_BUILD) -t deb \
 -d "sysstat" \
 -d "python-pycurl" \
 -d "python-requests (>= 0.8.2)" \
--d "python-psutil" \
 -d "python-httplib2" \
 -d "python-ntplib" \
 -d "python-yaml" \
