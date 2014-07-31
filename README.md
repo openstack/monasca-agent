@@ -171,7 +171,7 @@ All key/value pairs are optional and dependent on the metric.
 This section documents some of the naming conventions that are used for monitoring OpenStack.
 
 ### Metric Names
-Where applicable, each metric name will list the name of the service, such as "nova", component, such as "api", and check that is done, such as "process_exists". For example, "nova.api.process_exists".
+Where applicable, each metric name will list the name of the service, such as "compute", component, such as "nova-api", and check that is done, such as "process_exists". For example, "nova.api.process_exists".
 
 ### Dimensions
 This section documents the list of dimensions that are used in monitoring OpenStack.
@@ -181,7 +181,7 @@ This section documents the list of dimensions that are used in monitoring OpenSt
 | region | An OpenStack region.  | `uswest` and `useast` |
 | zone| An OpenStack zone | Examples include `1`, `2` or `3` |
 | cloud_tier | Used to identify the tier in the case that TripleO is being used. See http://docs.openstack.org/developer/tripleo-incubator/README.html. | `seed_cloud`, `undercloud`, `overcloud`, `paas` | 
-| service | The name of the OpenStack service being measured. | `nova` or `glance` |
+| service | The name of the OpenStack service being measured. | `compute` or `image` or `monitoring` |
 | component | The component in the OpenStack service being measured. |`nova-api`, `nova-scheduler`, `mysql` or `rabbitmq`. |
 | resource_id | The resource ID of an OpenStack resource. | |
 | tenant_id | The tenant/project ID of the owner of an OpenStack resource. | |
