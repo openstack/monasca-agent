@@ -56,11 +56,11 @@ instances:
 
         a.check(instances[0])
         metrics = a.get_metrics()
-        self.assertEquals(metrics[0][3].get('dimensions'), {'instance': 'first'})
+        self.assertEqual(metrics[0][3].get('dimensions'), {'instance': 'first'})
 
         a.check(instances[1])
         metrics = a.get_metrics()
-        self.assertEquals(metrics[0][3].get('dimensions'), {'instance': 'second'})
+        self.assertEqual(metrics[0][3].get('dimensions'), {'instance': 'second'})
 
     def testApacheOldConfig(self):
         a, _ = get_check('apache', self.apache_config)
@@ -75,11 +75,11 @@ instances:
         nginx, instances = get_check('nginx', self.nginx_config)
         nginx.check(instances[0])
         r = nginx.get_metrics()
-        self.assertEquals(len([t for t in r if t[0] == "nginx.net.connections"]), 1, r)
+        self.assertEqual(len([t for t in r if t[0] == "nginx.net.connections"]), 1, r)
 
         nginx.check(instances[1])
         r = nginx.get_metrics()
-        self.assertEquals(r[0][3].get('dimensions'), {'test': 'first_one'})
+        self.assertEqual(r[0][3].get('dimensions'), {'test': 'first_one'})
 
     def testNginxOldConfig(self):
         nginx, _ = get_check('nginx', self.nginx_config)
@@ -89,7 +89,7 @@ instances:
             'nginx_status_url_3': 'http://www.example3.com/nginx_status:third_tag'
         }
         instances = nginx.parse_agent_config(config)['instances']
-        self.assertEquals(len(instances), 3)
+        self.assertEqual(len(instances), 3)
         for i, instance in enumerate(instances):
             assert ':'.join(config.values()[i].split(':')[:-1]) == instance['nginx_status_url']
 
@@ -99,11 +99,11 @@ instances:
 
         l.check(instances[0])
         metrics = l.get_metrics()
-        self.assertEquals(metrics[0][3].get('dimensions'), {'instance': 'first'})
+        self.assertEqual(metrics[0][3].get('dimensions'), {'instance': 'first'})
 
         l.check(instances[1])
         metrics = l.get_metrics()
-        self.assertEquals(metrics[0][3].get('dimensions'), {'instance': 'second'})
+        self.assertEqual(metrics[0][3].get('dimensions'), {'instance': 'second'})
 
 
 if __name__ == '__main__':

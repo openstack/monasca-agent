@@ -66,26 +66,26 @@ java.util.concurrent.RejectedExecutionException
         events = parse_cassandra(
             logger,
             " INFO [CompactionExecutor:2] 2012-12-11 21:46:27,012 CompactionTask.java (line 109) Compacting [SSTableReader(path='/var/lib/cassandra/data/system/LocationInfo/system-LocationInfo-he-11-Data.db'), SSTableReader(path='/var/lib/cassandra/data/system/LocationInfo/system-LocationInfo-he-9-Data.db'), SSTableReader(path='/var/lib/cassandra/data/system/LocationInfo/system-LocationInfo-he-12-Data.db'), SSTableReader(path='/var/lib/cassandra/data/system/LocationInfo/system-LocationInfo-he-10-Data.db')]")
-        self.assertEquals(events,
-                          [{'alert_type': 'info',
-                            'event_type': 'cassandra.compaction',
-                            'timestamp': 1355262387,
-                            'msg_title': "Compacting [SSTableReader(path='/var/lib/cassandra/data/system/LocationInfo/system-LocationInfo-he-1",
-                            'msg_text': "Compacting [SSTableReader(path='/var/lib/cassandra/data/system/LocationInfo/system-LocationInfo-he-11-Data.db'), SSTableReader(path='/var/lib/cassandra/data/system/LocationInfo/system-LocationInfo-he-9-Data.db'), SSTableReader(path='/var/lib/cassandra/data/system/LocationInfo/system-LocationInfo-he-12-Data.db'), SSTableReader(path='/var/lib/cassandra/data/system/LocationInfo/system-LocationInfo-he-10-Data.db')]",
-                            'auto_priority': 0}])
+        self.assertEqual(events,
+                         [{'alert_type': 'info',
+                           'event_type': 'cassandra.compaction',
+                           'timestamp': 1355262387,
+                           'msg_title': "Compacting [SSTableReader(path='/var/lib/cassandra/data/system/LocationInfo/system-LocationInfo-he-1",
+                           'msg_text': "Compacting [SSTableReader(path='/var/lib/cassandra/data/system/LocationInfo/system-LocationInfo-he-11-Data.db'), SSTableReader(path='/var/lib/cassandra/data/system/LocationInfo/system-LocationInfo-he-9-Data.db'), SSTableReader(path='/var/lib/cassandra/data/system/LocationInfo/system-LocationInfo-he-12-Data.db'), SSTableReader(path='/var/lib/cassandra/data/system/LocationInfo/system-LocationInfo-he-10-Data.db')]",
+                           'auto_priority': 0}])
 
     @attr('cassandra')
     def testCompactionEnd(self):
         events = parse_cassandra(
             logger,
             "INFO [CompactionExecutor:2] 2012-12-11 21:46:27,095 CompactionTask.java (line 221) Compacted to [/var/lib/cassandra/data/system/LocationInfo/system-LocationInfo-he-13-Data.db,].  880 to 583 (~66% of original) bytes for 4 keys at 0.007831MB/s.  Time: 71ms.")
-        self.assertEquals(events,
-                          [{'alert_type': 'info',
-                            'event_type': 'cassandra.compaction',
-                            'timestamp': 1355262387,
-                            'msg_title': 'Compacted to [/var/lib/cassandra/data/system/LocationInfo/system-LocationInfo-he-13-Data.db,].  880 ',
-                            'msg_text': 'Compacted to [/var/lib/cassandra/data/system/LocationInfo/system-LocationInfo-he-13-Data.db,].  880 to 583 (~66% of original) bytes for 4 keys at 0.007831MB/s.  Time: 71ms.',
-                            'auto_priority': 0}])
+        self.assertEqual(events,
+                         [{'alert_type': 'info',
+                           'event_type': 'cassandra.compaction',
+                           'timestamp': 1355262387,
+                           'msg_title': 'Compacted to [/var/lib/cassandra/data/system/LocationInfo/system-LocationInfo-he-13-Data.db,].  880 ',
+                           'msg_text': 'Compacted to [/var/lib/cassandra/data/system/LocationInfo/system-LocationInfo-he-13-Data.db,].  880 to 583 (~66% of original) bytes for 4 keys at 0.007831MB/s.  Time: 71ms.',
+                           'auto_priority': 0}])
 
 if __name__ == '__main__':
     unittest.main()

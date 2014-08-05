@@ -95,10 +95,10 @@ class HaproxyTestCase(unittest.TestCase):
         self.assertTrue(isinstance(metrics, list))
         self.assertTrue(len(metrics) > 0)
 
-        self.assertEquals(len([t for t in metrics
-                               if t[0] == "haproxy.backend.bytes.in_rate"]), 4, metrics)
-        self.assertEquals(len([t for t in metrics
-                               if t[0] == "haproxy.frontend.session.current"]), 1, metrics)
+        self.assertEqual(len([t for t in metrics
+                              if t[0] == "haproxy.backend.bytes.in_rate"]), 4, metrics)
+        self.assertEqual(len([t for t in metrics
+                              if t[0] == "haproxy.frontend.session.current"]), 1, metrics)
 
         inst = config['instances'][0]
         data = self.check._fetch_data(inst['url'], inst['username'], inst['password'])
@@ -158,10 +158,10 @@ class HaproxyTestCase(unittest.TestCase):
         self.assertTrue(isinstance(metrics, list))
         self.assertTrue(len(metrics) > 0)
 
-        self.assertEquals(len([t for t in metrics
-                               if t[0] == "haproxy.backend.bytes.in_rate"]), 4, metrics)
-        self.assertEquals(len([t for t in metrics
-                               if t[0] == "haproxy.frontend.session.current"]), 1, metrics)
+        self.assertEqual(len([t for t in metrics
+                              if t[0] == "haproxy.backend.bytes.in_rate"]), 4, metrics)
+        self.assertEqual(len([t for t in metrics
+                              if t[0] == "haproxy.frontend.session.current"]), 1, metrics)
 
     def tearDown(self):
         if self.process is not None:

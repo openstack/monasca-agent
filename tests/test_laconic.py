@@ -37,12 +37,12 @@ class TestLaconic(unittest.TestCase):
     def testRepeatingErrors(self):
         for i in range(10):
             self.l.error("Cannot find nagios.log")
-        self.assertEquals(
+        self.assertEqual(
             self.sio.getvalue().count("Cannot find nagios.log"), 1, self.sio.getvalue())
 
         for i in range(10):
             self.l.warn("Cannot find ganglia.log")
-        self.assertEquals(
+        self.assertEqual(
             self.sio.getvalue().count("Cannot find ganglia.log"), 1, self.sio.getvalue())
 
         for i in range(10):
@@ -52,13 +52,13 @@ class TestLaconic(unittest.TestCase):
                 self.l.exception("Caught!")
 
         # once for the traceback, once for the message
-        self.assertEquals(self.sio.getvalue().count("Ka-boom"), 2)
+        self.assertEqual(self.sio.getvalue().count("Ka-boom"), 2)
 
     def testNonRepeat(self):
         for i in range(10):
             self.l.error("Cannot find nagios.log %d" % i)
-        self.assertEquals(self.sio.getvalue().count(" nagios.log"), 10)
-        self.assertEquals(self.sio.getvalue().count(" 7"), 1)
+        self.assertEqual(self.sio.getvalue().count(" nagios.log"), 10)
+        self.assertEqual(self.sio.getvalue().count(" 7"), 1)
 
     def testBlowUp(self):
         """Try to use a lot of memory"""
@@ -77,7 +77,7 @@ class TestLaconic(unittest.TestCase):
  mattis nunc, tincidunt mollis quam condimentum eu. Donec volutpat
  sodales magna eu fermentum. Integer ultricies odio non metus aliquet
  tristique. Proin ultrices accumsan augue, quis tempor diam rutrum at.""" % i)
-        self.assertEquals(len(self.laconic.hashed_messages), 7, self.sio.getvalue())
+        self.assertEqual(len(self.laconic.hashed_messages), 7, self.sio.getvalue())
 
 if __name__ == "__main__":
     unittest.main()

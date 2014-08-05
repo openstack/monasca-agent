@@ -138,13 +138,13 @@ class TestRedis(unittest.TestCase):
         # it's the only one we can guarantee is there.
         db_metrics = self._sort_metrics(
             [m for m in metrics if m[0] in ['redis.keys', 'redis.expires'] and "redis_db:db14" in m[3]["dimensions"]])
-        self.assertEquals(2, len(db_metrics))
+        self.assertEqual(2, len(db_metrics))
 
-        self.assertEquals('redis.expires', db_metrics[0][0])
-        self.assertEquals(1, db_metrics[0][2])
+        self.assertEqual('redis.expires', db_metrics[0][0])
+        self.assertEqual(1, db_metrics[0][2])
 
-        self.assertEquals('redis.keys', db_metrics[1][0])
-        self.assertEquals(3, db_metrics[1][2])
+        self.assertEqual('redis.keys', db_metrics[1][0])
+        self.assertEqual(3, db_metrics[1][2])
 
         # Run one more check and ensure we get total command count
         # and other rates

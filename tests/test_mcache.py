@@ -31,11 +31,11 @@ class TestMemCache(unittest.TestCase):
         raise SkipTest('Requires mcache')
         for i in range(3):
             # Count open connections to localhost:11211, should be 0
-            self.assertEquals(self._countConnections(11211), 0)
+            self.assertEqual(self._countConnections(11211), 0)
             new_conf = self.c.parse_agent_config({"memcache_server": "localhost"})
             self.c.check(new_conf['instances'][0])
             # Verify that the count is still 0
-            self.assertEquals(self._countConnections(11211), 0)
+            self.assertEqual(self._countConnections(11211), 0)
 
     def testMetrics(self):
         raise SkipTest('Requires mcache')
@@ -48,10 +48,10 @@ class TestMemCache(unittest.TestCase):
         r = self.c.get_metrics()
 
         # Check that we got metrics from 3 hosts (aka all but the dummy host)
-        self.assertEquals(len([t for t in r if t[0] == "memcache.total_items"]), 3, r)
+        self.assertEqual(len([t for t in r if t[0] == "memcache.total_items"]), 3, r)
 
         # Check that we got 21 metrics for a specific host
-        self.assertEquals(
+        self.assertEqual(
             len([t for t in r if t[3].get('dimensions') == {"instance": mythirdtag}]), 21, r)
 
     def testDimensions(self):
@@ -70,7 +70,7 @@ class TestMemCache(unittest.TestCase):
         r = self.c.get_metrics()
 
         # Check the dimensions
-        self.assertEquals(
+        self.assertEqual(
             len([t for t in r if t[3].get('dimensions') == {"regular_old": "dimensions"}]), 21, r)
 
         conf = {
@@ -87,7 +87,7 @@ class TestMemCache(unittest.TestCase):
         r = self.c.get_metrics()
 
         # Check the dimensions
-        self.assertEquals(
+        self.assertEqual(
             len([t for t in r if t[3].get('dimensions') == {"instance": "localhost_11211"}]), 21, r)
 
     def testDummyHost(self):
@@ -111,7 +111,7 @@ class TestMemCache(unittest.TestCase):
                 self.c.get_metrics()
 
             end = len(gc.garbage)
-            self.assertEquals(end - start, 0, gc.garbage)
+            self.assertEqual(end - start, 0, gc.garbage)
         finally:
             gc.set_debug(0)
 

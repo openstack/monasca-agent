@@ -14,7 +14,7 @@ class TestConfig(unittest.TestCase):
         """
         agent_config = get_config(
             cfg_path=os.path.join(os.path.dirname(os.path.realpath(__file__)), "badconfig.conf"))
-        self.assertEquals(agent_config["api_key"], "1234")
+        self.assertEqual(agent_config["api_key"], "1234")
 
     def testGoodPidFie(self):
         """Verify that the pid file succeeds and fails appropriately"""
@@ -30,10 +30,10 @@ class TestConfig(unittest.TestCase):
 
         p = PidFile(program, pid_dir)
 
-        self.assertEquals(p.get_pid(), 666)
+        self.assertEqual(p.get_pid(), 666)
         # clean up
-        self.assertEquals(p.clean(), True)
-        self.assertEquals(os.path.exists(expected_path), False)
+        self.assertEqual(p.clean(), True)
+        self.assertEqual(os.path.exists(expected_path), False)
 
     def testHostname(self):
         valid_hostnames = [

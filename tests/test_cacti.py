@@ -76,7 +76,7 @@ class TestCacti(unittest.TestCase):
         results3 = check.get_metrics()
         last_ts2 = check.last_ts[rrd_dir + '/localhost_hdd_free_10.rrd.AVERAGE']
 
-        self.assertEquals(last_ts1, last_ts2)
+        self.assertEqual(last_ts1, last_ts2)
 
         metrics = [r[0] for r in results2]
 
@@ -100,14 +100,14 @@ class TestCacti(unittest.TestCase):
 
         # Should not have any - not included in the whitelist
         current_users = [m[2] for m in results1 if m[0] == 'system.users.current' and m[2]]
-        self.assertEquals(len(current_users), 0)
+        self.assertEqual(len(current_users), 0)
 
         disk_used = [m for m in results1 if m[0] == 'system.disk.used' and m[2]]
         assert len(disk_used) > 0
 
         # Make sure no None values are picked up
         none_metrics = [m[2] for m in results1 if m[2] is None]
-        self.assertEquals(len(none_metrics), 0)
+        self.assertEqual(len(none_metrics), 0)
 
     if __name__ == '__main__':
         unittest.main()

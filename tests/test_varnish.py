@@ -1857,15 +1857,15 @@ instances:
         v, instances = get_check('varnish', self.config)
         v._parse_varnishstat(self.v_dump, False)
         metrics = v.get_metrics()
-        self.assertEquals([m[2] for m in metrics
-                           if m[0] == "varnish.n_waitinglist"][0], 980)
+        self.assertEqual([m[2] for m in metrics
+                          if m[0] == "varnish.n_waitinglist"][0], 980)
         assert "varnish.fetch_length" not in [m[0] for m in metrics]
 
         # XML parsing
         v._parse_varnishstat(self.xml_dump, True)
         metrics = v.get_metrics()
-        self.assertEquals([m[2] for m in metrics
-                           if m[0] == "varnish.SMA.s0.g_space"][0], 120606)
+        self.assertEqual([m[2] for m in metrics
+                          if m[0] == "varnish.SMA.s0.g_space"][0], 120606)
         assert "varnish.SMA.transient.c_bytes" not in [m[0] for m in metrics]
 
     def testCheck(self):

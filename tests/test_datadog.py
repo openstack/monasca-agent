@@ -148,7 +148,7 @@ class TestDogstream(TailTestCase):
         self._write_log((' '.join(data) for data in log_data))
 
         actual_output = self.dogstream.check(self.config, move_end=False)
-        self.assertEquals(expected_output, actual_output)
+        self.assertEqual(expected_output, actual_output)
         for metric, timestamp, val, attr in expected_output['dogstream']:
             assert isinstance(val, float)
 
@@ -177,7 +177,7 @@ class TestDogstream(TailTestCase):
         self._write_log((' '.join(data) for data in log_data))
 
         actual_output = self.dogstream.check(self.config, move_end=False)
-        self.assertEquals(expected_output, actual_output)
+        self.assertEqual(expected_output, actual_output)
         for metric, timestamp, val, attr in expected_output['dogstream']:
             assert isinstance(val, (int, long))
 
@@ -193,7 +193,7 @@ class TestDogstream(TailTestCase):
         self._write_log(log_data)
 
         actual_output = self.dogstream.check(self.config, move_end=False)
-        self.assertEquals(expected_output, actual_output)
+        self.assertEqual(expected_output, actual_output)
 
     def test_dogstream_ancient_function_plugin(self):
         """Ensure that pre-stateful plugins still work"""
@@ -230,7 +230,7 @@ class TestDogstream(TailTestCase):
             self.logger,
             {'dogstreams': '%s:tests.test_datadog:parse_function_plugin' % self.log_file.name})
         actual_output = statedog.check(self.config, move_end=False)
-        self.assertEquals(expected_output, actual_output)
+        self.assertEqual(expected_output, actual_output)
 
     def test_dogstream_new_plugin(self):
         """Ensure that class-based stateful plugins work"""
@@ -249,7 +249,7 @@ class TestDogstream(TailTestCase):
             self.logger,
             {'dogstreams': '%s:tests.test_datadog:ParseClassPlugin:foo:bar' % self.log_file.name})
         actual_output = statedog.check(self.config, move_end=False)
-        self.assertEquals(expected_output, actual_output)
+        self.assertEqual(expected_output, actual_output)
 
     def test_dogstream_events(self):
         log_data = [
@@ -301,7 +301,7 @@ class TestDogstream(TailTestCase):
         dogstream = Dogstreams.init(
             self.logger, {'dogstreams': '%s:tests.test_datadog:parse_events' % self.log_file.name})
         actual_output = dogstream.check(self.config, move_end=False)
-        self.assertEquals(expected_output, actual_output)
+        self.assertEqual(expected_output, actual_output)
 
     def test_dogstream_events_validation(self):
         log_data = [
@@ -337,7 +337,7 @@ class TestDogstream(TailTestCase):
             self.logger,
             {'dogstreams': '%s:tests.test_datadog:repr_event_parser' % self.log_file.name})
         actual_output = dogstream.check(self.config, move_end=False)
-        self.assertEquals(expected_output, actual_output)
+        self.assertEqual(expected_output, actual_output)
 
     def test_cassandra_parser(self):
 
@@ -408,7 +408,7 @@ class TestDogstream(TailTestCase):
             self.logger,
             {'dogstreams': '%s:dogstream.cassandra:parse_cassandra' % self.log_file.name})
         actual_output = dogstream.check(self.config, move_end=False)
-        self.assertEquals(expected_output, actual_output)
+        self.assertEqual(expected_output, actual_output)
 
     def test_supervisord_parser(self):
         log_data = """2012-07-16 22:30:48,335 INFO spawned: 'monitor' with pid 20216
@@ -453,7 +453,7 @@ class TestDogstream(TailTestCase):
             self.logger,
             {'dogstreams': '%s:dogstream.supervisord_log:parse_supervisord' % self.log_file.name})
         actual_output = dogstream.check(self.config, move_end=False)
-        self.assertEquals(expected_output, actual_output)
+        self.assertEqual(expected_output, actual_output)
 
 
 class TestNagiosPerfData(TailTestCase):
@@ -486,7 +486,7 @@ class TestNagiosPerfData(TailTestCase):
         ])
 
         dogstream = Dogstreams.init(self.logger, self.agent_config)
-        self.assertEquals([NagiosServicePerfData], [d.__class__ for d in dogstream.dogstreams])
+        self.assertEqual([NagiosServicePerfData], [d.__class__ for d in dogstream.dogstreams])
 
         log_data = [
             (
@@ -554,7 +554,7 @@ class TestNagiosPerfData(TailTestCase):
         actual_output = dogstream.check(self.agent_config, move_end=False)['dogstream']
         actual_output.sort(key=point_sorter)
 
-        self.assertEquals(expected_output, actual_output)
+        self.assertEqual(expected_output, actual_output)
 
     def test_service_perfdata_special_cases(self):
         from collector.checks.datadog import NagiosServicePerfData
@@ -565,7 +565,7 @@ class TestNagiosPerfData(TailTestCase):
         ])
 
         dogstream = Dogstreams.init(self.logger, self.agent_config)
-        self.assertEquals([NagiosServicePerfData], [d.__class__ for d in dogstream.dogstreams])
+        self.assertEqual([NagiosServicePerfData], [d.__class__ for d in dogstream.dogstreams])
 
         log_data = [
             (
@@ -680,7 +680,7 @@ class TestNagiosPerfData(TailTestCase):
         actual_output = dogstream.check(self.agent_config, move_end=False)['dogstream']
         actual_output.sort(key=point_sorter)
 
-        self.assertEquals(expected_output, actual_output)
+        self.assertEqual(expected_output, actual_output)
 
     def test_host_perfdata(self):
         from collector.checks.datadog import NagiosHostPerfData
@@ -691,7 +691,7 @@ class TestNagiosPerfData(TailTestCase):
         ])
 
         dogstream = Dogstreams.init(self.logger, self.agent_config)
-        self.assertEquals([NagiosHostPerfData], [d.__class__ for d in dogstream.dogstreams])
+        self.assertEqual([NagiosHostPerfData], [d.__class__ for d in dogstream.dogstreams])
 
         log_data = [
             (
@@ -733,7 +733,7 @@ class TestNagiosPerfData(TailTestCase):
         actual_output = dogstream.check(self.agent_config, move_end=False)['dogstream']
         actual_output.sort(key=point_sorter)
 
-        self.assertEquals(expected_output, actual_output)
+        self.assertEqual(expected_output, actual_output)
 
     def test_alt_service_perfdata(self):
         from collector.checks.datadog import NagiosServicePerfData
@@ -744,7 +744,7 @@ class TestNagiosPerfData(TailTestCase):
         ])
 
         dogstream = Dogstreams.init(self.logger, self.agent_config)
-        self.assertEquals([NagiosServicePerfData], [d.__class__ for d in dogstream.dogstreams])
+        self.assertEqual([NagiosServicePerfData], [d.__class__ for d in dogstream.dogstreams])
         actual_output = dogstream.check(self.agent_config, move_end=False)
 
         expected_output = {'dogstream': [('nagios.current_users.users', 1339511440, 1.0,
@@ -764,7 +764,7 @@ class TestNagiosPerfData(TailTestCase):
                                            'warn': '5852', 'metric_type': 'gauge',
                                            'host_name': 'localhost', 'crit': '6583',
                                            'unit': 'MB'})]}
-        self.assertEquals(expected_output, actual_output)
+        self.assertEqual(expected_output, actual_output)
 
     def test_alt_host_perfdata(self):
         from collector.checks.datadog import NagiosHostPerfData
@@ -775,7 +775,7 @@ class TestNagiosPerfData(TailTestCase):
         ])
 
         dogstream = Dogstreams.init(self.logger, self.agent_config)
-        self.assertEquals([NagiosHostPerfData], [d.__class__ for d in dogstream.dogstreams])
+        self.assertEqual([NagiosHostPerfData], [d.__class__ for d in dogstream.dogstreams])
         actual_output = dogstream.check(self.agent_config, move_end=False)
 
         expected_output = {'dogstream': [('nagios.host.pl', 1339511440, 0.0,
@@ -786,7 +786,7 @@ class TestNagiosPerfData(TailTestCase):
                                           {'warn': '3000.000000', 'metric_type': 'gauge',
                                            'host_name': 'localhost', 'min': '0.000000',
                                            'crit': '5000.000000', 'unit': 'ms'})]}
-        self.assertEquals(expected_output, actual_output)
+        self.assertEqual(expected_output, actual_output)
 
 
 if __name__ == '__main__':

@@ -51,8 +51,8 @@ Node count: 487
         buf = StringIO(stat_response)
         metrics, dimensions = Zookeeper.parse_stat(buf)
 
-        self.assertEquals(dimensions, {'mode': 'leader'})
-        self.assertEquals(metrics, expected)
+        self.assertEqual(dimensions, {'mode': 'leader'})
+        self.assertEqual(metrics, expected)
 
     def test_zk_stat_parsing_gte_v344(self):
         Zookeeper, instances = get_check('zk', CONFIG)
@@ -90,5 +90,5 @@ Node count: 487
         buf = StringIO(stat_response)
         metrics, dimensions = Zookeeper.parse_stat(buf)
 
-        self.assertEquals(dimensions, {'mode': 'leader'})
-        self.assertEquals(metrics, expected)
+        self.assertEqual(dimensions, {'mode': 'leader'})
+        self.assertEqual(metrics, expected)

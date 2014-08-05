@@ -60,25 +60,25 @@ class TestElastic(unittest.TestCase):
 
         self.assertTrue(isinstance(r, list))
         self.assertTrue(len(r) > 0)
-        self.assertEquals(len([t for t in r if t[0] == "elasticsearch.get.total"]), 1, r)
-        self.assertEquals(len([t for t in r if t[0] == "elasticsearch.search.fetch.total"]), 1, r)
-        self.assertEquals(len([t for t in r if t[0] == "jvm.gc.collection_time"]), 1, r)
-        self.assertEquals(len([t for t in r if t[0] == "jvm.mem.heap_committed"]), 1, r)
-        self.assertEquals(len([t for t in r if t[0] == "jvm.mem.heap_used"]), 1, r)
-        self.assertEquals(len([t for t in r if t[0] == "jvm.threads.count"]), 1, r)
-        self.assertEquals(len([t for t in r if t[0] == "jvm.threads.peak_count"]), 1, r)
-        self.assertEquals(len([t for t in r if t[0] == "elasticsearch.transport.rx_count"]), 1, r)
-        self.assertEquals(len([t for t in r if t[0] == "elasticsearch.transport.tx_size"]), 1, r)
-        self.assertEquals(
+        self.assertEqual(len([t for t in r if t[0] == "elasticsearch.get.total"]), 1, r)
+        self.assertEqual(len([t for t in r if t[0] == "elasticsearch.search.fetch.total"]), 1, r)
+        self.assertEqual(len([t for t in r if t[0] == "jvm.gc.collection_time"]), 1, r)
+        self.assertEqual(len([t for t in r if t[0] == "jvm.mem.heap_committed"]), 1, r)
+        self.assertEqual(len([t for t in r if t[0] == "jvm.mem.heap_used"]), 1, r)
+        self.assertEqual(len([t for t in r if t[0] == "jvm.threads.count"]), 1, r)
+        self.assertEqual(len([t for t in r if t[0] == "jvm.threads.peak_count"]), 1, r)
+        self.assertEqual(len([t for t in r if t[0] == "elasticsearch.transport.rx_count"]), 1, r)
+        self.assertEqual(len([t for t in r if t[0] == "elasticsearch.transport.tx_size"]), 1, r)
+        self.assertEqual(
             len([t for t in r if t[0] == "elasticsearch.transport.server_open"]), 1, r)
-        self.assertEquals(
+        self.assertEqual(
             len([t for t in r if t[0] == "elasticsearch.thread_pool.snapshot.queue"]), 1, r)
-        self.assertEquals(len([t for t in r if t[0] == "elasticsearch.active_shards"]), 1, r)
+        self.assertEqual(len([t for t in r if t[0] == "elasticsearch.active_shards"]), 1, r)
 
         self.check.cluster_status[conf['instances'][0].get('url')] = "red"
         self.check.check(conf['instances'][0])
         events = self.check.get_events()
-        self.assertEquals(len(events), 1, events)
+        self.assertEqual(len(events), 1, events)
 
 
 if __name__ == "__main__":
