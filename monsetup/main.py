@@ -71,6 +71,8 @@ def main(argv=None):
     elif detected_os == 'Windows':
         print("Windows is not currently supported by the Monasca Agent")
         sys.exit()
+    else:
+        print("{0} is not currently supported by the Monasca Agent".format(detected_os))
 
     # Service enable, includes setup of users/config directories so must be
     # done before configuration

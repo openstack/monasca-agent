@@ -1,59 +1,75 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**
+**Table of Contents**  *generated with [DocToc](http://doctoc.herokuapp.com/)*
 
 - [Introduction](#introduction)
 - [Architecture](#architecture)
 - [Installing](#installing)
 - [Configuring](#configuring)
-  - [Configuration Options](#configuration-options)
-  - [Configuring Plugins](#configuring-plugins)
-  - [monasca-setup](#monasca-setup)
-    - [Configuration Options](#configuration-options-1)
+  - [monasca-setup (Recommended)](#monasca-setup-recommended)
+    - [Explanation of monasca-setup command-line parameters:](#explanation-of-monasca-setup-command-line-parameters)
+    - [Manual Configuration of the Agent](#manual-configuration-of-the-agent)
+    - [Manual Configuration of Plugins](#manual-configuration-of-plugins)
   - [Chef Cookbook](#chef-cookbook)
   - [monasca-alarm-manager](#monasca-alarm-manager)
 - [Running](#running)
   - [Running from the command-line](#running-from-the-command-line)
   - [Running as a daemon](#running-as-a-daemon)
-- [Trouble-shooting](#trouble-shooting)
+- [Troubleshooting](#troubleshooting)
 - [Naming conventions](#naming-conventions)
   - [Common Naming Conventions](#common-naming-conventions)
     - [Metric Names](#metric-names)
-    - [Dimensions](#dimensions)
+    - [System Dimensions](#system-dimensions)
   - [OpenStack Specific Naming Conventions](#openstack-specific-naming-conventions)
     - [Metric Names](#metric-names-1)
-    - [Dimensions](#dimensions-1)
-- [Checks](#checks)
+    - [OpenStack Dimensions](#openstack-dimensions)
+- [System Checks](#system-checks)
   - [System Metrics](#system-metrics)
-  - [Nagios](#nagios)
-  - [Statsd](#statsd)
-  - [Log Parsing](#log-parsing)
-  - [Host alive](#host-alive)
-  - [Process exists](#process-exists)
-  - [Http Endpoint checks](#http-endpoint-checks)
-  - [MySQL](#mysql)
-  - [RabbitMQ](#rabbitmq)
-  - [Kafka](#kafka)
-  - [Other](#other)
-  - [OpenStack](#openstack)
-    - [Nova](#nova)
-    - [Swift](#swift)
-    - [Glance](#glance)
-    - [Cinder](#cinder)
-    - [Neutron](#neutron)
-    - [Keystone](#keystone)
-    - [Seed Controller](#seed-controller)
-- [Developing New Checks](#developing-new-checks)
-  - [AgentCheck Interface](#agentcheck-interface)
-  - [ServicesCheck interface](#servicescheck-interface)
-  - [Sending Metrics](#sending-metrics)
-  - [Plugin Configuration](#plugin-configuration)
-    - [init_config](#init_config)
-    - [instances](#instances)
-  - [Plugin Documentation](#plugin-documentation)
+- [Plugin Checks](#plugin-checks)
+  - [Developing New Checks](#developing-new-checks)
+    - [AgentCheck Interface](#agentcheck-interface)
+    - [ServicesCheck interface](#servicescheck-interface)
+    - [Sending Metrics](#sending-metrics)
+    - [Plugin Configuration](#plugin-configuration)
+      - [init_config](#init_config)
+      - [instances](#instances)
+      - [Plugin Documentation](#plugin-documentation)
+  - [Nagios Checks](#nagios-checks)
+  - [Host Alive Checks](#host-alive-checks)
+  - [Process Checks](#process-checks)
+  - [Http Endpoint Checks](#http-endpoint-checks)
+  - [MySQL Checks](#mysql-checks)
+  - [ZooKeeper Checks](#zookeeper-checks)
+  - [Kafka Checks](#kafka-checks)
+  - [RabbitMQ Checks](#rabbitmq-checks)
+  - [OpenStack Monitoring](#openstack-monitoring)
+    - [Nova Checks](#nova-checks)
+        - [Nova Processes Monitored](#nova-processes-monitored)
+        - [Example Nova Metrics](#example-nova-metrics)
+    - [Swift Checks](#swift-checks)
+        - [Swift Processes Monitored](#swift-processes-monitored)
+        - [Example Swift Metrics](#example-swift-metrics)
+    - [Glance Checks](#glance-checks)
+        - [Glance Processes Monitored](#glance-processes-monitored)
+        - [Example Glance Metrics](#example-glance-metrics)
+    - [Cinder Checks](#cinder-checks)
+        - [Cinder Processes Monitored](#cinder-processes-monitored)
+        - [Example Cinder Metrics](#example-cinder-metrics)
+    - [Neutron Checks](#neutron-checks)
+        - [Neutron Processes Monitored](#neutron-processes-monitored)
+        - [Example Neutron Metrics](#example-neutron-metrics)
+    - [Keystone Checks](#keystone-checks)
+        - [Keystone Processes Monitored](#keystone-processes-monitored)
+        - [Example Keystone Metrics](#example-keystone-metrics)
+    - [Ceilometer Checks](#ceilometer-checks)
+        - [Ceilometer Processes Monitored](#ceilometer-processes-monitored)
+        - [Example Ceilometer Metrics](#example-ceilometer-metrics)
+- [Statsd](#statsd)
+- [Log Parsing](#log-parsing)
 - [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 
 # Introduction
 The Monasca Agent is a modern Python monitoring agent for gathering metrics and sending them to the Monasca API. The Agent supports collecting metrics from a variety of sources as follows:
@@ -63,45 +79,54 @@ The Monasca Agent is a modern Python monitoring agent for gathering metrics and 
 * Statsd. The Monasca Agent supports an integrated Statsd daemon which can be used by applications via a statsd client library.
 * Retrieving metrics from log files written in a specific format. 
 * Host alive. The Monasca Agent can perform active checks on a host to determine if it is alive using ping(ICMP) or SSH.
-* Process exists checks. The Monasca Agent can check if a process is up or down.
+* Process checks. The Monasca Agent can check a process and return several metrics on the process such as number of instances, memory, io and threads.
 * Http Endpoint checks. The Monasca Agent can perform active checks on http endpoints by sending an HTTP request to an API.
 * Service checks. The Agent can check service such as MySQL, RabbitMQ, and many more.
+* OpenStack metrics.  The agent can perform checks on OpenStack processes.
+* The Agent can automatically detect and setup checks on certain processes and resources.
 
 For the complete list of metrics that the Monasca Agent supports see "Checks" below.
 
 The Agent is extensible through configuration of additional plugins, written in Python.
 
 # Architecture
-This section describes the overall architecture of the Monasca Agent.
-
-* Agent
-* Checks
+This section describes the overall architecture of the Monasca Agent.  The agent consists of the supervisor, collector, forwarder and statsd daemon.
 
 This diagram illustrates the monasca-agent architecture, and the table which follows it explains each component.
 
 ![alt text](monasca-agent_arch.png)
 
-A metric is identified by a name and dimensions.
+The flow of the agent application goes like this:
+
+* The collector runs based on a configurable interval and collects the base system metrics such as cpu or disk utilization as well as any metrics from additional configured plugins such as mySQL or Kafka.
+* The statsd daemon allows users to send statsd type messages to the agent at any time.  These messages are flushed periodically to the forwarder.
+* The forwarder, is a Tornado web server application that takes the metrics from the collector and statsd daemon, normalizes the metric names and forwards them on to the Monasca-API.
+* Once sent to the Monasca-API, the metrics continue through the Monasca pipeline and end up in the Metrics Database.
+* The collector then waits for the configured interval and restarts the collection process.
 
 The Agent is composed of the following components:
 
 * Supervisor (supervisord): Manages the lifecycle of the Collector, Forwarder and Statsd Daemon.
 * Collector (monasca-collector): Collects system and other metrics and sends to the Forwarder.
 * Forwarder (monasca-forwarder): Sends metrics to the API.
-* Statsd nDaemon (monasca-statsd): Statsd daemon.
+* Statsd Daemon (monasca-statsd): Statsd daemon.
+* Monasca Setup (monasca-setup)
 
 | Component Name | Process Name | Description |
 | -------------- | ------------ | ----------- |
-| Supervisor | supervisord | Runs as root, launches all other processes as the "monasca-agent" user |
-| Collector | monasca-collector | Gathers system & application metrics | 
-| Monstatsd | monasca-statsd | Statsd engine capable of handling dimensions associated with metrics submitted by a client that supports them. Also supports metrics from the standard statsd client. (udp/8125) | 
-| Forwarder | monasca-forwarder | Gathers data from statsd and submits it to Monasca API over SSL (tcp/17123) | 
-| Agent Checks | checks.d/*.py | Python-based user-configured checks |
+| Supervisor | supervisord | Runs as root, launches all other processes as the "monasca-agent" user.  This process manages the lifecycle of the Collector, Forwarder and Statsd Daemon.  It allows Start, Stop and Restart of all the agent processes together. |
+| Collector | monasca-collector | Gathers system & application metrics on a configurable interval and sends them to the Forwarder process. | 
+| Forwarder | monasca-forwarder | Gathers data from the collector and statsd and submits it to Monasca API over SSL (tcp/17123) | 
+| Statsd Daemon | monasca-statsd | Statsd engine capable of handling dimensions associated with metrics submitted by a client that supports them. Also supports metrics from the standard statsd client. (udp/8125) | 
+| Monasca Setup | monasca-setup | The monasca-setup script collects command-line arguments and configures the and starts the agent.  the Monasca Setup program can also auto-detect and configure certain agent plugins | 
+| Agent Checks | checks.d/*.py | Python-based user-configured checks.  These checks can be for other applications or services to verify functionality or gather statistics on things such as messages processed, etc.  Each additional agent check must be configured using a yaml file for a specific plugin that provides the additional functionality located in the conf.d directory. |
 
 
-The Agent includes the script "monasca-setup", that can be used for automatically configuring the agent to generate metrics that are sent to the API.  It creates the agent.conf file locate in /etc/monasca/agent directory.  It also sets up additional checks based on what is running locally on that machine.  For instance, if this is a compute node, the agent will setup checks to monitor the Nova processes and setup a http_status check on the nova-api.  It can also detect other servers such as mySQL and Kafka and setup checks for them as well.
+The Agent includes the "monasca-setup" script, that can be used for automatically configuring the agent to generate metrics that are sent to the API.  It creates the agent.conf file locate in /etc/monasca/agent directory.  It also sets up additional checks based on what is running locally on that machine.  For instance, if this is a compute node, the agent will setup checks to monitor the Nova processes and setup a http_status check on the nova-api.  It can also detect other servers such as mySQL and Kafka and setup checks for them as well.
 
-The [monasca-alarm-manager](**https://github.com/hpcloud-mon/monasca-alarm-manager**) is a utility that can be used for configuring a default set of alarms when monitoring a OpenStack deployment.
+A metric is identified by a name and dimensions.  The fields required in a metric are name, timestamp, and value.  A metric can also have 0..n dimensions.  Some standard dimensions are sent with all metrics that are sent by the agent.  Reference the section on [Dimensions](#dimensions) for more details.
+
+The [monasca-alarm-manager](**https://github.com/hpcloud-mon/monasca-alarm-manager**) is a utility that is under development that can be used for configuring a default set of alarms when monitoring a OpenStack deployment.
 
 # Installing
 The Agent (monasca-agent) is available for installation from the Python Package Index (PyPI). To install it, you first need `pip` installed on the node to be monitored. Instructions on installing pip may be found at https://pip.pypa.io/en/latest/installing.html.  The Agent will NOT run under any flavor of Windows or Mac OS at this time but has been tested thoroughly on Ubuntu and should work under most flavors of Linux.  Support may be added for Mac OS and Windows in the future.  Example of an Ubuntu or Debian based install:
@@ -128,7 +153,7 @@ sudo pip install monasca-agent
 The Agent requires configuration in order to run. There are two ways to configure the agent, either using the [monasca-setup](#monasca-setup) script or manually.
 
 ## monasca-setup (Recommended)
-The Monasca agent has a script, called "monasca-setup", that should be used to automatically configure the Agent to send metrics to a Monasca API. This script will create the agent.conf configuration file as well as any plugin configuration yaml files needed to monitor the processes on the local machine.  The agent configuration files are located in /etc/monasca/agent.  The plugin configuration files are located in located in /etc/monasca/agent/conf.d.
+The Monasca agent has a script, called "monasca-setup", that should be used to automatically configure the Agent to send metrics to a Monasca API. This script will create the agent.conf configuration file as well as any plugin configuration yaml files needed to monitor the processes on the local machine.  The mon-setup script will auto-detect certain applications and OpenStack processes that are running on the machine.  The agent configuration files are located in /etc/monasca/agent.  The plugin configuration files are located in located in /etc/monasca/agent/conf.d.
 
 To run monasca-setup:
 
@@ -254,27 +279,19 @@ To help configure a default set of alarms for monitoring an OpenStack deployment
 The Agent can be run from the command-line or as a daemon.
 
 ## Running from the command-line
-To run the agent from the command-line, you will need to start at least 2 processes in order to send metrics.  These are the collector and forwarder.  If you have already installed the monasca-agent package and run the monasca-setup configuration script, run the following commands from the Linux command-line:
-
-	* From a terminal window, use netcat to listen for metrics on a local port:
-		nc -lk 8080
-	* From a second terminal window, launch the forwarder in the background:
-		python ddagent.py &
-	* From the second terminal window, launch the collector in the foreground:
-		python agent.py foreground --use-local-forwarder
-	* Metric payloads will start to appear in the first terminal window running netcat
+TBD
 
 ## Running as a daemon
 To control the monasca-agent daemon, you can use the init.d commands that are listed below:
 
-	* To start the agent:
+	* To start the agent daemon:
 		sudo service monasca-agent start
-	* To stop the agent:
+	* To stop the agent daemon:
 		sudo service monasca-agent stop
-	* To restart the agent if it is already running:
+	* To restart the agent daemon if it is already running:
 		sudo service monasca-agent restart
 
-# Trouble-shooting
+# Troubleshooting
 TBD
 
 # Naming conventions
@@ -285,11 +302,11 @@ TBD
 Although metric names in the Monasca API can be any string the Monasca Agent uses several naming conventions as follows:
 
 * All lowercase characters.
-* '.' is used to hierarchially group. This is done for compabilty with Graphite as Graphite assumes a '.' as a delimiter.
-* '_' is used to separate words in long names that are not meant to be hierarchial.
+* '.' is used to hierarchially group. This is done for compatabilty with Graphite as Graphite assumes a '.' as a delimiter.
+* '_' is used to separate words in long names that are not meant to be hierarchal.
 
-### Dimensions
-Dimensions are a dictionary of (key, value) pairs that can be used to describe metrics. Dimensions are supplied to the API by Agent.
+### System Dimensions
+Dimensions are a dictionary of (key, value) pairs that can be used to describe metrics. Dimensions are supplied to the API by the Agent.
 
 This section documents some of the common naming conventions for dimensions that should observed by the monitoring agents/checks to improve consistency and make it easier to create alarms and perform queries.
 
@@ -308,7 +325,7 @@ This section documents some of the naming conventions that are used for monitori
 ### Metric Names
 Where applicable, each metric name will list the name of the service, such as "compute", component, such as "nova-api", and check that is done, such as "process_exists". For example, "nova.api.process_exists".
 
-### Dimensions
+### OpenStack Dimensions
 This section documents the list of dimensions that are used in monitoring OpenStack.
 
 | Name | Description | Examples |
@@ -319,46 +336,126 @@ This section documents the list of dimensions that are used in monitoring OpenSt
 | service | The name of the OpenStack service being measured. | `compute` or `image` or `monitoring` |
 | component | The component in the OpenStack service being measured. |`nova-api`, `nova-scheduler`, `mysql` or `rabbitmq`. |
 | resource_id | The resource ID of an OpenStack resource. | |
-| tenant_id | The tenant/project ID of the owner of an OpenStack resource. | |
+| tenant_name | The tenant name of the owner of an OpenStack resource. | |
 
-# Checks
+# System Checks
 This section documents all the checks that are supported by the Agent.
 
 ## System Metrics
-This section documents the system metrics that are sent by the Agent.
+This section documents the system metrics that are sent by the Agent.  This section includes checks by the network plugin as these are considered more system level checks.
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
-| system.cpu.idle_perc  | | Percentage of time the CPU is idle when no I/O requests are in progress |
-| system.cpu.iowait_perc | | Percentage of time the CPU is idle AND there is at least one I/O request in progress |
-| system.cpu.stolen_perc |  | Percentage of stolen CPU time, i.e. the time spent in other OS contexts when running in a virtualized environment |
-| system.cpu.system_perc |  | Percentage of time the CPU is used at the system level |
-| system.cpu.user_perc  | | Percentage of time the CPU is used at the user level |
-| system.disk.usage | device | |
-| system.mountpoint | | (OS dependent)  The amount of disk space being used
-| system.inodes | device | |
-| system.mountpoint | | (OS dependent)  inodes remaining in a filesystem
-| system.inodes_perc | device | |
-| system.mountpoint | | (OS dependent)  Percentage of inodes remaining in a filesystem
-| system.io_read_kbytes_sec device  | | Kbytes/sec read by an io device
-| system.io.read_req_sec | device   | Number of read requests/sec to an io device
-| system.io.write_kbytes_sec |device | Kbytes/sec written by an io device
-| system.io.write_req_sec   | device | Number of write requests/sec to an io device
-| system.cpu.load_avg_1min  | | The average system load over a 1 minute period
-| system.cpu.load_avg_5min  | | The average system load over a 5 minute period
-| system.cpu.load_avg_15min  | | The average system load over a 15 minute period
-| system.mem.free_mb | | Megabytes of free memory
-| system.mem.swap_free_mb | | Megabytes of free swap memory that is free
-| system.mem.swap_total_mb | | Megabytes of total physical swap memory
-| system.mem.swap_used_mb | | Megabytes of total swap memory used
-| system.mem.total_mb | | Total megabytes of memory
-| system.mem.usable_mb | | Total megabytes of usable memory
-| system.mem.usable_perc | | Percentage of total memory that is usable
-| system.mem.used_buffers | | Number of buffers being used by the kernel for block io
-| system.mem_used_cached | | Memory used for the page cache
-| system.mem.used_shared  | | Memory shared between separate processes and typically used for inter-process communication
+| cpu.idle_perc  | | Percentage of time the CPU is idle when no I/O requests are in progress |
+| cpu.wait_perc | | Percentage of time the CPU is idle AND there is at least one I/O request in progress |
+| cpu.stolen_perc | | Percentage of stolen CPU time, i.e. the time spent in other OS contexts when running in a virtualized environment |
+| cpu.system_perc | | Percentage of time the CPU is used at the system level |
+| cpu.user_perc  | | Percentage of time the CPU is used at the user level |
+| disk.free_inodes | device | The number of inodes that are free on a device |
+| disk.used_inodes | device | The number of inodes that are used on a device |
+| disk.total_inodes | device | The total number of inodes that are available on a device |
+| disk.used_kbytes | device | The number of kilobytes of disk space that are used on a device |
+| disk.total_kbytes | device | The total number of kilobytes of disk space that are available on a device |
+| disk.free_kbytes | device | The number of kilobytes of disk space that are free on a device|
+| io.read_kbytes_sec | device | Kbytes/sec read by an io device
+| io.read_req_sec | device   | Number of read requests/sec to an io device
+| io.write_kbytes_sec |device | Kbytes/sec written by an io device
+| io.write_req_sec   | device | Number of write requests/sec to an io device
+| cpu.load_avg_1min  | | The average system load over a 1 minute period
+| cpu.load_avg_5min  | | The average system load over a 5 minute period
+| cpu.load_avg_15min  | | The average system load over a 15 minute period
+| mem.free_mb | | Megabytes of free memory
+| mem.swap_free_perc | | Percentage of free swap memory that is free
+| mem.swap_free_mb | | Megabytes of free swap memory that is free
+| mem.swap_total_mb | | Megabytes of total physical swap memory
+| mem.swap_used_mb | | Megabytes of total swap memory used
+| mem.total_mb | | Total megabytes of memory
+| mem.usable_mb | | Total megabytes of usable memory
+| mem.usable_perc | | Percentage of total memory that is usable
+| mem.used_buffers | | Number of buffers being used by the kernel for block io
+| mem_used_cached | | Memory used for the page cache
+| mem.used_shared  | | Memory shared between separate processes and typically used for inter-process communication
+| net.bytes_in  | device | Number of network bytes received
+| net.bytes_out  | device | Number of network bytes sent
+| net.packets_in  | device | Number of network packets received
+| net.packets_out  | device | Number of network packets sent
+| net.errors_in  | device | Number of network errors on incoming network traffic
+| net.errors_out  | device | Number of network errors on outgoing network traffic
+| collector.threads.count  | service=monasca component=agent | Number of threads that the collector is consuming for this collection run
+| collector.emit.time  | service=monasca component=agent | Amount of time that the collector took for sending the collected metrics to the Forwarder for this collection run
+| collector.collection.time  | service=monasca component=agent | Amount of time that the collector took for this collection run
 
-## Nagios
+# Plugin Checks
+Plugins are the way to extend the Monasca Agent.  Plugins add additional functionality that allow the agent to perform checks on other applications, servers or services.
+
+## Developing New Checks
+
+Developers can extend the functionality of the Agent by writing custom plugins. Plugins are written in Python according to the conventions described below. The plugin script is placed in /etc/monasca/agent/checks.d, and a YAML file containing the configuration for the plugin is placed in /etc/monasca/agent/conf.d. The YAML file must have the same stem name as the plugin script.
+
+### AgentCheck Interface
+Most monasca-agent plugin code uses the AgentCheck interface. All custom checks inherit from the AgentCheck class found in monagent/collector/checks/__init__.py and require a check() method that takes one argument, instance, which is a dict specifying the configuration of the instance on behalf of the plugin being executed. The check() method is run once per instance defined in the check's configuration (discussed later).
+
+### ServicesCheck interface
+Some monasca-agent plugins use the ServicesCheck class found in monagent/collector/services_checks.py. These require a _check() method that is similar to AgentCheck's check(), but instead of being called once per iteration in a linear fashion, it is run against a threadpool to allow concurrent instances to be checked. Also, _check() must return a tuple consisting of either Status.UP or 'Status.DOWN(frommonagent.collector.checks.services_checks`), plus a text description.
+
+The size of the threadpool is either 6 or the total number of instances, whichever is lower. This may be adjusted with the threads_count parameter in the plugin's init_config (see Plugin Configuration below).
+
+### Sending Metrics
+Sending metrics in a check is easy, and is very similar to submitting metrics using a statsd client. The following methods are available:
+
+```
+self.gauge( ... ) # Sample a gauge metric
+
+self.increment( ... ) # Increment a counter metric
+
+self.decrement( ... ) # Decrement a counter metric
+
+self.histogram( ... ) # Sample a histogram metric
+
+self.rate( ... ) # Sample a point, with the rate calculated at the end of the check
+```
+
+All of these methods take the following arguments:
+
+* metric: The name of the metric
+* value: The value for the metric (defaults to 1 on increment, -1 on decrement)
+* dimensions: (optional) A list of dimensions (name:value pairs) to associate with this metric
+* hostname: (optional) A hostname to associate with this metric. Defaults to the current host
+* device_name: (optional) A device name to associate with this metric
+
+These methods may be called from anywhere within your check logic. At the end of your check function, all metrics that were submitted will be collected and flushed out with the other Agent metrics.
+
+As part of the parent class, you're given a logger at self.log>. The log handler will be checks.{name} where {name} is the stem filename of your plugin.
+
+Of course, when writing your plugin you should ensure that your code raises meaningful exceptions when unanticipated errors occur.
+
+### Plugin Configuration
+Each plugin has a corresponding YAML configuration file with the same stem name as the plugin script file.
+
+The configuration file has the following structure:
+
+```
+init_config:
+    key1: value1
+    key2: value2
+
+instances:
+    - username: john_smith
+      password: 123456
+    - username: jane_smith
+      password: 789012
+```
+
+#### init_config
+In the init_config section you can specify an arbitrary number of global name:value pairs that will be available on every run of the check in self.init_config.
+
+#### instances
+The instances section is a list of instances that this check will be run against. Your actual check() method is run once per instance. The name:value pairs for each instance specify details about the instance that are necessary for the check.
+
+#### Plugin Documentation
+Your plugin should include an example YAML configuration file to be placed in /etc/monasca/agent/conf.d/ which has the name of the plugin YAML file plus the extension '.example', so the example configuration file for the process plugin would be at /etc/monasca/agent/conf.d/process.yaml.example. This file should include a set of example init_config and instances clauses that demonstrate how the plugin can be configured.
+
+## Nagios Checks
 The Agent can run Nagios plugins. A YAML file (nagios_wrapper.yaml) contains the list of Nagios checks to run, including the check name, command name with parameters, and desired interval between iterations. A Python script (nagios_wrapper.py) runs each command in turn, captures the resulting exit code (0 through 3, corresponding to OK, warning, critical and unknown), and sends that information to the Forwarder, which then sends the Monitoring API. Currently, the Agent can only  send the exit code from a Nagios plugin. Any accompanying text is not sent.
  
 Similar to all plugins, the configuration is done in YAML, and consists of two keys: init_config and instances.
@@ -391,65 +488,7 @@ instances:
 
 * check_interval (optional) If unspecified, the checks will be run at the regular collector interval, which is 15 seconds by default. You may not want to run some checks that frequently, especially if they are resource-intensive, so check_interval lets you force a delay, in seconds, between iterations of that particular check.  The state for these are stored in temp_file_path with file names like nagios_wrapper_19fe42bc7cfdc37a2d88684013e66c7b.pck where the hash is an md5sum of the service_name (to accommodate odd characters that the filesystem may not like).
  
-## Statsd
-The Agent ships with a Statsd daemon implementation called monstatsd. A statsd client can be used to send metrics to the Forwarder via the Statsd daemon.
-
-monstatsd will accept metrics submitted by functions in either the standard statsd Python client library, or monasca-agent's monstatsd-python Python client library. The advantage of using the monstatsd-python library is that it is possible to specify dimensions on submitted metrics. Dimensions are not handled by the standard statsd client.
-
-Statsd metrics are not bundled along with the metrics gathered by the Collector, but are flushed to the agent Forwarder on a separate schedule (every 10 seconds by default, rather than 15 seconds for Collector metrics).
-
-Here is an example of metrics submitted using the standard statsd Python client library.
-
-```
-import statsd
-
-statsd.increment('processed', 5)        # Increment 'processed' metric by 5
-statsd.timing('pipeline', 2468.34)      # Pipeline took 2468.34 ms to execute
-statsd.gauge('gaugething', 3.14159265)  # 'gauge' would be the preferred metric type for Monitoring
-```
-
-The monstatsd-python library provides client support for dimensions.
-
-Metrics submission to monstatsd using the monstatsd-python Python client library may look like this:
-
-```
-from monstatsd import statsd
-
-statsd.gauge('withdimensions', 6.283185, dimensions=['name1:value1', 'name2:value2'])
-```
-
-Here are some examples of how code can be instrumented using calls to monstatsd.
-
-```
-# Import the module once it's installed.
-from monstatsd import statsd
-
-# Optionally, configure the host and port if you're running Statsd on a
-# non-standard port.
-statsd.connect('localhost', 8125)
-
-# Increment a counter.
-statsd.increment('page.views')
-
-# Record a gauge 50% of the time.
-statsd.gauge('users.online', 123, sample_rate=0.5)
-
-# Sample a histogram.
-statsd.histogram('file.upload.size', 1234)
-
-# Time a function call.
-@statsd.timed('page.render')
-def render_page():
-    # Render things ...
-
-# Tag a metric.
-statsd.histogram('query.time', 10, dimensions = ["version:1"])
-```
-
-## Log Parsing
-TBD
-
-## Host alive
+## Host Alive Checks
 An extension to the Agent can provide basic "aliveness" checks of other systems, verifying that the remote host (or device) is online. This check currently provides two methods of determining connectivity:
 
 * ping (ICMP)
@@ -498,7 +537,7 @@ The instances section contains the hostname/IP to check, and the type of check t
     alive_test: ssh
 ```        
 
-## Process exists
+## Process Checks
 Process checks can be performed to verify that a set of named processes are running on the local system. The YAML file `process.yaml` contains the list of processes that are checked. The processes can be identified using a pattern match or exact match on the process name. A Python script `process.py` runs each execution cycle to check that required processes are alive. If the process is running a value of 0 is sent, otherwise a value of 1 is sent to the Monasca API.
 
 Each process entry consists of two primary keys: name and search_string. Optionally, if an exact match on name is required, the exact_match boolean can be added to the entry and set to True.
@@ -514,15 +553,36 @@ instances:
    search_string: ['mysql']
    exact_match: True
 ``` 
+The process checks return the following metrics:
 
-## Http Endpoint checks
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| processes.mem.real  | process_name | Amount of real memory a process is using
+| processes.mem.rss  | process_name | Amount of rss memory a process is using
+| processes.io.read_count  | process_name | Number of reads by a process
+| processes.io.write_count  | process_name | Number of writes by a process
+| processes.io.read_bytes  | process_name | Bytes read by a process
+| processes.io.write_bytes  | process_name | Bytes written by a process
+| processes.threads  | process_name | Number of threads a process is using
+| processes.cpu_perc  | process_name | Percentage of cpu being consumed by a process
+| processes.vms  | process_name | Amount of virtual memory a process is using
+| processes.open_file_decorators  | process_name | Number of files being used by a process
+| processes.involuntary_ctx_switches  | process_name | Number of involuntary context switches for a process
+| processes.voluntary_ctx_switches  | process_name | Number of voluntary context switches for a process
+| processes.pid_count  | process_name | Number of processes that exist with this process name
+
+## Http Endpoint Checks
 This section describes the http endpoint check that can be performed by the Agent. Http endpoint checks are checks that perform simple up/down checks on services, such as HTTP/REST APIs. An agent, given a list of URLs can dispatch an http request and report to the API success/failure as a metric.
 
 The Agent supports additional functionality through the use of Python scripts. A YAML file (http_check.yaml) contains the list of URLs to check (among other optional parameters). A Python script (http_check.py) runs checks each host in turn, returning a 0 on success and a 1 on failure in the result sent through the Forwarder and on the Monitoring API.
  
 Similar to other checks, the configuration is done in YAML, and consists of two keys: init_config and instances.  The former is not used by http_check, while the later contains one or more URLs to check, plus optional parameters like a timeout, username/password, pattern to match against the HTTP response body, whether or not to include the HTTP response in the metric (as a 'detail' dimension), whether or not to also record the response time, and more.
 
+Sample config:
+
 ```
+init_config:
+ 
 instances:
        url: http://192.168.0.254/healthcheck
        timeout: 1
@@ -531,133 +591,350 @@ instances:
        match_pattern: '.*OK.*OK.*OK.*OK.*OK'
 ```
  
-Example Output
+The http_status checks return the following metrics:
 
-```
-    "metrics" : [
-      [
-         "http_status",
-         1394833060,
-         0,
-         {
-            "type" : "gauge",
-            "hostname" : "agenthost.domain.net",
-            "dimensions" : [
-               "url:http://192.168.0.254/healthcheck",
-               "detail:\"* deadlocks: OK\\n* mysql-db: OK\\n* rabbitmq-api: OK\\n* rabbitmq-external: OK\\n* rabbitmq-internal: OK\\n\""
-            ]
-         }
-      ],
-      [
-         "http_response_time",
-         1394833060,
-         0.251352787017822,
-         {
-            "type" : "gauge",
-            "hostname" : "agenthost.domain.net",
-            "dimensions" : [
-               "url:http://192.168.0.254/healthcheck"
-            ]
-         }
-      ],
-    ],
-```
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| http_status  | url, detail | The status of the http endpoint call (0 = success, 1 = failure)
+| http_response_time  | url | The response time of the http endpoint call
+
     
-## MySQL
-## RabbitMQ
-## Kafka
-## Other
-## OpenStack
-The `monasca-setup` script when run on a system that is running OpenStack services configures the Agent to send the following list of metrics.
+## MySQL Checks
+This section describes the mySQL check that can be performed by the Agent.  The mySQL check requires a configuration file called mysql.yaml to be available in the agent conf.d configuration directory.
 
-### Nova
-This section documents all the checks done for the OpenStack Nova service.
-
-| Component | Metric Name | Metric Type | Check Type | Unit | Plugin | Description | Notes |
-| --------- | ----------- | ----------- | ---------- | ---- | ------ | ----------- | ----- |
-| nova-api | nova.api.process_exists | Gauge | Passive | Binary | process | nova-api process exists |
-| nova-api | nova.api.http_status | Gauge | Passive | Binary | process | nova-api http endpoint is alive | This check should be executed on multiple systems.|
-| nova-compute | nova.compute.process_exists | Gauge | Passive | Binary | process | nova-api process exists |
-
-
-### Swift
-
-### Glance
-
-### Cinder
-
-### Neutron
-
-### Keystone
-
-### Seed Controller
-
-# Developing New Checks
-
-Developers can extend the functionality of the Agent by writing custom plugins. Plugins are written in Python according to the conventions described below. The plugin script is placed in /etc/monasca/agent/checks.d, and a YAML file containing the configuration for the plugin is placed in /etc/monasca/agent/conf.d. The YAML file must have the same stem name as the plugin script.
-
-## AgentCheck Interface
-Most monasca-agent plugin code uses the AgentCheck interface. All custom checks inherit from the AgentCheck class found in monagent/collector/checks/__init__.py and require a check() method that takes one argument, instance, which is a dict specifying the configuration of the instance on behalf of the plugin being executed. The check() method is run once per instance defined in the check's configuration (discussed later).
-
-## ServicesCheck interface
-Some monasca-agent plugins use the ServicesCheck class found in monagent/collector/services_checks.py. These require a _check() method that is similar to AgentCheck's check(), but instead of being called once per iteration in a linear fashion, it is run against a threadpool to allow concurrent instances to be checked. Also, _check() must return a tuple consisting of either Status.UP or 'Status.DOWN(frommonagent.collector.checks.services_checks`), plus a text description.
-
-The size of the threadpool is either 6 or the total number of instances, whichever is lower. This may be adjusted with the threads_count parameter in the plugin's init_config (see Plugin Configuration below).
-
-## Sending Metrics
-Sending metrics in a check is easy, and is very similar to submitting metrics using a statsd client. The following methods are available:
-
-```
-self.gauge( ... ) # Sample a gauge metric
-
-self.increment( ... ) # Increment a counter metric
-
-self.decrement( ... ) # Decrement a counter metric
-
-self.histogram( ... ) # Sample a histogram metric
-
-self.rate( ... ) # Sample a point, with the rate calculated at the end of the check
-```
-
-All of these methods take the following arguments:
-
-* metric: The name of the metric
-* value: The value for the metric (defaults to 1 on increment, -1 on decrement)
-* dimensions: (optional) A list of dimensions (name:value pairs) to associate with this metric
-* hostname: (optional) A hostname to associate with this metric. Defaults to the current host
-* device_name: (optional) A device name to associate with this metric
-
-These methods may be called from anywhere within your check logic. At the end of your check function, all metrics that were submitted will be collected and flushed out with the other Agent metrics.
-
-As part of the parent class, you're given a logger at self.log>. The log handler will be checks.{name} where {name} is the stem filename of your plugin.
-
-Of course, when writing your plugin you should ensure that your code raises meaningful exceptions when unanticipated errors occur.
-
-## Plugin Configuration
-Each plugin has a corresponding YAML configuration file with the same stem name as the plugin script file.
-
-The configuration file has the following structure:
+Sample config:
 
 ```
 init_config:
-    key1: value1
-    key2: value2
 
 instances:
-    - username: john_smith
-      password: 123456
-    - username: jane_smith
-      password: 789012
+	defaults_file: /root/.my.cnf
+	server: localhost
+	user: root
+```
+ 
+The mySQL checks return the following metrics:
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| mysql.performance.questions | hostname, mode, service=mysql | |
+| mysql.performance.qcache_hits | hostname, mode, service=mysql | |
+| mysql.performance.open_files | hostname, mode, service=mysql | |
+| mysql.performance.created_tmp_tables | hostname, mode, service=mysql | |
+| mysql.performance.user_time | hostname, mode, service=mysql | |
+| mysql.performance.com_replace_select | hostname, mode, service=mysql | |
+| mysql.performance.kernel_time | hostname, mode, service=mysql | |
+| mysql.performance.com_insert | hostname, mode, service=mysql | |
+| mysql.performance.threads_connected | hostname, mode, service=mysql | |
+| mysql.performance.com_update_multi | hostname, mode, service=mysql | |
+| mysql.performance.table_locks_waited | hostname, mode, service=mysql | |
+| mysql.performance.com_insert_select | hostname, mode, service=mysql | |
+| mysql.performance.slow_queries | hostname, mode, service=mysql | |
+| mysql.performance.com_delete | hostname, mode, service=mysql | |
+| mysql.performance.com_select | hostname, mode, service=mysql | |
+| mysql.performance.queries | hostname, mode, service=mysql | |
+| mysql.performance.created_tmp_files | hostname, mode, service=mysql | |
+| mysql.performance.com_update | hostname, mode, service=mysql | |
+| mysql.performance.com_delete_multi | hostname, mode, service=mysql | |
+| mysql.performance.created_tmp_disk_tables | hostname, mode, service=mysql | |
+| mysql.innodb.mutex_spin_rounds | hostname, mode, service=mysql | |
+| mysql.innodb.current_row_locks | hostname, mode, service=mysql | |
+| mysql.innodb.mutex_os_waits | hostname, mode, service=mysql | |
+| mysql.innodb.buffer_pool_used | hostname, mode, service=mysql | |
+| mysql.innodb.data_writes | hostname, mode, service=mysql | |
+| mysql.innodb.data_reads | hostname, mode, service=mysql | |
+| mysql.innodb.row_lock_waits | hostname, mode, service=mysql | |
+| mysql.innodb.os_log_fsyncs | hostname, mode, service=mysql | |
+| mysql.innodb.buffer_pool_total | hostname, mode, service=mysql | |
+| mysql.innodb.row_lock_time | hostname, mode, service=mysql | |
+| mysql.innodb.mutex_spin_waits | hostname, mode, service=mysql | |
+| mysql.innodb.buffer_pool_free | hostname, mode, service=mysql | |
+| mysql.net.max_connections | hostname, mode, service=mysql | |
+| mysql.net.connections | hostname, mode, service=mysql | |
+
+
+## ZooKeeper Checks
+This section describes the Zookeeper check that can be performed by the Agent.  The Zookeeper check requires a configuration file called zk.yaml to be available in the agent conf.d configuration directory.
+
+Sample config:
+
+```
+init_config:
+
+instances:
+	host: localhost
+	port: 2181
+	timeout: 3
+```
+ 
+The Zookeeper checks return the following metrics:
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| zookeeper.latency.max | hostname, mode, service=zookeeper | |
+| zookeeper.latency.min | hostname, mode, service=zookeeper | |
+| zookeeper.latency.avg | hostname, mode, service=zookeeper | |
+| zookeeper.bytes_sent | hostname, mode, service=zookeeper | |
+| zookeeper.bytes_outstanding | hostname, mode, service=zookeeper | |
+| zookeeper.bytes_received | hostname, mode, service=zookeeper | |
+| zookeeper.connections | hostname, mode, service=zookeeper | |
+| zookeeper.nodes | hostname, mode, service=zookeeper | |
+| zookeeper.zxid.count | hostname, mode, service=zookeeper | |
+| zookeeper.zxid.epoch | hostname, mode, service=zookeeper | |
+
+
+## Kafka Checks
+This section describes the Kafka check that can be performed by the Agent.  The Kafka check requires a configuration file called kafka.yaml to be available in the agent conf.d configuration directory.
+
+Sample config:
+
+```
+init_config:
+
+instances:
+- consumer_groups:
+    '1_alarm-state-transitions':
+        'alarm-state-transitions': ['3', '2', '1', '0']
+    '1_metrics':
+        'metrics': &id001 ['3', '2', '1', '0']
+        'test':
+            'healthcheck': ['1', '0']
+        'thresh-event':
+            'events': ['3', '2', '1', '0']
+        'thresh-metric':
+            'metrics': *id001
+  kafka_connect_str: localhost:9092
+  zk_connect_str: localhost:2181
+```
+ 
+The Kafka checks return the following metrics:
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| TBD |  | |
+
+
+## RabbitMQ Checks
+TBD
+
+## OpenStack Monitoring
+The `monasca-setup` script when run on a system that is running OpenStack services, configures the Agent to send the following list of metrics:
+
+* The setup program creates process checks for each process that is part of an OpenStack service.  A few sample metrics from the process check are provided.  For the complete list of process metrics, see the [Process Checks](#Process Checks) section.
+* Additionally, an http_status check will be setup on the api for the service, if there is one.
+
+PLEASE NOTE: The monasca-setup program will only install checks for OpenStack services it detects when it is run.  If an additional service is added to a particular node or deleted, monasca-setup must be re-run to add monitoring for the additional service or remove the service that is no longer there.
+
+### Nova Checks
+This section documents a *sampling* of the metrics generated by the checks setup automatically by the monasca-setup script for the OpenStack Nova service.
+
+The following nova processes are monitored, if they exist when the monasca-setup script is run:
+
+##### Nova Processes Monitored
+* nova-compute
+* nova-conductor
+* nova-cert
+* nova-network
+* nova-scheduler
+* nova-novncproxy
+* nova-xvpncproxy
+* nova-consoleauth
+* nova-objectstore
+* nova-api
+
+##### Example Nova Metrics
+
+| Component | Metric Name | Metric Type | Check Type | Dimensions | Plugin | Description | Notes |
+| --------- | ----------- | ----------- | ---------- | ---- | ------ | ----------- | ----- |
+| nova-compute | processes.process_pid_count | Gauge | Passive | service=nova, component=nova-compute | process | nova-compute process exists | This is only one of the process checks performed |
+| nova-api | processes.process_pid_count | Gauge | Passive | service=nova, component=nova-api | process | nova-api process pid count | This is only one of the process checks performed |
+| nova-api | http_status | Gauge | Active | service=nova, component=nova-api url=url_to_nova_api | http_status | nova-api http endpoint is alive | This check should be executed on multiple systems.|
+
+
+### Swift Checks
+This section documents a sampling of the metrics generated by the checks setup automatically by the monasca-setup script for the OpenStack Swift service.
+
+The following swift processes are monitored, if they exist when the monasca-setup script is run:
+
+##### Swift Processes Monitored
+* swift-container-updater
+* swift-account-auditor
+* swift-object-replicator
+* swift-container-replicator
+* swift-object-auditor
+* swift-container-auditor
+* swift-account-reaper
+* swift-container-sync
+* swift-account-replicator
+* swift-object-updater
+* swift-object-server
+* swift-account-server
+* swift-container-server
+* swift-proxy-server
+
+
+##### Example Swift Metrics
+
+| Component | Metric Name | Metric Type | Check Type | Dimensions | Plugin | Description | Notes |
+| --------- | ----------- | ----------- | ---------- | ---- | ------ | ----------- | ----- |
+| swift-container-updater | processes.process_pid_count | Gauge | Passive | service=swift, component=swift-container-updater | process | swift-container-updater process exists | This is only one of the process checks performed |
+| swift-proxy-server | processes.process_pid_count | Gauge | Passive | service=swift, component=swift-proxy-server | process | swift-proxy-server process pid count | This is only one of the process checks performed |
+| swift-proxy-server | http_status | Gauge | Active | service=swift, component=swift-proxy-server url=url_to_swift_proxy_server | http_status | swift-proxy-server http endpoint is alive | This check should be executed on multiple systems.|
+
+### Glance Checks
+This section documents a sampling of the metrics generated by the checks setup automatically by the monasca-setup script for the OpenStack Glance service.
+
+The following glance processes are monitored, if they exist when the monasca-setup script is run:
+
+##### Glance Processes Monitored
+* glance-registry
+* glance-api
+
+##### Example Glance Metrics
+
+| Component | Metric Name | Metric Type | Check Type | Dimensions | Plugin | Description | Notes |
+| --------- | ----------- | ----------- | ---------- | ---- | ------ | ----------- | ----- |
+| glance-registry | processes.process_pid_count | Gauge | Passive | service=glance, component=glance-registry | process | glance-registry process exists | This is only one of the process checks performed |
+| glance-api | processes.process_pid_count | Gauge | Passive | service=glance, component=glance-api | process | glance-api process pid count | This is only one of the process checks performed |
+| glance-api | http_status | Gauge | Active | service=glance, component=glance-api url=url_to_glance_api | http_status | glance-api http endpoint is alive | This check should be executed on multiple systems.|
+
+
+### Cinder Checks
+This section documents a sampling of the metrics generated by the checks setup automatically by the monasca-setup script for the OpenStack Cinder service.
+
+The following cinder processes are monitored, if they exist when the monasca-setup script is run:
+
+##### Cinder Processes Monitored
+* cinder-volume
+* cinder-scheduler
+* cinder-api
+
+##### Example Cinder Metrics
+
+| Component | Metric Name | Metric Type | Check Type | Dimensions | Plugin | Description | Notes |
+| --------- | ----------- | ----------- | ---------- | ---- | ------ | ----------- | ----- |
+| cinder-volume | processes.process_pid_count | Gauge | Passive | service=cinder, component=cinder-volume | process | cinder-volume process exists | This is only one of the process checks performed |
+| cinder-api | processes.process_pid_count | Gauge | Passive | service=cinder, component=cinder-api | process | cinder-api process pid count | This is only one of the process checks performed |
+| cinder-api | http_status | Gauge | Active | service=cinder, component=cinder-api url=url_to_cinder_api | http_status | cinder-api http endpoint is alive | This check should be executed on multiple systems.|
+
+
+### Neutron Checks
+This section documents a sampling of the metrics generated by the checks setup automatically by the monasca-setup script for the OpenStack Neutron service.
+
+The following neutron processes are monitored, if they exist when the monasca-setup script is run:
+
+##### Neutron Processes Monitored
+* neutron-server
+* neutron-openvswitch-agent
+* neutron-rootwrap
+* neutron-dhcp-agent
+* neutron-vpn-agent
+* neutron-metadata-agent
+* neutron-metering-agent
+* neutron-ns-metadata-proxy
+
+##### Example Neutron Metrics
+
+| Component | Metric Name | Metric Type | Check Type | Dimensions | Plugin | Description | Notes |
+| --------- | ----------- | ----------- | ---------- | ---- | ------ | ----------- | ----- |
+| neutron-server | processes.process_pid_count | Gauge | Passive | service=neutron, component=neutron-server | process | neutron-server process exists | This is only one of the process checks performed |
+| neutron-ns-metadata-proxy | processes.process_pid_count | Gauge | Passive | service=neutron, component=neutron-ns-metadata-proxy | process | neutron-ns-metadata-proxy process pid count | This is only one of the process checks performed |
+| neutron-ns-metadata-proxy | http_status | Gauge | Active | service=neutron, component=neutron-ns-metadata-proxy url=url_to_neutron_api | http_status | neutron-ns-metadata-proxy http endpoint is alive | This check should be executed on multiple systems.|
+
+
+### Keystone Checks
+This section documents a sampling of the metrics generated by the checks setup automatically by the monasca-setup script for the OpenStack Keystone service.
+
+The following keystone processes are monitored, if they exist when the monasca-setup script is run:
+
+##### Keystone Processes Monitored
+* keystone-all
+
+##### Example Keystone Metrics
+
+| Component | Metric Name | Metric Type | Check Type | Dimensions | Plugin | Description | Notes |
+| --------- | ----------- | ----------- | ---------- | ---- | ------ | ----------- | ----- |
+| keystone-all | processes.process_pid_count | Gauge | Passive | service=keystone, component=keystone-all | process | keystone-all process pid count | This is only one of the process checks performed |
+| keystone-all | http_status | Gauge | Active | service=keystone, component=keystone-all url=url_to_keystone_api | http_status | keystone-all http endpoint is alive | This check should be executed on multiple systems.|
+
+
+### Ceilometer Checks
+This section documents a sampling of the metrics generated by the checks setup automatically by the monasca-setup script for the OpenStack Ceilometer service.
+
+The following ceilometer processes are monitored, if they exist when the monasca-setup script is run:
+
+##### Ceilometer Processes Monitored
+* ceilometer-agent-compute
+* ceilometer-agent-central
+* ceilometer-agent-notification
+* ceilometer-collector
+* ceilometer-alarm-notifier
+* ceilometer-alarm-evaluator
+* ceilometer-api
+
+##### Example Ceilometer Metrics
+
+| Component | Metric Name | Metric Type | Check Type | Dimensions | Plugin | Description | Notes |
+| --------- | ----------- | ----------- | ---------- | ---- | ------ | ----------- | ----- |
+| ceilometer-agent-compute | processes.process_pid_count | Gauge | Passive | service=ceilometer, component=ceilometer-agent-compute | process | ceilometer-agent-compute process exists | This is only one of the process checks performed |
+| ceilometer-api | processes.process_pid_count | Gauge | Passive | service=ceilometer, component=ceilometer-api | process | ceilometer-api process pid count | This is only one of the process checks performed |
+| ceilometer-api | http_status | Gauge | Active | service=ceilometer, component=ceilometer-api url=url_to_ceilometer_api | http_status | ceilometer-api http endpoint is alive | This check should be executed on multiple systems.|
+
+
+# Statsd
+The Monasca Agent ships with a Statsd daemon implementation called monasca-statsd. A statsd client can be used to send metrics to the Forwarder via the Statsd daemon.
+
+monascastatsd will accept metrics submitted by functions in either the standard statsd Python client library, or the monasca-agent's [python-monasca-statsd Python client library](https://github.com/hpcloud-mon/python-monascastatsd). The advantage of using the python-monasca-statsd library is that it is possible to specify dimensions on submitted metrics. Dimensions are not handled by the standard statsd client.
+
+Statsd metrics are not bundled along with the metrics gathered by the Collector, but are flushed to the agent Forwarder on a separate schedule (every 10 seconds by default, rather than 15 seconds for Collector metrics).
+
+Here is an example of metrics submitted using the standard statsd Python client library.
+
+```
+import statsd
+
+statsd.increment('processed', 5)        # Increment 'processed' metric by 5
+statsd.timing('pipeline', 2468.34)      # Pipeline took 2468.34 ms to execute
+statsd.gauge('gaugething', 3.14159265)  # 'gauge' would be the preferred metric type for Monitoring
 ```
 
-### init_config
-In the init_config section you can specify an arbitrary number of global name:value pairs that will be available on every run of the check in self.init_config.
+The [python-monasca-statsd](https://github.com/hpcloud-mon/python-monascastatsd) library provides a python based implementation of a statsd client but also adds the ability to add dimensions to the the statsd metrics for the client.
 
-### instances
-The instances section is a list of instances that this check will be run against. Your actual check() method is run once per instance. The name:value pairs for each instance specify details about the instance that are necessary for the check.
+Here are some examples of how code can be instrumented using calls to python-monascastatsd.
+```
 
-## Plugin Documentation
-Your plugin should include an example YAML configuration file to be placed in /etc/monasca/agent/conf.d/ which has the name of the plugin YAML file plus the extension '.example', so the example configuration file for the process plugin would be at /etc/monasca/agent/conf.d/process.yaml.example. This file should include a set of example init_config and instances clauses that demonstrate how the plugin can be configured.
+	* Import the module once it's installed.
+		from monascastatsd import monascastatsd
+
+	* Optionally, configure the host and port if you're running Statsd on a non-standard port.
+		monascastatsd.connect('localhost', 8125)
+
+	* Increment a counter.
+		monascastatsd.increment('page_views')
+
+		With dimensions:
+    	monascastatsd.increment('page_views', 5, dimensions={'Hostname': 'prod.mysql.abccorp.com'})
+
+	* Record a gauge 50% of the time.
+		monascastatsd.gauge('users_online', 91, sample_rate=0.5)
+
+		With dimensions:
+		monascastatsd.gauge('users_online', 91, dimensions={'Origin': 'Dev', 'Environment': 'Test'})
+
+	* Sample a histogram.
+		monascastatsd.histogram('file.upload_size', 20456)
+
+		With dimensions:
+		monascastatsd.histogram('file.upload_size', 20456, sample_rate=0.5, dimensions={'Name': 'MyFile.pdf', 'Version': '1.0'})
+
+	* Time a function call.
+		@monascastatsd.timed('page.render')
+		def render_page():
+    	# Render things ...
+```
+
+# Log Parsing
+TBD
 
 # License
 Copyright (c) 2014 Hewlett-Packard Development Company, L.P.
