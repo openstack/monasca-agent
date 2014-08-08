@@ -1,11 +1,68 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**
+
+- [Introduction](#introduction)
+- [Architecture](#architecture)
+- [Installing](#installing)
+- [Configuring](#configuring)
+  - [Configuration Options](#configuration-options)
+  - [Configuring Plugins](#configuring-plugins)
+  - [monasca-setup](#monasca-setup)
+    - [Configuration Options](#configuration-options-1)
+  - [Chef Cookbook](#chef-cookbook)
+  - [monasca-alarm-manager](#monasca-alarm-manager)
+- [Running](#running)
+  - [Running from the command-line](#running-from-the-command-line)
+  - [Running as a daemon](#running-as-a-daemon)
+- [Trouble-shooting](#trouble-shooting)
+- [Naming conventions](#naming-conventions)
+  - [Common Naming Conventions](#common-naming-conventions)
+    - [Metric Names](#metric-names)
+    - [Dimensions](#dimensions)
+  - [OpenStack Specific Naming Conventions](#openstack-specific-naming-conventions)
+    - [Metric Names](#metric-names-1)
+    - [Dimensions](#dimensions-1)
+- [Checks](#checks)
+  - [System Metrics](#system-metrics)
+  - [Nagios](#nagios)
+  - [Statsd](#statsd)
+  - [Log Parsing](#log-parsing)
+  - [Host alive](#host-alive)
+  - [Process exists](#process-exists)
+  - [Http Endpoint checks](#http-endpoint-checks)
+  - [MySQL](#mysql)
+  - [RabbitMQ](#rabbitmq)
+  - [Kafka](#kafka)
+  - [Other](#other)
+  - [OpenStack](#openstack)
+    - [Nova](#nova)
+    - [Swift](#swift)
+    - [Glance](#glance)
+    - [Cinder](#cinder)
+    - [Neutron](#neutron)
+    - [Keystone](#keystone)
+    - [Seed Controller](#seed-controller)
+- [Developing New Checks](#developing-new-checks)
+  - [AgentCheck Interface](#agentcheck-interface)
+  - [ServicesCheck interface](#servicescheck-interface)
+  - [Sending Metrics](#sending-metrics)
+  - [Plugin Configuration](#plugin-configuration)
+    - [init_config](#init_config)
+    - [instances](#instances)
+  - [Plugin Documentation](#plugin-documentation)
+- [License](#license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Introduction
 The Monasca Agent is a modern Python monitoring agent for gathering metrics and sending them to the Monasca API. The Agent supports collecting metrics from a variety of sources as follows:
 
 * System metrics such as cpu and memory utilization.
 * Nagios plugins. The Monasca Agent can run Nagios plugins and send the status code returned by the plugin as a metric to the Monasca API.
 * Statsd. The Monasca Agent supports an integrated Statsd daemon which can be used by applications via a statsd client library.
-* Log Parsing. 
-* Host alive. The Monasca Agent can perform active checks if a host is alive using ping(ICMP) or SSH.
+* Retrieving metrics from log files written in a specific format. 
+* Host alive. The Monasca Agent can perform active checks on a host to determine if it is alive using ping(ICMP) or SSH.
 * Process exists checks. The Monasca Agent can check if a process is up or down.
 * Http Endpoint checks. The Monasca Agent can perform active checks on http endpoints by sending an HTTP request to an API.
 * Service checks. The Agent can check service such as MySQL, RabbitMQ, and many more.
@@ -20,6 +77,10 @@ This section describes the overall architecture of the Monasca Agent.
 * Agent
 * Checks
 
+This diagram illustrates the monasca-agent architecture, and the table which follows it explains each component.
+
+![alt text](monasca-agent_arch.png)
+
 A metric is identified by a name and dimensions.
 
 The Agent is composed of the following components:
@@ -31,28 +92,28 @@ The Agent is composed of the following components:
 
 | Component Name | Process Name | Description |
 | -------------- | ------------ | ----------- |
-| Supervisor | supervisord | Runs as root, launches all other processes as the "mon-agent" user |
-| Collector | mon-collector | Gathers system & application metrics | 
-| Monstatsd | monstatsd | Statsd engine capable of handling dimensions associated with metrics submitted by a client that supports them. Also supports metrics from the standard statsd client. (udp/8125) | 
-| Forwarder | mon-forwarder | Gathers data from statsd and submits it to Mon API over SSL (tcp/17123) | 
+| Supervisor | supervisord | Runs as root, launches all other processes as the "monasca-agent" user |
+| Collector | monasca-collector | Gathers system & application metrics | 
+| Monstatsd | monasca-statsd | Statsd engine capable of handling dimensions associated with metrics submitted by a client that supports them. Also supports metrics from the standard statsd client. (udp/8125) | 
+| Forwarder | monasca-forwarder | Gathers data from statsd and submits it to Monasca API over SSL (tcp/17123) | 
 | Agent Checks | checks.d/*.py | Python-based user-configured checks |
 
 
-The Agent includes the script "monasca-setup", that can be used for automatically configuring the metrics that are sent to the API.
+The Agent includes the script "monasca-setup", that can be used for automatically configuring the agent to generate metrics that are sent to the API.  It creates the agent.conf file locate in /etc/monasca/agent directory.  It also sets up additional checks based on what is running locally on that machine.  For instance, if this is a compute node, the agent will setup checks to monitor the Nova processes and setup a http_status check on the nova-api.  It can also detect other servers such as mySQL and Kafka and setup checks for them as well.
 
 The [monasca-alarm-manager](**https://github.com/hpcloud-mon/monasca-alarm-manager**) is a utility that can be used for configuring a default set of alarms when monitoring a OpenStack deployment.
 
 # Installing
-The Agent (monasca-agent) is available for installation from the Python Package Index (PyPI). To install it, you first need `pip` installed on the node to be monitored. Instructions or installing pip may be found at https://pip.pypa.io/en/latest/installing.html but for most uses, under a Debian or Ubuntu-based operating system,
+The Agent (monasca-agent) is available for installation from the Python Package Index (PyPI). To install it, you first need `pip` installed on the node to be monitored. Instructions on installing pip may be found at https://pip.pypa.io/en/latest/installing.html.  The Agent will NOT run under any flavor of Windows or Mac OS at this time but has been tested thoroughly on Ubuntu and should work under most flavors of Linux.  Support may be added for Mac OS and Windows in the future.  Example of an Ubuntu or Debian based install:
 
 ```
-apt-get install python-pip
+sudo apt-get install python-pip
 ```
 
 To ensure you are running the latest version of pip
 
 ```
-pip install --upgrade pip
+sudo pip install --upgrade pip
 ```
 
 Warning, the Agent is known to not install properly under python-pip version 1.0, which is packaged with Ubuntu 12.04 LTS (Precise Pangolin).
@@ -60,75 +121,131 @@ Warning, the Agent is known to not install properly under python-pip version 1.0
 The Agent can be installed using pip as follows:
 
 ```
-pip install monasca-agent
+sudo pip install monasca-agent
 ```
 
 # Configuring
-The Agent requires configuration in order to run. Example configuration files can be found in /usr/local/share/mon/agent/. Start by creating an agent.conf file
+The Agent requires configuration in order to run. There are two ways to configure the agent, either using the [monasca-setup](#monasca-setup) script or manually.
 
-    sudo cp /usr/local/share/mon/agent/agent.conf.example /etc/mon-agent/agent.conf
+## monasca-setup (Recommended)
+The Monasca agent has a script, called "monasca-setup", that should be used to automatically configure the Agent to send metrics to a Monasca API. This script will create the agent.conf configuration file as well as any plugin configuration yaml files needed to monitor the processes on the local machine.  The agent configuration files are located in /etc/monasca/agent.  The plugin configuration files are located in located in /etc/monasca/agent/conf.d.
+
+To run monasca-setup:
+
+```
+sudo monasca-setup --username KEYSTONE_USERNAME --password KEYSTONE_PASSWORD --project_name KEYSTONE_PROJECT_NAME --service SERVICE_NAME --keystone_url http://URL_OF_KEYSTONE_API:35357/v3 --monasca_url http://URL_OF_MONASCA_API:8080/v2.0 --overwrite
+```
+### Explanation of monasca-setup command-line parameters:
+All parameters require a '--' before the parameter such as '--verbose'
+
+| Parameter | Description | Example Value|
+| ----------- | ------------ | ----------- |
+| username | This is a required parameter that specifies the username needed to login to Keystone to get a token | myuser |
+| password | This is a required parameter that specifies the password needed to login to Keystone to get a token | mypassword |
+| project_name | This is a required parameter that specifies the name of the Keystone project name to store the metrics under | myproject |
+| keystone_url | This is a required parameter that specifies the url of the keystone api for retrieving tokens | http://192.168.1.5:35357/v3 |
+| service | This is a required parameter that specifies the name of the service associated with this particular node | nova, cinder, myservice |
+| monasca_url | This is a required parameter that specifies the url of the monasca api for retrieving tokens | http://192.168.1.4:8080/v2.0 |
+| config_dir | This is an optional parameter that specifies the directory where the agent configuration files will be stored. | /etc/monasca/agent |
+| log_dir | This is an optional parameter that specifies the directory where the agent log files will be stored. | /var/log/monasca/agent |
+| template_dir | This is an optional parameter that specifies the directory where the agent template files will be stored. | /usr/local/share/monasca/agent |
+| user | This is an optional parameter that specifies the user name to run monasca-agent as | monasca-agent |
+| headless | This is an optional parameter that specifies whether monasca-setup should run in a non-interactive mode | |
+| skip_enable | This is an optional parameter. By default the service is enabled, which requires the script run as root. Set this parameter to skip that step. | |
+| verbose | This is an optional parameter that specifies whether the monasca-setup script will print additional information for debugging purposes | |
+| overwrite | This is an optional parameter to overwrite the plugin configuration.  Use this if you don't want to keep the original configuration.  If this parameter is not specified, the configuration will be appended to the existing configuration, possibly creating duplicate checks.  **NOTE:** The agent config file, agent.conf, will always be overwritten, even if this parameter is not specified |  |
+
+### Manual Configuration of the Agent
+
+This is not the recommended way to configure the agent but if you are having trouble running the monasca-setup program, you can manually configure the agent using the steps below:
+
+Start by creating an agent.conf file.  An example configuration file can be found in /usr/local/share/monasca/agent/.
+
+    sudo mkdir -p /etc/monasca/agent
+    sudo cp /usr/local/share/monasca/agent/agent.conf.template /etc/monasca/agent/agent.conf
 
 and then edit the file with your favorite text editor (vi, nano, emacs, etc.)
 
-    sudo nano /etc/mon-agent/agent.conf
+    sudo nano /etc/monasca/agent/agent.conf
 
-In particular, replace the "CHANGE_ME" values as needed.
+In particular, replace any values that have curly braces.
+Example:
+Change
 
-You may also specify zero or more dimensions that would be included in every metric generated on that node, using the dimensions: value. Example: (include no extra dimensions on every metric)
+	username: {args.username}
 
-    dimensions:
+			to
 
-(include one extra dimension on every metric)
+	username: myuser
 
-    dimensions: service:mini-mon
+You must replace all of the curly brace values and you can also optionally tweak any of the other configuration items as well like a port number in the case of a port conflict.  The config file options are documented in the agent.conf.template file.  You may also specify zero or more dimensions that would be included in every metric generated on that node, using the dimensions: value. Example: (include no extra dimensions on every metric)
 
-(include three extra dimensions on every metric)
+    dimensions: (This means no dimensions)
+			OR
+    dimensions: service:nova (This means one dimension called service with a value of nova)
+    		OR
+    dimensions: service:nova, group:group_a, zone:2 (This means three dimensions)
 
-    dimensions: service:mini-mon, group:group_a, az:2
+Once the configuration file has been updated and saved, monasca-agent must be restarted.
 
-Once the configuration file has been updated and saved, mon-agent may be started.
+    sudo service monasca-agent restart
 
-    sudo service mon-agent start
 
-The Agent has a number of configuration options that can be configured. To help configure the agent the script `monasca-setup` can be run.
+### Manual Configuration of Plugins
+If you did not run monasca-setup and/or there are additional plugins you would like to activate, follow the steps below:
 
-## Configuration Options
-TBD
-
-## Configuring Plugins
-Agent plugins are activated by placing a valid configuration file in the /etc/mon-agent/conf.d/ directory. Configuration files are in YAML format, with the file extension .yaml. You may find example configuration files in /usr/local/share/mon/agent/conf.d/
+Agent plugins are activated by placing a valid configuration file in the /etc/monasca/agent/conf.d/ directory. Configuration files are in YAML format, with the file extension .yaml. You may find example configuration files in /usr/local/share/monasca/agent/conf.d/
 
 For example, to activate the http_check plugin:
 
-    sudo cp /usr/local/share/mon/agent/conf.d/http_check.yaml.example /etc/mon-agent/conf.d/http_check.yaml
+    sudo mkdir -p /etc/monasca/agent/conf.d
+    sudo cp /usr/local/share/monasca/agent/conf.d/http_check.yaml.example /etc/monasca/agent/conf.d/http_check.yaml
 
 and then edit the file as needed for your configuration.
 
-    sudo nano /etc/mon-agent/conf.d/http_check.yaml
+    sudo nano /etc/monasca/agent/conf.d/http_check.yaml
 
 The plugins are annotated and include the possible configuration parameters. In general, though, configuration files are split into two sections:
-
-    init_config:
-
-and
-
-    instances:
-
+init_config
+   and
+instances
 The init_config section contains global configuration parameters for the plugin. The instances section contains one or more check to run. For example, multiple API servers can be checked from one http_check.yaml configuration by listing YAML-compatible stanzas in the instances section.
 
-## monasca-setup
-The Monasca agent has a script, called "monasca-setup", that can be used to automatically configure the Agent to send metrics to a Monasca API. 
+A plugin config is specified something like this:
 
-To run monasca-setup
+    init_config:
+    	is_jmx: true
 
-```
-monasca-setup -u me -p pass --project_name myproject -s mini-mon --keystone_url https://keystone --monasca_url https://mon-api
-```
+    	# Metrics collected by this check. You should not have to modify this.
+    	conf:
+       	#
+       	# Aggregate cluster stats
+        	#
+        	- include:
+            domain: '"kafka.server"'
+            bean: '"kafka.server":type="BrokerTopicMetrics",name="AllTopicsBytesOutPerSec"'
+            attribute:
+                MeanRate:
+                    metric_type: counter
+                    alias: kafka.net.bytes_out
 
-### Configuration Options
+    instances:
+		- 	host: localhost
+        	port: 9999
+        	name: jmx_instance
+        	user: username
+        	password: password
+        	#java_bin_path: /path/to/java #Optional, should be set if the agent cannot find your java executable
+        	#trust_store_path: /path/to/trustStore.jks # Optional, should be set if ssl is enabled
+        	#trust_store_password: password
+        	dimensions:
+             env: stage
+             newDim: test
+
+
 
 ## Chef Cookbook
-An example cookbook for Chef configuration of the monitoring agent is at [https://github.com/stackforge/cookbook-monasca-agent](https://github.com/stackforge/cookbook-monasca-agent).
+An example cookbook for Chef configuration of the monitoring agent is at [https://github.com/stackforge/cookbook-monasca-agent](https://github.com/stackforge/cookbook-monasca-agent).  This cookbook can be used as an example of how to automate the install and configuration of the monasca-agent.
 
 ## monasca-alarm-manager
 To help configure a default set of alarms for monitoring an OpenStack deployment the `monasca-alarm-manager` can be used. The alarm manager is under development in Github at, [https://github.com/hpcloud-mon/monasca-alarm-manager](https://github.com/hpcloud-mon/monasca-alarm-manager).
@@ -137,7 +254,25 @@ To help configure a default set of alarms for monitoring an OpenStack deployment
 The Agent can be run from the command-line or as a daemon.
 
 ## Running from the command-line
+To run the agent from the command-line, you will need to start at least 2 processes in order to send metrics.  These are the collector and forwarder.  If you have already installed the monasca-agent package and run the monasca-setup configuration script, run the following commands from the Linux command-line:
+
+	* From a terminal window, use netcat to listen for metrics on a local port:
+		nc -lk 8080
+	* From a second terminal window, launch the forwarder in the background:
+		python ddagent.py &
+	* From the second terminal window, launch the collector in the foreground:
+		python agent.py foreground --use-local-forwarder
+	* Metric payloads will start to appear in the first terminal window running netcat
+
 ## Running as a daemon
+To control the monasca-agent daemon, you can use the init.d commands that are listed below:
+
+	* To start the agent:
+		sudo service monasca-agent start
+	* To stop the agent:
+		sudo service monasca-agent stop
+	* To restart the agent if it is already running:
+		sudo service monasca-agent restart
 
 # Trouble-shooting
 TBD
@@ -194,24 +329,24 @@ This section documents the system metrics that are sent by the Agent.
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
-| system.cpu.idle_perc	| | Percentage of time the CPU is idle when no I/O requests are in progress |
+| system.cpu.idle_perc  | | Percentage of time the CPU is idle when no I/O requests are in progress |
 | system.cpu.iowait_perc | | Percentage of time the CPU is idle AND there is at least one I/O request in progress |
-| system.cpu.stolen_perc |	| Percentage of stolen CPU time, i.e. the time spent in other OS contexts when running in a virtualized environment |
-| system.cpu.system_perc |	| Percentage of time the CPU is used at the system level |
-| system.cpu.user_perc	| |	Percentage of time the CPU is used at the user level |
+| system.cpu.stolen_perc |  | Percentage of stolen CPU time, i.e. the time spent in other OS contexts when running in a virtualized environment |
+| system.cpu.system_perc |  | Percentage of time the CPU is used at the system level |
+| system.cpu.user_perc  | | Percentage of time the CPU is used at the user level |
 | system.disk.usage | device | |
-| system.mountpoint | | (OS dependent)	The amount of disk space being used
-| system.inodes	| device | |
-| system.mountpoint | | (OS dependent)	inodes remaining in a filesystem
+| system.mountpoint | | (OS dependent)  The amount of disk space being used
+| system.inodes | device | |
+| system.mountpoint | | (OS dependent)  inodes remaining in a filesystem
 | system.inodes_perc | device | |
-| system.mountpoint | | (OS dependent)	Percentage of inodes remaining in a filesystem
-| system.io_read_kbytes_sec	device	| | Kbytes/sec read by an io device
-| system.io.read_req_sec | device	| Number of read requests/sec to an io device
+| system.mountpoint | | (OS dependent)  Percentage of inodes remaining in a filesystem
+| system.io_read_kbytes_sec device  | | Kbytes/sec read by an io device
+| system.io.read_req_sec | device   | Number of read requests/sec to an io device
 | system.io.write_kbytes_sec |device | Kbytes/sec written by an io device
-| system.io.write_req_sec	| device | Number of write requests/sec to an io device
-| system.cpu.load_avg_1min	| | The average system load over a 1 minute period
-| system.cpu.load_avg_5min	| | The average system load over a 5 minute period
-| system.cpu.load_avg_15min	 | | The average system load over a 15 minute period
+| system.io.write_req_sec   | device | Number of write requests/sec to an io device
+| system.cpu.load_avg_1min  | | The average system load over a 1 minute period
+| system.cpu.load_avg_5min  | | The average system load over a 5 minute period
+| system.cpu.load_avg_15min  | | The average system load over a 15 minute period
 | system.mem.free_mb | | Megabytes of free memory
 | system.mem.swap_free_mb | | Megabytes of free swap memory that is free
 | system.mem.swap_total_mb | | Megabytes of total physical swap memory
@@ -259,7 +394,7 @@ instances:
 ## Statsd
 The Agent ships with a Statsd daemon implementation called monstatsd. A statsd client can be used to send metrics to the Forwarder via the Statsd daemon.
 
-monstatsd will accept metrics submitted by functions in either the standard statsd Python client library, or mon-agent's monstatsd-python Python client library. The advantage of using the monstatsd-python library is that it is possible to specify dimensions on submitted metrics. Dimensions are not handled by the standard statsd client.
+monstatsd will accept metrics submitted by functions in either the standard statsd Python client library, or monasca-agent's monstatsd-python Python client library. The advantage of using the monstatsd-python library is that it is possible to specify dimensions on submitted metrics. Dimensions are not handled by the standard statsd client.
 
 Statsd metrics are not bundled along with the metrics gathered by the Collector, but are flushed to the agent Forwarder on a separate schedule (every 10 seconds by default, rather than 15 seconds for Collector metrics).
 
@@ -459,13 +594,13 @@ This section documents all the checks done for the OpenStack Nova service.
 
 # Developing New Checks
 
-Developers can extend the functionality of the Agent by writing custom plugins. Plugins are written in Python according to the conventions described below. The plugin script is placed in /etc/mon-agent/checks.d, and a YAML file containing the configuration for the plugin is placed in /etc/mon-agent/conf.d. The YAML file must have the same stem name as the plugin script.
+Developers can extend the functionality of the Agent by writing custom plugins. Plugins are written in Python according to the conventions described below. The plugin script is placed in /etc/monasca/agent/checks.d, and a YAML file containing the configuration for the plugin is placed in /etc/monasca/agent/conf.d. The YAML file must have the same stem name as the plugin script.
 
 ## AgentCheck Interface
-Most mon-agent plugin code uses the AgentCheck interface. All custom checks inherit from the AgentCheck class found in monagent/collector/checks/__init__.py and require a check() method that takes one argument, instance, which is a dict specifying the configuration of the instance on behalf of the plugin being executed. The check() method is run once per instance defined in the check's configuration (discussed later).
+Most monasca-agent plugin code uses the AgentCheck interface. All custom checks inherit from the AgentCheck class found in monagent/collector/checks/__init__.py and require a check() method that takes one argument, instance, which is a dict specifying the configuration of the instance on behalf of the plugin being executed. The check() method is run once per instance defined in the check's configuration (discussed later).
 
 ## ServicesCheck interface
-Some mon-agent plugins use the ServicesCheck class found in monagent/collector/services_checks.py. These require a _check() method that is similar to AgentCheck's check(), but instead of being called once per iteration in a linear fashion, it is run against a threadpool to allow concurrent instances to be checked. Also, _check() must return a tuple consisting of either Status.UP or 'Status.DOWN(frommonagent.collector.checks.services_checks`), plus a text description.
+Some monasca-agent plugins use the ServicesCheck class found in monagent/collector/services_checks.py. These require a _check() method that is similar to AgentCheck's check(), but instead of being called once per iteration in a linear fashion, it is run against a threadpool to allow concurrent instances to be checked. Also, _check() must return a tuple consisting of either Status.UP or 'Status.DOWN(frommonagent.collector.checks.services_checks`), plus a text description.
 
 The size of the threadpool is either 6 or the total number of instances, whichever is lower. This may be adjusted with the threads_count parameter in the plugin's init_config (see Plugin Configuration below).
 
@@ -522,7 +657,7 @@ In the init_config section you can specify an arbitrary number of global name:va
 The instances section is a list of instances that this check will be run against. Your actual check() method is run once per instance. The name:value pairs for each instance specify details about the instance that are necessary for the check.
 
 ## Plugin Documentation
-Your plugin should include an example YAML configuration file to be placed in /etc/mon-agent/conf.d/ which has the name of the plugin YAML file plus the extension '.example', so the example configuration file for the process plugin would be at /etc/mon-agent/conf.d/process.yaml.example. This file should include a set of example init_config and instances clauses that demonstrate how the plugin can be configured.
+Your plugin should include an example YAML configuration file to be placed in /etc/monasca/agent/conf.d/ which has the name of the plugin YAML file plus the extension '.example', so the example configuration file for the process plugin would be at /etc/monasca/agent/conf.d/process.yaml.example. This file should include a set of example init_config and instances clauses that demonstrate how the plugin can be configured.
 
 # License
 Copyright (c) 2014 Hewlett-Packard Development Company, L.P.

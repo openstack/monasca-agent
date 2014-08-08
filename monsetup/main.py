@@ -10,6 +10,7 @@ import socket
 import subprocess
 import sys
 import yaml
+import platform
 
 import agent_config
 from detection.plugins import kafka, mon, mysql, network, zookeeper
@@ -22,7 +23,7 @@ DETECTION_PLUGINS = [kafka.Kafka, mon.MonAPI, mon.MonPersister, mon.MonThresh, m
                      network.Network, nova.Nova, cinder.Cinder, swift.Swift, glance.Glance,
                      ceilometer.Ceilometer, neutron.Neutron, keystone.Keystone, zookeeper.Zookeeper]
 # Map OS to service type
-OS_SERVICE_MAP = {'linux': sysv.SysV}
+OS_SERVICE_MAP = {'Linux': sysv.SysV}
 
 log = logging.getLogger(__name__)
 
@@ -61,7 +62,15 @@ def main(argv=None):
         logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
     # Detect os
-    detected_os = 'linux'  # todo add detection
+    detected_os = platform.system()
+    if detected_os == 'Linux':
+        pass
+    elif detected_os == 'Darwin':
+        print("Mac OS is not currently supported by the Monasca Agent")
+        sys.exit()
+    elif detected_os == 'Windows':
+        print("Windows is not currently supported by the Monasca Agent")
+        sys.exit()
 
     # Service enable, includes setup of users/config directories so must be
     # done before configuration
