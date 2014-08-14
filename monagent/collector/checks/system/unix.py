@@ -113,13 +113,9 @@ class Disk(Check):
                 self.logger.exception("Cannot parse %s" % (parts,))
 
             if inodes:
-                usage_data['%s.disk_total_inodes' % parts[0]] = parts[1]
-                usage_data['%s.disk_used_inodes' % parts[0]] = parts[2]
-                usage_data['%s.disk_free_inodes' % parts[0]] = parts[3]
+                usage_data['%s.disk_inode_utilization_perc' % parts[0]] = float(parts[2]) / parts[1] * 100
             else:
-                usage_data['%s.disk_total_kbytes' % parts[0]] = parts[1]
-                usage_data['%s.disk_used_kbytes' % parts[0]] = parts[2]
-                usage_data['%s.disk_free_kbytes' % parts[0]] = parts[3]
+                usage_data['%s.disk_space_utilization_perc' % parts[0]] = float(parts[2]) / parts[1] * 100
 
         return usage_data
 
@@ -261,20 +257,20 @@ class IO(Check):
             names = {"wait": "await",
                      "svc_t": "svctm",
                      "%b": "%util",
-                     "kr/s": "io_read_kbytes_sec",
-                     "kw/s": "io_write_kbytes_sec",
+                     "kr/s": "io.read_kbytes_sec",
+                     "kw/s": "io.write_kbytes_sec",
                      "actv": "avgqu-sz"}
         elif os_name == "freebsd":
             names = {"svc_t": "await",
                      "%b": "%util",
-                     "kr/s": "io_read_kbytes_sec",
-                     "kw/s": "io_write_kbytes_sec",
+                     "kr/s": "io.read_kbytes_sec",
+                     "kw/s": "io.write_kbytes_sec",
                      "wait": "avgqu-sz"}
         elif os_name == "linux":
-            names = {"rkB/s": "io_read_kbytes_sec",
-                     "r/s": "io_read_req_sec",
-                     "wkB/s": "io_write_kbytes_sec",
-                     "w/s": "io_write_req_sec"}
+            names = {"rkB/s": "io.read_kbytes_sec",
+                     "r/s": "io.read_req_sec",
+                     "wkB/s": "io.write_kbytes_sec",
+                     "w/s": "io.write_req_sec"}
         # translate if possible
         return names.get(metric_name, metric_name)
 
@@ -435,9 +431,9 @@ class Load(Check):
 
         # Split out the 3 load average values
         load = [res.replace(',', '.') for res in re.findall(r'([0-9]+[\.,]\d+)', uptime)]
-        return {'load_avg_1_min': float(load[0]),
-                'load_avg_5_min': float(load[1]),
-                'load_avg_15_min': float(load[2]),
+        return {'cpu.load_avg_1_min': float(load[0]),
+                'cpu.load_avg_5_min': float(load[1]),
+                'cpu.load_avg_15_min': float(load[2]),
                 }
 
 
@@ -537,35 +533,35 @@ class Memory(Check):
             # Physical memory
             # FIXME units are in MB, we should use bytes instead
             try:
-                memData['mem_total_mb'] = int(meminfo.get('MemTotal', 0)) / 1024
-                memData['mem_free_mb'] = int(meminfo.get('MemFree', 0)) / 1024
-                memData['memphysBuffers'] = int(meminfo.get('Buffers', 0)) / 1024
-                memData['memphysCached'] = int(meminfo.get('Cached', 0)) / 1024
-                memData['memphysShared'] = int(meminfo.get('Shmem', 0)) / 1024
+                memData['mem.total_mb'] = int(meminfo.get('MemTotal', 0)) / 1024
+                memData['mem.free_mb'] = int(meminfo.get('MemFree', 0)) / 1024
+                memData['mem.used_buffers'] = int(meminfo.get('Buffers', 0)) / 1024
+                memData['mem.used_cached'] = int(meminfo.get('Cached', 0)) / 1024
+                memData['mem.used_shared'] = int(meminfo.get('Shmem', 0)) / 1024
 
-                memData['mem_usable_perc'] = memData['mem_total_mb'] - memData['mem_free_mb']
+                memData['mem.usable_perc'] = memData['mem.total_mb'] - memData['mem.free_mb']
                 # Usable is relative since cached and buffers are actually used to speed things up.
-                memData['mem_usable_mb'] = memData['mem_free_mb'] + \
-                    memData['memphysBuffers'] + memData['memphysCached']
+                memData['mem.usable_mb'] = memData['mem.free_mb'] + \
+                    memData['mem.used_buffers'] + memData['mem.used_cached']
 
-                if memData['mem_total_mb'] > 0:
-                    memData['mem_usable_perc'] = float(
-                        memData['mem_usable_mb']) / float(memData['mem_total_mb'])
+                if memData['mem.total_mb'] > 0:
+                    memData['mem.usable_perc'] = float(
+                        memData['mem.usable_mb']) / float(memData['mem.total_mb'])
             except Exception:
                 self.logger.exception('Cannot compute stats from /proc/meminfo')
 
             # Swap
             # FIXME units are in MB, we should use bytes instead
             try:
-                memData['mem_swap_total_mb'] = int(meminfo.get('SwapTotal', 0)) / 1024
-                memData['mem_swap_free_mb'] = int(meminfo.get('SwapFree', 0)) / 1024
+                memData['mem.swap_total_mb'] = int(meminfo.get('SwapTotal', 0)) / 1024
+                memData['mem.swap_free_mb'] = int(meminfo.get('SwapFree', 0)) / 1024
 
-                memData['mem_swap_used_mb'] = memData[
-                    'mem_swap_total_mb'] - memData['mem_swap_free_mb']
+                memData['mem.swap_used_mb'] = memData[
+                    'mem.swap_total_mb'] - memData['mem.swap_free_mb']
 
-                if memData['mem_swap_total_mb'] > 0:
-                    memData['mem_swap_free_perc'] = float(
-                        memData['mem_swap_free_mb']) / float(memData['mem_swap_total_mb'])
+                if memData['mem.swap_total_mb'] > 0:
+                    memData['mem.swap_free_perc'] = float(
+                        memData['mem.swap_free_mb']) / float(memData['mem.swap_total_mb'])
             except Exception:
                 self.logger.exception('Cannot compute swap stats')
 
@@ -747,11 +743,11 @@ class Cpu(Check):
         When figures are not available, False is sent back.
         """
         def format_results(us, sy, wa, idle, st):
-            data = {'cpu_user_perc': us,
-                    'cpu_system_perc': sy,
-                    'cpu_wait_perc': wa,
-                    'cpu_idle_perc': idle,
-                    'cpu_stolen_perc': st}
+            data = {'cpu.user_perc': us,
+                    'cpu.system_perc': sy,
+                    'cpu.wait_perc': wa,
+                    'cpu.idle_perc': idle,
+                    'cpu.stolen_perc': st}
             for key in data.keys():
                 if data[key] is None:
                     del data[key]

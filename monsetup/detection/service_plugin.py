@@ -39,13 +39,13 @@ class ServicePlugin(Plugin):
         for process in self.found_processes:
             # Watch the service processes
             log.info("\tMonitoring the {0} {1} process.".format(process, self.service_name))
-            config.merge(watch_process([process], self.service_name))
+            config.merge(watch_process([process], self.service_name, process))
 
         if self.service_api_url and self.search_pattern:
             # Setup an active http_status check on the API
             log.info("\tConfiguring an http_check for the {0} API.".format(self.service_name))
             config.merge(service_api_check(self.service_name + '-api', self.service_api_url,
-                                           self.search_pattern, self.service_name))
+                                           self.search_pattern, self.service_name + '_api'))
 
         return config
 

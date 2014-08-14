@@ -26,7 +26,7 @@ def find_process_name(pname):
     return None
 
 
-def watch_process(search_strings, service=None):
+def watch_process(search_strings, service=None, component=None):
     """Takes a list of process search strings and returns a Plugins object with the config set.
         This was built as a helper as many plugins setup process watching
     """
@@ -34,17 +34,16 @@ def watch_process(search_strings, service=None):
     parameters = {'name': search_strings[0],
                   'search_string': search_strings}
 
-    # If service parameter is set in the plugin config, add the service dimension which
-    # will override the service in the agent config
-    if service:
-        parameters['dimensions'] = {'service': service}
+    dimensions = _get_dimensions(service, component)
+    if len(dimensions) > 0:
+        parameters['dimensions'] = dimensions
 
     config['process'] = {'init_config': None,
                          'instances': [parameters]}
     return config
 
 
-def service_api_check(name, url, pattern, service=None):
+def service_api_check(name, url, pattern, service=None, component=None):
     """Setup a service api to be watched by the http_check plugin."""
     config = agent_config.Plugins()
     parameters = {'name': name,
@@ -53,12 +52,26 @@ def service_api_check(name, url, pattern, service=None):
                   'timeout': 10,
                   'use_keystone': True}
 
-    # If service parameter is set in the plugin config, add the service dimension which
-    # will override the service in the agent config
-    if service:
-        parameters['dimensions'] = {'service': service}
+    dimensions = _get_dimensions(service, component)
+    if len(dimensions) > 0:
+        parameters['dimensions'] = dimensions
 
     config['http_check'] = {'init_config': None,
                             'instances': [parameters]}
 
     return config
+
+
+def _get_dimensions(service, component):
+    dimensions = {}
+    # If service parameter is set in the plugin config, add the service dimension which
+    # will override the service in the agent config
+    if service:
+        dimensions.update({'service': service})
+
+    # If component parameter is set in the plugin config, add the component dimension which
+    # will override the component in the agent config
+    if component:
+        dimensions.update({'component': component})
+
+    return dimensions

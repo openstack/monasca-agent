@@ -5,18 +5,18 @@ from monagent.common.util import Platform
 
 class ProcessCheck(AgentCheck):
 
-    PROCESS_GAUGE = ('processes_threads',
-                     'processes_cpu.pct',
-                     'processes_mem.rss',
-                     'processes_mem.vms',
-                     'processes_mem.real',
-                     'processes_open_file_decorators',
-                     'processes_ioread_count',
-                     'processes_iowrite_count',
-                     'processes_ioread_bytes',
-                     'processes_iowrite_bytes',
-                     'processes_voluntary_ctx_switches',
-                     'processes_involuntary_ctx_switches')
+    PROCESS_GAUGE = ('process.threads',
+                     'process.cpu_pct',
+                     'process.mem.rss',
+                     'process.mem.vms',
+                     'process.mem.real',
+                     'process.open_file_descriptors',
+                     'process.io.read_count',
+                     'process.io.write_count',
+                     'process.io.read_bytes',
+                     'process.io.write_bytes',
+                     'process.voluntary_ctx_switches',
+                     'process.involuntary_ctx_switches')
 
     @staticmethod
     def is_psutil_version_later_than(v):
@@ -193,7 +193,7 @@ class ProcessCheck(AgentCheck):
 
         self.log.debug('ProcessCheck: process %s analysed' % name)
 
-        self.gauge('processes_pid_count', len(pids), dimensions=dimensions)
+        self.gauge('process.pid_count', len(pids), dimensions=dimensions)
 
         metrics = dict(zip(ProcessCheck.PROCESS_GAUGE,
                            self.get_process_metrics(pids,

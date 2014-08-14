@@ -108,16 +108,16 @@ class Collector(object):
     def collector_stats(self, num_metrics, num_events, collection_time, emit_time):
         metrics = {}
         thread_count = threading.active_count()
-        metrics['monagent.collector.threads.count'] = thread_count
+        metrics['threads_count'] = thread_count
         if thread_count > MAX_THREADS_COUNT:
             log.warn("Collector thread count is high: %d" % thread_count)
 
-        metrics['monagent.collector.collection.time'] = collection_time
+        metrics['collection_time'] = collection_time
         if collection_time > MAX_COLLECTION_TIME:
             log.info("Collection time (s) is high: %.1f, metrics count: %d, events count: %d" %
                      (collection_time, num_metrics, num_events))
 
-        metrics['monagent.collector.emit.time'] = emit_time
+        metrics['emit_time'] = emit_time
         if emit_time is not None and emit_time > MAX_EMIT_TIME:
             log.info("Emit time (s) is high: %.1f, metrics count: %d, events count: %d" %
                      (emit_time, num_metrics, num_events))
@@ -163,7 +163,10 @@ class Collector(object):
         # Add in metrics on the collector run, emit_duration is from the previous run
         for name, value in self.collector_stats(len(metrics_list), len(events),
                                                 collect_duration, self.emit_duration).iteritems():
-            metrics_list.append(Measurement(name, timestamp, value, {}))
+            metrics_list.append(Measurement(name,
+                                            timestamp,
+                                            value,
+                                            {'service': 'monasca', 'component': 'collector'}))
 
         emitter_statuses = self._emit(metrics_list)
         self.emit_duration = timer.step()

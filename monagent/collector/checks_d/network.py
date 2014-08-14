@@ -28,18 +28,18 @@ class Network(AgentCheck):
     }
 
     NETSTAT_GAUGE = {
-        ('udp4', 'connections'): 'net_udp4_connections',
-        ('udp6', 'connections'): 'net_udp6_connections',
-        ('tcp4', 'established'): 'net_tcp4_established',
-        ('tcp4', 'opening'): 'net_tcp4_opening',
-        ('tcp4', 'closing'): 'net_tcp4_closing',
-        ('tcp4', 'listening'): 'net_tcp4_listening',
-        ('tcp4', 'time_wait'): 'net_tcp4_time_wait',
-        ('tcp6', 'established'): 'net_tcp6_established',
-        ('tcp6', 'opening'): 'net_tcp6_opening',
-        ('tcp6', 'closing'): 'net_tcp6_closing',
-        ('tcp6', 'listening'): 'net_tcp6_listening',
-        ('tcp6', 'time_wait'): 'net_tcp6_time_wait',
+        ('udp4', 'connections'): 'net.udp4_connections',
+        ('udp6', 'connections'): 'net.udp6_connections',
+        ('tcp4', 'established'): 'net.tcp4_established',
+        ('tcp4', 'opening'): 'net.tcp4_opening',
+        ('tcp4', 'closing'): 'net.tcp4_closing',
+        ('tcp4', 'listening'): 'net.tcp4_listening',
+        ('tcp4', 'time_wait'): 'net.tcp4_time_wait',
+        ('tcp6', 'established'): 'net.tcp6_established',
+        ('tcp6', 'opening'): 'net.tcp6_opening',
+        ('tcp6', 'closing'): 'net.tcp6_closing',
+        ('tcp6', 'listening'): 'net.tcp6_listening',
+        ('tcp6', 'time_wait'): 'net.tcp6_time_wait',
     }
 
     def __init__(self, name, init_config, agent_config, instances=None):
@@ -100,7 +100,7 @@ class Network(AgentCheck):
             if iface in self._excluded_ifaces and metric in exclude_iface_metrics:
                 # skip it!
                 continue
-            self.rate('net_%s' % metric, val, device_name=iface)
+            self.rate('net.%s' % metric, val, device_name=iface)
             count += 1
         self.log.debug("tracked %s network metrics for interface %s" % (count, iface))
 

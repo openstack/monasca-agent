@@ -351,12 +351,8 @@ This section documents the system metrics that are sent by the Agent.  This sect
 | cpu.stolen_perc | | Percentage of stolen CPU time, i.e. the time spent in other OS contexts when running in a virtualized environment |
 | cpu.system_perc | | Percentage of time the CPU is used at the system level |
 | cpu.user_perc  | | Percentage of time the CPU is used at the user level |
-| disk.free_inodes | device | The number of inodes that are free on a device |
-| disk.used_inodes | device | The number of inodes that are used on a device |
-| disk.total_inodes | device | The total number of inodes that are available on a device |
-| disk.used_kbytes | device | The number of kilobytes of disk space that are used on a device |
-| disk.total_kbytes | device | The total number of kilobytes of disk space that are available on a device |
-| disk.free_kbytes | device | The number of kilobytes of disk space that are free on a device|
+| disk_inode_utilization_perc | device | The percentage of inodes that are used on a device |
+| disk_space_utilization_perc | device | The percentage of disk space that is being used on a device |
 | io.read_kbytes_sec | device | Kbytes/sec read by an io device
 | io.read_req_sec | device   | Number of read requests/sec to an io device
 | io.write_kbytes_sec |device | Kbytes/sec written by an io device
@@ -373,7 +369,7 @@ This section documents the system metrics that are sent by the Agent.  This sect
 | mem.usable_mb | | Total megabytes of usable memory
 | mem.usable_perc | | Percentage of total memory that is usable
 | mem.used_buffers | | Number of buffers being used by the kernel for block io
-| mem_used_cached | | Memory used for the page cache
+| mem.used_cached | | Memory used for the page cache
 | mem.used_shared  | | Memory shared between separate processes and typically used for inter-process communication
 | net.bytes_in  | device | Number of network bytes received
 | net.bytes_out  | device | Number of network bytes sent
@@ -381,9 +377,9 @@ This section documents the system metrics that are sent by the Agent.  This sect
 | net.packets_out  | device | Number of network packets sent
 | net.errors_in  | device | Number of network errors on incoming network traffic
 | net.errors_out  | device | Number of network errors on outgoing network traffic
-| collector.threads.count  | service=monasca component=agent | Number of threads that the collector is consuming for this collection run
-| collector.emit.time  | service=monasca component=agent | Amount of time that the collector took for sending the collected metrics to the Forwarder for this collection run
-| collector.collection.time  | service=monasca component=agent | Amount of time that the collector took for this collection run
+| thread_count  | service=monasca component=collector | Number of threads that the collector is consuming for this collection run
+| emit_time  | service=monasca component=collector | Amount of time that the collector took for sending the collected metrics to the Forwarder for this collection run
+| collection_time  | service=monasca component=collector | Amount of time that the collector took for this collection run
 
 # Plugin Checks
 Plugins are the way to extend the Monasca Agent.  Plugins add additional functionality that allow the agent to perform checks on other applications, servers or services.
@@ -557,19 +553,19 @@ The process checks return the following metrics:
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
-| processes.mem.real  | process_name | Amount of real memory a process is using
-| processes.mem.rss  | process_name | Amount of rss memory a process is using
-| processes.io.read_count  | process_name | Number of reads by a process
-| processes.io.write_count  | process_name | Number of writes by a process
-| processes.io.read_bytes  | process_name | Bytes read by a process
-| processes.io.write_bytes  | process_name | Bytes written by a process
-| processes.threads  | process_name | Number of threads a process is using
-| processes.cpu_perc  | process_name | Percentage of cpu being consumed by a process
-| processes.vms  | process_name | Amount of virtual memory a process is using
-| processes.open_file_decorators  | process_name | Number of files being used by a process
-| processes.involuntary_ctx_switches  | process_name | Number of involuntary context switches for a process
-| processes.voluntary_ctx_switches  | process_name | Number of voluntary context switches for a process
-| processes.pid_count  | process_name | Number of processes that exist with this process name
+| process.mem.real  | process_name, service, component | Amount of real memory a process is using
+| process.mem.rss  | process_name, service, component | Amount of rss memory a process is using
+| process.io.read_count  | process_name, service, component | Number of reads by a process
+| process.io.write_count  | process_name, service, component | Number of writes by a process
+| process.io.read_bytes  | process_name, service, component | Bytes read by a process
+| process.io.write_bytes  | process_name, service, component | Bytes written by a process
+| process.threads  | process_name, service, component | Number of threads a process is using
+| process.cpu_perc  | process_name, service, component | Percentage of cpu being consumed by a process
+| process.vms  | process_name, service, component | Amount of virtual memory a process is using
+| process.open_file_decorators  | process_name, service, component | Number of files being used by a process
+| process.involuntary_ctx_switches  | process_name, service, component | Number of involuntary context switches for a process
+| process.voluntary_ctx_switches  | process_name, service, component | Number of voluntary context switches for a process
+| process.pid_count  | process_name, service, component | Number of processes that exist with this process name
 
 ## Http Endpoint Checks
 This section describes the http endpoint check that can be performed by the Agent. Http endpoint checks are checks that perform simple up/down checks on services, such as HTTP/REST APIs. An agent, given a list of URLs can dispatch an http request and report to the API success/failure as a metric.

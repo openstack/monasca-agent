@@ -67,6 +67,9 @@ class MySql(AgentCheck):
         host, port, user, password, mysql_sock, defaults_file, dimensions, options = self._get_config(
             instance)
 
+        if 'service' not in dimensions:
+            dimensions.update({'service': 'mysql'})
+
         if (not host or not user) and not defaults_file:
             raise Exception("Mysql host and user are needed.")
 
@@ -84,7 +87,7 @@ class MySql(AgentCheck):
         password = instance.get('pass', '')
         mysql_sock = instance.get('sock', '')
         defaults_file = instance.get('defaults_file', '')
-        dimensions = instance.get('dimensions', None)
+        dimensions = instance.get('dimensions', {})
         options = instance.get('options', {})
 
         return host, port, user, password, mysql_sock, defaults_file, dimensions, options
