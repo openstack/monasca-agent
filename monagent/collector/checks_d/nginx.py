@@ -1,14 +1,15 @@
 import re
 import urllib2
 
-from monagent.common.util import headers
 from monagent.collector.checks import AgentCheck
 from monagent.collector.checks.utils import add_basic_auth
+from monagent.common.util import headers
 
 
 class Nginx(AgentCheck):
 
     """Tracks basic nginx metrics via the status module
+
     * number of connections
     * number of requets per second
 
@@ -20,7 +21,6 @@ class Nginx(AgentCheck):
     server accepts handled requests
      1156958 1156958 4491319
     Reading: 0 Writing: 2 Waiting: 6
-
     """
 
     def check(self, instance):

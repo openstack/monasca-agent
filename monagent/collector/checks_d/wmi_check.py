@@ -1,10 +1,9 @@
-'''
-Windows Only.
+"""Windows Only.
 
 Generic WMI check. This check allows you to specify particular metrics that you
 want from WMI in your configuration. Check wmi.yaml.example in your conf.d
 directory for more details on configuration.
-'''
+"""
 try:
     import wmi
 except Exception:

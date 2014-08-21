@@ -1,8 +1,11 @@
 import logging
 
 from plugin import Plugin
+
 from monsetup import agent_config
-from monsetup.detection import find_process_cmdline, watch_process, service_api_check
+from monsetup.detection import find_process_cmdline
+from monsetup.detection import service_api_check
+from monsetup.detection import watch_process
 
 
 log = logging.getLogger(__name__)
@@ -11,6 +14,7 @@ log = logging.getLogger(__name__)
 class ServicePlugin(Plugin):
 
     """Base class implemented by the monasca-agent plugin detection classes
+
        for OpenStack Services
     """
 
@@ -23,7 +27,9 @@ class ServicePlugin(Plugin):
         super(ServicePlugin, self).__init__(kwargs['template_dir'], kwargs['overwrite'])
 
     def _detect(self):
-        """Run detection"""
+        """Run detection.
+
+        """
         self.found_processes = []
 
         for process in self.process_names:
@@ -34,6 +40,7 @@ class ServicePlugin(Plugin):
 
     def build_config(self):
         """Build the config as a Plugins object and return.
+
         """
         config = agent_config.Plugins()
         for process in self.found_processes:
@@ -50,6 +57,7 @@ class ServicePlugin(Plugin):
         return config
 
     def dependencies_installed(self):
-        """return True if dependencies are installed
+        """Return True if dependencies are installed.
+
         """
         return True

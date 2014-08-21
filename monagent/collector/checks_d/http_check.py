@@ -1,15 +1,20 @@
 #!/bin/env python
-"""Monitoring Agent plugin for HTTP/API checks"""
+"""Monitoring Agent plugin for HTTP/API checks.
 
-import socket
-import time
+"""
+
 import json
 import re
+import socket
+import time
 
-from httplib2 import Http, HttpLib2Error, httplib
+from httplib2 import Http
+from httplib2 import httplib
+from httplib2 import HttpLib2Error
 
-from monagent.collector.checks.services_checks import ServicesCheck, Status
 from monagent.collector.checks.check import AgentCheck
+from monagent.collector.checks.services_checks import ServicesCheck
+from monagent.collector.checks.services_checks import Status
 
 
 class HTTPCheck(ServicesCheck):
@@ -38,7 +43,9 @@ class HTTPCheck(ServicesCheck):
         return url, username, password, timeout, include_content, headers, response_time, dimensions, ssl, pattern, use_keystone, token
 
     def _create_status_event(self, status, msg, instance):
-        """Does nothing: status events are not yet supported by Mon API"""
+        """Does nothing: status events are not yet supported by Mon API.
+
+        """
         return
 
     def _check(self, instance):

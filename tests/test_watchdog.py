@@ -102,6 +102,7 @@ class PseudoAgent(object):
         x = 0
         while True:
             x = random()
+        return x
 
     @staticmethod
     def hanging_net():

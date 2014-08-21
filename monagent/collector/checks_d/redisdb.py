@@ -1,6 +1,6 @@
-'''
-Redis checks
-'''
+"""Redis checks.
+
+"""
 import re
 import time
 
@@ -84,7 +84,9 @@ class Redis(AgentCheck):
         return {"redis": version}
 
     def _parse_dict_string(self, string, key, default):
-        """Take from a more recent redis.py, parse_info"""
+        """Take from a more recent redis.py, parse_info.
+
+        """
         try:
             for item in string.split(','):
                 k, v = item.rsplit('=', 1)
@@ -94,7 +96,7 @@ class Redis(AgentCheck):
                     except ValueError:
                         return v
             return default
-        except Exception as e:
+        except Exception:
             self.log.exception("Cannot parse dictionary string: %s" % string)
             return default
 
@@ -144,7 +146,7 @@ class Redis(AgentCheck):
         start = time.time()
         try:
             info = conn.info()
-        except ValueError as e:
+        except ValueError:
             # This is likely a know issue with redis library 2.0.0
             # See https://github.com/DataDog/dd-agent/issues/374 for details
             import redis

@@ -1,11 +1,10 @@
 import base64
+import binascii
 import os
+import stat
 
 # os.SEEK_END is defined in python 2.5
 SEEK_END = 2
-
-from stat import *
-import binascii
 
 
 def median(vals):
@@ -21,8 +20,9 @@ def median(vals):
 
 
 def add_basic_auth(request, username, password):
-    """ A helper to add basic authentication to a urllib2 request. We do this
-        across a variety of checks so it's good to have this in one place.
+    """A helper to add basic authentication to a urllib2 request.
+
+    We do this across a variety of checks so it's good to have this in one place.
     """
     auth_str = base64.encodestring('%s:%s' % (username, password)).strip()
     request.add_header('Authorization', 'Basic %s' % auth_str)
@@ -52,8 +52,8 @@ class TailFile(object):
             already_open = True
 
         stat = os.stat(self._path)
-        inode = stat[ST_INO]
-        size = stat[ST_SIZE]
+        inode = stat[stat.ST_INO]
+        size = stat[stat.ST_SIZE]
 
         # Compute CRC of the beginning of the file
         crc = None
@@ -98,8 +98,10 @@ class TailFile(object):
 
     def tail(self, line_by_line=True, move_end=True):
         """Read line-by-line and run callback on each line.
+
         line_by_line: yield each time a callback has returned True
-        move_end: start from the last line of the log"""
+        move_end: start from the last line of the log
+        """
         try:
             self._open_file(move_end=move_end)
 

@@ -1,7 +1,7 @@
 import json
+import time
 import urllib2
 import urlparse
-import time
 
 from monagent.collector.checks import AgentCheck
 
@@ -42,6 +42,7 @@ METRIC_SUFFIX = {QUEUE_TYPE: "queue", NODE_TYPE: "node"}
 class RabbitMQ(AgentCheck):
 
     """This check is for gathering statistics from the RabbitMQ
+
     Management Plugin (http://www.rabbitmq.com/management.html)
     """
 
@@ -104,8 +105,8 @@ class RabbitMQ(AgentCheck):
         return data
 
     def get_stats(self, instance, base_url, object_type, max_detailed, specified_list):
-        """
-        instance: the check instance
+        """instance: the check instance
+
         base_url: the url of the rabbitmq management api (e.g. http://localhost:15672/api)
         object_type: either QUEUE_TYPE or NODE_TYPE
         max_detailed: the limit of objects to collect for this type
@@ -116,7 +117,8 @@ class RabbitMQ(AgentCheck):
         # Make a copy of this list as we will remove items from it at each iteration
         specified_items = list(specified_list)
 
-        """ data is a list of nodes or queues:
+        """data is a list of nodes or queues:
+
         data = [
             {'status': 'running', 'node': 'rabbit@host', 'name': 'queue1', 'consumers': 0, 'vhost': '/', 'backing_queue_status': {'q1': 0, 'q3': 0, 'q2': 0, 'q4': 0, 'avg_ack_egress_rate': 0.0, 'ram_msg_count': 0, 'ram_ack_count': 0, 'len': 0, 'persistent_count': 0, 'target_ram_count': 'infinity', 'next_seq_id': 0, 'delta': ['delta', 'undefined', 0, 'undefined'], 'pending_acks': 0, 'avg_ack_ingress_rate': 0.0, 'avg_egress_rate': 0.0, 'avg_ingress_rate': 0.0}, 'durable': True, 'idle_since': '2013-10-03 13:38:18', 'exclusive_consumer_tag': '', 'arguments': {}, 'memory': 10956, 'policy': '', 'auto_delete': False},
             {'status': 'running', 'node': 'rabbit@host, 'name': 'queue10', 'consumers': 0, 'vhost': '/', 'backing_queue_status': {'q1': 0, 'q3': 0, 'q2': 0, 'q4': 0, 'avg_ack_egress_rate': 0.0, 'ram_msg_count': 0, 'ram_ack_count': 0, 'len': 0, 'persistent_count': 0, 'target_ram_count': 'infinity', 'next_seq_id': 0, 'delta': ['delta', 'undefined', 0, 'undefined'], 'pending_acks': 0, 'avg_ack_ingress_rate': 0.0, 'avg_egress_rate': 0.0, 'avg_ingress_rate': 0.0}, 'durable': True, 'idle_since': '2013-10-03 13:38:18', 'exclusive_consumer_tag': '', 'arguments': {}, 'memory': 10956, 'policy': '', 'auto_delete': False},

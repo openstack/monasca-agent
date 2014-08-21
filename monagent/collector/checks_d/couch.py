@@ -1,13 +1,14 @@
-import urllib2
 import json
+import urllib2
 
-from monagent.common.util import headers
 from monagent.collector.checks import AgentCheck
+from monagent.common.util import headers
 
 
 class CouchDb(AgentCheck):
 
     """Extracts stats from CouchDB via its REST API
+
     http://wiki.apache.org/couchdb/Runtime_Statistics
     """
 
@@ -28,7 +29,9 @@ class CouchDb(AgentCheck):
                     self.gauge(metric_name, val, dimensions=metric_dimensions, device_name=db_name)
 
     def _get_stats(self, url):
-        "Hit a given URL and return the parsed json"
+        """Hit a given URL and return the parsed json.
+
+        """
         self.log.debug('Fetching Couchdb stats at url: %s' % url)
         req = urllib2.Request(url, None, headers(self.agent_config))
 

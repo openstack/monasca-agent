@@ -1,11 +1,17 @@
-import unittest
 from functools import reduce
+import logging
+import platform
+import re
+import unittest
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__file__)
 
-from monagent.collector.checks.system.unix import *
 from common import get_check
+from monagent.collector.checks.system.unix import Cpu
+from monagent.collector.checks.system.unix import Disk
+from monagent.collector.checks.system.unix import IO
+from monagent.collector.checks.system.unix import Memory
 
 
 class TestSystem(unittest.TestCase):
@@ -115,7 +121,7 @@ none                  985964       1  985963    1% /lib/init/rw
 
     def test_collecting_disk_metrics(self):
         """Testing disk stats gathering"""
-        if Platform.is_unix():
+        if platform.system() == 'Linux':
             disk = Disk(logger, {})
             res = disk.check()
             # Assert we have disk & inode stats
@@ -126,7 +132,7 @@ none                  985964       1  985963    1% /lib/init/rw
     def testMemory(self):
         global logger
         res = Memory(logger).check()
-        if Platform.is_linux():
+        if platform.system() == 'Linux':
             for k in (
                     "swapTotal", "swapFree", "swapPctFree", "swapUsed", "physTotal", "physFree",
                     "physUsed", "physBuffers", "physCached", "physUsable", "physPctUsable",
@@ -134,7 +140,7 @@ none                  985964       1  985963    1% /lib/init/rw
                 assert k in res, res
             assert res["swapTotal"] == res["swapFree"] + res["swapUsed"]
             assert res["physTotal"] == res["physFree"] + res["physUsed"]
-        elif sys.platform == 'darwin':
+        elif platform.system() == 'Darwin':
             for k in ("swapFree", "swapUsed", "physFree", "physUsed"):
                 assert k in res, res
 

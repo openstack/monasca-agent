@@ -1,9 +1,11 @@
-from monsetup.detection import ServicePlugin
+import monsetup.detection
 
 
-class Nova(ServicePlugin):
+class Nova(monsetup.detection.ServicePlugin):
 
-    """Detect Nova daemons and setup configuration to monitor them."""
+    """Detect Nova daemons and setup configuration to monitor them.
+
+    """
 
     def __init__(self, template_dir, overwrite=True):
         service_params = {

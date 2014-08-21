@@ -1,14 +1,11 @@
-"""
-Custom parser for supervisord log suitable for use by Datadog 'dogstreams'
+"""Custom parser for supervisord log suitable for use by Datadog 'dogstreams'
 
 Add to datadog.conf as follows:
-
-dogstreams: [path_to_supervisord.log]:datadog.streams.supervisord:parse_supervisord
-
+    dogstreams: [path_to_supervisord.log]:datadog.streams.supervisord:parse_supervisord
 """
 from datetime import datetime
-import time
 import re
+import time
 
 EVENT_TYPE = "supervisor"
 
@@ -37,8 +34,8 @@ program_matcher = re.compile("^\w+:? '?(?P<program>\w+)'?")
 
 
 def parse_supervisord(log, line):
-    """
-    Parse the supervisord.log line into a dogstream event
+    """Parse the supervisord.log line into a dogstream event.
+
     """
     if len(line) == 0:
         log.info("Skipping empty line of supervisord.log")
@@ -71,9 +68,9 @@ def parse_supervisord(log, line):
         return None
 
 if __name__ == "__main__":
-    import sys
-    import pprint
     import logging
+    import pprint
+    import sys
     logging.basicConfig()
     log = logging.getLogger()
     lines = open(sys.argv[1]).readlines()

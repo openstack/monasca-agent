@@ -1,6 +1,6 @@
-import urllib2
-import time
 from collections import defaultdict
+import time
+import urllib2
 
 from monagent.collector.checks import AgentCheck
 from monagent.common.util import headers
@@ -65,7 +65,9 @@ class HAProxy(AgentCheck):
                            url=url, collect_status_metrics=collect_status_metrics)
 
     def _fetch_data(self, url, username, password):
-        ''' Hit a given URL and return the parsed json '''
+        """Hit a given URL and return the parsed json.
+
+        """
         # Try to fetch data from the stats URL
 
         passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
@@ -85,8 +87,10 @@ class HAProxy(AgentCheck):
 
     def _process_data(self, data, collect_aggregates_only, process_events,
                       url=None, collect_status_metrics=False):
-        ''' Main data-processing loop. For each piece of useful data, we'll
-        either save a metric, save an event or both. '''
+        """Main data-processing loop. For each piece of useful data, we'll
+
+        either save a metric, save an event or both.
+        """
 
         # Split the first line into an index of fields
         # The line looks like:
@@ -164,8 +168,8 @@ class HAProxy(AgentCheck):
 
     def _process_metrics(self, data_list, service, url):
         for data in data_list:
-            """
-            Each element of data_list is a dictionary related to one host
+            """Each element of data_list is a dictionary related to one host
+
             (one line) extracted from the csv. All of these elements should
             have the same value for 'pxname' key
             It should look like:
@@ -193,8 +197,9 @@ class HAProxy(AgentCheck):
                         self.gauge(name, value, dimensions=dimensions)
 
     def _process_events(self, data_list, url):
-        ''' Main event processing loop. Events will be created for a service
-        status change '''
+        """Main event processing loop. Events will be created for a service status change.
+
+        """
         for data in data_list:
             hostname = data['svname']
             service_name = data['pxname']

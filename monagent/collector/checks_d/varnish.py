@@ -1,6 +1,6 @@
-import xml.parsers.expat  # python 2.4 compatible
 import re
 import subprocess
+import xml.parsers.expat  # python 2.4 compatible
 
 from monagent.collector.checks import AgentCheck
 

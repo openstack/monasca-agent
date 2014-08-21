@@ -1,7 +1,7 @@
+from collections import namedtuple
 from fnmatch import fnmatch
 import os
 import time
-from collections import namedtuple
 
 from monagent.collector.checks import AgentCheck
 
@@ -52,16 +52,16 @@ class Cacti(AgentCheck):
         # The rrdtool module is required for the check to work
         try:
             import rrdtool
-        except ImportError as e:
+        except ImportError:
             raise Exception(
-                "Cannot import rrdtool module. Check the instructions to install this module at https://app.datadoghq.com/account/settings#integrations/cacti")
+                "Cannot import rrdtool module. This module is required for the cacti plugin to work correctly")
 
         # Try importing MySQL
         try:
             import MySQLdb
-        except ImportError as e:
+        except ImportError:
             raise Exception(
-                "Cannot import MySQLdb module. Check the instructions to install this module at https://app.datadoghq.com/account/settings#integrations/cacti")
+                "Cannot import MySQLdb module. This module is required for the cacti plugin to work correctly")
 
         connection = MySQLdb.connect(config.host, config.user, config.password, config.db)
 
@@ -123,7 +123,9 @@ class Cacti(AgentCheck):
         return Config(host, user, password, db, rrd_path, whitelist, field_names)
 
     def _read_rrd(self, rrd_path, hostname, device_name):
-        ''' Main metric fetching method '''
+        """Main metric fetching method.
+
+        """
         import rrdtool
         metric_count = 0
 
@@ -177,9 +179,10 @@ class Cacti(AgentCheck):
         return metric_count
 
     def _fetch_rrd_meta(self, connection, rrd_path_root, whitelist, field_names):
-        ''' Fetch metadata about each RRD in this Cacti DB, returning a list of
-            tuples of (hostname, device_name, rrd_path)
-        '''
+        """Fetch metadata about each RRD in this Cacti DB.
+
+         Returns a list of tuples of (hostname, device_name, rrd_path)
+        """
         def _in_whitelist(rrd):
             path = rrd.replace('<path_rra>/', '')
             for p in whitelist:
@@ -226,7 +229,9 @@ class Cacti(AgentCheck):
 
     @staticmethod
     def _format_metric_name(m_name, cfunc):
-        ''' Format a cacti metric name into a Datadog-friendly name '''
+        """Format a cacti metric name into a Datadog-friendly name.
+
+        """
         try:
             aggr = CFUNC_TO_AGGR[cfunc]
         except KeyError:
@@ -242,16 +247,18 @@ class Cacti(AgentCheck):
 
     @staticmethod
     def _transform_metric(m_name, val):
-        ''' Add any special case transformations here '''
+        """Add any special case transformations here.
+
+        """
         # Report memory in MB
         if m_name[0:11] in ('system.mem.', 'system.disk'):
             return val / 1024
         return val
 
-    '''
-        For backwards compatability with pre-checks_d configuration.
-        Convert old-style config to new-style config.
-    '''
+    """For backwards compatability with pre-checks_d configuration.
+
+    Convert old-style config to new-style config.
+    """
     @staticmethod
     def parse_agent_config(agentConfig):
         required = ['cacti_mysql_server', 'cacti_mysql_user', 'cacti_rrd_path']

@@ -8,37 +8,38 @@ from __future__ import print_function
 
 import logging
 import os
-from pprint import pprint
+import pprint
 import re
 import time
 import traceback
 
-from monagent.common import check_status
-from monagent.common.keystone import Keystone
-from monagent.common.config import get_confd_path
-from monagent.common.exceptions import CheckException, NaN, Infinity, UnknownValue
-from monagent.common.util import LaconicFilter, get_hostname, get_os
+import yaml
+
+import monagent.common.aggregator
+import monagent.common.config
+import monagent.common.exceptions
+import monagent.common.keystone
+import monagent.common.util
 
 log = logging.getLogger(__name__)
 
 
 # todo convert all checks to the new interface then remove this.
 #      Is the LaconicFilter on logs used elsewhere?
-# ==============================================================================
+# =============================================================================
 # DEPRECATED
 # ------------------------------
 # If you are writing your own check, you should inherit from AgentCheck
 # and not this class. This class will be removed in a future version
 # of the agent.
-# ==============================================================================
+# =============================================================================
 class Check(object):
 
-    """
-    (Abstract) class for all checks with the ability to:
+    """(Abstract) class for all checks with the ability to:
+
     * store 1 (and only 1) sample for gauges per metric/tag combination
     * compute rates for counters
     * only log error messages once (instead of each time they occur)
-
     """
 
     def __init__(self, logger, agent_config=None):
@@ -52,13 +53,14 @@ class Check(object):
         self._counters = {}  # metric_name: bool
         self.logger = logger
         try:
-            self.logger.addFilter(LaconicFilter())
+            self.logger.addFilter(monagent.common.util.LaconicFilter())
         except Exception:
             self.logger.exception("Trying to install laconic log filter and failed")
 
     @staticmethod
     def normalize(metric, prefix=None):
         """Turn a metric into a well-formed metric name
+
         prefix.b.c
         """
         name = re.sub(r"[,\+\*\-/()\[\]{}]", "_", metric)
@@ -81,20 +83,21 @@ class Check(object):
         return device_name.strip().lower().replace(' ', '_')
 
     def counter(self, metric):
-        """
-        Treats the metric as a counter, i.e. computes its per second derivative
+        """Treats the metric as a counter, i.e. computes its per second derivative
+
         ACHTUNG: Resets previous values associated with this metric.
         """
         self._counters[metric] = True
         self._sample_store[metric] = {}
 
     def is_counter(self, metric):
-        "Is this metric a counter?"
+        """Is this metric a counter?
+        """
         return metric in self._counters
 
     def gauge(self, metric):
-        """
-        Treats the metric as a gauge, i.e. keep the data as is
+        """Treats the metric as a gauge, i.e. keep the data as is
+
         ACHTUNG: Resets previous values associated with this metric.
         """
         self._sample_store[metric] = {}
@@ -106,36 +109,36 @@ class Check(object):
         return self.is_metric(metric) and not self.is_counter(metric)
 
     def get_metric_names(self):
-        "Get all metric names"
+        """Get all metric names.
+        """
         return self._sample_store.keys()
 
     def save_gauge(self, metric, value, timestamp=None,
                    dimensions=None, hostname=None, device_name=None):
-        """ Save a gauge value. """
+        """Save a gauge value.
+        """
         if not self.is_gauge(metric):
             self.gauge(metric)
         self.save_sample(metric, value, timestamp, dimensions, hostname, device_name)
 
     def save_sample(self, metric, value, timestamp=None,
                     dimensions=None, hostname=None, device_name=None):
-        """Save a simple sample, evict old values if needed
+        """Save a simple sample, evict old values if needed.
         """
         if dimensions is None:
             dimensions = {}
-        from common.util import cast_metric_val
-
         if timestamp is None:
             timestamp = time.time()
         if metric not in self._sample_store:
-            raise CheckException("Saving a sample for an undefined metric: %s" % metric)
+            raise monagent.common.exceptions.CheckException("Saving a sample for an undefined metric: %s" % metric)
         try:
-            value = cast_metric_val(value)
+            value = monagent.common.util.cast_metric_val(value)
         except ValueError as ve:
-            raise NaN(ve)
+            raise monagent.common.exceptions.NaN(ve)
 
         # Sort and validate dimensions
         if dimensions is not None and not isinstance(dimensions, dict):
-            raise CheckException("Dimensions must be a dictionary")
+            raise monagent.common.exceptions.CheckException("Dimensions must be a dictionary")
 
         # Data eviction rules
         key = (tuple(sorted(dimensions.items())), device_name)
@@ -148,8 +151,8 @@ class Check(object):
                 self._sample_store[metric][key] = self._sample_store[metric][key][-1:] + \
                     [(timestamp, value, hostname, device_name)]
         else:
-            raise CheckException("%s must be either gauge or counter, skipping sample at %s" %
-                                 (metric, time.ctime(timestamp)))
+            raise monagent.common.exceptions.CheckException("%s must be either gauge or counter, skipping sample at %s" %
+                                                            (metric, time.ctime(timestamp)))
 
         if self.is_gauge(metric):
             # store[metric][dimensions] = (ts, val) - only 1 value allowed
@@ -159,26 +162,27 @@ class Check(object):
 
     @classmethod
     def _rate(cls, sample1, sample2):
-        "Simple rate"
+        """Simple rate.
+        """
         try:
             interval = sample2[0] - sample1[0]
             if interval == 0:
-                raise Infinity()
+                raise monagent.common.exceptions.Infinity()
 
             delta = sample2[1] - sample1[1]
             if delta < 0:
-                raise UnknownValue()
+                raise monagent.common.exceptions.UnknownValue()
 
             return (sample2[0], delta / interval, sample2[2], sample2[3])
-        except Infinity:
+        except monagent.common.exceptions.Infinity:
             raise
-        except UnknownValue:
+        except monagent.common.exceptions.UnknownValue:
             raise
         except Exception as e:
-            raise NaN(e)
+            raise monagent.common.exceptions.NaN(e)
 
     def get_sample_with_timestamp(self, metric, dimensions=None, device_name=None, expire=True):
-        """Get (timestamp-epoch-style, value)
+        """Get (timestamp-epoch-style, value).
         """
         if dimensions is None:
             dimensions = {}
@@ -188,11 +192,11 @@ class Check(object):
 
         # Never seen this metric
         if metric not in self._sample_store:
-            raise UnknownValue()
+            raise monagent.common.exceptions.UnknownValue()
 
         # Not enough value to compute rate
         elif self.is_counter(metric) and len(self._sample_store[metric][key]) < 2:
-            raise UnknownValue()
+            raise monagent.common.exceptions.UnknownValue()
 
         elif self.is_counter(metric) and len(self._sample_store[metric][key]) >= 2:
             res = self._rate(
@@ -205,16 +209,18 @@ class Check(object):
             return self._sample_store[metric][key][-1]
 
         else:
-            raise UnknownValue()
+            raise monagent.common.exceptions.UnknownValue()
 
     def get_sample(self, metric, dimensions=None, device_name=None, expire=True):
-        "Return the last value for that metric"
+        """Return the last value for that metric.
+        """
         x = self.get_sample_with_timestamp(metric, dimensions, device_name, expire)
         assert isinstance(x, tuple) and len(x) == 4, x
         return x[1]
 
     def get_samples_with_timestamps(self, expire=True):
-        "Return all values {metric: (ts, value)} for non-tagged metrics"
+        """Return all values {metric: (ts, value)} for non-tagged metrics.
+        """
         values = {}
         for m in self._sample_store:
             try:
@@ -224,7 +230,8 @@ class Check(object):
         return values
 
     def get_samples(self, expire=True):
-        "Return all values {metric: value} for non-tagged metrics"
+        """Return all values {metric: value} for non-tagged metrics.
+        """
         values = {}
         for m in self._sample_store:
             try:
@@ -234,8 +241,9 @@ class Check(object):
                 pass
         return values
 
-    def get_metrics(self, expire=True):
+    def get_metrics(self, expire=True, prettyprint=False):
         """Get all metrics, including the ones that are tagged.
+
         This is the preferred method to retrieve metrics
 
         @return the list of samples
@@ -251,7 +259,7 @@ class Check(object):
                     try:
                         ts, val, hostname, device_name = self.get_sample_with_timestamp(
                             m, dimensions, device_name, expire)
-                    except UnknownValue:
+                    except monagent.common.exceptions.UnknownValue:
                         continue
                     attributes = {}
                     if dimensions_list:
@@ -273,27 +281,22 @@ class AgentCheck(object):
     keystone = None
 
     def __init__(self, name, init_config, agent_config, instances=None):
-        """
-        Initialize a new check.
+        """Initialize a new check.
 
         :param name: The name of the check
         :param init_config: The config for initializing the check
         :param agent_config: The global configuration for the agent
         :param instances: A list of configuration objects for each instance.
         """
-        from monagent.common.aggregator import MetricsAggregator
-
         self.name = name
         self.init_config = init_config
         self.agent_config = agent_config
-        self.hostname = get_hostname(agent_config)
+        self.hostname = monagent.common.util.get_hostname(agent_config)
         self.log = logging.getLogger('%s.%s' % (__name__, name))
 
-        self.aggregator = MetricsAggregator(
-            self.hostname,
-            recent_point_threshold=agent_config.get(
-                'recent_point_threshold',
-                None))
+        self.aggregator = monagent.common.aggregator.MetricsAggregator(self.hostname,
+                                                                       recent_point_threshold=agent_config.get('recent_point_threshold',
+                                                                                                               None))
 
         self.events = []
         self.instances = instances or []
@@ -301,20 +304,19 @@ class AgentCheck(object):
         self.library_versions = None
 
         api_config = self.agent_config['Api']
-        AgentCheck.keystone = Keystone(api_config['keystone_url'],
-                                       api_config['username'],
-                                       api_config['password'],
-                                       api_config['project_name'])
+        AgentCheck.keystone = monagent.common.keystone.Keystone(api_config['keystone_url'],
+                                                                api_config['username'],
+                                                                api_config['password'],
+                                                                api_config['project_name'])
 
     def instance_count(self):
-        """ Return the number of instances that are configured for this check. """
+        """Return the number of instances that are configured for this check.
+        """
         return len(self.instances)
 
     def gauge(self, metric, value, dimensions=None,
               hostname=None, device_name=None, timestamp=None):
-        """
-        Record the value of a gauge, with optional dimensions, hostname and device
-        name.
+        """Record the value of a gauge, with optional dimensions, hostname and device name.
 
         :param metric: The name of the metric
         :param value: The value of the gauge
@@ -326,8 +328,7 @@ class AgentCheck(object):
         self.aggregator.gauge(metric, value, dimensions, hostname, device_name, timestamp)
 
     def increment(self, metric, value=1, dimensions=None, hostname=None, device_name=None):
-        """
-        Increment a counter with optional dimensions, hostname and device name.
+        """Increment a counter with optional dimensions, hostname and device name.
 
         :param metric: The name of the metric
         :param value: The value to increment by
@@ -338,8 +339,7 @@ class AgentCheck(object):
         self.aggregator.increment(metric, value, dimensions, hostname, device_name)
 
     def decrement(self, metric, value=-1, dimensions=None, hostname=None, device_name=None):
-        """
-        Increment a counter with optional dimensions, hostname and device name.
+        """Decrement a counter with optional dimensions, hostname and device name.
 
         :param metric: The name of the metric
         :param value: The value to decrement by
@@ -350,8 +350,8 @@ class AgentCheck(object):
         self.aggregator.decrement(metric, value, dimensions, hostname, device_name)
 
     def rate(self, metric, value, dimensions=None, hostname=None, device_name=None):
-        """
-        Submit a point for a metric that will be calculated as a rate on flush.
+        """Submit a point for a metric that will be calculated as a rate on flush.
+
         Values will persist across each call to `check` if there is not enough
         point to generate a rate on the flush.
 
@@ -364,8 +364,7 @@ class AgentCheck(object):
         self.aggregator.rate(metric, value, dimensions, hostname, device_name)
 
     def histogram(self, metric, value, dimensions=None, hostname=None, device_name=None):
-        """
-        Sample a histogram value, with optional dimensions, hostname and device name.
+        """Sample a histogram value, with optional dimensions, hostname and device name.
 
         :param metric: The name of the metric
         :param value: The value to sample for the histogram
@@ -376,8 +375,7 @@ class AgentCheck(object):
         self.aggregator.histogram(metric, value, dimensions, hostname, device_name)
 
     def set(self, metric, value, dimensions=None, hostname=None, device_name=None):
-        """
-        Sample a set value, with optional dimensions, hostname and device name.
+        """Sample a set value, with optional dimensions, hostname and device name.
 
         :param metric: The name of the metric
         :param value: The value for the set
@@ -388,8 +386,7 @@ class AgentCheck(object):
         self.aggregator.set(metric, value, dimensions, hostname, device_name)
 
     def event(self, event):
-        """
-        Save an event.
+        """Save an event.
 
         :param event: The event payload as a dictionary. Has the following
         structure:
@@ -412,8 +409,7 @@ class AgentCheck(object):
         self.events.append(event)
 
     def has_events(self):
-        """
-        Check whether the check has saved any events
+        """Check whether the check has saved any events
 
         @return whether or not the check has saved any events
         @rtype boolean
@@ -421,8 +417,7 @@ class AgentCheck(object):
         return len(self.events) > 0
 
     def get_metrics(self, prettyprint=False):
-        """
-        Get all metrics, including the ones that are tagged.
+        """Get all metrics, including the ones that are tagged.
 
         @return the list of samples
         @rtype list of Measurement objects from monagent.common.metrics
@@ -444,8 +439,7 @@ class AgentCheck(object):
         return self.aggregator.flush()
 
     def get_events(self):
-        """
-        Return a list of the events saved by the check, if any
+        """Return a list of the events saved by the check, if any
 
         @return the list of events saved by this check
         @rtype list of event dictionaries
@@ -455,13 +449,13 @@ class AgentCheck(object):
         return events
 
     def has_warnings(self):
-        """
-        Check whether the instance run created any warnings
+        """Check whether the instance run created any warnings.
         """
         return len(self.warnings) > 0
 
     def warning(self, warning_message):
-        """ Add a warning message that will be printed in the info page
+        """Add a warning message that will be printed in the info page
+
         :param warning_message: String. Warning message to be displayed
         """
         self.warnings.append(warning_message)
@@ -475,43 +469,45 @@ class AgentCheck(object):
             pass
 
     def get_library_versions(self):
-        """ Should return a string that shows which version
-        of the needed libraries are used """
+        """Should return a string that shows which version
+
+        of the needed libraries are used
+        """
         raise NotImplementedError
 
     def get_warnings(self):
-        """
-        Return the list of warnings messages to be displayed in the info page
+        """Return the list of warnings messages to be displayed in the info page.
         """
         warnings = self.warnings
         self.warnings = []
         return warnings
 
     def run(self):
-        """ Run all instances. """
+        """Run all instances.
+        """
         instance_statuses = []
         for i, instance in enumerate(self.instances):
             try:
                 instance['keystone'] = AgentCheck.keystone
                 self.check(instance)
                 if self.has_warnings():
-                    instance_status = check_status.InstanceStatus(i,
-                                                                  check_status.STATUS_WARNING,
-                                                                  warnings=self.get_warnings())
+                    instance_status = monagent.common.check_status.InstanceStatus(i,
+                                                                                  monagent.common.check_status.STATUS_WARNING,
+                                                                                  warnings=self.get_warnings())
                 else:
-                    instance_status = check_status.InstanceStatus(i, check_status.STATUS_OK)
+                    instance_status = monagent.common.check_status.InstanceStatus(i,
+                                                                                  monagent.common.check_status.STATUS_OK)
             except Exception as e:
                 self.log.exception("Check '%s' instance #%s failed" % (self.name, i))
-                instance_status = check_status.InstanceStatus(i,
-                                                              check_status.STATUS_ERROR,
-                                                              error=e,
-                                                              tb=traceback.format_exc())
+                instance_status = monagent.common.check_status.InstanceStatus(i,
+                                                                              monagent.common.check_status.STATUS_ERROR,
+                                                                              error=e,
+                                                                              tb=traceback.format_exc())
             instance_statuses.append(instance_status)
         return instance_statuses
 
     def check(self, instance):
-        """
-        Overriden by the check class. This will be called to run the check.
+        """Overriden by the check class. This will be called to run the check.
 
         :param instance: A dict with the instance information. This will vary
         depending on your config structure.
@@ -520,21 +516,19 @@ class AgentCheck(object):
 
     @staticmethod
     def stop():
-        """
-        To be executed when the agent is being stopped to clean ressources
+        """To be executed when the agent is being stopped to clean ressources.
         """
         pass
 
     @classmethod
     def from_yaml(cls, path_to_yaml=None, agentConfig=None, yaml_text=None, check_name=None):
+        """A method used for testing your check without running the agent.
         """
-        A method used for testing your check without running the agent.
-        """
-        import yaml
-        try:
-            from yaml import CLoader as Loader
-        except ImportError:
-            from yaml import Loader
+        if hasattr(yaml, 'CLoader'):
+            Loader = yaml.CLoader
+        else:
+            Loader = yaml.Loader
+
         if path_to_yaml:
             check_name = os.path.basename(path_to_yaml).split('.')[0]
             try:
@@ -551,9 +545,7 @@ class AgentCheck(object):
 
     @staticmethod
     def normalize(metric, prefix=None):
-        """
-        Turn a metric into a well-formed metric name
-        prefix.b.c
+        """Turn a metric into a well-formed metric name prefix.b.c
 
         :param metric The metric name to normalize
         :param prefix A prefix to to add to the normalized name, default None
@@ -587,10 +579,11 @@ class AgentCheck(object):
 
 
 def run_check(name, path=None):
-    from tests.common import get_check
+    import tests.common
 
     # Read the config file
-    confd_path = path or os.path.join(get_confd_path(get_os()), '%s.yaml' % name)
+    confd_path = path or os.path.join(monagent.common.config.get_confd_path(monagent.common.util.get_os()),
+                                      '%s.yaml' % name)
 
     try:
         f = open(confd_path)
@@ -601,13 +594,13 @@ def run_check(name, path=None):
     f.close()
 
     # Run the check
-    check, instances = get_check(name, config_str)
+    check, instances = tests.common.get_check(name, config_str)
     if not instances:
         raise Exception('YAML configuration returned no instances.')
     for instance in instances:
         check.check(instance)
         if check.has_events():
             print("Events:\n")
-            pprint(check.get_events(), indent=4)
+            pprint.pprint(check.get_events(), indent=4)
         print("Metrics:\n")
-        pprint(check.get_metrics(), indent=4)
+        pprint.pprint(check.get_metrics(), indent=4)

@@ -1,7 +1,7 @@
 from datetime import datetime
 import re
 
-from collector.dogstream import common
+from monagent.collector.dogstream import common
 
 
 LOG4J_PRIORITY = [

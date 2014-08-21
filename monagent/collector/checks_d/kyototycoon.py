@@ -1,6 +1,6 @@
+from collections import defaultdict
 import re
 import urllib2
-from collections import defaultdict
 
 from monagent.collector.checks import AgentCheck
 
@@ -12,6 +12,7 @@ whitespace = re.compile(r'\s')
 class KyotoTycoonCheck(AgentCheck):
 
     """Report statistics about the Kyoto Tycoon DBM-style
+
     database server (http://fallabs.com/kyototycoon/)
     """
 

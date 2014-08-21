@@ -1,35 +1,31 @@
 #!/usr/bin/env python
 
-# set up logging before importing any other components
-from monagent.common.config import get_version, initialize_logging
-initialize_logging('collector')
-
-import os
-os.umask(0o22)
-
 # Core modules
+import glob
 import logging
-import os.path
+import os
 import signal
 import sys
 import time
-import glob
+
+# Custom modules
+import checks.collector
+import jmxfetch
+import monagent.common.check_status
+import monagent.common.config
+import monagent.common.daemon
+import monagent.common.emitter
+import monagent.common.util
+
+# set up logging before importing any other components
+monagent.common.config.initialize_logging('collector')
+os.umask(0o22)
 
 # Check we're not using an old version of Python. We need 2.4 above because
 # some modules (like subprocess) were only introduced in 2.4.
 if int(sys.version_info[1]) <= 3:
     sys.stderr.write("Monasca Agent requires python 2.4 or later.\n")
     sys.exit(2)
-
-# Custom modules
-from checks.collector import Collector
-from monagent.common.check_status import CollectorStatus, ForwarderStatus
-from monagent.common.config import get_config, get_parsed_args, load_check_directory, get_confd_path, check_yaml, get_logging_config
-from monagent.common.daemon import Daemon, AgentSupervisor
-from monagent.common.emitter import http_emitter
-from monagent.common.util import Watchdog, PidFile, get_os
-from jmxfetch import JMXFetch, JMX_LIST_COMMANDS
-
 
 # Constants
 PID_NAME = "monasca-agent"
@@ -43,14 +39,14 @@ log = logging.getLogger('collector')
 
 # todo the collector has daemon code but is always run in foreground mode
 # from the supervisor, is there a reason for the daemon code then?
-class CollectorDaemon(Daemon):
+class CollectorDaemon(monagent.common.daemon.Daemon):
 
-    """
-    The agent class is a daemon that runs the collector in a background process.
+    """The agent class is a daemon that runs the collector in a background process.
+
     """
 
     def __init__(self, pidfile, autorestart, start_event=True):
-        Daemon.__init__(self, pidfile, autorestart=autorestart)
+        monagent.common.daemon.Daemon.__init__(self, pidfile, autorestart=autorestart)
         self.run_forever = True
         self.collector = None
         self.start_event = start_event
@@ -59,8 +55,8 @@ class CollectorDaemon(Daemon):
         log.debug("Caught sigterm. Stopping run loop.")
         self.run_forever = False
 
-        if JMXFetch.is_running():
-            JMXFetch.stop()
+        if jmxfetch.JMXFetch.is_running():
+            jmxfetch.JMXFetch.stop()
 
         if self.collector:
             self.collector.stop()
@@ -72,10 +68,12 @@ class CollectorDaemon(Daemon):
 
     def info(self, verbose=None):
         logging.getLogger().setLevel(logging.ERROR)
-        return CollectorStatus.print_latest_status(verbose=verbose)
+        return monagent.common.check_status.CollectorStatus.print_latest_status(verbose=verbose)
 
     def run(self, config=None):
-        """Main loop of the collector"""
+        """Main loop of the collector.
+
+        """
 
         # Gracefully exit on sigterm.
         signal.signal(signal.SIGTERM, self._handle_sigterm)
@@ -87,15 +85,15 @@ class CollectorDaemon(Daemon):
         signal.signal(signal.SIGINT, self._handle_sigterm)
 
         # Save the agent start-up stats.
-        CollectorStatus().persist()
+        monagent.common.check_status.CollectorStatus().persist()
 
         # Intialize the collector.
         if config is None:
-            config = get_config(parse_args=True)
+            config = monagent.common.config.get_config(parse_args=True)
 
         # Load the checks_d checks
-        checksd = load_check_directory(config)
-        self.collector = Collector(config, http_emitter, checksd)
+        checksd = monagent.common.config.load_check_directory(config)
+        self.collector = checks.collector.Collector(config, monagent.common.emitter.http_emitter, checksd)
 
         # Configure the watchdog.
         check_frequency = int(config['check_freq'])
@@ -127,9 +125,9 @@ class CollectorDaemon(Daemon):
             if config.get('profile', False) and config.get('profile').lower() == 'yes' and profiled:
                 try:
                     profiler.disable()
+                    import cStringIO
                     import pstats
-                    from cStringIO import StringIO
-                    s = StringIO()
+                    s = cStringIO.StringIO()
                     ps = pstats.Stats(profiler, stream=s).sort_stats("cumulative")
                     ps.print_stats()
                     log.debug(s.getvalue())
@@ -149,7 +147,7 @@ class CollectorDaemon(Daemon):
 
         # Now clean-up.
         try:
-            CollectorStatus.remove_latest_status()
+            monagent.common.check_status.CollectorStatus.remove_latest_status()
         except Exception:
             pass
 
@@ -162,8 +160,9 @@ class CollectorDaemon(Daemon):
     def _get_watchdog(check_freq, agentConfig):
         watchdog = None
         if agentConfig.get("watchdog", True):
-            watchdog = Watchdog(check_freq * WATCHDOG_MULTIPLIER,
-                                max_mem_mb=agentConfig.get('limit_memory_consumption', None))
+            watchdog = monagent.common.util.Watchdog(check_freq * WATCHDOG_MULTIPLIER,
+                                                     max_mem_mb=agentConfig.get('limit_memory_consumption',
+                                                                                None))
             watchdog.reset()
         return watchdog
 
@@ -176,12 +175,12 @@ class CollectorDaemon(Daemon):
         log.info("Running an auto-restart.")
         if self.collector:
             self.collector.stop()
-        sys.exit(AgentSupervisor.RESTART_EXIT_STATUS)
+        sys.exit(monagent.common.daemon.AgentSupervisor.RESTART_EXIT_STATUS)
 
 
 def main():
-    options, args = get_parsed_args()
-    agentConfig = get_config(options=options)
+    options, args = monagent.common.config.get_parsed_args()
+    agentConfig = monagent.common.config.get_config(options=options)
     # todo autorestart isn't used remove
     autorestart = agentConfig.get('autorestart', False)
 
@@ -207,7 +206,7 @@ def main():
         sys.stderr.write("Unknown command: %s\n" % command)
         return 3
 
-    pid_file = PidFile('monasca-agent')
+    pid_file = monagent.common.util.PidFile('monasca-agent')
 
     if options.clean:
         pid_file.clean()
@@ -215,7 +214,7 @@ def main():
     agent = CollectorDaemon(pid_file.get_path(), autorestart)
 
     if command in START_COMMANDS:
-        log.info('Agent version %s' % get_version())
+        log.info('Agent version %s' % monagent.common.config.get_version())
 
     if 'start' == command:
         log.info('Start daemon')
@@ -247,34 +246,29 @@ def main():
             def parent_func():
                 agent.start_event = False
 
-            AgentSupervisor.start(parent_func, child_func)
+            monagent.common.daemon.AgentSupervisor.start(parent_func, child_func)
         else:
             # Run in the standard foreground.
             agent.run(config=agentConfig)
 
     elif 'check' == command:
         check_name = args[1]
-        try:
-            # Try the old-style check first
-            print(getattr(collector.checks.collector, check_name)(log).check(agentConfig))
-        except Exception:
-            # If not an old-style check, try checks_d
-            checks = load_check_directory(agentConfig)
-            for check in checks['initialized_checks']:
-                if check.name == check_name:
+        checks = monagent.common.config.load_check_directory(agentConfig)
+        for check in checks['initialized_checks']:
+            if check.name == check_name:
+                check.run()
+                print("Metrics: ")
+                check.get_metrics(prettyprint=True)
+                if len(args) == 3 and args[2] == 'check_rate':
+                    print("Running 2nd iteration to capture rate metrics")
+                    time.sleep(1)
                     check.run()
                     print("Metrics: ")
                     check.get_metrics(prettyprint=True)
-                    if len(args) == 3 and args[2] == 'check_rate':
-                        print("Running 2nd iteration to capture rate metrics")
-                        time.sleep(1)
-                        check.run()
-                        print("Metrics: ")
-                        check.get_metrics(prettyprint=True)
 
     elif 'check_all' == command:
         print("Loading check directory...")
-        checks = load_check_directory(agentConfig)
+        checks = monagent.common.config.load_check_directory(agentConfig)
         print("...directory loaded.\n")
         for check in checks['initialized_checks']:
             print("#" * 80)
@@ -285,12 +279,12 @@ def main():
             print("#" * 80 + "\n\n")
 
     elif 'configcheck' == command or 'configtest' == command:
-        osname = get_os()
+        osname = monagent.common.util.get_os()
         all_valid = True
-        for conf_path in glob.glob(os.path.join(get_confd_path(osname), "*.yaml")):
+        for conf_path in glob.glob(os.path.join(monagent.common.config.get_confd_path(osname), "*.yaml")):
             basename = os.path.basename(conf_path)
             try:
-                check_yaml(conf_path)
+                monagent.common.config.check_yaml(conf_path)
             except Exception as e:
                 all_valid = False
                 print("%s contains errors:\n    %s" % (basename, e))
@@ -307,14 +301,14 @@ def main():
 
     elif 'jmx' == command:
 
-        if len(args) < 2 or args[1] not in JMX_LIST_COMMANDS.keys():
+        if len(args) < 2 or args[1] not in jmxfetch.JMX_LIST_COMMANDS.keys():
             print("#" * 80)
             print("JMX tool to be used to help configuring your JMX checks.")
             print("See http://docs.datadoghq.com/integrations/java/ for more information")
             print("#" * 80)
             print("\n")
             print("You have to specify one of the following command:")
-            for command, desc in JMX_LIST_COMMANDS.iteritems():
+            for command, desc in jmxfetch.JMX_LIST_COMMANDS.iteritems():
                 print("      - %s [OPTIONAL: LIST OF CHECKS]: %s" % (command, desc))
             print("Example: sudo /etc/init.d/monasca-agent jmx list_matching_attributes tomcat jmx solr")
             print("\n")
@@ -322,11 +316,11 @@ def main():
         else:
             jmx_command = args[1]
             checks_list = args[2:]
-            confd_directory = get_confd_path(get_os())
-            should_run = JMXFetch.init(
+            confd_directory = monagent.common.config.get_confd_path(monagent.common.util.get_os())
+            should_run = jmxfetch.JMXFetch.init(
                 confd_directory,
                 agentConfig,
-                get_logging_config(),
+                monagent.common.config.get_logging_config(),
                 15,
                 jmx_command,
                 checks_list,

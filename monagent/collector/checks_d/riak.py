@@ -1,9 +1,9 @@
 from hashlib import md5
+from httplib2 import Http
+from httplib2 import HttpLib2Error
 import json
-import time
 import socket
-
-from httplib2 import Http, HttpLib2Error
+import time
 
 from monagent.collector.checks import AgentCheck
 
@@ -60,15 +60,15 @@ class Riak(AgentCheck):
             h = Http(timeout=timeout)
             resp, content = h.request(url, "GET")
 
-        except socket.timeout as e:
+        except socket.timeout:
             self.timeout_event(url, timeout, aggregation_key)
             return
 
-        except socket.error as e:
+        except socket.error:
             self.timeout_event(url, timeout, aggregation_key)
             return
 
-        except HttpLib2Error as e:
+        except HttpLib2Error:
             self.timeout_event(url, timeout, aggregation_key)
             return
 

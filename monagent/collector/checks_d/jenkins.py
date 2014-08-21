@@ -1,9 +1,7 @@
+from collections import defaultdict
+from glob import glob
 import os
 import time
-
-from collections import defaultdict
-
-from glob import glob
 
 try:
     from xml.etree.ElementTree import ElementTree
@@ -13,14 +11,14 @@ except ImportError:
     except ImportError:
         pass
 
-from monagent.common.util import get_hostname
 from monagent.collector.checks import AgentCheck
+from monagent.common.util import get_hostname
 
 
 class Skip(Exception):
 
-    """
-    Raised by :class:`Jenkins` when it comes across
+    """Raised by :class:`Jenkins` when it comes across
+
     a build or job that should be excluded from being checked.
     """
 

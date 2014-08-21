@@ -1,8 +1,8 @@
-'''
-Monitor the Windows Event Log
-'''
-from datetime import datetime
+"""Monitor the Windows Event Log.
+
+"""
 import calendar
+from datetime import datetime
 try:
     import wmi
 except Exception:
@@ -75,9 +75,10 @@ class Win32EventLog(AgentCheck):
 
     @staticmethod
     def _instance_key(instance):
-        ''' Generate a unique key per instance for use with keeping track of
-            state for each instance.
-        '''
+        """Generate a unique key per instance for use with keeping track of
+
+        state for each instance.
+        """
         return '%s' % (instance)
 
 
@@ -95,7 +96,9 @@ class EventLogQuery(object):
         self.start_ts = start_ts
 
     def to_wql(self):
-        ''' Return this query as a WQL string. '''
+        """Return this query as a WQL string.
+
+        """
         wql = """
         SELECT Message, SourceName, TimeGenerated, Type, User, InsertionStrings
         FROM Win32_NTLogEvent
@@ -125,9 +128,10 @@ class EventLogQuery(object):
 
     @staticmethod
     def _add_message_filter(msg_filter, q):
-        ''' Filter on the message text using a LIKE query. If the filter starts
-            with '-' then we'll assume that it's a NOT LIKE filter.
-        '''
+        """Filter on the message text using a LIKE query. If the filter starts
+
+        with '-' then we'll assume that it's a NOT LIKE filter.
+        """
         if msg_filter.startswith('-'):
             msg_filter = msg_filter[1:]
             q += '\nAND NOT Message LIKE "%s"' % msg_filter
@@ -137,18 +141,19 @@ class EventLogQuery(object):
 
     @staticmethod
     def _dt_to_wmi(dt):
-        ''' A wrapper around wmi.from_time to get a WMI-formatted time from a
-            time struct.
-        '''
+        """A wrapper around wmi.from_time to get a WMI-formatted time from a time struct.
+
+        """
         return wmi.from_time(year=dt.year, month=dt.month, day=dt.day,
                              hours=dt.hour, minutes=dt.minute, seconds=dt.second, microseconds=0,
                              timezone=0)
 
     @staticmethod
     def _convert_event_types(types):
-        ''' Detect if we are running on <= Server 2003. If so, we should convert
+        """Detect if we are running on <= Server 2003. If so, we should convert
+
             the EventType values to integers
-        '''
+        """
         return types
 
 
@@ -177,15 +182,18 @@ class LogEvent(object):
         }
 
     def is_after(self, ts):
-        ''' Compare this event's timestamp to a give timestamp. '''
+        """Compare this event's timestamp to a give timestamp.
+
+        """
         if self.timestamp >= int(calendar.timegm(ts.timetuple())):
             return True
         return False
 
     @staticmethod
     def _wmi_to_ts(wmi_ts):
-        ''' Convert a wmi formatted timestamp into an epoch using wmi.to_time().
-        '''
+        """Convert a wmi formatted timestamp into an epoch using wmi.to_time().
+
+        """
         year, month, day, hour, minute, second, microsecond, tz = \
             wmi.to_time(wmi_ts)
         dt = datetime(year=year, month=month, day=day, hour=hour, minute=minute,

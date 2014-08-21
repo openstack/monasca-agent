@@ -1,11 +1,13 @@
 """Classes for detection of running resources to be monitored.
+
     Detection classes should be platform independent
 """
 
 
 class Plugin(object):
 
-    """Abstract class implemented by the monasca-agent plugin detection classes
+    """Abstract class implemented by the monasca-agent plugin detection classes.
+
     """
     # todo these should include dependency detection
 
@@ -18,22 +20,28 @@ class Plugin(object):
         self._detect()
 
     def _detect(self):
-        """Run detection, set self.available True if the service is detected."""
+        """Run detection, set self.available True if the service is detected.
+
+        """
         raise NotImplementedError
 
     def build_config(self):
         """Build the config as a Plugins object and return.
+
         """
         raise NotImplementedError
 
     def dependencies_installed(self):
-        """return True if dependencies are installed
+        """Return True if dependencies are installed.
+
         """
         raise NotImplementedError
 
     @property
     def name(self):
-        """Return _name if set otherwise the class name"""
+        """Return _name if set otherwise the class name.
+
+        """
         if '_name' in self.__dict__:
             return self._name
         else:

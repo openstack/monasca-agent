@@ -1,5 +1,7 @@
 #!/bin/env python
-"""Monitoring Agent wrapper for Nagios checks"""
+"""Monitoring Agent wrapper for Nagios checks.
+
+"""
 
 import hashlib
 import json
@@ -14,16 +16,20 @@ from monagent.collector.checks.services_checks import ServicesCheck, Status
 
 class WrapNagios(ServicesCheck):
 
-    """Inherit ServicesCheck class to process Nagios checks"""
+    """Inherit ServicesCheck class to process Nagios checks.
+
+    """
 
     def __init__(self, name, init_config, agent_config, instances=None):
         ServicesCheck.__init__(self, name, init_config, agent_config, instances)
 
     @staticmethod
     def _do_skip_check(instance, last_run_data):
-        """ Determine whether or not to skip a check depending on
-            the checks's check_interval, if specified, and the last
-            time the check was run """
+        """Determine whether or not to skip a check depending on
+
+        the checks's check_interval, if specified, and the last
+        time the check was run
+        """
         if instance['service_name'] in last_run_data and 'check_interval' in instance:
             if time.time() < last_run_data[instance['service_name']] + instance['check_interval']:
                 return True
@@ -31,11 +37,15 @@ class WrapNagios(ServicesCheck):
             return False
 
     def _create_status_event(self, status, msg, instance):
-        """Does nothing: status events are not yet supported by Mon API"""
+        """Does nothing: status events are not yet supported by Mon API.
+
+        """
         return
 
     def _check(self, instance):
-        """Run the command specified by check_command and capture the result"""
+        """Run the command specified by check_command and capture the result.
+
+        """
 
         dimensions = {'observer_host': socket.getfqdn()}
         # Add per-instance dimensions, if any

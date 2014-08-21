@@ -1,7 +1,9 @@
 import socket
 import time
 
-from monagent.collector.checks.services_checks import ServicesCheck, Status, EventType
+from monagent.collector.checks.services_checks import EventType
+from monagent.collector.checks.services_checks import ServicesCheck
+from monagent.collector.checks.services_checks import Status
 
 
 class BadConfException(Exception):

@@ -1,6 +1,6 @@
-'''
-Check the performance counters from SQL Server
-'''
+"""Check the performance counters from SQL Server.
+
+"""
 import traceback
 
 from monagent.collector.checks import AgentCheck
@@ -39,14 +39,16 @@ class SQLServer(AgentCheck):
 
     @staticmethod
     def _conn_key(host, username, password, database):
-        ''' Return a key to use for the connection cache
-        '''
+        """Return a key to use for the connection cache.
+
+        """
         return '%s:%s:%s:%s' % (host, username, password, database)
 
     @staticmethod
     def _conn_string(host, username, password, database):
-        ''' Return a connection string to use with adodbapi
-        '''
+        """Return a connection string to use with adodbapi.
+
+        """
         conn_str = 'Provider=SQLOLEDB;Data Source=%s;Initial Catalog=%s;' % (host, database)
         if username:
             conn_str += 'User ID=%s;' % (username)
@@ -74,7 +76,7 @@ class SQLServer(AgentCheck):
                 conn_str = self._conn_string(host, username, password, database)
                 conn = adodbapi.connect(conn_str)
                 self.connections[conn_key] = conn
-            except Exception as e:
+            except Exception:
                 cx = "%s - %s" % (host, database)
                 raise Exception("Unable to connect to SQL Server for instance %s.\n %s"
                                 % (cx, traceback.format_exc()))
@@ -84,8 +86,9 @@ class SQLServer(AgentCheck):
         self._fetch_metrics(cursor, dimensions)
 
     def _fetch_metrics(self, cursor, custom_dimensions):
-        ''' Fetch the metrics from the sys.dm_os_performance_counters table
-        '''
+        """Fetch the metrics from the sys.dm_os_performance_counters table.
+
+        """
         for metric in self.METRICS:
             # Normalize all rows to the same size for easy of use
             if len(metric) == 3:
@@ -100,7 +103,7 @@ class SQLServer(AgentCheck):
             if instance_n == ALL_INSTANCES:
                 try:
                     self._fetch_all_instances(metric, cursor, custom_dimensions)
-                except Exception as e:
+                except Exception:
                     self.log.exception('Unable to fetch metric: %s' % mname)
                     self.warning('Unable to fetch metric: %s' % mname)
             else:
@@ -112,7 +115,7 @@ class SQLServer(AgentCheck):
                         and instance_name = ?
                     """, (counter, instance_n))
                     (value,) = cursor.fetchone()
-                except Exception as e:
+                except Exception:
                     self.log.exception('Unable to fetch metric: %s' % mname)
                     self.warning('Unable to fetch metric: %s' % mname)
                     continue

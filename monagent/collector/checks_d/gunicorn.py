@@ -1,5 +1,4 @@
-"""
-Collects metrics from the gunicorn web server.
+"""Collects metrics from the gunicorn web server.
 
 http://gunicorn.org/
 """
@@ -42,7 +41,9 @@ class GUnicornCheck(AgentCheck):
         return {"psutil": version}
 
     def check(self, instance):
-        """ Collect metrics for the given gunicorn instance. """
+        """Collect metrics for the given gunicorn instance.
+
+        """
         if not psutil:
             raise GUnicornCheckError("gunicorn check requires the psutil python package")
 
@@ -107,7 +108,9 @@ class GUnicornCheck(AgentCheck):
 
     @staticmethod
     def _get_master_proc_by_name(name):
-        """ Return a psutil process for the master gunicorn process with the given name. """
+        """Return a psutil process for the master gunicorn process with the given name.
+
+        """
         master_name = GUnicornCheck._get_master_proc_name(name)
         master_procs = [
             p for p in psutil.process_iter() if p.cmdline and p.cmdline[0] == master_name]
@@ -121,7 +124,9 @@ class GUnicornCheck(AgentCheck):
 
     @staticmethod
     def _get_master_proc_name(name):
-        """ Return the name of the master gunicorn process for the given proc name. """
+        """Return the name of the master gunicorn process for the given proc name.
+
+        """
         # Here's an example of a process list for a gunicorn box with name web1
         # root     22976  0.1  0.1  60364 13424 ?        Ss   19:30   0:00 gunicorn: master [web1]
         # web      22984 20.7  2.3 521924 176136 ?       Sl   19:30   1:58 gunicorn: worker [web1]

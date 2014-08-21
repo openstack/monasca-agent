@@ -1,4 +1,4 @@
-from monagent.collector.checks.check import Check
+import monagent.collector.checks.check
 
 try:
     import wmi
@@ -15,10 +15,10 @@ B2MB = float(1048576)
 KB2MB = B2KB = float(1024)
 
 
-class Processes(Check):
+class Processes(monagent.collector.checks.check.Check):
 
     def __init__(self, logger):
-        Check.__init__(self, logger)
+        monagent.collector.checks.check.Check.__init__(self, logger)
         self.gauge('system.proc.queue_length')
         self.gauge('system.proc.count')
 
@@ -31,7 +31,7 @@ class Processes(Check):
             return
 
         try:
-            cpu = w.Win32_PerfFormattedData_PerfOS_Processor(name="_Total")[0]
+            w.Win32_PerfFormattedData_PerfOS_Processor(name="_Total")[0]
         except AttributeError:
             self.logger.info('Missing Win32_PerfFormattedData_PerfOS_Processor WMI class.' +
                              ' No process metrics will be returned.')
@@ -44,10 +44,10 @@ class Processes(Check):
         return self.get_metrics()
 
 
-class Memory(Check):
+class Memory(monagent.collector.checks.check.Check):
 
     def __init__(self, logger):
-        Check.__init__(self, logger)
+        monagent.collector.checks.check.Check.__init__(self, logger)
         self.logger = logger
         self.gauge('system.mem.free')
         self.gauge('system.mem.used')
@@ -84,10 +84,10 @@ class Memory(Check):
         return self.get_metrics()
 
 
-class Cpu(Check):
+class Cpu(monagent.collector.checks.check.Check):
 
     def __init__(self, logger):
-        Check.__init__(self, logger)
+        monagent.collector.checks.check.Check.__init__(self, logger)
         self.logger = logger
         self.gauge('system.cpu.user')
         self.gauge('system.cpu.idle')
@@ -122,9 +122,10 @@ class Cpu(Check):
 
     @staticmethod
     def _average_metric(wmi_class, wmi_prop):
-        ''' Sum all of the values of a metric from a WMI class object, excluding
-            the value for "_Total"
-        '''
+        """Sum all of the values of a metric from a WMI class object.
+
+        Excludes the value for "_Total"
+        """
         val = 0
         counter = 0
         for wmi_object in wmi_class:
@@ -142,10 +143,10 @@ class Cpu(Check):
         return val
 
 
-class Network(Check):
+class Network(monagent.collector.checks.check.Check):
 
     def __init__(self, logger):
-        Check.__init__(self, logger)
+        monagent.collector.checks.check.Check.__init__(self, logger)
         self.logger = logger
         self.gauge('system.net.bytes_rcvd')
         self.gauge('system.net.bytes_sent')
@@ -169,10 +170,10 @@ class Network(Check):
         return self.get_metrics()
 
 
-class Disk(Check):
+class Disk(monagent.collector.checks.check.Check):
 
     def __init__(self, logger):
-        Check.__init__(self, logger)
+        monagent.collector.checks.check.Check.__init__(self, logger)
         self.logger = logger
         self.gauge('system.disk.free')
         self.gauge('system.disk.total')
@@ -203,10 +204,10 @@ class Disk(Check):
         return self.get_metrics()
 
 
-class IO(Check):
+class IO(monagent.collector.checks.check.Check):
 
     def __init__(self, logger):
-        Check.__init__(self, logger)
+        monagent.collector.checks.check.Check.__init__(self, logger)
         self.logger = logger
         self.gauge('system.io.wkb_s')
         self.gauge('system.io.w_s')

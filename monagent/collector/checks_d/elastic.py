@@ -3,12 +3,12 @@ import socket
 import subprocess
 import sys
 import time
-import urlparse
 import urllib2
+import urlparse
 
-from monagent.common.util import headers
 from monagent.collector.checks import AgentCheck
 from monagent.collector.checks.utils import add_basic_auth
+from monagent.common.util import headers
 
 
 class NodeNotFound(Exception):
@@ -154,8 +154,8 @@ class ElasticSearch(AgentCheck):
         self._process_health_data(config_url, health_data, dimensions=dimensions)
 
     def _get_es_version(self, config_url, auth=None):
-        """
-            Get the running version of Elastic Search
+        """Get the running version of Elastic Search.
+
         """
 
         try:
@@ -170,8 +170,8 @@ class ElasticSearch(AgentCheck):
         return version
 
     def _define_params(self, version):
-        """
-            Define the set of URLs and METRICS to use depending on the running ES version
+        """Define the set of URLs and METRICS to use depending on the running ES version.
+
         """
 
         if version >= [0, 90, 10]:
@@ -214,8 +214,9 @@ class ElasticSearch(AgentCheck):
         self.METRICS.update(additional_metrics)
 
     def _get_data(self, url, auth=None):
-        """ Hit a given URL and return the parsed json
-            `auth` is a tuple of (username, password) or None
+        """Hit a given URL and return the parsed json
+
+        `auth` is a tuple of (username, password) or None
         """
         req = urllib2.Request(url, None, headers(self.agent_config))
         if auth:
@@ -264,8 +265,9 @@ class ElasticSearch(AgentCheck):
                         process_metric(metric, *desc)
 
     def _get_primary_addr(self, url, node_name, auth):
-        """ Returns a list of primary interface addresses as seen by ES.
-            Used in ES < 0.19
+        """Returns a list of primary interface addresses as seen by ES.
+
+        Used in ES < 0.19
         """
         req = urllib2.Request(url, None, headers(self.agent_config))
         # Load basic authentication configuration, if available.
@@ -286,9 +288,10 @@ class ElasticSearch(AgentCheck):
 
     @staticmethod
     def _host_matches_node(primary_addrs):
-        """ For < 0.19, check if the current host matches the IP given in the
-            cluster nodes check `/_cluster/nodes`. Uses `ip addr` on Linux and
-            `ifconfig` on Mac
+        """For < 0.19, check if the current host matches the IP given in the
+
+        cluster nodes check `/_cluster/nodes`. Uses `ip addr` on Linux and
+        `ifconfig` on Mac
         """
         if sys.platform == 'darwin':
             ifaces = subprocess.Popen(['ifconfig'], stdout=subprocess.PIPE)
@@ -312,6 +315,7 @@ class ElasticSearch(AgentCheck):
 
     def _process_metric(self, data, metric, path, xform=None, dimensions=None):
         """data: dictionary containing all the stats
+
         metric: datadog metric
         path: corresponding path in data, flattened, e.g. thread_pool.bulk.queue
         xfom: a lambda to apply to the numerical value

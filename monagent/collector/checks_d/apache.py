@@ -1,8 +1,8 @@
 import urllib2
 
-from monagent.common.util import headers
 from monagent.collector.checks import AgentCheck
 from monagent.collector.checks.utils import add_basic_auth
+from monagent.common.util import headers
 
 
 class Apache(AgentCheck):

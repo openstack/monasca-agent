@@ -1,22 +1,29 @@
 #!/bin/env python
-"""Monitoring Agent remote host aliveness checker"""
+"""Monitoring Agent remote host aliveness checker.
+
+"""
 
 import socket
 import subprocess
 import sys
 
-from monagent.collector.checks.services_checks import ServicesCheck, Status
+from monagent.collector.checks.services_checks import ServicesCheck
+from monagent.collector.checks.services_checks import Status
 
 
 class HostAlive(ServicesCheck):
 
-    """Inherit ServicesCheck class to test if a host is alive or not"""
+    """Inherit ServicesCheck class to test if a host is alive or not.
+
+    """
 
     def __init__(self, name, init_config, agent_config, instances=None):
         ServicesCheck.__init__(self, name, init_config, agent_config, instances)
 
     def _test_ssh(self, host, port, timeout=None):
-        """ Connect to the SSH port (typically 22) and look for a banner """
+        """Connect to the SSH port (typically 22) and look for a banner.
+
+        """
         if port is None:
             port = 22
         try:
@@ -46,7 +53,9 @@ class HostAlive(ServicesCheck):
 
     @staticmethod
     def _test_ping(host, timeout=None):
-        """ Attempt to ping the host """
+        """Attempt to ping the host.
+
+        """
         ping_prefix = "ping -c 1 -q "
         if timeout is not None:
             ping_prefix += "-W " + str(timeout) + " "
@@ -70,11 +79,15 @@ class HostAlive(ServicesCheck):
             return True
 
     def _create_status_event(self, status, msg, instance):
-        """Does nothing: status events are not yet supported by Mon API"""
+        """Does nothing: status events are not yet supported by Mon API.
+
+        """
         return
 
     def _check(self, instance):
-        """Run the desired host-alive check againt this host"""
+        """Run the desired host-alive check againt this host.
+
+        """
 
         dimensions = {'target_host': instance['host_name'], 'observer_host': socket.getfqdn()}
         # Add per-instance dimensions, if any

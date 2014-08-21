@@ -1,10 +1,10 @@
-"""
-Collects network metrics.
+"""Collects network metrics.
+
 """
 
 # stdlib
-import subprocess
 import re
+import subprocess
 
 # project
 from monagent.collector.checks import AgentCheck
@@ -254,8 +254,8 @@ class Network(AgentCheck):
             self._submit_devicemetrics(interface, metrics)
 
     def _parse_solaris_netstat(self, netstat_output):
-        """
-        Return a mapping of network metrics by interface. For example:
+        """Return a mapping of network metrics by interface. For example:
+
             { interface:
                 {'bytes_out': 0,
                   'bytes_in': 0,

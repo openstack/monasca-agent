@@ -1,16 +1,18 @@
-""" Tools for loading Python modules from arbitrary locations.
+"""Tools for loading Python modules from arbitrary locations.
+
 """
 
-import os
 import imp
+import os
 import sys
 
 # todo seems to be only used by dogstream at this point, possibly remove?
 
 
 def imp_type_for_filename(filename):
-    """Given the name of a Python module, return a type description suitable to
-    be passed to imp.load_module()"""
+    """Given the name of a Python module, return a type description suitable to be passed to imp.load_module().
+
+    """
     for type_data in imp.get_suffixes():
         extension = type_data[0]
         if filename.endswith(extension):
@@ -19,7 +21,9 @@ def imp_type_for_filename(filename):
 
 
 def load_qualified_module(full_module_name, path=None):
-    """Load a module which may be within a package"""
+    """Load a module which may be within a package.
+
+    """
     remaining_pieces = full_module_name.split('.')
     done_pieces = []
     file_obj = None
@@ -40,7 +44,8 @@ def module_name_for_filename(filename):
     """Given the name of a Python file, find an appropropriate module name.
 
     This involves determining whether the file is within a package, and
-    determining the name of same."""
+    determining the name of same.
+    """
     all_segments = filename.split(os.sep)
     path_elements = all_segments[:-1]
     module_elements = [all_segments[-1].rsplit('.', 1)[0]]
@@ -52,10 +57,10 @@ def module_name_for_filename(filename):
 
 
 def get_module(name):
-    """Given either an absolute path to a Python file or a module name, load
-    and return a Python module.
+    """Given either an absolute path to a Python file or a module name, load and return a Python module.
 
-    If the module is already loaded, takes no action."""
+    If the module is already loaded, takes no action.
+    """
     if name.startswith('/'):
         basename, modulename = module_name_for_filename(name)
         path = [basename]
@@ -68,8 +73,9 @@ def get_module(name):
 
 
 def load(config_string, default_name=None):
-    """Given a module name and an object expected to be contained within,
-    return said object"""
+    """Given a module name and an object expected to be contained within, return said object.
+
+    """
     (module_name, object_name) = (config_string.rsplit(':', 1) + [default_name])[:2]
     module = get_module(module_name)
     if object_name:

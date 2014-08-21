@@ -3,9 +3,9 @@ import urllib2
 import re
 import sys
 
-from monagent.common.util import headers
 from monagent.collector.checks import AgentCheck
 from monagent.collector.checks.utils import add_basic_auth
+from monagent.common.util import headers
 
 
 # Constants
@@ -16,6 +16,7 @@ DEFAULT_TIMEOUT = 10
 class Couchbase(AgentCheck):
 
     """Extracts stats from Couchbase via its REST API
+
     http://docs.couchbase.com/couchbase-manual-2.0/#using-the-rest-api
     """
 
@@ -49,7 +50,9 @@ class Couchbase(AgentCheck):
                         metric_name, val, dimensions=metric_dimensions, device_name=node_name)
 
     def _get_stats(self, url, instance):
-        "Hit a given URL and return the parsed json"
+        """Hit a given URL and return the parsed json.
+
+        """
         self.log.debug('Fetching Couchbase stats at url: %s' % url)
         req = urllib2.Request(url, None, headers(self.agent_config))
         if 'user' in instance and 'password' in instance:

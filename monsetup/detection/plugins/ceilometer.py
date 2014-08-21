@@ -1,7 +1,7 @@
-from monsetup.detection import ServicePlugin
+import monsetup.detection
 
 
-class Ceilometer(ServicePlugin):
+class Ceilometer(monsetup.detection.ServicePlugin):
 
     """Detect Ceilometer daemons and setup configuration to monitor them."""
 

@@ -1,19 +1,14 @@
-# std
-import yaml
-
-try:
-    from yaml import CLoader as Loader
-except ImportError:
-    from yaml import Loader
-import os
-import logging
 import glob
+import logging
+import os
 import signal
 import subprocess
 import tempfile
 import time
 
-from monagent.common.util import PidFile, get_os
+import yaml
+
+import monagent.common.util
 
 log = logging.getLogger(__name__)
 
@@ -55,7 +50,7 @@ class InvalidJMXConfiguration(Exception):
 
 
 class JMXFetch(object):
-    pid_file = PidFile("jmxfetch")
+    pid_file = monagent.common.util.PidFile("jmxfetch")
     pid_file_path = pid_file.get_path()
 
     @classmethod
@@ -95,27 +90,26 @@ class JMXFetch(object):
 
     @classmethod
     def should_run(cls, confd_path, checks_list):
-        """
-    Return a tuple (jmx_checks, invalid_checks, java_bin_path, java_options)
+        '''Return a tuple (jmx_checks, invalid_checks, java_bin_path, java_options).
 
-    jmx_checks: list of yaml files that are jmx checks
-    (they have the is_jmx flag enabled or they are in JMX_CHECKS)
-    and that have at least one instance configured
+        jmx_checks: list of yaml files that are jmx checks
+        (they have the is_jmx flag enabled or they are in JMX_CHECKS)
+        and that have at least one instance configured
 
-    invalid_checks: dictionary whose keys are check names that are JMX checks but
-    they have a bad configuration. Values of the dictionary are exceptions generated
-    when checking the configuration
+        invalid_checks: dictionary whose keys are check names that are JMX checks but
+        they have a bad configuration. Values of the dictionary are exceptions generated
+        when checking the configuration
 
-    java_bin_path: is the path to the java executable. It was
-    previously set in the "instance" part of the yaml file of the
-    jmx check. So we need to parse yaml files to get it.
-    We assume that this value is alwayws the same for every jmx check
-    so we can return the first value returned
+        java_bin_path: is the path to the java executable. It was
+        previously set in the "instance" part of the yaml file of the
+        jmx check. So we need to parse yaml files to get it.
+        We assume that this value is alwayws the same for every jmx check
+        so we can return the first value returned
 
-    java_options: is string contains options that will be passed to java_bin_path
-    We assume that this value is alwayws the same for every jmx check
-    so we can return the first value returned
-    """
+        java_options: is string contains options that will be passed to java_bin_path
+        We assume that this value is alwayws the same for every jmx check
+        so we can return the first value returned
+        '''
 
         jmx_checks = []
         java_bin_path = None
@@ -129,6 +123,10 @@ class JMXFetch(object):
             if os.path.exists(conf):
                 f = open(conf)
                 try:
+                    if hasattr(yaml, 'CLoader'):
+                        Loader = yaml.CLoader
+                    else:
+                        Loader = yaml.Loader
                     check_config = yaml.load(f.read(), Loader=Loader)
                     assert check_config is not None
                     f.close()
@@ -236,7 +234,7 @@ class JMXFetch(object):
         except Exception:
             return False
 
-        if get_os() != 'windows':
+        if monagent.common.util.get_os() != 'windows':
             try:
                 os.kill(pid, 0)
                 # os.kill(pid, 0) will throw an exception if pid is not running
@@ -292,7 +290,7 @@ class JMXFetch(object):
 
     @classmethod
     def get_path_to_jmxfetch(cls):
-        if get_os() != 'windows':
+        if monagent.common.util.get_os() != 'windows':
             return os.path.realpath(
                 os.path.join(os.path.abspath(__file__), "..", "../collector/checks", "libs",
                              JMX_FETCH_JAR_NAME))

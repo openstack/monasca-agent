@@ -6,6 +6,7 @@ import collections
 class Plugins(collections.defaultdict):
 
     """A container for the plugin configurations used by the monasca-agent.
+
         This is essentially a defaultdict(dict) but put into a class primarily to make the interface clear, also
         to add a couple of helper methods.
         Each plugin config is stored with the key being its config name (excluding .yaml).
@@ -21,7 +22,8 @@ class Plugins(collections.defaultdict):
         raise NotImplementedError
 
     def merge(self, other):
-        """Do a deep merge with precedence going to other (as is the case with update)
+        """Do a deep merge with precedence going to other (as is the case with update).
+
         """
         # Implemented as a function so it can be used for arbitrary dictionaries not just self, this is needed
         # for the recursive nature of the merge.
@@ -29,7 +31,8 @@ class Plugins(collections.defaultdict):
 
 
 def deep_merge(adict, other):
-    """A recursive merge of two dictionaries including combining of any lists within the data structure
+    """A recursive merge of two dictionaries including combining of any lists within the data structure.
+
     """
     for key, value in other.iteritems():
         if key in adict:

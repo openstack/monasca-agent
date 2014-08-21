@@ -1,6 +1,6 @@
 import re
-import types
 import time
+import types
 
 from monagent.collector.checks import AgentCheck
 from monagent.common.util import get_hostname
@@ -109,7 +109,9 @@ class MongoDb(AgentCheck):
 
     def create_event(self, state, server, agentConfig):
         """Create an event with a message describing the replication
-            state of a mongo node"""
+
+        state of a mongo node
+        """
 
         def get_state_description(state):
             if state == 0:
@@ -148,8 +150,8 @@ class MongoDb(AgentCheck):
         })
 
     def check(self, instance):
-        """
-        Returns a dictionary that looks a lot like what's sent back by db.serverStatus()
+        """Returns a dictionary that looks a lot like what's sent back by db.serverStatus().
+
         """
         if 'server' not in instance:
             self.log.warn("Missing 'server' in mongo config")

@@ -1,4 +1,4 @@
-from monagent.collector.checks import *
+from monagent.collector.checks import AgentCheck
 
 # Reference: http://code.sixapart.com/svn/memcached/trunk/server/doc/protocol.txt
 # Name              Type     Meaning

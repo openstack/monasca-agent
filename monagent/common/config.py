@@ -75,8 +75,6 @@ def _windows_commondata_path():
     import ctypes
     from ctypes import wintypes, windll
 
-    CSIDL_COMMON_APPDATA = 35
-
     _SHGetFolderPath = windll.shell32.SHGetFolderPathW
     _SHGetFolderPath.argtypes = [wintypes.HWND,
                                  ctypes.c_int,
@@ -84,7 +82,6 @@ def _windows_commondata_path():
                                  wintypes.DWORD, wintypes.LPCWSTR]
 
     path_buf = wintypes.create_unicode_buffer(wintypes.MAX_PATH)
-    result = _SHGetFolderPath(0, CSIDL_COMMON_APPDATA, 0, 0, path_buf)
     return path_buf.value
 
 
@@ -488,7 +485,6 @@ def get_win32service_file(osname, filename):
 
 def check_yaml(conf_path):
     f = open(conf_path)
-    check_name = os.path.basename(conf_path).split('.')[0]
     try:
         check_config = yaml.load(f.read(), Loader=Loader)
         assert 'init_config' in check_config, "No 'init_config' section found"
@@ -588,7 +584,6 @@ def load_check_directory(agent_config):
         # Check if the config exists OR we match the old-style config
         conf_path = os.path.join(confd_path, '%s.yaml' % check_name)
         if os.path.exists(conf_path):
-            f = open(conf_path)
             try:
                 check_config = check_yaml(conf_path)
             except Exception as e:

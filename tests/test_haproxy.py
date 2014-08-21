@@ -38,6 +38,7 @@ class HaproxyTestCase(unittest.TestCase):
                 loop += 1
                 if loop >= MAX_WAIT:
                     break
+        return request
 
     def setUp(self):
         self.process = None

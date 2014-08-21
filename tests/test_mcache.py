@@ -52,7 +52,7 @@ class TestMemCache(unittest.TestCase):
 
         # Check that we got 21 metrics for a specific host
         self.assertEqual(
-            len([t for t in r if t[3].get('dimensions') == {"instance": mythirdtag}]), 21, r)
+            len([t for t in r if t[3].get('dimensions') == {"instance": "mythirdtag"}]), 21, r)
 
     def testDimensions(self):
         raise SkipTest('Requires mcache')

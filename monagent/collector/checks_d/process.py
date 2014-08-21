@@ -1,4 +1,6 @@
-"""Gather metrics on specific processes"""
+"""Gather metrics on specific processes.
+
+"""
 from monagent.collector.checks import AgentCheck
 from monagent.common.util import Platform
 
@@ -28,8 +30,8 @@ class ProcessCheck(AgentCheck):
             return False
 
     def find_pids(self, search_string, psutil, exact_match=True):
-        """
-        Create a set of pids of selected processes.
+        """Create a set of pids of selected processes.
+
         Search for search_string
         """
         found_process_list = []

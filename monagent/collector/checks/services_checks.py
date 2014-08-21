@@ -1,10 +1,10 @@
-from collections import namedtuple
-import time
-from Queue import Queue, Empty
+import collections
+import Queue
 import threading
+import time
 
-from monagent.collector.checks import AgentCheck
-from monagent.collector.checks.libs.thread_pool import Pool
+import monagent.collector.checks
+import monagent.collector.checks.libs.thread_pool
 
 
 TIMEOUT = 180
@@ -12,16 +12,16 @@ DEFAULT_SIZE_POOL = 6
 MAX_LOOP_ITERATIONS = 1000
 FAILURE = "FAILURE"
 
-up_down = namedtuple('up_down', ['UP', 'DOWN'])
+up_down = collections.namedtuple('up_down', ['UP', 'DOWN'])
 Status = up_down('UP', 'DOWN')
 EventType = up_down("servicecheck.state_change.up", "servicecheck.state_change.down")
 
 
-class ServicesCheck(AgentCheck):
+class ServicesCheck(monagent.collector.checks.AgentCheck):
     SOURCE_TYPE_NAME = 'servicecheck'
 
-    """
-    Services checks inherits from this class.
+    """Services checks inherits from this class.
+
     This class should never be directly instanciated.
 
     Work flow:
@@ -36,11 +36,10 @@ class ServicesCheck(AgentCheck):
             Status.UP or Status.DOWN.
             The second element is a short error message that will be displayed
             when the service turns down.
-
     """
 
     def __init__(self, name, init_config, agentConfig, instances):
-        AgentCheck.__init__(self, name, init_config, agentConfig, instances)
+        monagent.collector.checks.AgentCheck.__init__(self, name, init_config, agentConfig, instances)
 
         # A dictionary to keep track of service statuses
         self.statuses = {}
@@ -60,9 +59,9 @@ class ServicesCheck(AgentCheck):
         default_size = min(self.instance_count(), DEFAULT_SIZE_POOL)
         self.pool_size = int(self.init_config.get('threads_count', default_size))
 
-        self.pool = Pool(self.pool_size)
+        self.pool = monagent.collector.checks.libs.thread_pool.Pool(self.pool_size)
 
-        self.resultsq = Queue()
+        self.resultsq = Queue.Queue()
         self.jobs_status = {}
         self.pool_started = True
 
@@ -110,7 +109,7 @@ class ServicesCheck(AgentCheck):
             # We put the results in the result queue
             self.resultsq.put(result)
 
-        except Exception as e:
+        except Exception:
             result = (FAILURE, FAILURE, FAILURE, FAILURE)
             self.resultsq.put(result)
 
@@ -119,7 +118,7 @@ class ServicesCheck(AgentCheck):
             try:
                 # We want to fetch the result in a non blocking way
                 status, msg, name, queue_instance = self.resultsq.get_nowait()
-            except Empty:
+            except Queue.Empty:
                 break
 
             if status == FAILURE:
@@ -165,13 +164,12 @@ class ServicesCheck(AgentCheck):
             del self.jobs_status[name]
 
     def _check(self, instance):
-        """This function should be implemented by inherited classes"""
+        """This function should be implemented by inherited classes.
+        """
         raise NotImplementedError
 
     def _clean(self):
         now = time.time()
-        stuck_process = None
-        stuck_time = time.time()
         for name in self.jobs_status.keys():
             start_time = self.jobs_status[name]
             if now - start_time > TIMEOUT:

@@ -1,8 +1,8 @@
-"""
-Unix system checks.
+"""Unix system checks.
 """
 
 # stdlib
+import functools
 import logging
 import operator
 import platform
@@ -12,22 +12,24 @@ import sys
 import time
 
 # project
-from monagent.collector.checks.check import Check
-from monagent.common.metrics import Measurement
-from monagent.common.util import Platform
-from functools import reduce
+
+import monagent.collector.checks.check
+import monagent.common.metrics
+import monagent.common.util
 
 
 # locale-resilient float converter
 to_float = lambda s: float(s.replace(",", "."))
 
 
-class Disk(Check):
+class Disk(monagent.collector.checks.check.Check):
 
-    """ Collects metrics about the machine's disks. """
+    """Collects metrics about the machine's disks.
+    """
 
     def check(self):
-        """Get disk space/inode stats"""
+        """Get disk space/inode stats.
+        """
         # First get the configuration.
         if self.agent_config is not None:
             use_mount = self.agent_config.get("use_mount", False)
@@ -58,12 +60,12 @@ class Disk(Check):
             # parse into a list of Measurements
             stats.update(inodes)
             timestamp = time.time()
-            measurements = [
-                Measurement(
-                    key.split(
-                        '.', 1)[1], timestamp, value, {
-                        'device': key.split(
-                            '.', 1)[0]}) for key, value in stats.iteritems()]
+            measurements = [monagent.common.metrics.Measurement(key.split('.', 1)[1],
+                                                                timestamp,
+                                                                value,
+                                                                {'device': key.split('.', 1)[0]})
+                            for key, value in stats.iteritems()]
+
             return measurements
 
         except Exception:
@@ -72,9 +74,9 @@ class Disk(Check):
 
     def parse_df_output(
             self, df_output, platform_name, inodes=False, use_mount=False, blacklist_re=None):
-        """
-        Parse the output of the df command. If use_volume is true the volume
-        is used to anchor the metric, otherwise false the mount
+        """Parse the output of the df command.
+
+        If use_volume is true the volume is used to anchor the metric, otherwise false the mount
         point is used. Returns a tuple of (disk, inode).
         """
         usage_data = {}
@@ -88,14 +90,14 @@ class Disk(Check):
                 if use_mount:
                     parts[0] = parts[-1]
                 if inodes:
-                    if Platform.is_darwin(platform_name):
+                    if monagent.common.util.Platform.is_darwin(platform_name):
                         # Filesystem 512-blocks Used Available Capacity iused ifree %iused  Mounted
                         # Inodes are in position 5, 6 and we need to compute the total
                         # Total
                         parts[1] = int(parts[5]) + int(parts[6])  # Total
                         parts[2] = int(parts[5])  # Used
                         parts[3] = int(parts[6])  # Available
-                    elif Platform.is_freebsd(platform_name):
+                    elif monagent.common.util.Platform.is_freebsd(platform_name):
                         # Filesystem 1K-blocks Used Avail Capacity iused ifree %iused Mounted
                         # Inodes are in position 5, 6 and we need to compute the total
                         parts[1] = int(parts[5]) + int(parts[6])  # Total
@@ -128,8 +130,7 @@ class Disk(Check):
         return True
 
     def _is_real_device(self, device):
-        """
-        Return true if we should track the given device name and false otherwise.
+        """Return true if we should track the given device name and false otherwise.
         """
         # First, skip empty lines.
         if not device or len(device) <= 1:
@@ -164,10 +165,9 @@ class Disk(Check):
         return devices
 
     def _transform_df_output(self, df_output, blacklist_re):
-        """
-        Given raw output for the df command, transform it into a normalized
-        list devices. A 'device' is a list with fields corresponding to the
-        output of df output on each platform.
+        """Given raw output for the df command, transform it into a normalized list devices.
+
+        A 'device' is a list with fields corresponding to the output of df output on each platform.
         """
         all_devices = [l.strip().split() for l in df_output.split("\n")]
 
@@ -190,10 +190,10 @@ class Disk(Check):
         return devices
 
 
-class IO(Check):
+class IO(monagent.collector.checks.check.Check):
 
     def __init__(self, logger):
-        Check.__init__(self, logger)
+        monagent.collector.checks.check.Check.__init__(self, logger)
         self.header_re = re.compile(r'([%\\/\-_a-zA-Z0-9]+)[\s+]?')
         self.item_re = re.compile(r'^([a-zA-Z0-9\/]+)')
         self.value_re = re.compile(r'\d+\.\d+')
@@ -252,7 +252,8 @@ class IO(Check):
 
     @staticmethod
     def xlate(metric_name, os_name):
-        """Standardize on linux metric names"""
+        """Standardize on linux metric names.
+        """
         if os_name == "sunos":
             names = {"wait": "await",
                      "svc_t": "svctm",
@@ -282,7 +283,7 @@ class IO(Check):
         """
         io = {}
         try:
-            if Platform.is_linux():
+            if monagent.common.util.Platform.is_linux():
                 stdout = sp.Popen(['iostat', '-d', '1', '2', '-x', '-k'],
                                   stdout=sp.PIPE,
                                   close_fds=True).communicate()[0]
@@ -394,7 +395,7 @@ class IO(Check):
             for dev_name, stats in filtered_io.iteritems():
                 filtered_stats = {stat: stats[stat]
                                   for stat in stats.iterkeys() if stat not in self.stat_blacklist}
-                m_list = [Measurement(key, timestamp, value, {'device': dev_name})
+                m_list = [monagent.common.metrics.Measurement(key, timestamp, value, {'device': dev_name})
                           for key, value in filtered_stats.iteritems()]
                 measurements.extend(m_list)
 
@@ -405,10 +406,10 @@ class IO(Check):
             return {}
 
 
-class Load(Check):
+class Load(monagent.collector.checks.check.Check):
 
     def check(self):
-        if Platform.is_linux():
+        if monagent.common.util.Platform.is_linux():
             try:
                 loadAvrgProc = open('/proc/loadavg', 'r')
                 uptime = loadAvrgProc.readlines()
@@ -437,10 +438,10 @@ class Load(Check):
                 }
 
 
-class Memory(Check):
+class Memory(monagent.collector.checks.check.Check):
 
     def __init__(self, logger):
-        Check.__init__(self, logger)
+        monagent.collector.checks.check.Check.__init__(self, logger)
         macV = None
         if sys.platform == 'darwin':
             macV = platform.mac_ver()
@@ -464,7 +465,7 @@ class Memory(Check):
                 pass
 
     def check(self):
-        if Platform.is_linux():
+        if monagent.common.util.Platform.is_linux():
             try:
                 meminfoProc = open('/proc/meminfo', 'r')
                 lines = meminfoProc.readlines()
@@ -736,10 +737,11 @@ class Memory(Check):
             return {}
 
 
-class Cpu(Check):
+class Cpu(monagent.collector.checks.check.Check):
 
     def check(self):
-        """Return an aggregate of CPU stats across all CPUs
+        """Return an aggregate of CPU stats across all CPUs.
+
         When figures are not available, False is sent back.
         """
         def format_results(us, sy, wa, idle, st):
@@ -754,7 +756,8 @@ class Cpu(Check):
             return data
 
         def get_value(legend, data, name, filter_value=None):
-            "Using the legend and a metric name, get the value or None from the data line"
+            """Using the legend and a metric name, get the value or None from the data line.
+            """
             if name in legend:
                 value = to_float(data[legend.index(name)])
                 if filter_value is not None:
@@ -767,7 +770,7 @@ class Cpu(Check):
                 self.logger.debug("Cannot extract cpu value %s from %s (%s)" % (name, data, legend))
                 return 0.0
 
-        if Platform.is_linux():
+        if monagent.common.util.Platform.is_linux():
             mpstat = sp.Popen(['mpstat', '1', '3'], stdout=sp.PIPE, close_fds=True).communicate()[0]
             # topdog@ip:~$ mpstat 1 3
             # Linux 2.6.32-341-ec2 (ip)   01/19/2012  _x86_64_  (2 CPU)
@@ -917,7 +920,7 @@ class Cpu(Check):
                     size = [get_value(headers, l.split(), "sze") for l in d_lines]
                     count = sum(size)
                     rel_size = [s / count for s in size]
-                    dot = lambda v1, v2: reduce(operator.add, map(operator.mul, v1, v2))
+                    dot = lambda v1, v2: functools.reduce(operator.add, map(operator.mul, v1, v2))
                     return format_results(dot(user, rel_size),
                                           dot(kern, rel_size),
                                           dot(wait, rel_size),
@@ -932,9 +935,9 @@ class Cpu(Check):
 
 
 def _get_subprocess_output(command):
-    """
-    Run the given subprocess command and return it's output. Raise an Exception
-    if an error occurs.
+    """Run the given subprocess command and return it's output.
+
+    Raise an Exception if an error occurs.
     """
     proc = sp.Popen(command, stdout=sp.PIPE, close_fds=True)
     return proc.stdout.read()

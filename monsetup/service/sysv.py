@@ -1,20 +1,23 @@
 """System V style service.
+
 """
-from glob import glob
+import glob
 import logging
 import os
 import pwd
 import subprocess
 
-from . import Service
+import service
 
 log = logging.getLogger(__name__)
 
 
-class SysV(Service):
+class SysV(service.Service):
 
     def __init__(self, init_template, config_dir, log_dir, name='monasca-agent', username='monasca-agent'):
-        """Setup this service with the given init template"""
+        """Setup this service with the given init template.
+
+        """
         super(SysV, self).__init__(config_dir, log_dir, name)
         self.init_script = '/etc/init.d/%s' % self.name
         self.init_template = init_template
@@ -22,6 +25,7 @@ class SysV(Service):
 
     def enable(self):
         """Sets monasca-agent to start on boot.
+
             Generally this requires running as super user
         """
         # Create monasca-agent user/group if needed
@@ -53,7 +57,8 @@ class SysV(Service):
         log.info('Enabled {0} service via SysV init script'.format(self.name))
 
     def start(self, restart=True):
-        """Starts monasca-agent
+        """Starts monasca-agent.
+
             If the agent is running and restart is True, restart
         """
         if not self.is_enabled():
@@ -65,7 +70,8 @@ class SysV(Service):
         return True
 
     def stop(self):
-        """Stops monasca-agent
+        """Stops monasca-agent.
+
         """
         if not self.is_enabled():
             log.error('The service is not enabled')
@@ -76,12 +82,13 @@ class SysV(Service):
         return True
 
     def is_enabled(self):
-        """Returns True if monasca-agent is setup to start on boot, false otherwise
+        """Returns True if monasca-agent is setup to start on boot, false otherwise.
+
         """
         if not os.path.exists(self.init_script):
             return False
 
-        if len(glob('/etc/rc?.d/S??monasca-agent')) > 0:
+        if len(glob.glob('/etc/rc?.d/S??monasca-agent')) > 0:
             return True
         else:
             return False

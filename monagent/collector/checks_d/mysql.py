@@ -1,7 +1,7 @@
-import subprocess
 import os
-import sys
 import re
+import subprocess
+import sys
 import traceback
 
 from monagent.collector.checks import AgentCheck
@@ -235,8 +235,8 @@ class MySql(AgentCheck):
         return the_type(dict[key])
 
     def _collect_dict(self, metric_type, field_metric_map, query, db, dimensions):
-        """
-        Query status and get a dictionary back.
+        """Query status and get a dictionary back.
+
         Extract each field out of the dictionary
         and stuff it in the corresponding metric.
 

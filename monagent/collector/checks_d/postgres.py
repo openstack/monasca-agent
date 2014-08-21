@@ -8,7 +8,8 @@ class ShouldRestartException(Exception):
 
 class PostgreSql(AgentCheck):
 
-    """Collects per-database, and optionally per-relation metrics
+    """Collects per-database, and optionally per-relation metrics.
+
     """
 
     RATE = AgentCheck.rate
@@ -120,6 +121,7 @@ SELECT relname,
 
     def _collect_stats(self, key, db, dimensions, relations):
         """Query pg_stat_* for various metrics
+
         If relations is not an empty list, gather per-relation metrics
         on top of that.
         """
@@ -190,7 +192,9 @@ SELECT relname,
                 [v[0][1](self, v[0][0], v[1], dimensions=dimensions) for v in values]
 
     def get_connection(self, key, host, port, user, password, dbname, use_cached=True):
-        "Get and memoize connections to instances"
+        """Get and memorize connections to instances.
+
+        """
         if key in self.dbs and use_cached:
             return self.dbs[key]
 

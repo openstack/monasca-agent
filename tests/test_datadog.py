@@ -212,6 +212,7 @@ class TestDogstream(TailTestCase):
                 'dogstreams': '%s:tests.test_datadog:parse_ancient_function_plugin' %
                 self.log_file.name})
         actual_output = plugdog.check(self.config, move_end=False)
+        self.assertEqual(expected_output, actual_output)
 
     def test_dogstream_function_plugin(self):
         """Ensure that non-class-based stateful plugins work"""

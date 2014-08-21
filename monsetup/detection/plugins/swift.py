@@ -1,9 +1,11 @@
-from monsetup.detection import ServicePlugin
+import monsetup.detection
 
 
-class Swift(ServicePlugin):
+class Swift(monsetup.detection.ServicePlugin):
 
-    """Detect Swift daemons and setup configuration to monitor them."""
+    """Detect Swift daemons and setup configuration to monitor them.
+
+    """
 
     def __init__(self, template_dir, overwrite=True):
         service_params = {

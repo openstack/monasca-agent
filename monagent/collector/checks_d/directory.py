@@ -1,6 +1,9 @@
 from fnmatch import fnmatch
-from os import stat, walk
-from os.path import abspath, exists, join
+from os import stat
+from os import walk
+from os.path import abspath
+from os.path import exists
+from os.path import join
 import time
 
 from monagent.collector.checks import AgentCheck

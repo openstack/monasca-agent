@@ -709,6 +709,6 @@ def get_jmx_status():
 
         return check_statuses
 
-    except Exception as e:
+    except Exception:
         log.exception("Couldn't load latest jmx status")
         return []

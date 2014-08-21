@@ -9,13 +9,22 @@ import pwd
 import socket
 import subprocess
 import sys
-import yaml
 import platform
 
+import yaml
 import agent_config
-from detection.plugins import kafka, mon, mysql, network, zookeeper
-from detection.plugins import nova, glance, cinder, neutron, swift
-from detection.plugins import keystone, ceilometer
+from detection.plugins import kafka
+from detection.plugins import mon
+from detection.plugins import mysql
+from detection.plugins import network
+from detection.plugins import zookeeper
+from detection.plugins import nova
+from detection.plugins import glance
+from detection.plugins import cinder
+from detection.plugins import neutron
+from detection.plugins import swift
+from detection.plugins import keystone
+from detection.plugins import ceilometer
 from service import sysv
 
 # List of all detection plugins to run

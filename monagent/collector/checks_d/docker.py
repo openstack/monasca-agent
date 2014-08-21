@@ -1,10 +1,10 @@
-import json
-import urllib2
-import urllib
 import httplib
-import socket
+import json
 import os
 import re
+import socket
+import urllib2
+import urllib
 from urlparse import urlsplit
 
 from monagent.collector.checks import AgentCheck
@@ -70,7 +70,9 @@ DOCKER_TAGS = [
 class UnixHTTPConnection(httplib.HTTPConnection, object):
 
     """Class used in conjuction with UnixSocketHandler to make urllib2
-    compatible with Unix sockets."""
+
+    compatible with Unix sockets.
+    """
 
     def __init__(self, unix_socket):
         self._unix_socket = unix_socket
@@ -87,8 +89,9 @@ class UnixHTTPConnection(httplib.HTTPConnection, object):
 
 class UnixSocketHandler(urllib2.AbstractHTTPHandler):
 
-    """Class that makes Unix sockets work with urllib2 without any additional
-    dependencies."""
+    """Class that makes Unix sockets work with urllib2 without any additional dependencies.
+
+    """
 
     def unix_open(self, req):
         full_path = "%s%s" % urlsplit(req.get_full_url())[1:3]
@@ -180,15 +183,21 @@ class Docker(AgentCheck):
         return False
 
     def _get_containers(self, instance):
-        """Gets the list of running containers in Docker."""
+        """Gets the list of running containers in Docker.
+
+        """
         return self._get_json("%(url)s/containers/json" % instance, params={"size": 1})
 
     def _get_container(self, instance, cid):
-        """Get container information from Docker, gived a container Id."""
+        """Get container information from Docker, gived a container Id.
+
+        """
         return self._get_json("%s/containers/%s/json" % (instance["url"], cid))
 
     def _get_json(self, uri, params=None):
-        """Utility method to get and parse JSON streams."""
+        """Utility method to get and parse JSON streams.
+
+        """
         if params:
             uri = "%s?%s" % (uri, urllib.urlencode(params))
         self.log.debug("Connecting to: %s" % uri)
@@ -205,8 +214,10 @@ class Docker(AgentCheck):
 
     @staticmethod
     def _find_cgroup(hierarchy):
-        """Finds the mount point for a specified cgroup hierarchy. Works with
-        old style and new style mounts."""
+        """Finds the mount point for a specified cgroup hierarchy.
+
+        Works with old style and new style mounts.
+        """
         try:
             fp = open("/proc/mounts")
             mounts = map(lambda x: x.split(), fp.read().splitlines())
@@ -221,7 +232,9 @@ class Docker(AgentCheck):
                 return mountpoint
 
     def _parse_cgroup_file(self, file_):
-        """Parses a cgroup pseudo file for key/values."""
+        """Parses a cgroup pseudo file for key/values.
+
+        """
         fp = None
         try:
             self.log.debug("Opening file: %s" % file_)

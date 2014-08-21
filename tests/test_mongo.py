@@ -79,7 +79,6 @@ class TestMongo(unittest.TestCase):
                 c1.admin.command("replSetInitiate")
                 # Sleep for 15s until replication is stable
                 time.sleep(30)
-                x = c1.admin.command("replSetGetStatus")
                 assert pymongo.Connection('localhost:%s' % PORT2)
         except Exception:
             logging.getLogger().exception("Cannot instantiate mongod properly")

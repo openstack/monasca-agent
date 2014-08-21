@@ -1,13 +1,13 @@
+import datetime
+import itertools
 import os
-import traceback
 import re
 import time
-from datetime import datetime
-from itertools import groupby  # >= python 2.4
+import traceback
 
-from utils import TailFile
-from monagent.common.util import LaconicFilter
-from monagent.collector import modules
+import monagent.collector
+import monagent.common.util
+import utils
 
 
 if hasattr('some string', 'partition'):
@@ -111,7 +111,7 @@ class Dogstream(object):
 
         if parser_spec:
             try:
-                parse_func = modules.load(parser_spec, 'parser')
+                parse_func = monagent.collector.modules.load(parser_spec, 'parser')
                 if isinstance(parse_func, type):
                     logger.info('Instantiating class-based dogstream')
                     parse_func = parse_func(
@@ -142,7 +142,7 @@ class Dogstream(object):
         self.class_based = class_based
 
         # Apply LaconicFilter to avoid log flooding
-        self.logger.addFilter(LaconicFilter("dogstream"))
+        self.logger.addFilter(monagent.common.util.LaconicFilter("dogstream"))
 
         self.log_path = log_path
         self.parse_func = parse_func or self._default_line_parser
@@ -163,7 +163,7 @@ class Dogstream(object):
 
             # Build our tail -f
             if self._gen is None:
-                self._gen = TailFile(
+                self._gen = utils.TailFile(
                     self.logger,
                     self.log_path,
                     self._line_parser).tail(
@@ -202,7 +202,7 @@ class Dogstream(object):
             else:
                 try:
                     parsed = self.parse_func(self.logger, line, self.parser_state, *self.parse_args)
-                except TypeError as e:
+                except TypeError:
                     # Arity of parse_func is 3 (old-style), not 4
                     parsed = self.parse_func(self.logger, line)
 
@@ -250,7 +250,7 @@ class Dogstream(object):
                 try:
                     # Bucket points into 15 second buckets
                     ts = (int(float(ts)) / self._freq) * self._freq
-                    date = datetime.fromtimestamp(ts)
+                    date = datetime.datetime.fromtimestamp(ts)
                     assert date.year > 1990
                 except Exception:
                     invalid_reasons.append('invalid timestamp')
@@ -265,14 +265,13 @@ class Dogstream(object):
                                       repr(datum), ', '.join(invalid_reasons), line)
                 else:
                     self._values.append((metric, ts, value, attrs))
-        except Exception as e:
+        except Exception:
             self.logger.debug("Error while parsing line %s" % line, exc_info=True)
             self._error_count += 1
             self.logger.error("Parser error: %s out of %s" % (self._error_count, self._line_count))
 
     @staticmethod
     def _default_line_parser(logger, line):
-        original_line = line
         sep = ' '
         metric, _, line = partition(line.strip(), sep)
         timestamp, _, line = partition(line.strip(), sep)
@@ -284,13 +283,14 @@ class Dogstream(object):
                 keyval, _, line = partition(line.strip(), sep)
                 key, val = keyval.split('=', 1)
                 attributes[key] = val
-        except Exception as e:
+        except Exception:
             logger.debug(traceback.format_exc())
 
         return metric, timestamp, value, attributes
 
     def _aggregate(self, values):
-        """ Aggregate values down to the second and store as:
+        """Aggregate values down to the second and store as:
+
             {
                 "dogstream": [(metric, timestamp, value, {key: val})]
             }
@@ -300,7 +300,7 @@ class Dogstream(object):
 
         values.sort(key=point_sorter)
 
-        for (timestamp, metric, host_name, device_name), val_attrs in groupby(values, key=point_sorter):
+        for (timestamp, metric, host_name, device_name), val_attrs in itertools.groupby(values, key=point_sorter):
             attributes = {}
             vals = []
             for _metric, _timestamp, v, a in val_attrs:
@@ -519,6 +519,3 @@ class NagiosServicePerfData(NagiosPerfData):
         if middle_name:
             metric.append(middle_name.replace(' ', '_').lower())
         return metric
-
-if __name__ == '__main__':
-    testddForwarder()

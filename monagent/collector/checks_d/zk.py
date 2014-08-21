@@ -1,5 +1,4 @@
-'''
-Parses the response from zookeeper's `stat` admin command, which looks like:
+"""Parses the response from zookeeper's `stat` admin command, which looks like:
 
 ```
 Zookeeper version: 3.2.2--1, built on 03/16/2010 07:31 GMT
@@ -21,13 +20,12 @@ Node count: 487
 ```
 
 Tested with Zookeeper versions 3.0.0 to 3.4.5
-
-'''
+"""
 
 import re
 import socket
-import struct
 from StringIO import StringIO
+import struct
 
 from monagent.collector.checks import AgentCheck
 
@@ -87,9 +85,10 @@ class Zookeeper(AgentCheck):
 
     @classmethod
     def parse_stat(cls, buf):
-        ''' `buf` is a readable file-like object
-            returns a tuple: ([(metric_name, value)], dimensions)
-        '''
+        """`buf` is a readable file-like object
+
+        returns a tuple: ([(metric_name, value)], dimensions)
+        """
         metrics = []
         buf.seek(0)
 

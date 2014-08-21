@@ -32,28 +32,34 @@ SENTINEL = "QUIT"
 
 def is_sentinel(obj):
     """Predicate to determine whether an item from the queue is the
-    signal to stop"""
+
+    signal to stop
+    """
     return isinstance(obj, str) and obj == SENTINEL
 
 
 class TimeoutError(Exception):
 
-    """Raised when a result is not available within the given timeout"""
+    """Raised when a result is not available within the given timeout.
+    """
     pass
 
 
 class PoolWorker(threading.Thread):
 
-    """Thread that consumes WorkUnits from a queue to process them"""
+    """Thread that consumes WorkUnits from a queue to process them.
+    """
 
     def __init__(self, workq, *args, **kwds):
-        """\param workq: Queue object to consume the work units from"""
+        """\param workq: Queue object to consume the work units from.
+        """
         threading.Thread.__init__(self, *args, **kwds)
         self._workq = workq
         self.running = False
 
     def run(self):
-        """Process the work unit, or wait for sentinel to exit"""
+        """Process the work unit, or wait for sentinel to exit.
+        """
         while True:
             self.running = True
             workunit = self._workq.get()
@@ -69,14 +75,15 @@ class PoolWorker(threading.Thread):
 class Pool(object):
 
     """
-    The Pool class represents a pool of worker threads. It has methods
-    which allows tasks to be offloaded to the worker processes in a
-    few different ways
+    The Pool class represents a pool of worker threads.
+
+    It has methods which allows tasks to be offloaded to the
+    worker processes in a few different ways.
     """
 
     def __init__(self, nworkers, name="Pool"):
-        """
-        \param nworkers (integer) number of worker threads to start
+        """\param nworkers (integer) number of worker threads to start
+
         \param name (string) prefix for the worker threads' name
         """
         self._workq = Queue.Queue()
@@ -86,7 +93,7 @@ class Pool(object):
             thr = PoolWorker(self._workq, name="Worker-%s-%d" % (name, idx))
             try:
                 thr.start()
-            except:
+            except Exception:
                 # If one thread has a problem, undo everything
                 self.terminate()
                 raise
@@ -97,25 +104,28 @@ class Pool(object):
         return len([w for w in self._workers if w.running])
 
     def apply(self, func, args=(), kwds=None):
-        """Equivalent of the apply() builtin function. It blocks till
-        the result is ready."""
+        """Equivalent of the apply() builtin function.
+
+        It blocks till the result is ready.
+        """
         if not kwds:
             kwds = dict()
         return self.apply_async(func, args, kwds).get()
 
     def map(self, func, iterable, chunksize=None):
-        """A parallel equivalent of the map() builtin function. It
-        blocks till the result is ready.
+        """A parallel equivalent of the map() builtin function.
+
+        It blocks till the result is ready.
 
         This method chops the iterable into a number of chunks which
         it submits to the process pool as separate tasks. The
         (approximate) size of these chunks can be specified by setting
-        chunksize to a positive integer."""
+        chunksize to a positive integer.
+        """
         return self.map_async(func, iterable, chunksize).get()
 
     def imap(self, func, iterable, chunksize=1):
-        """
-        An equivalent of itertools.imap().
+        """An equivalent of itertools.imap().
 
         The chunksize argument is the same as the one used by the
         map() method. For very long iterables using a large value for
@@ -133,22 +143,24 @@ class Pool(object):
 
     def imap_unordered(self, func, iterable, chunksize=1):
         """The same as imap() except that the ordering of the results
-        from the returned iterator should be considered
-        arbitrary. (Only when there is only one worker process is the
-        order guaranteed to be "correct".)"""
+
+        from the returned iterator should be considered arbitrary.
+        (Only when there is only one worker process is the order
+        guaranteed to be "correct".)
+        """
         collector = UnorderedResultCollector()
         self._create_sequences(func, iterable, chunksize, collector)
         return iter(collector)
 
     def apply_async(self, func, args=(), kwds=None, callback=None):
-        """A variant of the apply() method which returns an
-        ApplyResult object.
+        """A variant of the apply() method which returns an ApplyResult object.
 
         If callback is specified then it should be a callable which
         accepts a single argument. When the result becomes ready,
         callback is applied to it (unless the call failed). callback
         should complete immediately since otherwise the thread which
-        handles the results will get blocked."""
+        handles the results will get blocked.
+        """
         if not kwds:
             kwds = dict()
         assert not self._closed  # No lock here. We assume it's atomic...
@@ -158,14 +170,14 @@ class Pool(object):
         return apply_result
 
     def map_async(self, func, iterable, chunksize=None, callback=None):
-        """A variant of the map() method which returns a ApplyResult
-        object.
+        """A variant of the map() method which returns a ApplyResult object.
 
         If callback is specified then it should be a callable which
         accepts a single argument. When the result becomes ready
         callback is applied to it (unless the call failed). callback
         should complete immediately since otherwise the thread which
-        handles the results will get blocked."""
+        handles the results will get blocked.
+        """
         apply_result = ApplyResult(callback=callback)
         collector = OrderedResultCollector(apply_result, as_iterator=False)
         self._create_sequences(func, iterable, chunksize, collector)
@@ -173,6 +185,7 @@ class Pool(object):
 
     def imap_async(self, func, iterable, chunksize=None, callback=None):
         """A variant of the imap() method which returns an ApplyResult
+
         object that provides an iterator (next method(timeout)
         available).
 
@@ -180,7 +193,8 @@ class Pool(object):
         accepts a single argument. When the resulting iterator becomes
         ready, callback is applied to it (unless the call
         failed). callback should complete immediately since otherwise
-        the thread which handles the results will get blocked."""
+        the thread which handles the results will get blocked.
+        """
         apply_result = ApplyResult(callback=callback)
         collector = OrderedResultCollector(apply_result, as_iterator=True)
         self._create_sequences(func, iterable, chunksize, collector)
@@ -189,30 +203,35 @@ class Pool(object):
     def imap_unordered_async(self, func, iterable, chunksize=None,
                              callback=None):
         """A variant of the imap_unordered() method which returns an
-        ApplyResult object that provides an iterator (next
-        method(timeout) available).
+
+        ApplyResult object that provides an iterator (next method(timeout)
+        available).
 
         If callback is specified then it should be a callable which
         accepts a single argument. When the resulting iterator becomes
         ready, callback is applied to it (unless the call
         failed). callback should complete immediately since otherwise
-        the thread which handles the results will get blocked."""
+        the thread which handles the results will get blocked.
+        """
         apply_result = ApplyResult(callback=callback)
         collector = UnorderedResultCollector(apply_result)
         self._create_sequences(func, iterable, chunksize, collector)
         return apply_result
 
     def close(self):
-        """Prevents any more tasks from being submitted to the
-        pool. Once all the tasks have been completed the worker
-        processes will exit."""
+        """Prevents any more tasks from being submitted to the pool.
+
+        Once all the tasks have been completed the worker
+        processes will exit.
+        """
         # No lock here. We assume it's sufficiently atomic...
         self._closed = True
 
     def terminate(self):
-        """Stops the worker processes immediately without completing
-        outstanding work. When the pool object is garbage collected
-        terminate() will be called immediately."""
+        """Stops the worker processes immediately without completing outstanding work.
+
+        When the pool object is garbage collected terminate() will be called immediately.
+        """
         self.close()
 
         # Clearing the job queue
@@ -228,18 +247,19 @@ class Pool(object):
             self._workq.put(SENTINEL)
 
     def join(self):
-        """Wait for the worker processes to exit. One must call
-        close() or terminate() before using join()."""
+        """Wait for the worker processes to exit.
+
+        One must call close() or terminate() before using join().
+        """
         for thr in self._workers:
             thr.join()
 
     def _create_sequences(self, func, iterable, chunksize, collector=None):
-        """
-        Create the WorkUnit objects to process and pushes them on the
-        work queue. Each work unit is meant to process a slice of
-        iterable of size chunksize. If collector is specified, then
-        the ApplyResult objects associated with the jobs will notify
-        collector when their result becomes ready.
+        """Create the WorkUnit objects to process and pushes them on the work queue.
+
+        Each work unit is meant to process a slice of iterable of size chunksize.
+        If collector is specified, then the ApplyResult objects associated with
+        the jobs will notify collector when their result becomes ready.
 
         \return the list of WorkUnit objects (basically: JobSequences)
         pushed onto the work queue
@@ -271,8 +291,10 @@ class Pool(object):
 
 class WorkUnit(object):
 
-    """ABC for a unit of work submitted to the worker threads. It's
-    basically just an object equipped with a process() method"""
+    """ABC for a unit of work submitted to the worker threads.
+
+    It's basically just an object equipped with a process() method
+    """
 
     def process(self):
         """Do the work. Shouldn't raise any exception"""
@@ -281,11 +303,12 @@ class WorkUnit(object):
 
 class Job(WorkUnit):
 
-    """A work unit that corresponds to the execution of a single function"""
+    """A work unit that corresponds to the execution of a single function.
+    """
 
     def __init__(self, func, args, kwds, apply_result):
-        """
-        \param func/args/kwds used to call the function
+        """\param func/args/kwds used to call the function
+
         \param apply_result ApplyResult object that holds the result
         of the function call
         """
@@ -296,14 +319,14 @@ class Job(WorkUnit):
         self._result = apply_result
 
     def process(self):
-        """
-        Call the function with the args/kwds and tell the ApplyResult
+        """Call the function with the args/kwds and tell the ApplyResult
+
         that its result is ready. Correctly handles the exceptions
-        happening during the execution of the function
+        happening during the execution of the function.
         """
         try:
             result = self._func(*self._args, **self._kwds)
-        except:
+        except Exception:
             self._result._set_exception()
         else:
             self._result._set_value(result)
@@ -312,15 +335,15 @@ class Job(WorkUnit):
 class JobSequence(WorkUnit):
 
     """A work unit that corresponds to the processing of a continuous
-    sequence of Job objects"""
+    sequence of Job objects
+    """
 
     def __init__(self, jobs):
         WorkUnit.__init__(self)
         self._jobs = jobs
 
     def process(self):
-        """
-        Call process() on all the Job objects that have been specified
+        """Call process() on all the Job objects that have been specified.
         """
         for job in self._jobs:
             job.process()
@@ -329,16 +352,18 @@ class JobSequence(WorkUnit):
 class ApplyResult(object):
 
     """An object associated with a Job object that holds its result:
+
     it's available during the whole life the Job and after, even when
     the Job didn't process yet. It's possible to use this object to
     wait for the result/exception of the job to be available.
 
     The result objects returns by the Pool::*_async() methods are of
-    this type"""
+    this type
+    """
 
     def __init__(self, collector=None, callback=None):
-        """
-        \param collector when not None, the notify_ready() method of
+        """\param collector when not None, the notify_ready() method of
+
         the collector will be called when the result from the Job is
         ready
         \param callback when not None, function to call when the
@@ -356,11 +381,11 @@ class ApplyResult(object):
             self._collector = collector
 
     def get(self, timeout=None):
-        """
-        Returns the result when it arrives. If timeout is not None and
-        the result does not arrive within timeout seconds then
-        TimeoutError is raised. If the remote call raised an exception
-        then that exception will be reraised by get().
+        """Returns the result when it arrives.
+
+        If timeout is not None and the result does not arrive within timeout
+        seconds then TimeoutError is raised. If the remote call raised an
+        exception then that exception will be re-raised by get().
         """
         if not self.wait(timeout):
             raise TimeoutError("Result not available within %fs" % timeout)
@@ -369,27 +394,31 @@ class ApplyResult(object):
         raise self._data[0], self._data[1], self._data[2]
 
     def wait(self, timeout=None):
-        """Waits until the result is available or until timeout
-        seconds pass."""
+        """Waits until the result is available or until timeout seconds pass.
+        """
         self._event.wait(timeout)
         return self._event.isSet()
 
     def ready(self):
-        """Returns whether the call has completed."""
+        """Returns whether the call has completed.
+        """
         return self._event.isSet()
 
     def successful(self):
-        """Returns whether the call completed without raising an
-        exception. Will raise AssertionError if the result is not
-        ready."""
+        """Returns whether the call completed without raising an exception.
+
+        Will raise AssertionError if the result is not ready.
+        """
         assert self.ready()
         return self._success
 
     def _set_value(self, value):
         """Called by a Job object to tell the result is ready, and
+
         provides the value of this result. The object will become
         ready and successful. The collector's notify_ready() method
-        will be called, and the callback method too"""
+        will be called, and the callback method too.
+        """
         assert not self.ready()
         self._data = value
         self._success = True
@@ -399,14 +428,16 @@ class ApplyResult(object):
         if self._callback is not None:
             try:
                 self._callback(value)
-            except:
+            except Exception:
                 traceback.print_exc()
 
     def _set_exception(self):
         """Called by a Job object to tell that an exception occured
+
         during the processing of the function. The object will become
         ready but not successful. The collector's notify_ready()
-        method will be called, but NOT the callback method"""
+        method will be called, but NOT the callback method
+        """
         assert not self.ready()
         self._data = sys.exc_info()
         self._success = False
@@ -417,22 +448,25 @@ class ApplyResult(object):
 
 class AbstractResultCollector(object):
 
-    """ABC to define the interface of a ResultCollector object. It is
-    basically an object which knows whuich results it's waiting for,
+    """ABC to define the interface of a ResultCollector object.
+
+    It is basically an object which knows whuich results it's waiting for,
     and which is able to get notify when they get available. It is
     also able to provide an iterator over the results when they are
-    available"""
+    available.
+    """
 
     def __init__(self, to_notify):
-        """
-        \param to_notify ApplyResult object to notify when all the
+        """\param to_notify ApplyResult object to notify when all the
+
         results we're waiting for become available. Can be None.
         """
         self._to_notify = to_notify
 
     def register_result(self, apply_result):
-        """Used to identify which results we're waiting for. Will
-        always be called BEFORE the Jobs get submitted to the work
+        """Used to identify which results we're waiting for.
+
+        Will always be called BEFORE the Jobs get submitted to the work
         queue, and BEFORE the __iter__ and _get_result() methods can
         be called
         \param apply_result ApplyResult object to add in our collection
@@ -441,6 +475,7 @@ class AbstractResultCollector(object):
 
     def notify_ready(self, apply_result):
         """Called by the ApplyResult object (already registered via
+
         register_result()) that it is now ready (ie. the Job's result
         is available or an exception has been raised).
         \param apply_result ApplyResult object telling us that the job
@@ -450,6 +485,7 @@ class AbstractResultCollector(object):
 
     def _get_result(self, idx, timeout=None):
         """Called by the CollectorIterator object to retrieve the
+
         result's values one after another (order defined by the
         implementation)
         \param idx The index of the result we want, wrt collector's order
@@ -460,19 +496,23 @@ class AbstractResultCollector(object):
         raise NotImplementedError("Children classes must implement it")
 
     def __iter__(self):
-        """Return a new CollectorIterator object for this collector"""
+        """Return a new CollectorIterator object for this collector.
+        """
         return CollectorIterator(self)
 
 
 class CollectorIterator(object):
 
     """An iterator that allows to iterate over the result values
+
     available in the given collector object. Equipped with an extended
     next() method accepting a timeout argument. Created by the
-    AbstractResultCollector::__iter__() method"""
+    AbstractResultCollector::__iter__() method
+    """
 
     def __init__(self, collector):
-        """\param AbstractResultCollector instance"""
+        """\param AbstractResultCollector instance.
+        """
         self._collector = collector
         self._idx = 0
 
@@ -480,16 +520,18 @@ class CollectorIterator(object):
         return self
 
     def next(self, timeout=None):
-        """Return the next result value in the sequence. Raise
-        StopIteration at the end. Can raise the exception raised by
-        the Job"""
+        """Return the next result value in the sequence.
+
+        Raise StopIteration at the end. Can raise the exception raised by
+        the Job.
+        """
         try:
             apply_result = self._collector._get_result(self._idx, timeout)
         except IndexError:
             # Reset for next time
             self._idx = 0
             raise StopIteration
-        except:
+        except Exception:
             self._idx = 0
             raise
         self._idx += 1
@@ -500,13 +542,15 @@ class CollectorIterator(object):
 class UnorderedResultCollector(AbstractResultCollector):
 
     """An AbstractResultCollector implementation that collects the
+
     values of the ApplyResult objects in the order they become ready. The
     CollectorIterator object returned by __iter__() will iterate over
-    them in the order they become ready"""
+    them in the order they become ready.
+    """
 
     def __init__(self, to_notify=None):
-        """
-        \param to_notify ApplyResult object to notify when all the
+        """\param to_notify ApplyResult object to notify when all the
+
         results we're waiting for become available. Can be None.
         """
         AbstractResultCollector.__init__(self, to_notify)
@@ -515,8 +559,9 @@ class UnorderedResultCollector(AbstractResultCollector):
         self._expected = 0
 
     def register_result(self, apply_result):
-        """Used to identify which results we're waiting for. Will
-        always be called BEFORE the Jobs get submitted to the work
+        """Used to identify which results we're waiting for.
+
+        Will always be called BEFORE the Jobs get submitted to the work
         queue, and BEFORE the __iter__ and _get_result() methods can
         be called
         \param apply_result ApplyResult object to add in our collection
@@ -525,6 +570,7 @@ class UnorderedResultCollector(AbstractResultCollector):
 
     def _get_result(self, idx, timeout=None):
         """Called by the CollectorIterator object to retrieve the
+
         result's values one after another, in the order the results have
         become available.
         \param idx The index of the result we want, wrt collector's order
@@ -553,6 +599,7 @@ class UnorderedResultCollector(AbstractResultCollector):
 
     def notify_ready(self, apply_result):
         """Called by the ApplyResult object (already registered via
+
         register_result()) that it is now ready (ie. the Job's result
         is available or an exception has been raised).
         \param apply_result ApplyResult object telling us that the job
@@ -575,13 +622,15 @@ class UnorderedResultCollector(AbstractResultCollector):
 class OrderedResultCollector(AbstractResultCollector):
 
     """An AbstractResultCollector implementation that collects the
+
     values of the ApplyResult objects in the order they have been
     submitted. The CollectorIterator object returned by __iter__()
-    will iterate over them in the order they have been submitted"""
+    will iterate over them in the order they have been submitted.
+    """
 
     def __init__(self, to_notify=None, as_iterator=True):
-        """
-        \param to_notify ApplyResult object to notify when all the
+        """\param to_notify ApplyResult object to notify when all the
+
         results we're waiting for become available. Can be None.
         \param as_iterator boolean telling whether the result value
         set on to_notify should be an iterator (available as soon as 1
@@ -595,8 +644,9 @@ class OrderedResultCollector(AbstractResultCollector):
         self._as_iterator = as_iterator
 
     def register_result(self, apply_result):
-        """Used to identify which results we're waiting for. Will
-        always be called BEFORE the Jobs get submitted to the work
+        """Used to identify which results we're waiting for.
+
+        Will always be called BEFORE the Jobs get submitted to the work
         queue, and BEFORE the __iter__ and _get_result() methods can
         be called
         \param apply_result ApplyResult object to add in our collection
@@ -606,6 +656,7 @@ class OrderedResultCollector(AbstractResultCollector):
 
     def _get_result(self, idx, timeout=None):
         """Called by the CollectorIterator object to retrieve the
+
         result's values one after another (order defined by the
         implementation)
         \param idx The index of the result we want, wrt collector's order
@@ -619,6 +670,7 @@ class OrderedResultCollector(AbstractResultCollector):
 
     def notify_ready(self, apply_result):
         """Called by the ApplyResult object (already registered via
+
         register_result()) that it is now ready (ie. the Job's result
         is available or an exception has been raised).
         \param apply_result ApplyResult object telling us that the job
@@ -641,25 +693,25 @@ class OrderedResultCollector(AbstractResultCollector):
             elif not self._as_iterator and got_last:
                 try:
                     lst = [r.get(0) for r in self._results]
-                except:
+                except Exception:
                     self._to_notify._set_exception()
                 else:
                     self._to_notify._set_value(lst)
 
 
 def _test():
-    """Some tests"""
-    import thread
+    """Some tests.
+    """
     import time
 
     def f(x):
         return x * x
 
     def work(seconds):
-        print("[%d] Start to work for %fs..." % (thread.get_ident(), seconds))
+        print("[%d] Start to work for %fs..." % (threading.thread.get_ident(), seconds))
         time.sleep(seconds)
-        print("[%d] Work done (%fs)." % (thread.get_ident(), seconds))
-        return "%d slept %fs" % (thread.get_ident(), seconds)
+        print("[%d] Work done (%fs)." % (threading.thread.get_ident(), seconds))
+        return "%d slept %fs" % (threading.thread.get_ident(), seconds)
 
     # Test copy/pasted from multiprocessing
     pool = Pool(9)                # start 4 worker threads

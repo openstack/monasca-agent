@@ -1,7 +1,7 @@
-from monsetup.detection import ServicePlugin
+import monsetup.detection
 
 
-class Glance(ServicePlugin):
+class Glance(monsetup.detection.ServicePlugin):
 
     """Detect Glance daemons and setup configuration to monitor them."""
 

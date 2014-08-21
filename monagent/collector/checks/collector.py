@@ -1,15 +1,14 @@
 # Core modules
 import logging
-import threading
-import time
 import socket
-
-from monagent.common.metrics import Measurement
-from monagent.common.util import get_os, Timer
 import system.unix as u
 import system.win32 as w32
-from datadog import Dogstreams
-from monagent.common.check_status import CheckStatus, CollectorStatus, EmitterStatus
+import threading
+import time
+
+import monagent.common.check_status
+import monagent.common.metrics
+import monagent.common.util
 
 
 log = logging.getLogger(__name__)
@@ -25,15 +24,15 @@ FLUSH_LOGGING_INITIAL = 5
 
 class Collector(object):
 
-    """
-    The collector is responsible for collecting data from each check and
+    """The collector is responsible for collecting data from each check and
+
     passing it along to the emitters, who send it to their final destination.
     """
 
     def __init__(self, agent_config, emitter, checksd=None):
         self.emit_duration = None
         self.agent_config = agent_config
-        self.os = get_os()
+        self.os = monagent.common.util.get_os()
         self.plugins = None
         self.emitter = emitter
         socket.setdefaulttimeout(15)
@@ -74,23 +73,24 @@ class Collector(object):
             self.init_failed_checks_d = checksd['init_failed_checks']
 
     def _emit(self, payload):
-        """ Send the payload via the emitter. """
+        """Send the payload via the emitter.
+        """
         statuses = []
         # Don't try to send to an emitter if we're stopping/
         if self.continue_running:
             name = self.emitter.__name__
-            emitter_status = EmitterStatus(name)
+            emitter_status = monagent.common.check_status.EmitterStatus(name)
             try:
                 self.emitter(payload, log, self.agent_config['forwarder_url'])
             except Exception as e:
                 log.exception("Error running emitter: %s" % self.emitter.__name__)
-                emitter_status = EmitterStatus(name, e)
+                emitter_status = monagent.common.check_status.EmitterStatus(name, e)
             statuses.append(emitter_status)
         return statuses
 
     def _set_status(self, check_statuses, emitter_statuses, collect_duration):
         try:
-            CollectorStatus(check_statuses, emitter_statuses).persist()
+            monagent.common.check_status.CollectorStatus(check_statuses, emitter_statuses).persist()
         except Exception:
             log.exception("Error persisting collector status")
 
@@ -125,13 +125,11 @@ class Collector(object):
         return metrics
 
     def run(self):
-        """
-        Collect data from each check and submit their data.
+        """Collect data from each check and submit their data.
+
         There are currently two types of checks the system checks and the configured ones from checks_d
         """
-        timer = Timer()
-        if self.os != 'windows':
-            cpu_clock = time.clock()
+        timer = monagent.common.util.Timer()
         self.run_count += 1
         log.debug("Starting collection run #%s" % self.run_count)
 
@@ -144,7 +142,7 @@ class Collector(object):
         for check_type in self._legacy_checks:
             try:
                 for name, value in check_type.check().iteritems():
-                    metrics_list.append(Measurement(name, timestamp, value, {}))
+                    metrics_list.append(monagent.common.metrics.Measurement(name, timestamp, value, {}))
             except Exception:
                 log.exception('Error running check.')
 
@@ -163,10 +161,10 @@ class Collector(object):
         # Add in metrics on the collector run, emit_duration is from the previous run
         for name, value in self.collector_stats(len(metrics_list), len(events),
                                                 collect_duration, self.emit_duration).iteritems():
-            metrics_list.append(Measurement(name,
-                                            timestamp,
-                                            value,
-                                            {'service': 'monasca', 'component': 'collector'}))
+            metrics_list.append(monagent.common.metrics.Measurement(name,
+                                                                    timestamp,
+                                                                    value,
+                                                                    {'service': 'monasca', 'component': 'collector'}))
 
         emitter_statuses = self._emit(metrics_list)
         self.emit_duration = timer.step()
@@ -175,8 +173,9 @@ class Collector(object):
         self._set_status(checks_statuses, emitter_statuses, collect_duration)
 
     def run_checks_d(self):
-        """ Run defined checks_d checks.
-            returns a list of Measurements, a dictionary of events and a list of check statuses.
+        """Run defined checks_d checks.
+
+        returns a list of Measurements, a dictionary of events and a list of check statuses.
         """
         measurements = []
         events = {}
@@ -210,23 +209,22 @@ class Collector(object):
             except Exception:
                 log.exception("Error running check %s" % check.name)
 
-            check_status = CheckStatus(check.name, instance_statuses, metric_count, event_count,
-                                       library_versions=check.get_library_info())
+            check_status = monagent.common.check_status.CheckStatus(check.name, instance_statuses, metric_count, event_count,
+                                                                    library_versions=check.get_library_info())
             check_statuses.append(check_status)
 
         for check_name, info in self.init_failed_checks_d.iteritems():
             if not self.continue_running:
                 return
-            check_status = CheckStatus(check_name, None, None, None,
-                                       init_failed_error=info['error'],
-                                       init_failed_traceback=info['traceback'])
+            check_status = monagent.common.check_status.CheckStatus(check_name, None, None, None,
+                                                                    init_failed_error=info['error'],
+                                                                    init_failed_traceback=info['traceback'])
             check_statuses.append(check_status)
 
         return measurements, events, check_statuses
 
     def stop(self):
-        """
-        Tell the collector to stop at the next logical point.
+        """Tell the collector to stop at the next logical point.
         """
         # This is called when the process is being killed, so
         # try to stop the collector as soon as possible.

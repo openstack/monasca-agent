@@ -1,7 +1,7 @@
-from monsetup.detection import ServicePlugin
+import monsetup.detection
 
 
-class Cinder(ServicePlugin):
+class Cinder(monsetup.detection.ServicePlugin):
 
     """Detect Cinder daemons and setup configuration to monitor them."""
 

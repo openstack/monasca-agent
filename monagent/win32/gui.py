@@ -1,4 +1,4 @@
-# Copyright © 2009-2010 CEA
+# Copyright �� 2009-2010 CEA
 # Pierre Raybaut
 # Licensed under the terms of the CECILL License
 # Modified for Datadog
@@ -19,6 +19,8 @@ import win32service
 
 # GUI Imports
 from guidata.qt.QtCore import SIGNAL, Qt, QSize, QPoint, QTimer
+from guidata.qt.QtGui import QInputDialog, QWidget, QFont, QLabel, QGroupBox, QHBoxLayout, QSystemTrayIcon
+from guidata.qt.QtGui import QVBoxLayout, QPushButton, QSplitter, QListWidget, QMenu, QMessageBox
 
 from guidata.configtools import get_icon, get_family, MONOSPACE
 from guidata.qthelpers import get_std_icon

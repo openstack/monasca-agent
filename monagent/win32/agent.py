@@ -21,6 +21,8 @@ from ddagent import Application
 from win32.common import handle_exe_click
 from collector.jmxfetch import JMXFetch
 
+from monagent.common.config import get_config, load_check_directory, set_win32_cert_path
+
 log = logging.getLogger(__name__)
 RESTART_INTERVAL = 24 * 60 * 60  # Defaults to 1 day
 
@@ -118,8 +120,7 @@ class DDAgent(multiprocessing.Process):
     def run(self):
         log.debug("Windows Service - Starting collector")
         emitters = self.get_emitters()
-        systemStats = get_system_stats()
-        self.collector = Collector(self.config, emitters, systemStats)
+        self.collector = Collector(self.config, emitters)
 
         # Load the checks_d checks
         checksd = load_check_directory(self.config)
