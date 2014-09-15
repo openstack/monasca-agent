@@ -16,6 +16,7 @@ import agent_config
 from detection.plugins import kafka
 from detection.plugins import mon
 from detection.plugins import mysql
+from detection.plugins import rabbitmq
 from detection.plugins import network
 from detection.plugins import zookeeper
 from detection.plugins import nova
@@ -29,8 +30,9 @@ from service import sysv
 
 # List of all detection plugins to run
 DETECTION_PLUGINS = [kafka.Kafka, mon.MonAPI, mon.MonPersister, mon.MonThresh, mysql.MySQL,
-                     network.Network, nova.Nova, cinder.Cinder, swift.Swift, glance.Glance,
-                     ceilometer.Ceilometer, neutron.Neutron, keystone.Keystone, zookeeper.Zookeeper]
+                     rabbitmq.RabbitMQ, network.Network, nova.Nova, cinder.Cinder, swift.Swift,
+                     glance.Glance, ceilometer.Ceilometer, neutron.Neutron, keystone.Keystone,
+                     zookeeper.Zookeeper]
 # Map OS to service type
 OS_SERVICE_MAP = {'Linux': sysv.SysV}
 

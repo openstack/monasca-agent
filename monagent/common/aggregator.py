@@ -285,12 +285,14 @@ class MetricsAggregator(Aggregator):
                       device_name=None, timestamp=None, sample_rate=1):
         # Avoid calling extra functions to dedupe dimensions if there are none
         if dimensions is None:
-            dimensions = {}
-        context = (name, tuple(dimensions.items()), hostname, device_name)
+            new_dimensions = {}
+        else:
+            new_dimensions = dimensions.copy()
+        context = (name, tuple(new_dimensions.items()), hostname, device_name)
 
         if context not in self.metrics:
             metric_class = self.metric_type_to_class[mtype]
-            self.metrics[context] = metric_class(self.formatter, name, dimensions,
+            self.metrics[context] = metric_class(self.formatter, name, new_dimensions,
                                                  hostname or self.hostname, device_name)
         cur_time = time()
         if timestamp is not None and cur_time - int(timestamp) > self.recent_point_threshold:

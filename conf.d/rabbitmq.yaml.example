@@ -1,7 +1,24 @@
 init_config:
 
 instances:
-    # for every instance a 'rabbitmq_api_url' must be provided, pointing to the api
+    # NOTE: The rabbitmq management plugin must be enabled for this check to work!
+    # To enable the management plugin:
+        # sudo rabbitmq-plugins enable rabbitmq_management
+        # OUTPUT:
+            # The following plugins have been enabled:
+              # mochiweb
+              # webmachine
+              # rabbitmq_web_dispatch
+              # amqp_client
+              # rabbitmq_management_agent
+              # rabbitmq_management
+            # Plugin configuration has changed. Restart RabbitMQ for changes to take effect.
+    # To restart the rabbitmq-server
+        # sudo service rabbitmq-server restart
+        # OUTPUT:
+          # * Restarting message broker rabbitmq-server
+    #
+    # For every instance a 'rabbitmq_api_url' must be provided, pointing to the api
     # url of the RabbitMQ Managment Plugin (http://www.rabbitmq.com/management.html)
     # optional: 'rabbitmq_user' (default: guest) and 'rabbitmq_pass' (default: guest)
     #

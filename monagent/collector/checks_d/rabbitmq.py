@@ -8,35 +8,71 @@ from monagent.collector.checks import AgentCheck
 
 EVENT_TYPE = SOURCE_TYPE_NAME = 'rabbitmq'
 QUEUE_TYPE = 'queues'
+EXCHANGE_TYPE = 'exchanges'
 NODE_TYPE = 'nodes'
-MAX_DETAILED_QUEUES = 200
-MAX_DETAILED_NODES = 100
+MAX_DETAILED_QUEUES = 150
+MAX_DETAILED_EXCHANGES = 100
+MAX_DETAILED_NODES = 50
 # Post an event in the stream when the number of queues or nodes to
 # collect is above 90% of the limit
 ALERT_THRESHOLD = 0.9
-QUEUE_ATTRIBUTES = ['active_consumers',
-                    'consumers',
-                    'memory',
-                    'messages',
-                    'messages_ready',
-                    'messages_unacknowledged']
+QUEUE_ATTRIBUTES = [
+    # Path, Name
+    ('active_consumers', 'active_consumers'),
+    ('consumers', 'consumers'),
+    ('memory', 'memory'),
 
-NODE_ATTRIBUTES = ['fd_used',
-                   'mem_used',
-                   'run_queue',
-                   'sockets_used']
+    ('messages', 'messages'),
+    ('messages_details/rate', 'messages.rate'),
 
-ATTRIBUTES = {QUEUE_TYPE: QUEUE_ATTRIBUTES, NODE_TYPE: NODE_ATTRIBUTES}
+    ('messages_ready', 'messages.ready'),
+    ('messages_ready_details/rate', 'messages.ready_rate'),
+
+    ('messages_unacknowledged', 'messages.unacknowledged'),
+    ('messages_unacknowledged_details/rate', 'messages.unacknowledged_rate'),
+
+    ('message_stats/ack', 'messages.ack_count'),
+    ('message_stats/ack_details/rate', 'messages.ack_rate'),
+
+    ('message_stats/deliver', 'messages.deliver_count'),
+    ('message_stats/deliver_details/rate', 'messages.deliver_rate'),
+
+    ('message_stats/deliver_get', 'messages.deliver_get_count'),
+    ('message_stats/deliver_get_details/rate', 'messages.deliver_get_rate'),
+
+    ('message_stats/publish', 'messages.publish_count'),
+    ('message_stats/publish_details/rate', 'messages.publish_rate'),
+
+    ('message_stats/redeliver', 'messages.redeliver_count'),
+    ('message_stats/redeliver_details/rate', 'messages.redeliver_rate')]
+
+EXCHANGE_ATTRIBUTES = [('message_stats/publish_out', 'messages.published_count'),
+                       ('message_stats/publish_out_details/rate', 'messages.published_rate'),
+
+                       ('message_stats/publish_in', 'messages.received_count'),
+                       ('message_stats/publish_in_details/rate', 'messages.received_rate')]
+
+NODE_ATTRIBUTES = [
+    ('fd_used', 'fd_used'),
+    ('mem_used', 'mem_used'),
+    ('run_queue', 'run_queue'),
+    ('sockets_used', 'sockets_used')]
+
+ATTRIBUTES = {QUEUE_TYPE: QUEUE_ATTRIBUTES,
+              EXCHANGE_TYPE: EXCHANGE_ATTRIBUTES,
+              NODE_TYPE: NODE_ATTRIBUTES}
 
 DIMENSIONS_MAP = {
-    QUEUE_TYPE: {'node': 'node',
-                 'name': 'queue',
-                 'vhost': 'vhost',
-                 'policy': 'policy'},
-    NODE_TYPE: {'name': 'node'}
+    'queues': {'name': 'queue',
+               'vhost': 'vhost',
+               'policy': 'policy'},
+    'exchanges': {'name': 'exchange',
+                  'vhost': 'vhost',
+                  'type': 'type'},
+    'nodes': {'name': 'node'}
 }
 
-METRIC_SUFFIX = {QUEUE_TYPE: "queue", NODE_TYPE: "node"}
+METRIC_SUFFIX = {QUEUE_TYPE: "queue", EXCHANGE_TYPE: "exchange", NODE_TYPE: "node"}
 
 
 class RabbitMQ(AgentCheck):
@@ -62,17 +98,20 @@ class RabbitMQ(AgentCheck):
             base_url += '/'
         username = instance.get('rabbitmq_user', 'guest')
         password = instance.get('rabbitmq_pass', 'guest')
+        dimensions = instance.get('dimensions', {})
 
         # Limit of queues/nodes to collect metrics from
         max_detailed = {
             QUEUE_TYPE: int(instance.get('max_detailed_queues', MAX_DETAILED_QUEUES)),
+            EXCHANGE_TYPE: int(instance.get('max_detailed_exchanges', MAX_DETAILED_EXCHANGES)),
             NODE_TYPE: int(instance.get('max_detailed_nodes', MAX_DETAILED_NODES)),
         }
 
         # List of queues/nodes to collect metrics from
         specified = {
             QUEUE_TYPE: instance.get('queues', []),
-            NODE_TYPE: instance.get('nodes', []),
+            EXCHANGE_TYPE: instance.get('exchanges', []),
+            NODE_TYPE: instance.get('nodes', [])
         }
 
         for object_type, specified_objects in specified.iteritems():
@@ -86,13 +125,29 @@ class RabbitMQ(AgentCheck):
         opener = urllib2.build_opener(auth_handler)
         urllib2.install_opener(opener)
 
-        return base_url, max_detailed, specified
+        return base_url, max_detailed, specified, dimensions
 
     def check(self, instance):
-        base_url, max_detailed, specified = self._get_config(instance)
-        self.get_stats(
-            instance, base_url, QUEUE_TYPE, max_detailed[QUEUE_TYPE], specified[QUEUE_TYPE])
-        self.get_stats(instance, base_url, NODE_TYPE, max_detailed[NODE_TYPE], specified[NODE_TYPE])
+        base_url, max_detailed, specified, dimensions = self._get_config(instance)
+
+        self.get_stats(instance,
+                       base_url,
+                       QUEUE_TYPE,
+                       max_detailed[QUEUE_TYPE],
+                       list(specified[QUEUE_TYPE]),
+                       dimensions.copy())
+        self.get_stats(instance,
+                       base_url,
+                       NODE_TYPE,
+                       max_detailed[NODE_TYPE],
+                       list(specified[NODE_TYPE]),
+                       dimensions.copy())
+        self.get_stats(instance,
+                       base_url,
+                       EXCHANGE_TYPE,
+                       max_detailed[EXCHANGE_TYPE],
+                       specified[EXCHANGE_TYPE],
+                       dimensions.copy())
 
     @staticmethod
     def _get_data(url):
@@ -104,15 +159,14 @@ class RabbitMQ(AgentCheck):
             raise Exception('Cannot parse JSON response from API url: %s %s' % (url, str(e)))
         return data
 
-    def get_stats(self, instance, base_url, object_type, max_detailed, specified_list):
+    def get_stats(self, instance, base_url, object_type, max_detailed, specified_list, dimensions):
         """instance: the check instance
 
         base_url: the url of the rabbitmq management api (e.g. http://localhost:15672/api)
-        object_type: either QUEUE_TYPE or NODE_TYPE
+        object_type: either QUEUE_TYPE, EXCHANGE_TYPE or NODE_TYPE
         max_detailed: the limit of objects to collect for this type
         specified_list: a list of specified queues or nodes (specified in the yaml file)
         """
-
         data = self._get_data(urlparse.urljoin(base_url, object_type))
         # Make a copy of this list as we will remove items from it at each iteration
         specified_items = list(specified_list)
@@ -130,25 +184,17 @@ class RabbitMQ(AgentCheck):
             raise Exception("The maximum number of %s you can specify is %d." %
                             (object_type, max_detailed))
 
-        # a list of queues/nodes is specified. We process only those
+        # If a list of exchanges/queues/nodes is specified,
+        # we process only those.
         if specified_items is not None and len(specified_items) > 0:
-            if object_type == NODE_TYPE:
-                for data_line in data:
-                    name = data_line.get("name")
-                    if name in specified_items:
-                        self._get_metrics(data_line, object_type)
-                        specified_items.remove(name)
-
-            else:  # object_type == QUEUE_TYPE
-                for data_line in data:
-                    name = data_line.get("name")
-                    absolute_name = '%s/%s' % (data_line.get("vhost"), name)
-                    if name in specified_items:
-                        self._get_metrics(data_line, object_type)
-                        specified_items.remove(name)
-                    elif absolute_name in specified_items:
-                        self._get_metrics(data_line, object_type)
-                        specified_items.remove(absolute_name)
+            for data_line in data:
+                name = data_line.get("name")
+                if name not in specified_items:
+                    if object_type == QUEUE_TYPE:
+                        name = '%s/%s' % (data_line.get("vhost"), name)
+                if name in specified_items:
+                    self._get_metrics(data_line, object_type, dimensions)
+                    specified_items.remove(name)
 
         # No queues/node are specified. We will process every queue/node if it's under the limit
         else:
@@ -159,30 +205,38 @@ class RabbitMQ(AgentCheck):
             if len(data) > max_detailed:
                 # Display a warning in the info page
                 self.warning(
-                    "Too many queues to fetch. You must choose the %s you are interested in by editing the rabbitmq.yaml configuration file or get in touch with Datadog Support" %
+                    "Too many queues to fetch. You must choose the %s you are interested in by editing the rabbitmq.yaml configuration file" %
                     object_type)
 
             for data_line in data[:max_detailed]:
                 # We truncate the list of nodes/queues if it's above the limit
-                self._get_metrics(data_line, object_type)
+                self._get_metrics(data_line, object_type, dimensions)
 
-    def _get_metrics(self, data, object_type):
-        dimensions = {}
-        dimensions_list = DIMENSIONS_MAP[object_type]
+    def _get_metrics(self, data, object_type, dimensions):
+        dimensions_list = DIMENSIONS_MAP[object_type].copy()
         for d in dimensions_list.iterkeys():
             dim = data.get(d, None)
-            if dim is not None:
-                dimensions['rabbitmq_%s' % dimensions_list[d]] = dim
+            if dim not in [None, ""]:
+                dimensions[dimensions_list[d]] = dim
+        if not "service" in dimensions:
+            dimensions['service'] = 'rabbitmq'
 
-        for attribute in ATTRIBUTES[object_type]:
-            value = data.get(attribute, None)
-            if value is not None:
-                try:
-                    self.gauge('rabbitmq.%s.%s' % (METRIC_SUFFIX[object_type], attribute), float(
-                        value), dimensions=dimensions)
-                except ValueError:
-                    self.log.debug("Caught ValueError for %s %s = %s  with dimensions: %s" % (
-                        METRIC_SUFFIX[object_type], attribute, value, dimensions))
+        for attribute, metric_name in ATTRIBUTES[object_type]:
+            # Walk down through the data path, e.g. foo/bar => d['foo']['bar']
+            root = data
+            keys = attribute.split('/')
+            for path in keys[:-1]:
+                root = root.get(path, {})
+
+            value = root.get(keys[-1], None)
+            if value == None:
+                value = 0.0
+            try:
+                self.log.debug("Collected data for %s: metric name: %s: value: %f dimensions: %s" % (object_type, metric_name, float(value), str(dimensions)))
+                self.gauge('rabbitmq.%s.%s' % (METRIC_SUFFIX[object_type], metric_name), float(value), dimensions=dimensions.copy())
+            except ValueError:
+                self.log.debug("Caught ValueError for %s %s = %s  with dimensions: %s" % (
+                    METRIC_SUFFIX[object_type], attribute, value, dimensions))
 
     def alert(self, base_url, max_detailed, size, object_type):
         key = "%s%s" % (base_url, object_type)
@@ -195,7 +249,7 @@ class RabbitMQ(AgentCheck):
         title = "RabbitMQ integration is approaching the limit on the number of %s that can be collected from on %s" % (
             object_type, self.hostname)
         msg = """%s %s are present. The limit is %s.
-        Please get in touch with Datadog support to increase the limit.""" % (size, object_type, max_detailed)
+        Please get in touch with Monasca development to increase the limit.""" % (size, object_type, max_detailed)
 
         event = {
             "timestamp": int(time.time()),

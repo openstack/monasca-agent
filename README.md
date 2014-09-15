@@ -711,7 +711,70 @@ The Kafka checks return the following metrics:
 
 
 ## RabbitMQ Checks
-TBD
+This section describes the RabbitMQ check that can be performed by the Agent.  The RabbitMQ check gathers metrics on Nodes, Exchanges and Queues from the rabbit server.  The RabbitMQ check requires a configuration file called rabbitmq.yaml to be available in the agent conf.d configuration directory.  The config file must contain the names of the Exchanges and Queues that you are interested in monitoring.
+
+NOTE: The agent RabbitMQ plugin requires the RabbitMQ Management Plugin to be installed.  The management plugin is included in the RabbitMQ distribution. To enable it, use the rabbitmq-plugins command like this:
+```
+rabbitmq-plugins enable rabbitmq_management
+```
+Sample config:
+
+```
+init_config:
+
+instances:
+  - exchanges: [nova, cinder, ceilometer, glance, keystone, neutron, heat]
+    nodes: [rabbit@devstack]
+    queues: [conductor]
+    rabbitmq_api_url: http://localhost:15672/api
+    rabbitmq_user: guest
+    rabbitmq_pass: guest
+```
+
+If you want the monasca-setup program to detect and auto-configure the plugin for you, you must create the file /root/.rabbitmq.cnf with the information needed in the configuration yaml file before running the setup program.  It should look like this:
+
+```
+[client]
+user=guest
+password=pass
+nodes=rabbit@devstack
+queues=conductor
+exchanges=nova,cinder,ceilometer,glance,keystone,neutron,heat
+```
+
+ 
+The RabbitMQ checks return the following metrics:
+
+| Metric Name | Dimensions | Check Type |
+| ----------- | ---------- | --------- |
+| rabbitmq.node.fd_used | hostname, node, service=rabbitmq | Node |
+| rabbitmq.node.sockets_used | hostname, node, service=rabbitmq | Node |
+| rabbitmq.node.run_queue | hostname, node, service=rabbitmq | Node |
+| rabbitmq.node.mem_used | hostname, node, service=rabbitmq | Node |
+| rabbitmq.exchange.messages.received_count | hostname, exchange, vhost, type, service=rabbitmq | Exchange |
+| rabbitmq.exchange.messages.received_rate | hostname, exchange, vhost, type, service=rabbitmq | Exchange |
+| rabbitmq.exchange.messages.published_count | hostname, exchange, vhost, type, service=rabbitmq | Exchange |
+| rabbitmq.exchange.messages.published_rate | hostname, exchange, vhost, type, service=rabbitmq | Exchange |
+| rabbitmq.queue.consumers | hostname, queue, vhost, service=rabbitmq | Queue |
+| rabbitmq.queue.memory | hostname, queue, vhost, service=rabbitmq | Queue |
+| rabbitmq.queue.active_consumers | hostname, queue, vhost, service=rabbitmq | Queue |
+| rabbitmq.queue.messages | hostname, queue, vhost, service=rabbitmq | Queue |
+| rabbitmq.queue.messages.rate | hostname, queue, vhost, service=rabbitmq | Queue |
+| rabbitmq.queue.messages.ready | hostname, queue, vhost, service=rabbitmq | Queue |
+| rabbitmq.queue.messages.ready_rate | hostname, queue, vhost, service=rabbitmq | Queue |
+| rabbitmq.queue.messages.publish_count | hostname, queue, vhost, service=rabbitmq | Queue |
+| rabbitmq.queue.messages.publish_rate | hostname, queue, vhost, service=rabbitmq | Queue |
+| rabbitmq.queue.messages.deliver_count | hostname, queue, vhost, service=rabbitmq | Queue |
+| rabbitmq.queue.messages.deliver_rate | hostname, queue, vhost, service=rabbitmq | Queue |
+| rabbitmq.queue.messages.redeliver_count | hostname, queue, vhost, service=rabbitmq | Queue |
+| rabbitmq.queue.messages.redeliver_rate | hostname, queue, vhost, service=rabbitmq | Queue |
+| rabbitmq.queue.messages.unacknowledged | hostname, queue, vhost, service=rabbitmq | Queue |
+| rabbitmq.queue.messages.unacknowledged_rate | hostname, queue, vhost, service=rabbitmq | Queue |
+| rabbitmq.queue.messages.deliver_get_count | hostname, queue, vhost, service=rabbitmq | Queue |
+| rabbitmq.queue.messages.deliver_get_rate | hostname, queue, vhost, service=rabbitmq | Queue |
+| rabbitmq.queue.messages.ack_count | hostname, queue, vhost, service=rabbitmq | Queue |
+| rabbitmq.queue.messages.ack_rate | hostname, queue, vhost, service=rabbitmq | Queue |
+
 
 ## OpenStack Monitoring
 The `monasca-setup` script when run on a system that is running OpenStack services, configures the Agent to send the following list of metrics:
@@ -880,7 +943,7 @@ The following ceilometer processes are monitored, if they exist when the monasca
 # Statsd
 The Monasca Agent ships with a Statsd daemon implementation called monasca-statsd. A statsd client can be used to send metrics to the Forwarder via the Statsd daemon.
 
-monascastatsd will accept metrics submitted by functions in either the standard statsd Python client library, or the monasca-agent's [python-monasca-statsd Python client library](https://github.com/hpcloud-mon/python-monascastatsd). The advantage of using the python-monasca-statsd library is that it is possible to specify dimensions on submitted metrics. Dimensions are not handled by the standard statsd client.
+monascastatsd will accept metrics submitted by functions in either the standard statsd Python client library, or the monasca-agent's [monasca-statsd Python client library](https://github.com/stackforge/monasca-statsd). The advantage of using the python-monasca-statsd library is that it is possible to specify dimensions on submitted metrics. Dimensions are not handled by the standard statsd client.
 
 Statsd metrics are not bundled along with the metrics gathered by the Collector, but are flushed to the agent Forwarder on a separate schedule (every 10 seconds by default, rather than 15 seconds for Collector metrics).
 
@@ -894,9 +957,9 @@ statsd.timing('pipeline', 2468.34)      # Pipeline took 2468.34 ms to execute
 statsd.gauge('gaugething', 3.14159265)  # 'gauge' would be the preferred metric type for Monitoring
 ```
 
-The [python-monasca-statsd](https://github.com/hpcloud-mon/python-monascastatsd) library provides a python based implementation of a statsd client but also adds the ability to add dimensions to the the statsd metrics for the client.
+The [monasca-statsd](https://github.com/stackforge/monasca-statsd library provides a python based implementation of a statsd client but also adds the ability to add dimensions to the the statsd metrics for the client.
 
-Here are some examples of how code can be instrumented using calls to python-monascastatsd.
+Here are some examples of how code can be instrumented using calls to monasca-statsd.
 ```
 
 	* Import the module once it's installed.

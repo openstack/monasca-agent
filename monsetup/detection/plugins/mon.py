@@ -98,5 +98,5 @@ def dropwizard_health_check(name, url):
                             'instances': [{'name': name,
                                            'url': url,
                                            'timeout': 1,
-                                           'include_content': True}]}
+                                           'include_content': False}]}
     return config

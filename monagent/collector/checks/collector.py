@@ -164,7 +164,7 @@ class Collector(object):
             metrics_list.append(monagent.common.metrics.Measurement(name,
                                                                     timestamp,
                                                                     value,
-                                                                    {'service': 'monasca', 'component': 'collector'}))
+                                                                    {'component': 'collector'}))
 
         emitter_statuses = self._emit(metrics_list)
         self.emit_duration = timer.step()
