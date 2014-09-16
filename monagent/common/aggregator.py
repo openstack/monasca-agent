@@ -156,10 +156,12 @@ class MetricsBucketAggregator(Aggregator):
         # Avoid calling extra functions to dedupe dimensions if there are none
         # Note: if you change the way that context is created, please also change create_empty_metrics,
         #  which counts on this order
-        if dimensions is None:
-            context = (name, (), hostname, device_name)
+        if dimensions is not None:
+            new_dimensions = dimensions.copy()
+            context = (name, tuple(new_dimensions.items()), hostname, device_name)
         else:
-            context = (name, dimensions.items(), hostname, device_name)
+            new_dimensions = None
+            context = (name, new_dimensions, hostname, device_name)
 
         cur_time = time()
         # Check to make sure that the timestamp that is passed in (if any) is not older than
@@ -182,7 +184,7 @@ class MetricsBucketAggregator(Aggregator):
 
             if context not in metric_by_context:
                 metric_class = self.metric_type_to_class[mtype]
-                metric_by_context[context] = metric_class(self.formatter, name, dimensions,
+                metric_by_context[context] = metric_class(self.formatter, name, new_dimensions,
                                                           hostname or self.hostname, device_name)
 
             metric_by_context[context].sample(value, sample_rate, timestamp)
@@ -284,11 +286,12 @@ class MetricsAggregator(Aggregator):
     def submit_metric(self, name, value, mtype, dimensions=None, hostname=None,
                       device_name=None, timestamp=None, sample_rate=1):
         # Avoid calling extra functions to dedupe dimensions if there are none
-        if dimensions is None:
-            new_dimensions = {}
-        else:
+        if dimensions is not None:
             new_dimensions = dimensions.copy()
-        context = (name, tuple(new_dimensions.items()), hostname, device_name)
+            context = (name, tuple(new_dimensions.items()), hostname, device_name)
+        else:
+            new_dimensions = None
+            context = (name, new_dimensions, hostname, device_name)
 
         if context not in self.metrics:
             metric_class = self.metric_type_to_class[mtype]

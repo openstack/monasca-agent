@@ -1,3 +1,4 @@
+import ast
 import logging
 import select
 import socket
@@ -125,9 +126,9 @@ class Server(object):
             if m[0] == '@':
                 sample_rate = float(m[1:])
                 assert 0 <= sample_rate <= 1
+            # Parse dimensions
             elif m[0] == '#':
-                dim_list = [dim.split(':') for dim in m[1:].split(',')]
-                dimensions = {key.strip(): value.strip() for key, value in dim_list}
+                dimensions = ast.literal_eval(m[1:])
 
         return name, value, metric_type, dimensions, sample_rate
 

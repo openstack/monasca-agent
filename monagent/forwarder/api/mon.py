@@ -87,9 +87,12 @@ class MonAPI(object):
         """
         # Add default dimensions
         for measurement in measurements:
-            for dimension in self.default_dimensions.keys():
-                if dimension not in measurement.dimensions.keys():
-                    measurement.dimensions.update({dimension: self.default_dimensions[dimension]})
+            if isinstance(measurement.dimensions, dict):
+                for dimension in self.default_dimensions.keys():
+                    if dimension not in measurement.dimensions.keys():
+                        measurement.dimensions.update({dimension: self.default_dimensions[dimension]})
+            else:
+                measurement.dimensions = self.default_dimensions.copy()
 
         self._post(measurements)
 
