@@ -5,19 +5,19 @@ init_config:
      # Where to store last-run timestamps for each check (required)
 #    temp_file_path:  /dev/shm/
 
-# List a check name under 'service_name' and the full command-line
+# List a check name under 'name' and the full command-line
 # under 'check_command'.  If the command exists in 'check_path' above,
 # it is not necessary to specify the full path.
 
 instances:
-#    - service_name:     load
+#    - name:             nagios.load
 #      check_command:    check_load -r -w 2,1.5,1 -c 10,5,4
 
-#    - service_name:     disk
+#    - name:             nagios.disk
 #      check_command:    check_disk -w 15\% -c 5\% -A -i /srv/node
 #      check_interval:   300
 
-#    - service_name:     swap
+#    - name:             nagios.swap
 #      check_command:    /usr/lib/nagios/plugins/check_swap -w 50\% -c 10\%
 #      check_interval:   120
 #      dimensions:       { 'group': 'memory' }

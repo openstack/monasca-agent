@@ -1,5 +1,5 @@
 #!/bin/env python
-"""Monitoring Agent wrapper for Nagios checks.
+"""Monasca Agent wrapper for Nagios checks.
 
 """
 
@@ -26,12 +26,11 @@ class WrapNagios(ServicesCheck):
     @staticmethod
     def _do_skip_check(instance, last_run_data):
         """Determine whether or not to skip a check depending on
-
         the checks's check_interval, if specified, and the last
         time the check was run
         """
-        if instance['service_name'] in last_run_data and 'check_interval' in instance:
-            if time.time() < last_run_data[instance['service_name']] + instance['check_interval']:
+        if instance['name'] in last_run_data and 'check_interval' in instance:
+            if time.time() < last_run_data[instance['name']] + instance['check_interval']:
                 return True
         else:
             return False
@@ -70,7 +69,7 @@ class WrapNagios(ServicesCheck):
             last_run_path +
             'nagios_wrapper_' +
             hashlib.md5(
-                instance['service_name']).hexdigest() +
+                instance['name']).hexdigest() +
             '.pck')
 
         # Load last-run data from shared memory file
@@ -92,22 +91,20 @@ class WrapNagios(ServicesCheck):
             output = proc.communicate()
             # The check detail is all the text before the pipe
             detail = output[0].split('|')[0]
-            if detail != '':
-                # Serialize the output for JSON-friendliness and add to the dimensions
-                dimensions['detail'] = json.dumps(detail)
+            # TODO(dschroeder): Save/send 'detail' when supported by the API
         except OSError:
             # Return an UNKNOWN code (3) if I have landed here
-            self.gauge(instance['service_name'], 3, dimensions=dimensions)
+            self.gauge(instance['name'], 3, dimensions=dimensions)
             self.log.info(instance['check_command'].split(" ")[0] + " is missing or unreadable")
             return
 
         status_code = proc.poll()
-        last_run_data[instance['service_name']] = time.time()
-        self.gauge(instance['service_name'], status_code, dimensions=dimensions)
+        last_run_data[instance['name']] = time.time()
+        self.gauge(instance['name'], status_code, dimensions=dimensions)
         # Return DOWN on critical, UP otherwise
         if status_code == "2":
-            return Status.DOWN, "DOWN: " + dimensions['detail']
-        return Status.UP, "UP: " + dimensions['detail']
+            return Status.DOWN, "DOWN: {}".format(detail)
+        return Status.UP, "UP: {}".format(detail)
 
         # Save last-run data
         file_w = open(last_run_file, "w")

@@ -114,6 +114,10 @@ class Disk(monagent.collector.checks.check.Check):
             except IndexError:
                 self.logger.exception("Cannot parse %s" % (parts,))
 
+            # Some partitions (EFI boot) may appear to have 0 available inodes
+            if parts[1] == 0:
+                continue
+
             if inodes:
                 usage_data['%s.disk_inode_utilization_perc' % parts[0]] = float(parts[2]) / parts[1] * 100
             else:

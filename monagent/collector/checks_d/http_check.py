@@ -36,11 +36,10 @@ class HTTPCheck(ServicesCheck):
         pattern = instance.get('match_pattern', None)
         if url is None:
             raise Exception("Bad configuration. You must specify a url")
-        include_content = instance.get('include_content', False)
         ssl = instance.get('disable_ssl_validation', True)
         token = AgentCheck.keystone.get_token()
 
-        return url, username, password, timeout, include_content, headers, response_time, dimensions, ssl, pattern, use_keystone, token
+        return url, username, password, timeout, headers, response_time, dimensions, ssl, pattern, use_keystone, token
 
     def _create_status_event(self, status, msg, instance):
         """Does nothing: status events are not yet supported by Mon API.
@@ -49,7 +48,7 @@ class HTTPCheck(ServicesCheck):
         return
 
     def _check(self, instance):
-        addr, username, password, timeout, include_content, headers, response_time, dimensions, disable_ssl_validation, pattern, use_keystone, token = self._load_conf(
+        addr, username, password, timeout, headers, response_time, dimensions, disable_ssl_validation, pattern, use_keystone, token = self._load_conf(
             instance)
 
         content = ''
@@ -125,9 +124,7 @@ class HTTPCheck(ServicesCheck):
                 running_time = time.time() - start
                 self.gauge('http_response_time', running_time, dimensions=new_dimensions)
 
-            # Add a 'detail' tag if requested
-            if include_content:
-                new_dimensions['detail'] = json.dumps(content)
+            # TODO(dschroeder): Save/send content data when supported by API
 
             if int(resp.status) >= 400:
                 if use_keystone and int(resp.status) == 401:
