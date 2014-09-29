@@ -88,7 +88,7 @@ def main(argv=None):
     agent_conf_path = os.path.join(args.config_dir, 'agent.conf')
     with open(os.path.join(args.template_dir, 'agent.conf.template'), 'r') as agent_template:
         with open(agent_conf_path, 'w') as agent_conf:
-            agent_conf.write(agent_template.read().format(args=args, hostname=socket.gethostname()))
+            agent_conf.write(agent_template.read().format(args=args, hostname=socket.getfqdn()))
     os.chown(agent_conf_path, 0, gid)
     os.chmod(agent_conf_path, 0o640)
     # Link the supervisor.conf
