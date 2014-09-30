@@ -50,10 +50,11 @@ class Kafka(Plugin):
 
             log.info("\tInstalling kafka_consumer plugin.")
             self.config['kafka_consumer'] = {'init_config': None,
-                                        'instances': [{'kafka_connect_str': kafka_connect_str, 'full_output': False,
-                                                       'consumer_groups': dict(consumers)}]}
+                                             'instances': [{'kafka_connect_str': kafka_connect_str,
+                                                            'full_output': False,
+                                                            'consumer_groups': dict(consumers)}]}
         except Exception:
-            log.exception('Error Detecting Kafka consumers/topics/partitions')
+            log.error('Error Detecting Kafka consumers/topics/partitions')
 
     def _find_kafka_connection(self):
         listen_ip = find_addr_listening_on_port(self.port)
@@ -71,8 +72,11 @@ class Kafka(Plugin):
         :return: Zookeeper url
         """
         zk_connect = re.compile('zookeeper.connect=(.*)')
-        with open('/etc/kafka/server.properties') as settings:
-            match = zk_connect.search(settings.read())
+        try:
+            with open('/etc/kafka/server.properties') as settings:
+                match = zk_connect.search(settings.read())
+        except IOError:
+            return None
 
         if match is None:
             log.error('No zookeeper url found in the kafka server properties.')
@@ -89,7 +93,7 @@ class Kafka(Plugin):
         try:
             output = check_output(zk_shell)
         except CalledProcessError:
-            log.exception('Error running the zookeeper shell to list path %s' % path)
+            log.error('Error running the zookeeper shell to list path %s' % path)
             raise
 
         # The last line is like '[item1, item2, item3]'
