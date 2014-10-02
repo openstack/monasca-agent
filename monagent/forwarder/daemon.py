@@ -140,7 +140,6 @@ class AgentInputHandler(tornado.web.RequestHandler):
         # monagent.common.metrics.Measurements expressed as a dict
         msg = tornado.escape.json_decode(self.request.body)
         try:
-            log.debug(msg)
             measurements = [Measurement(**m) for m in msg]
         except Exception:
             log.exception('Error parsing body of Agent Input')

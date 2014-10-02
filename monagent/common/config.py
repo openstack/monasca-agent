@@ -858,7 +858,9 @@ def get_mon_api_config(config):
                       'password': False,
                       'use_keystone': True,
                       'keystone_url': '',
-                      'dimensions': None}
+                      'dimensions': None,
+                      'max_buffer_size': 1000,
+                      'backlog_send_rate': 5}
 
     if config.has_option("Main", "dimensions"):
         # parse comma separated dimensions into a dimension list
@@ -874,7 +876,9 @@ def get_mon_api_config(config):
                    "username": config.get,
                    "password": config.get,
                    "use_keystone": config.getboolean,
-                   "keystone_url": config.get}
+                   "keystone_url": config.get,
+                   "max_buffer_size": config.getint,
+                   "backlog_send_rate": config.getint}
 
         for name, func in options.iteritems():
             if config.has_option("Api", name):

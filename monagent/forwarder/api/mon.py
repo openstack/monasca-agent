@@ -1,11 +1,13 @@
 import logging
+from collections import deque
 
 from monascaclient import exc as exc, client
 from monagent.common.keystone import Keystone
 from monagent.common.util import get_hostname
 
-log = logging.getLogger(__name__)
+import requests
 
+log = logging.getLogger(__name__)
 
 class MonAPI(object):
 
@@ -13,6 +15,8 @@ class MonAPI(object):
         Any errors should raise an exception so the transaction calling
         this is not committed
     """
+
+    LOG_INTERVAL = 10
 
     def __init__(self, config):
         """
@@ -22,7 +26,6 @@ class MonAPI(object):
         self.url = config['url']
         self.api_version = '2_0'
         self.default_dimensions = config['dimensions']
-        self.token_expiration = 1438
         # Verify the hostname is set as a dimension
         if 'hostname' not in self.default_dimensions:
             self.default_dimensions['hostname'] = get_hostname()
@@ -38,6 +41,9 @@ class MonAPI(object):
                                  self.password,
                                  self.project_name)
         self.mon_client = None
+        self.max_buffer_size = config['max_buffer_size']
+        self.backlog_send_rate = config['backlog_send_rate']
+        self.message_queue = deque(maxlen=self.max_buffer_size)
 
     def _post(self, measurements):
         """Does the actual http post
@@ -47,38 +53,29 @@ class MonAPI(object):
         kwargs = {
             'jsonbody': data
         }
-        try:
-            if not self.mon_client:
-                # construct the mon client
-                self.mon_client = self.get_client()
 
-            done = False
-            while not done:
-                response = self.mon_client.metrics.create(**kwargs)
-                if 200 <= response.status_code <= 299:
-                    # Good status from web service
-                    log.debug("Message sent successfully: {0}"
-                              .format(str(data)))
-                elif 400 <= response.status_code <= 499:
-                    # Good status from web service but some type of issue
-                    # with the data
-                    if response.status_code == 401:
-                        # Get a new token/client and retry
-                        self.mon_client.replace_token(self.keystone.refresh_token())
-                        continue
+        if not self.mon_client:
+            # construct the monasca client
+            self.mon_client = self.get_client()
+
+        if self._send_message(**kwargs):
+            if len(self.message_queue) > 0:
+                messages_sent = 0
+                for index in range(0, len(self.message_queue)):
+                    if index < self.backlog_send_rate:
+                        msg = self.message_queue.pop()
+
+                        if self._send_message(**msg):
+                            messages_sent += 1
+                        else:
+                            self._queue_message(msg)
+                            break
                     else:
-                        error_msg = "Successful web service call but there" + \
-                                    " were issues (Status: {0}, Status Message: " + \
-                                    "{1}, Message Content: {1})"
-                        log.error(error_msg.format(response.status_code,
-                                                   response.reason, response.text))
-                        response.raise_for_status()
-                else:  # Not a good status
-                    response.raise_for_status()
-                done = True
-        except exc.HTTPException as he:
-            log.error("Error sending message to mon-api: {0}"
-                      .format(str(he.message)))
+                        break
+                log.info("Sent {0} messages from the backlog.".format(messages_sent))
+                log.info("{0} messages remaining in the queue.".format(len(self.message_queue)))
+        else:
+            self._queue_message(kwargs.copy())
 
     def post_metrics(self, measurements):
         """post_metrics
@@ -98,7 +95,7 @@ class MonAPI(object):
 
     def get_client(self):
         """get_client
-            get a new mon-client object
+            get a new monasca-client object
         """
         token = self.keystone.refresh_token()
         # Re-create the client.  This is temporary until
@@ -108,3 +105,30 @@ class MonAPI(object):
             'token': token
         }
         return client.Client(self.api_version, self.url, **kwargs)
+
+    def _send_message(self, **kwargs):
+        try:
+            self.mon_client.metrics.create(**kwargs)
+            return True
+        except exc.HTTPException as he:
+            if 'unauthorized' in str(he):
+                log.info("Invalid token detected. Getting a new token...")
+                # Get a new token
+                self.mon_client.replace_token(self.keystone.refresh_token())
+            else:
+                log.debug("Error sending message to monasca-api. Error is {0}."
+                          .format(str(he.message)))
+        except Exception as ex:
+            log.debug("Error sending message to monasca-api. Error is {0}."
+                      .format(str(ex.message)))
+
+        return False
+
+    def _queue_message(self, msg):
+        self.message_queue.append(msg)
+        queue_size = len(self.message_queue)
+        if queue_size is 1 or queue_size % MonAPI.LOG_INTERVAL == 0:
+            log.warn("API is down or unreachable.  Queuing the messages to send later...")
+            log.info("Current agent queue size: {0} of {1}.".format(len(self.message_queue),
+                                                                    self.max_buffer_size))
+            log.info("A message will be logged for every {0} messages queued.".format(MonAPI.LOG_INTERVAL))

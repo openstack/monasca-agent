@@ -9,7 +9,18 @@ password: {args.password}
 # Keystone API URL: URL for the Keystone server to use
 # Example: https://region-a.geo-1.identity.hpcloudsvc.com:35357/v3/
 keystone_url: {args.keystone_url}
+# Project name to be used by this agent
 project_name: {args.project_name}
+
+# The following 2 options are for handling buffering and reconnection to the monasca-api
+# If you want the messages to be sent as fast as possible, set these two options to
+# the same number.  If you have a larger system with many agents, you may want to throttle
+# the number of messages sent to the API by setting the backlog_send_rate to a lower number.
+
+# Maximum number of messages to buffer when unable to communicate with the monasca-api
+max_buffer_size: 1000
+# Maximum number of messages to send at one time when communication with the monasca-api is restored
+backlog_send_rate: 1000
 
 [Main]
 
