@@ -42,7 +42,8 @@ class Aggregator(object):
 
     @staticmethod
     def formatter(metric, value, timestamp, dimensions, hostname,
-                  device_name=None, metric_type=None, interval=None):
+                  delegated_tenant=None, device_name=None, metric_type=None,
+                  interval=None):
         """ Formats metrics, put them into a Measurement class
             (metric, timestamp, value, {"dimensions": {"name1": "value1", "name2": "value2"}, ...})
             dimensions should be a dictionary
@@ -54,7 +55,8 @@ class Aggregator(object):
         if device_name:
             dimensions['device_name'] = device_name
 
-        return Measurement(metric, int(timestamp), value, dimensions)
+        return Measurement(metric, int(timestamp), value, dimensions,
+                           delegated_tenant)
 
     def packets_per_second(self, interval):
         if interval == 0:
@@ -151,8 +153,9 @@ class MetricsBucketAggregator(Aggregator):
     def calculate_bucket_start(self, timestamp):
         return timestamp - (timestamp % self.interval)
 
-    def submit_metric(self, name, value, mtype, dimensions=None, hostname=None,
-                      device_name=None, timestamp=None, sample_rate=1):
+    def submit_metric(self, name, value, mtype, dimensions=None,
+                      delegated_tenant=None, hostname=None, device_name=None,
+                      timestamp=None, sample_rate=1):
         # Avoid calling extra functions to dedupe dimensions if there are none
         # Note: if you change the way that context is created, please also change create_empty_metrics,
         #  which counts on this order
@@ -184,7 +187,8 @@ class MetricsBucketAggregator(Aggregator):
 
             if context not in metric_by_context:
                 metric_class = self.metric_type_to_class[mtype]
-                metric_by_context[context] = metric_class(self.formatter, name, new_dimensions,
+                metric_by_context[context] = metric_class(self.formatter, name,
+                                                          new_dimensions, delegated_tenant,
                                                           hostname or self.hostname, device_name)
 
             metric_by_context[context].sample(value, sample_rate, timestamp)
@@ -283,19 +287,23 @@ class MetricsAggregator(Aggregator):
             '_dd-r': Rate,
         }
 
-    def submit_metric(self, name, value, mtype, dimensions=None, hostname=None,
-                      device_name=None, timestamp=None, sample_rate=1):
+    def submit_metric(self, name, value, mtype, dimensions=None,
+                      delegated_tenant=None, hostname=None, device_name=None,
+                      timestamp=None, sample_rate=1):
+
         # Avoid calling extra functions to dedupe dimensions if there are none
         if dimensions is not None:
             new_dimensions = dimensions.copy()
-            context = (name, tuple(new_dimensions.items()), hostname, device_name)
+            context = (name, tuple(new_dimensions.items()), delegated_tenant,
+                       hostname, device_name)
         else:
             new_dimensions = None
-            context = (name, new_dimensions, hostname, device_name)
+            context = (name, new_dimensions, delegated_tenant,
+                       hostname, device_name)
 
         if context not in self.metrics:
             metric_class = self.metric_type_to_class[mtype]
-            self.metrics[context] = metric_class(self.formatter, name, new_dimensions,
+            self.metrics[context] = metric_class(self.formatter, name, new_dimensions, delegated_tenant,
                                                  hostname or self.hostname, device_name)
         cur_time = time()
         if timestamp is not None and cur_time - int(timestamp) > self.recent_point_threshold:
@@ -304,23 +312,35 @@ class MetricsAggregator(Aggregator):
         else:
             self.metrics[context].sample(value, sample_rate, timestamp)
 
-    def gauge(self, name, value, dimensions=None, hostname=None, device_name=None, timestamp=None):
-        self.submit_metric(name, value, 'g', dimensions, hostname, device_name, timestamp)
+    def gauge(self, name, value, dimensions=None, delegated_tenant=None,
+              hostname=None, device_name=None, timestamp=None):
+        self.submit_metric(name, value, 'g', dimensions, delegated_tenant,
+                           hostname, device_name, timestamp)
 
-    def increment(self, name, value=1, dimensions=None, hostname=None, device_name=None):
-        self.submit_metric(name, value, 'c', dimensions, hostname, device_name)
+    def increment(self, name, value=1, dimensions=None, delegated_tenant=None,
+                  hostname=None, device_name=None):
+        self.submit_metric(name, value, 'c', dimensions, delegated_tenant,
+                           hostname, device_name)
 
-    def decrement(self, name, value=-1, dimensions=None, hostname=None, device_name=None):
-        self.submit_metric(name, value, 'c', dimensions, hostname, device_name)
+    def decrement(self, name, value=-1, dimensions=None, delegated_tenant=None,
+                  hostname=None, device_name=None):
+        self.submit_metric(name, value, 'c', dimensions, delegated_tenant,
+                           hostname, device_name)
 
-    def rate(self, name, value, dimensions=None, hostname=None, device_name=None):
-        self.submit_metric(name, value, '_dd-r', dimensions, hostname, device_name)
+    def rate(self, name, value, dimensions=None, delegated_tenant=None,
+             hostname=None, device_name=None):
+        self.submit_metric(name, value, '_dd-r', dimensions, delegated_tenant,
+                           hostname, device_name)
 
-    def histogram(self, name, value, dimensions=None, hostname=None, device_name=None):
-        self.submit_metric(name, value, 'h', dimensions, hostname, device_name)
+    def histogram(self, name, value, dimensions=None, delegated_tenant=None,
+                  hostname=None, device_name=None):
+        self.submit_metric(name, value, 'h', dimensions, delegated_tenant,
+                           hostname, device_name)
 
-    def set(self, name, value, dimensions=None, hostname=None, device_name=None):
-        self.submit_metric(name, value, 's', dimensions, hostname, device_name)
+    def set(self, name, value, dimensions=None, delegated_tenant=None,
+            hostname=None, device_name=None):
+        self.submit_metric(name, value, 's', dimensions, delegated_tenant,
+                           hostname, device_name)
 
     def flush(self):
         timestamp = time()

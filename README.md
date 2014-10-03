@@ -64,6 +64,7 @@
     - [Ceilometer Checks](#ceilometer-checks)
         - [Ceilometer Processes Monitored](#ceilometer-processes-monitored)
         - [Example Ceilometer Metrics](#example-ceilometer-metrics)
+  - [Libvirt VM Monitoring](#libvirt-vm-monitoring)
 - [Statsd](#statsd)
 - [Log Parsing](#log-parsing)
 - [License](#license)
@@ -938,6 +939,116 @@ The following ceilometer processes are monitored, if they exist when the monasca
 | ceilometer-agent-compute | processes.process_pid_count | Gauge | Passive | service=ceilometer, component=ceilometer-agent-compute | process | ceilometer-agent-compute process exists | This is only one of the process checks performed |
 | ceilometer-api | processes.process_pid_count | Gauge | Passive | service=ceilometer, component=ceilometer-api | process | ceilometer-api process pid count | This is only one of the process checks performed |
 | ceilometer-api | http_status | Gauge | Active | service=ceilometer, component=ceilometer-api url=url_to_ceilometer_api | http_status | ceilometer-api http endpoint is alive | This check should be executed on multiple systems.|
+
+## Libvirt VM Monitoring
+
+### Overview
+The Libvirt plugin provides metrics for virtual machines when run on the hypervisor server.  It provides two sets of metrics per measurement: one designed for the owner of the VM, and one intended for the owner of the hypervisor server.
+
+### Configuration
+The `monasca-setup` program will configure the Libvirt plugin if `nova-api` is running, `/etc/nova/nova.conf` exists, and `python-novaclient` is installed.  It uses a cache directory to persist data, which is `/dev/shm` by default.  On non-Linux systems (BSD, Mac OSX), `/dev/shm` may not exist, so `cache_dir` would need to be changed accordingly, either in `monsetup/detection/plugins/libvirt.py` prior to running `monasca-setup`, or `/etc/monasca/agent/conf.d/libvirt.yaml` afterwards.
+
+`nova_refresh` specifies the number of seconds between calls to the Nova API to refresh the instance cache.  This is helpful for updating VM hostname and pruning deleted instances from the cache.  By default, it is set to 14,400 seconds (four hours).  Set to 0 to refresh every time the Collector runs, or to None to disable regular refreshes entirely (though the instance cache will still be refreshed if a new instance is detected).
+
+`vm_probation` specifies a period of time (in seconds) in which to suspend metrics from a newly-created VM.  This is to prevent quickly-obsolete metrics in an environment with a high amount of instance churn (VMs created and destroyed in rapid succession).  The default probation length is 300 seconds (five minutes).  Setting to 0 disables VM probation, and metrics will be recorded as soon as possible after a VM is created.
+
+Example config:
+```
+init_config:
+    admin_password: pass
+    admin_tenant_name: service
+    admin_user: nova
+    identity_uri: 'http://192.168.10.5:35357/v2.0'
+    cache_dir: /dev/shm
+    nova_refresh: 14400
+    vm_probation: 300
+instances:
+    - {}
+```
+`instances` are null in `libvirt.yaml`  because the libvirt plugin detects and runs against all provisioned VM instances; specifying them in `libvirt.yaml` is unnecessary.
+
+Note: If the Nova service login credentials are changed, `monasca-setup` would need to be re-run to use the new credentials.  Alternately, `/etc/monasca/agent/conf.d/libvirt.yaml` could be modified directly.
+
+### Instance Cache
+The instance cache (`/dev/shm/libvirt_instances.yaml` by default) contains data that is not available to libvirt, but queried from Nova.  To limit calls to the Nova API, the cache is only updated if a new instance is detected (libvirt sees an instance not already in the cache), or every `nova_refresh` seconds (see Configuration above).
+
+Example cache:
+```
+instance-00000003: {created: '2014-10-14T17:30:03Z', hostname: vm01.testboy.net,
+  instance_uuid: 54272a41-cf12-4243-b6f4-6e0c5ecbd777, tenant_id: 09afcd6d22bf4de0aea02de6e0724d41,
+  zone: nova}
+instance-00000005: {created: '2014-10-15T18:39:44Z', hostname: vm02.testboy.net,
+  instance_uuid: aa04fa03-93c5-4a70-be01-3ddd9a529710, tenant_id: 09afcd6d22bf4de0aea02de6e0724d41,
+  zone: nova}
+last_update: 1413398407
+```
+
+### Metrics Cache
+The libvirt inspector returns *counters*, but it is much more useful to use *rates* instead.  To convert counters to rates, a metrics cache is used, stored in `/dev/shm/libvirt_metrics.yaml` by default.  For each measurement gathered, the current value and timestamp (UNIX epoch) are recorded in the cache.  The subsequent run of the Monasca Agent Collector compares current values against prior ones, and computes the rate.
+
+Since CPU Time is provided in nanoseconds, the timestamp recorded has nanosecond resolution.  Otherwise, integer seconds are used.
+
+Example cache (excerpt, see next section for complete list of available metrics):
+```
+instance-00000003:
+  cpu.time: {timestamp: 1413327252.150278, value: 191890000000}
+  io.read_bytes:
+    hdd: {timestamp: 1413327252, value: 139594}
+    vda: {timestamp: 1413327252, value: 1604608}
+  net.rx_packets:
+    vnet0: {timestamp: 1413327252, value: 24}
+instance-00000004:
+  cpu.time: {timestamp: 1413327252.196404, value: 34870000000}
+  io.write_requests:
+    hdd: {timestamp: 1413327252, value: 0}
+    vda: {timestamp: 1413327252, value: 447}
+  net.tx_bytes:
+    vnet1: {timestamp: 1413327252, value: 2260}
+```
+
+### Metrics
+
+| Name                 | Description                            | Associated Dimensions  |
+| -------------------- | -------------------------------------- | ---------------------- |
+| cpu.utilization_perc | Overall CPU utilization (percentage)   |                        |
+| io.read_ops_sec      | Disk I/O read operations per second    | 'device' (ie, 'hdd')   |
+| io.write_ops_sec     | Disk I/O write operations per second   | 'device' (ie, 'hdd')   |
+| io.read_bytes_sec    | Disk I/O read bytes per second         | 'device' (ie, 'hdd')   |
+| io.write_bytes_sec   | Disk I/O write bytes per second        | 'device' (ie, 'hdd')   |
+| io.errors_sec        | Disk I/O errors per second             | 'device' (ie, 'hdd')   |
+| net.in_packets_sec   | Network received packets per second    | 'device' (ie, 'vnet0') |
+| net.out_packets_sec  | Network transmitted packets per second | 'device' (ie, 'vnet0') |
+| net.in_bytes_sec     | Network received bytes per second      | 'device' (ie, 'vnet0') |
+| net.out_bytes_sec    | Network transmitted bytes per second   | 'device' (ie, 'vnet0') |
+
+Since separate metrics are sent to the VM's owner as well as Operations, all metric names designed for Operations are prefixed with "vm." to easily distinguish between VM metrics and compute host's metrics.
+
+### Dimensions
+All metrics include `resource_id` and `zone` (availability zone) dimensions.  Because there is a separate set of metrics for the two target audiences (VM customers and Operations), other dimensions may differ.
+
+| Dimension Name | Customer Value            | Operations Value        |
+| -------------- | ------------------------- | ----------------------- |
+| hostname       | name of VM as provisioned | hypervisor's hostname   |
+| zone           | availability zone         | availability zone       |
+| resource_id    | resource ID of VM         | resource ID of VM       |
+| service        | "compute"                 | "compute"               |
+| component      | "vm"                      | "vm"                    |
+| device         | name of net or disk dev   | name of net or disk dev |
+| tenant_id      | (N/A)                     | owner of VM             |
+
+### Cross-Tenant Metric Submission
+If the owner of the VM is to receive his or her own metrics, the Agent needs to be able to submit metrics on their behalf.  This is called cross-tenant metric submission.  For this to work, a keystone role called "monitoring-delegate" needs to be created, and the monasca-agent user assigned to it.
+```
+keystone role-create --name=monitoring-delegate
+
+user_id=`keystone user-list |grep monasca-agent |cut -d'|' -f2`
+role_id=`keystone role-list |grep monitoring-delegate |cut -d'|' -f2`
+tenant_id=`keystone tenant-list |grep mini-mon |cut -d'|' -f2`
+
+keystone user-role-add --user=${user_id// /} --role=${role_id// /} --tenant_id=${tenant_id// /}
+```
+The tenant name "mini-mon" in the example above may differ depending on your installation (it is set by the `--project-name` parameter of `monasca-setup` and can be referenced as `project_name` in `/etc/monasca/agent/agent.conf`).  Once assigned to the `monitoring-delegate` group, the Agent can submit metrics for other tenants.
+
 
 
 # Statsd

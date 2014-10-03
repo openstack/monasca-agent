@@ -14,7 +14,8 @@ log = logging.getLogger(__name__)
 # in the current setup both the emitter and the mon api are converting to json in for loops
 # A Measurement is the standard format used to pass data from the
 # collector and monstatsd to the forwarder
-Measurement = namedtuple('Measurement', ['name', 'timestamp', 'value', 'dimensions'])
+Measurement = namedtuple('Measurement', ['name', 'timestamp', 'value',
+                                         'dimensions', 'delegated_tenant'])
 
 
 class MetricTypes(object):
@@ -43,11 +44,13 @@ class Gauge(Metric):
 
     """ A metric that tracks a value at particular points in time. """
 
-    def __init__(self, formatter, name, dimensions, hostname, device_name):
+    def __init__(self, formatter, name, dimensions, delegated_tenant,
+                 hostname, device_name):
         self.formatter = formatter
         self.name = name
         self.value = None
         self.dimensions = dimensions
+        self.delegated_tenant = delegated_tenant
         self.hostname = hostname
         self.device_name = device_name
         self.last_sample_time = None
@@ -65,6 +68,7 @@ class Gauge(Metric):
                 timestamp=self.timestamp or timestamp,
                 value=self.value,
                 dimensions=self.dimensions,
+                delegated_tenant=self.delegated_tenant,
                 hostname=self.hostname,
                 device_name=self.device_name,
                 metric_type=MetricTypes.GAUGE,
@@ -92,6 +96,7 @@ class BucketGauge(Gauge):
                 timestamp=timestamp,
                 value=self.value,
                 dimensions=self.dimensions,
+                delegated_tenant=self.delegated_tenant,
                 hostname=self.hostname,
                 device_name=self.device_name,
                 metric_type=MetricTypes.GAUGE,
@@ -107,11 +112,13 @@ class Counter(Metric):
 
     """ A metric that tracks a counter value. """
 
-    def __init__(self, formatter, name, dimensions, hostname, device_name):
+    def __init__(self, formatter, name, dimensions, delegated_tenant,
+                 hostname, device_name):
         self.formatter = formatter
         self.name = name
         self.value = 0
         self.dimensions = dimensions
+        self.delegated_tenant = delegated_tenant
         self.hostname = hostname
         self.device_name = device_name
         self.last_sample_time = None
@@ -128,6 +135,7 @@ class Counter(Metric):
                 value=value,
                 timestamp=timestamp,
                 dimensions=self.dimensions,
+                delegated_tenant=self.delegated_tenant,
                 hostname=self.hostname,
                 device_name=self.device_name,
                 metric_type=MetricTypes.RATE,
@@ -141,13 +149,15 @@ class Histogram(Metric):
 
     """ A metric to track the distribution of a set of values. """
 
-    def __init__(self, formatter, name, dimensions, hostname, device_name):
+    def __init__(self, formatter, name, dimensions, delegated_tenant,
+                 hostname, device_name):
         self.formatter = formatter
         self.name = name
         self.count = 0
         self.samples = []
         self.percentiles = [0.95]
         self.dimensions = dimensions
+        self.delegated_tenant = delegated_tenant
         self.hostname = hostname
         self.device_name = device_name
         self.last_sample_time = None
@@ -179,6 +189,7 @@ class Histogram(Metric):
             hostname=self.hostname,
             device_name=self.device_name,
             dimensions=self.dimensions,
+            delegated_tenant=self.delegated_tenant,
             metric='%s.%s' % (self.name, suffix),
             value=value,
             timestamp=ts,
@@ -193,6 +204,7 @@ class Histogram(Metric):
             metrics.append(self.formatter(
                 hostname=self.hostname,
                 dimensions=self.dimensions,
+                delegated_tenant=self.delegated_tenant,
                 metric=name,
                 value=val,
                 timestamp=ts,
@@ -211,10 +223,12 @@ class Set(Metric):
 
     """ A metric to track the number of unique elements in a set. """
 
-    def __init__(self, formatter, name, dimensions, hostname, device_name):
+    def __init__(self, formatter, name, dimensions, delegated_tenant,
+                 hostname, device_name):
         self.formatter = formatter
         self.name = name
         self.dimensions = dimensions
+        self.delegated_tenant = delegated_tenant
         self.hostname = hostname
         self.device_name = device_name
         self.values = set()
@@ -232,6 +246,7 @@ class Set(Metric):
                 hostname=self.hostname,
                 device_name=self.device_name,
                 dimensions=self.dimensions,
+                delegated_tenant=self.delegated_tenant,
                 metric=self.name,
                 value=len(self.values),
                 timestamp=timestamp,
@@ -246,10 +261,12 @@ class Rate(Metric):
 
     """ Track the rate of metrics over each flush interval """
 
-    def __init__(self, formatter, name, dimensions, hostname, device_name):
+    def __init__(self, formatter, name, dimensions, delegated_tenant,
+                 hostname, device_name):
         self.formatter = formatter
         self.name = name
         self.dimensions = dimensions
+        self.delegated_tenant = delegated_tenant
         self.hostname = hostname
         self.device_name = device_name
         self.samples = []
@@ -286,6 +303,7 @@ class Rate(Metric):
                 hostname=self.hostname,
                 device_name=self.device_name,
                 dimensions=self.dimensions,
+                delegated_tenant=self.delegated_tenant,
                 metric=self.name,
                 value=val,
                 timestamp=timestamp,

@@ -63,7 +63,8 @@ class Disk(monagent.collector.checks.check.Check):
             measurements = [monagent.common.metrics.Measurement(key.split('.', 1)[1],
                                                                 timestamp,
                                                                 value,
-                                                                {'device': key.split('.', 1)[0]})
+                                                                {'device': key.split('.', 1)[0]},
+                                                                None)
                             for key, value in stats.iteritems()]
 
             return measurements
@@ -399,7 +400,7 @@ class IO(monagent.collector.checks.check.Check):
             for dev_name, stats in filtered_io.iteritems():
                 filtered_stats = {stat: stats[stat]
                                   for stat in stats.iterkeys() if stat not in self.stat_blacklist}
-                m_list = [monagent.common.metrics.Measurement(key, timestamp, value, {'device': dev_name})
+                m_list = [monagent.common.metrics.Measurement(key, timestamp, value, {'device': dev_name}, None)
                           for key, value in filtered_stats.iteritems()]
                 measurements.extend(m_list)
 

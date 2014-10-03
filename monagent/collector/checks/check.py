@@ -314,42 +314,45 @@ class AgentCheck(object):
         """
         return len(self.instances)
 
-    def gauge(self, metric, value, dimensions=None,
+    def gauge(self, metric, value, dimensions=None, delegated_tenant=None,
               hostname=None, device_name=None, timestamp=None):
         """Record the value of a gauge, with optional dimensions, hostname and device name.
 
         :param metric: The name of the metric
         :param value: The value of the gauge
         :param dimensions: (optional) A dictionary of dimensions for this metric
+        :param delegated_tenant: (optional) Submit metrics on behalf of this tenant ID.
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         :param timestamp: (optional) The timestamp for this metric value
         """
-        self.aggregator.gauge(metric, value, dimensions, hostname, device_name, timestamp)
+        self.aggregator.gauge(metric, value, dimensions, delegated_tenant, hostname, device_name, timestamp)
 
-    def increment(self, metric, value=1, dimensions=None, hostname=None, device_name=None):
+    def increment(self, metric, value=1, dimensions=None, delegated_tenant=None, hostname=None, device_name=None):
         """Increment a counter with optional dimensions, hostname and device name.
 
         :param metric: The name of the metric
         :param value: The value to increment by
         :param dimensions: (optional) A dictionary of dimensions for this metric
+        :param delegated_tenant: (optional) Submit metrics on behalf of this tenant ID.
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         """
-        self.aggregator.increment(metric, value, dimensions, hostname, device_name)
+        self.aggregator.increment(metric, value, dimensions, delegated_tenant, hostname, device_name)
 
-    def decrement(self, metric, value=-1, dimensions=None, hostname=None, device_name=None):
+    def decrement(self, metric, value=-1, dimensions=None, delegated_tenant=None, hostname=None, device_name=None):
         """Decrement a counter with optional dimensions, hostname and device name.
 
         :param metric: The name of the metric
         :param value: The value to decrement by
         :param dimensions: (optional) A dictionary of dimensions for this metric
+        :param delegated_tenant: (optional) Submit metrics on behalf of this tenant ID.
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         """
-        self.aggregator.decrement(metric, value, dimensions, hostname, device_name)
+        self.aggregator.decrement(metric, value, dimensions, delegated_tenant, hostname, device_name)
 
-    def rate(self, metric, value, dimensions=None, hostname=None, device_name=None):
+    def rate(self, metric, value, dimensions=None, delegated_tenant=None, hostname=None, device_name=None):
         """Submit a point for a metric that will be calculated as a rate on flush.
 
         Values will persist across each call to `check` if there is not enough
@@ -358,32 +361,35 @@ class AgentCheck(object):
         :param metric: The name of the metric
         :param value: The value of the rate
         :param dimensions: (optional) A dictionary of dimensions for this metric
+        :param delegated_tenant: (optional) Submit metrics on behalf of this tenant ID.
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         """
-        self.aggregator.rate(metric, value, dimensions, hostname, device_name)
+        self.aggregator.rate(metric, value, dimensions, delegated_tenant, hostname, device_name)
 
-    def histogram(self, metric, value, dimensions=None, hostname=None, device_name=None):
+    def histogram(self, metric, value, dimensions=None, delegated_tenant=None, hostname=None, device_name=None):
         """Sample a histogram value, with optional dimensions, hostname and device name.
 
         :param metric: The name of the metric
         :param value: The value to sample for the histogram
         :param dimensions: (optional) A dictionary of dimensions for this metric
+        :param delegated_tenant: (optional) Submit metrics on behalf of this tenant ID.
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         """
-        self.aggregator.histogram(metric, value, dimensions, hostname, device_name)
+        self.aggregator.histogram(metric, value, dimensions, delegated_tenant, hostname, device_name)
 
-    def set(self, metric, value, dimensions=None, hostname=None, device_name=None):
+    def set(self, metric, value, dimensions=None, delegated_tenant=None, hostname=None, device_name=None):
         """Sample a set value, with optional dimensions, hostname and device name.
 
         :param metric: The name of the metric
         :param value: The value for the set
         :param dimensions: (optional) A dictionary of dimensions for this metric
+        :param delegated_tenant: (optional) Submit metrics on behalf of this tenant ID.
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         """
-        self.aggregator.set(metric, value, dimensions, hostname, device_name)
+        self.aggregator.set(metric, value, dimensions, delegated_tenant, hostname, device_name)
 
     def event(self, event):
         """Save an event.
@@ -428,6 +434,9 @@ class AgentCheck(object):
                 print(" Timestamp:  {}".format(metric.timestamp))
                 print(" Name:       {}".format(metric.name))
                 print(" Value:      {}".format(metric.value))
+                if (metric.delegated_tenant):
+                    print(" Delegtd ID: {}".format(metric.delegated_tenant))
+
                 print(" Dimensions: ", end='')
                 line = 0
                 for name in metric.dimensions:

@@ -45,15 +45,16 @@ class MonAPI(object):
         self.backlog_send_rate = config['backlog_send_rate']
         self.message_queue = deque(maxlen=self.max_buffer_size)
 
-    def _post(self, measurements):
+    def _post(self, measurements, delegated_tenant=None):
         """Does the actual http post
             measurements is a list of Measurement
         """
-        data = [m.__dict__ for m in measurements]
         kwargs = {
-            'jsonbody': data
+            'jsonbody': measurements
         }
 
+        if delegated_tenant is not None:
+            kwargs['tenant_id'] = delegated_tenant
         if not self.mon_client:
             # construct the monasca client
             self.mon_client = self.get_client()
@@ -91,7 +92,16 @@ class MonAPI(object):
             else:
                 measurement.dimensions = self.default_dimensions.copy()
 
-        self._post(measurements)
+        # Split out separate POSTs for each delegated tenant (includes 'None')
+        tenant_group = {}
+        for measurement in measurements:
+            m_dict = measurement.__dict__
+            delegated_tenant = m_dict.pop('delegated_tenant')
+            if delegated_tenant not in tenant_group:
+                tenant_group[delegated_tenant] = []
+            tenant_group[delegated_tenant].extend([m_dict.copy()])
+        for tenant in tenant_group:
+            self._post(tenant_group[tenant], tenant)
 
     def get_client(self):
         """get_client

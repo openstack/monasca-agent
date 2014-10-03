@@ -2,26 +2,38 @@
 """ Detect running daemons then configure and start the agent.
 """
 
+import agent_config
 import argparse
 import logging
 import os
+import platform
 import pwd
 import socket
 import subprocess
 import sys
 import yaml
-import platform
-
-import agent_config
-from detection.plugins import kafka_consumer, mon, mysql, network, zookeeper
-from detection.plugins import nova, glance, cinder, neutron, swift
-from detection.plugins import keystone, ceilometer
+from detection.plugins import ceilometer
+from detection.plugins import cinder
+from detection.plugins import glance
+from detection.plugins import kafka_consumer
+from detection.plugins import keystone
+from detection.plugins import libvirt
+from detection.plugins import mon
+from detection.plugins import mysql
+from detection.plugins import network
+from detection.plugins import neutron
+from detection.plugins import nova
+from detection.plugins import rabbitmq
+from detection.plugins import swift
+from detection.plugins import zookeeper
 from service import sysv
 
 # List of all detection plugins to run
-DETECTION_PLUGINS = [kafka_consumer.Kafka, mon.MonAPI, mon.MonPersister, mon.MonThresh, mysql.MySQL,
-                     network.Network, nova.Nova, cinder.Cinder, swift.Swift, glance.Glance,
-                     ceilometer.Ceilometer, neutron.Neutron, keystone.Keystone, zookeeper.Zookeeper]
+DETECTION_PLUGINS = [ceilometer.Ceilometer, cinder.Cinder, glance.Glance,
+                     kafka_consumer.Kafka, keystone.Keystone, libvirt.Libvirt,
+                     mon.MonAPI, mon.MonPersister, mon.MonThresh, mysql.MySQL,
+                     network.Network, neutron.Neutron, nova.Nova,
+                     rabbitmq.RabbitMQ, swift.Swift, zookeeper.Zookeeper]
 # Map OS to service type
 OS_SERVICE_MAP = {'Linux': sysv.SysV}
 

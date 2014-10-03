@@ -142,7 +142,8 @@ class Collector(object):
         for check_type in self._legacy_checks:
             try:
                 for name, value in check_type.check().iteritems():
-                    metrics_list.append(monagent.common.metrics.Measurement(name, timestamp, value, {}))
+                    metrics_list.append(monagent.common.metrics.Measurement(name, timestamp,
+                                                                            value, {}, None))
             except Exception:
                 log.exception('Error running check.')
 
@@ -164,7 +165,8 @@ class Collector(object):
             metrics_list.append(monagent.common.metrics.Measurement(name,
                                                                     timestamp,
                                                                     value,
-                                                                    {'component': 'collector'}))
+                                                                    {'component': 'collector'},
+                                                                    None))
 
         emitter_statuses = self._emit(metrics_list)
         self.emit_duration = timer.step()
