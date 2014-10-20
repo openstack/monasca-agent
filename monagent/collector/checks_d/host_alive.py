@@ -89,7 +89,8 @@ class HostAlive(ServicesCheck):
 
         """
 
-        dimensions = {'target_host': instance['host_name'], 'observer_host': socket.getfqdn()}
+        dimensions = {'target_host': instance['host_name'],
+                      'observer_host': socket.getfqdn()}
         # Add per-instance dimensions, if any
         if 'dimensions' in instance.keys() and instance['dimensions'] is not None:
             dimensions.update(instance['dimensions'])
@@ -107,9 +108,9 @@ class HostAlive(ServicesCheck):
             self.log.info("Unrecognized alive_test " + instance['alive_test'])
 
         if success is True:
-            self.gauge('host_alive', 0, dimensions=dimensions)
+            self.gauge('host_alive_status', 0, dimensions=dimensions)
             return Status.UP, "UP"
         else:
-            self.gauge('host_alive', 1, dimensions=dimensions)
+            self.gauge('host_alive_status', 1, dimensions=dimensions)
             self.log.error("Host down: " + instance['host_name'])
             return Status.DOWN, "DOWN"

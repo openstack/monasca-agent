@@ -9,7 +9,7 @@ class Ceilometer(monsetup.detection.ServicePlugin):
         service_params = {
             'template_dir': template_dir,
             'overwrite': overwrite,
-            'service_name': 'ceilometer',
+            'service_name': 'telemetry',
             'process_names': ['ceilometer-agent-compute', 'ceilometer-agent-central',
                               'ceilometer-agent-notification', 'ceilometer-collector',
                               'ceilometer-alarm-notifier', 'ceilometer-alarm-evaluator',

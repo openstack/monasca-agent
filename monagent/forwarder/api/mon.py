@@ -85,12 +85,12 @@ class MonAPI(object):
         """
         # Add default dimensions
         for measurement in measurements:
-            if isinstance(measurement.dimensions, dict):
+            if isinstance(measurement.dimensions, list):
+                measurement.dimensions = dict([(d[0], d[1]) for d in measurement.dimensions])
+            else:
                 for dimension in self.default_dimensions.keys():
                     if dimension not in measurement.dimensions.keys():
                         measurement.dimensions.update({dimension: self.default_dimensions[dimension]})
-            else:
-                measurement.dimensions = self.default_dimensions.copy()
 
         # Split out separate POSTs for each delegated tenant (includes 'None')
         tenant_group = {}

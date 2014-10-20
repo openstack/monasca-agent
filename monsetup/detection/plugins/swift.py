@@ -11,7 +11,7 @@ class Swift(monsetup.detection.ServicePlugin):
         service_params = {
             'template_dir': template_dir,
             'overwrite': overwrite,
-            'service_name': 'swift',
+            'service_name': 'object-storage',
             'process_names': ['swift-container-updater', 'swift-account-auditor',
                               'swift-object-replicator', 'swift-container-replicator',
                               'swift-object-auditor', 'swift-container-auditor',

@@ -67,8 +67,9 @@ class MySql(AgentCheck):
         host, port, user, password, mysql_sock, defaults_file, dimensions, options = self._get_config(
             instance)
 
-        if 'service' not in dimensions:
-            dimensions.update({'service': 'mysql'})
+        new_dimensions = {'component': 'mysql', 'service': 'mysql'}
+        if dimensions is not None:
+            new_dimensions.update(dimensions.copy())
 
         if (not host or not user) and not defaults_file:
             raise Exception("Mysql host and user are needed.")
@@ -76,8 +77,8 @@ class MySql(AgentCheck):
         db = self._connect(host, port, mysql_sock, user, password, defaults_file)
 
         # Metric collection
-        self._collect_metrics(host, db, dimensions, options)
-        self._collect_system_metrics(host, db, dimensions)
+        self._collect_metrics(host, db, new_dimensions, options)
+        self._collect_system_metrics(host, db, new_dimensions)
 
     @staticmethod
     def _get_config(instance):

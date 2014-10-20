@@ -11,7 +11,7 @@ class Neutron(monsetup.detection.ServicePlugin):
         service_params = {
             'template_dir': template_dir,
             'overwrite': overwrite,
-            'service_name': 'neutron',
+            'service_name': 'networking',
             'process_names': ['neutron-server', 'neutron-openvswitch-agent',
                               'neutron-rootwrap', 'neutron-dhcp-agent',
                               'neutron-vpn-agent', 'neutron-metadata-agent',

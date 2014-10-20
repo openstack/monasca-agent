@@ -218,8 +218,9 @@ class RabbitMQ(AgentCheck):
             dim = data.get(d, None)
             if dim not in [None, ""]:
                 dimensions[dimensions_list[d]] = dim
-        if not "service" in dimensions:
-            dimensions['service'] = 'rabbitmq'
+        new_dimensions = {'component': 'rabbitmq', 'service': 'rabbitmq'}
+        if dimensions is not None:
+            new_dimensions.update(dimensions.copy())
 
         for attribute, metric_name in ATTRIBUTES[object_type]:
             # Walk down through the data path, e.g. foo/bar => d['foo']['bar']
@@ -233,7 +234,7 @@ class RabbitMQ(AgentCheck):
                 value = 0.0
             try:
                 self.log.debug("Collected data for %s: metric name: %s: value: %f dimensions: %s" % (object_type, metric_name, float(value), str(dimensions)))
-                self.gauge('rabbitmq.%s.%s' % (METRIC_SUFFIX[object_type], metric_name), float(value), dimensions=dimensions.copy())
+                self.gauge('rabbitmq.%s.%s' % (METRIC_SUFFIX[object_type], metric_name), float(value), dimensions=new_dimensions)
             except ValueError:
                 self.log.debug("Caught ValueError for %s %s = %s  with dimensions: %s" % (
                     METRIC_SUFFIX[object_type], attribute, value, dimensions))

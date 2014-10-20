@@ -147,6 +147,7 @@ class Server(object):
                 # todo it seems like this count should be done in the submit_metric method
                 self.aggregator.count += 1
                 name, value, mtype, dimensions, sample_rate = self._parse_metric_packet(packet)
+
                 self.aggregator.submit_metric(
                     name, value, mtype, dimensions=dimensions, sample_rate=sample_rate)
 

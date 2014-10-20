@@ -53,7 +53,7 @@ class Aggregator(object):
         if hostname:
             dimensions['hostname'] = hostname
         if device_name:
-            dimensions['device_name'] = device_name
+            dimensions['device'] = device_name
 
         return Measurement(metric, int(timestamp), value, dimensions,
                            delegated_tenant)
@@ -159,12 +159,12 @@ class MetricsBucketAggregator(Aggregator):
         # Avoid calling extra functions to dedupe dimensions if there are none
         # Note: if you change the way that context is created, please also change create_empty_metrics,
         #  which counts on this order
-        if dimensions is not None:
-            new_dimensions = dimensions.copy()
-            context = (name, tuple(new_dimensions.items()), hostname, device_name)
+        if dimensions is None:
+            new_dimensions = {}
         else:
-            new_dimensions = None
-            context = (name, new_dimensions, hostname, device_name)
+            new_dimensions = dimensions.copy()
+        new_dimensions = {'component': 'monasca-agent', 'service': 'monitoring'}.update(new_dimensions)
+        context = (name, tuple(new_dimensions.items()), hostname, device_name)
 
         cur_time = time()
         # Check to make sure that the timestamp that is passed in (if any) is not older than
@@ -185,13 +185,13 @@ class MetricsBucketAggregator(Aggregator):
                 self.current_bucket = bucket_start_timestamp
                 self.current_mbc = metric_by_context
 
-            if context not in metric_by_context:
-                metric_class = self.metric_type_to_class[mtype]
-                metric_by_context[context] = metric_class(self.formatter, name,
-                                                          new_dimensions, delegated_tenant,
-                                                          hostname or self.hostname, device_name)
+        if context not in metric_by_context:
+            metric_class = self.metric_type_to_class[mtype]
+            metric_by_context[context] = metric_class(self.formatter, name,
+                                                      new_dimensions, delegated_tenant,
+                                                      hostname or self.hostname, device_name)
 
-            metric_by_context[context].sample(value, sample_rate, timestamp)
+        metric_by_context[context].sample(value, sample_rate, timestamp)
 
     def create_empty_metrics(
             self, sample_time_by_context, expiry_timestamp, flush_timestamp, metrics):
@@ -303,8 +303,12 @@ class MetricsAggregator(Aggregator):
 
         if context not in self.metrics:
             metric_class = self.metric_type_to_class[mtype]
-            self.metrics[context] = metric_class(self.formatter, name, new_dimensions, delegated_tenant,
-                                                 hostname or self.hostname, device_name)
+            self.metrics[context] = metric_class(self.formatter,
+                                                 name,
+                                                 new_dimensions,
+                                                 hostname or self.hostname,
+                                                 device_name,
+                                                 delegated_tenant)
         cur_time = time()
         if timestamp is not None and cur_time - int(timestamp) > self.recent_point_threshold:
             log.debug("Discarding %s - ts = %s , current ts = %s " % (name, timestamp, cur_time))

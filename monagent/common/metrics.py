@@ -10,12 +10,13 @@ from monagent.common.exceptions import Infinity, UnknownValue
 log = logging.getLogger(__name__)
 
 
-# todo it would be best to implement a Measurement group/list container, it could then have methods for converting to json
-# in the current setup both the emitter and the mon api are converting to json in for loops
-# A Measurement is the standard format used to pass data from the
-# collector and monstatsd to the forwarder
-Measurement = namedtuple('Measurement', ['name', 'timestamp', 'value',
-                                         'dimensions', 'delegated_tenant'])
+class Measurement(object):
+    def __init__(self, name, timestamp, value, dimensions, delegated_tenant=None):
+        self.name = name
+        self.timestamp = timestamp
+        self.value = value
+        self.dimensions = dimensions
+        self.delegated_tenant = delegated_tenant
 
 
 class MetricTypes(object):
@@ -44,8 +45,8 @@ class Gauge(Metric):
 
     """ A metric that tracks a value at particular points in time. """
 
-    def __init__(self, formatter, name, dimensions, delegated_tenant,
-                 hostname, device_name):
+    def __init__(self, formatter, name, dimensions,
+                 hostname, device_name, delegated_tenant = None):
         self.formatter = formatter
         self.name = name
         self.value = None
@@ -112,8 +113,8 @@ class Counter(Metric):
 
     """ A metric that tracks a counter value. """
 
-    def __init__(self, formatter, name, dimensions, delegated_tenant,
-                 hostname, device_name):
+    def __init__(self, formatter, name, dimensions,
+                 hostname, device_name, delegated_tenant = None):
         self.formatter = formatter
         self.name = name
         self.value = 0
@@ -149,8 +150,8 @@ class Histogram(Metric):
 
     """ A metric to track the distribution of a set of values. """
 
-    def __init__(self, formatter, name, dimensions, delegated_tenant,
-                 hostname, device_name):
+    def __init__(self, formatter, name, dimensions,
+                 hostname, device_name, delegated_tenant=None):
         self.formatter = formatter
         self.name = name
         self.count = 0
@@ -223,8 +224,8 @@ class Set(Metric):
 
     """ A metric to track the number of unique elements in a set. """
 
-    def __init__(self, formatter, name, dimensions, delegated_tenant,
-                 hostname, device_name):
+    def __init__(self, formatter, name, dimensions,
+                 hostname, device_name, delegated_tenant=None):
         self.formatter = formatter
         self.name = name
         self.dimensions = dimensions
@@ -261,8 +262,8 @@ class Rate(Metric):
 
     """ Track the rate of metrics over each flush interval """
 
-    def __init__(self, formatter, name, dimensions, delegated_tenant,
-                 hostname, device_name):
+    def __init__(self, formatter, name, dimensions,
+                 hostname, device_name, delegated_tenant = None):
         self.formatter = formatter
         self.name = name
         self.dimensions = dimensions

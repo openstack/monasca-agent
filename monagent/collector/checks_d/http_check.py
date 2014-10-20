@@ -53,10 +53,11 @@ class HTTPCheck(ServicesCheck):
 
         content = ''
 
-        new_dimensions = dimensions.copy()
+        new_dimensions = {'component': 'monasca-agent',
+                          'service': 'monitoring',
+                          'url': addr}
         if dimensions is not None:
-            new_dimensions.update(dimensions)
-        new_dimensions['url'] = addr
+            new_dimensions.update(dimensions.copy())
 
         start = time.time()
         done = False

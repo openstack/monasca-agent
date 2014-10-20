@@ -108,16 +108,16 @@ class Collector(object):
     def collector_stats(self, num_metrics, num_events, collection_time, emit_time):
         metrics = {}
         thread_count = threading.active_count()
-        metrics['threads_count'] = thread_count
+        metrics['monasca.thread_count'] = thread_count
         if thread_count > MAX_THREADS_COUNT:
             log.warn("Collector thread count is high: %d" % thread_count)
 
-        metrics['collection_time'] = collection_time
+        metrics['monasca.collection_time_sec'] = collection_time
         if collection_time > MAX_COLLECTION_TIME:
             log.info("Collection time (s) is high: %.1f, metrics count: %d, events count: %d" %
                      (collection_time, num_metrics, num_events))
 
-        metrics['emit_time'] = emit_time
+        metrics['monasca.emit_time_sec'] = emit_time
         if emit_time is not None and emit_time > MAX_EMIT_TIME:
             log.info("Emit time (s) is high: %.1f, metrics count: %d, events count: %d" %
                      (emit_time, num_metrics, num_events))
@@ -142,8 +142,12 @@ class Collector(object):
         for check_type in self._legacy_checks:
             try:
                 for name, value in check_type.check().iteritems():
-                    metrics_list.append(monagent.common.metrics.Measurement(name, timestamp,
-                                                                            value, {}, None))
+                    metrics_list.append(monagent.common.metrics.Measurement(name,
+                                                                            timestamp,
+                                                                            value,
+                                                                            {'component': 'monasca-agent',
+                                                                             'service': 'monitoring'},
+                                                                            None))
             except Exception:
                 log.exception('Error running check.')
 
@@ -165,9 +169,9 @@ class Collector(object):
             metrics_list.append(monagent.common.metrics.Measurement(name,
                                                                     timestamp,
                                                                     value,
-                                                                    {'component': 'collector'},
-                                                                    None))
-
+                                                                    {'component': 'monasca-agent',
+                                                                     'service': 'monitoring'},
+                                                                     None))
         emitter_statuses = self._emit(metrics_list)
         self.emit_duration = timer.step()
 

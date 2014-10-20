@@ -63,8 +63,10 @@ class Disk(monagent.collector.checks.check.Check):
             measurements = [monagent.common.metrics.Measurement(key.split('.', 1)[1],
                                                                 timestamp,
                                                                 value,
-                                                                {'device': key.split('.', 1)[0]},
-                                                                None)
+                                                                {'device': key.split('.', 1)[0],
+                                                                 'service': 'monitoring',
+                                                                 'component': 'monasca-agent'},
+                                                                 None)
                             for key, value in stats.iteritems()]
 
             return measurements
@@ -120,9 +122,9 @@ class Disk(monagent.collector.checks.check.Check):
                 continue
 
             if inodes:
-                usage_data['%s.disk_inode_utilization_perc' % parts[0]] = float(parts[2]) / parts[1] * 100
+                usage_data['%s.disk.inode_used_perc' % parts[0]] = float(parts[2]) / parts[1] * 100
             else:
-                usage_data['%s.disk_space_utilization_perc' % parts[0]] = float(parts[2]) / parts[1] * 100
+                usage_data['%s.disk.space_used_perc' % parts[0]] = float(parts[2]) / parts[1] * 100
 
         return usage_data
 
@@ -400,7 +402,10 @@ class IO(monagent.collector.checks.check.Check):
             for dev_name, stats in filtered_io.iteritems():
                 filtered_stats = {stat: stats[stat]
                                   for stat in stats.iterkeys() if stat not in self.stat_blacklist}
-                m_list = [monagent.common.metrics.Measurement(key, timestamp, value, {'device': dev_name}, None)
+                m_list = [monagent.common.metrics.Measurement(key, timestamp, value, {'device': dev_name,
+                                                                                      'service': 'monitoring',
+                                                                                      'component': 'monasca-agent'},
+                                                                                      None)
                           for key, value in filtered_stats.iteritems()]
                 measurements.extend(m_list)
 
@@ -437,9 +442,9 @@ class Load(monagent.collector.checks.check.Check):
 
         # Split out the 3 load average values
         load = [res.replace(',', '.') for res in re.findall(r'([0-9]+[\.,]\d+)', uptime)]
-        return {'cpu.load_avg_1_min': float(load[0]),
-                'cpu.load_avg_5_min': float(load[1]),
-                'cpu.load_avg_15_min': float(load[2]),
+        return {'load.avg_1_min': float(load[0]),
+                'load.avg_5_min': float(load[1]),
+                'load.avg_15_min': float(load[2]),
                 }
 
 

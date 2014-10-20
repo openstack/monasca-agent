@@ -65,6 +65,13 @@
         - [Ceilometer Processes Monitored](#ceilometer-processes-monitored)
         - [Example Ceilometer Metrics](#example-ceilometer-metrics)
   - [Libvirt VM Monitoring](#libvirt-vm-monitoring)
+    - [Overview](#overview)
+    - [Configuration](#configuration)
+    - [Instance Cache](#instance-cache)
+    - [Metrics Cache](#metrics-cache)
+    - [Metrics](#metrics)
+    - [Dimensions](#dimensions)
+    - [Cross-Tenant Metric Submission](#cross-tenant-metric-submission)
 - [Statsd](#statsd)
 - [Log Parsing](#log-parsing)
 - [License](#license)
@@ -319,6 +326,8 @@ All key/value pairs are optional and dependent on the metric.
 | observer_hostname | The FQDN of the host that runs a check against another host. |
 | url | In the case of the http endpoint check the url of the http endpoint being checked. |
 | device | The device name |
+| service | The sevice name that owns this metric |
+| component | The component name within the service that the metric comes from |
 
 ## OpenStack Specific Naming Conventions
 This section documents some of the naming conventions that are used for monitoring OpenStack.
@@ -352,15 +361,15 @@ This section documents the system metrics that are sent by the Agent.  This sect
 | cpu.stolen_perc | | Percentage of stolen CPU time, i.e. the time spent in other OS contexts when running in a virtualized environment |
 | cpu.system_perc | | Percentage of time the CPU is used at the system level |
 | cpu.user_perc  | | Percentage of time the CPU is used at the user level |
-| disk_inode_utilization_perc | device | The percentage of inodes that are used on a device |
-| disk_space_utilization_perc | device | The percentage of disk space that is being used on a device |
+| disk.inode_used_perc | device | The percentage of inodes that are used on a device |
+| disk.space_used_perc | device | The percentage of disk space that is being used on a device |
 | io.read_kbytes_sec | device | Kbytes/sec read by an io device
 | io.read_req_sec | device   | Number of read requests/sec to an io device
 | io.write_kbytes_sec |device | Kbytes/sec written by an io device
 | io.write_req_sec   | device | Number of write requests/sec to an io device
-| cpu.load_avg_1min  | | The average system load over a 1 minute period
-| cpu.load_avg_5min  | | The average system load over a 5 minute period
-| cpu.load_avg_15min  | | The average system load over a 15 minute period
+| load.avg_1_min  | | The average system load over a 1 minute period
+| load.avg_5_min  | | The average system load over a 5 minute period
+| load.avg_15_min  | | The average system load over a 15 minute period
 | mem.free_mb | | Megabytes of free memory
 | mem.swap_free_perc | | Percentage of free swap memory that is free
 | mem.swap_free_mb | | Megabytes of free swap memory that is free
@@ -372,15 +381,15 @@ This section documents the system metrics that are sent by the Agent.  This sect
 | mem.used_buffers | | Number of buffers being used by the kernel for block io
 | mem.used_cached | | Memory used for the page cache
 | mem.used_shared  | | Memory shared between separate processes and typically used for inter-process communication
-| net.bytes_in  | device | Number of network bytes received
-| net.bytes_out  | device | Number of network bytes sent
-| net.packets_in  | device | Number of network packets received
-| net.packets_out  | device | Number of network packets sent
-| net.errors_in  | device | Number of network errors on incoming network traffic
-| net.errors_out  | device | Number of network errors on outgoing network traffic
-| thread_count  | service=monasca component=collector | Number of threads that the collector is consuming for this collection run
-| emit_time  | service=monasca component=collector | Amount of time that the collector took for sending the collected metrics to the Forwarder for this collection run
-| collection_time  | service=monasca component=collector | Amount of time that the collector took for this collection run
+| net.in_bytes  | device | Number of network bytes received
+| net.out_bytes  | device | Number of network bytes sent
+| net.in_packets  | device | Number of network packets received
+| net.out_packets  | device | Number of network packets sent
+| net.in_errors  | device | Number of network errors on incoming network traffic
+| net.out_errors  | device | Number of network errors on outgoing network traffic
+| monasca.thread_count  | service=monitoring component=monasca-agent | Number of threads that the collector is consuming for this collection run
+| monasca.emit_time_sec  | service=monitoring component=monasca-agent | Amount of time that the collector took for sending the collected metrics to the Forwarder for this collection run
+| monasca.collection_time_sec  | service=monitoring component=monasca-agent | Amount of time that the collector took for this collection run
 
 # Plugin Checks
 Plugins are the way to extend the Monasca Agent.  Plugins add additional functionality that allow the agent to perform checks on other applications, servers or services.
@@ -418,7 +427,7 @@ All of these methods take the following arguments:
 * value: The value for the metric (defaults to 1 on increment, -1 on decrement)
 * dimensions: (optional) A list of dimensions (name:value pairs) to associate with this metric
 * hostname: (optional) A hostname to associate with this metric. Defaults to the current host
-* device_name: (optional) A device name to associate with this metric
+* device: (optional) A device name to associate with this metric
 
 These methods may be called from anywhere within your check logic. At the end of your check function, all metrics that were submitted will be collected and flushed out with the other Agent metrics.
 
@@ -534,6 +543,12 @@ The instances section contains the hostname/IP to check, and the type of check t
     alive_test: ssh
 ```        
 
+The host alive checks return the following metric:
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| host_alive_status  | hostname, service, component, observer_host, target_host | Provides the status of the target host based on an ssh or ping check
+
 ## Process Checks
 Process checks can be performed to verify that a set of named processes are running on the local system. The YAML file `process.yaml` contains the list of processes that are checked. The processes can be identified using a pattern match or exact match on the process name. A Python script `process.py` runs each execution cycle to check that required processes are alive. If the process is running a value of 0 is sent, otherwise a value of 1 is sent to the Monasca API.
 
@@ -554,16 +569,17 @@ The process checks return the following metrics:
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
-| process.mem.real  | process_name, service, component | Amount of real memory a process is using
-| process.mem.rss  | process_name, service, component | Amount of rss memory a process is using
+| process.mem.real_mbytes  | process_name, service, component | Amount of physical memory allocated to a process minus shared libraries in megabytes
+| process.mem.rss_mbytes  | process_name, service, component | Amount of physical memory allocated to a process, including memory from shared libraries in megabytes
+| process.mem.vsz_mbytes  | process_name, service, component | Amount of all the memory a process can access, including swapped, physical, and shared in megabytes
 | process.io.read_count  | process_name, service, component | Number of reads by a process
 | process.io.write_count  | process_name, service, component | Number of writes by a process
-| process.io.read_bytes  | process_name, service, component | Bytes read by a process
-| process.io.write_bytes  | process_name, service, component | Bytes written by a process
-| process.threads  | process_name, service, component | Number of threads a process is using
+| process.io.read_kbytes  | process_name, service, component | Kilobytes read by a process
+| process.io.write_kbytes  | process_name, service, component | Kilobytes written by a process
+| process.thread_count  | process_name, service, component | Number of threads a process is using
 | process.cpu_perc  | process_name, service, component | Percentage of cpu being consumed by a process
-| process.vms  | process_name, service, component | Amount of virtual memory a process is using
-| process.open_file_decorators  | process_name, service, component | Number of files being used by a process
+| process.open_file_descriptors  | process_name, service, component | Number of files being used by a process
+| process.open_file_descriptors_perc  | process_name, service, component | Number of files being used by a process as a percentage of the total file descriptors allocated to the process
 | process.involuntary_ctx_switches  | process_name, service, component | Number of involuntary context switches for a process
 | process.voluntary_ctx_switches  | process_name, service, component | Number of voluntary context switches for a process
 | process.pid_count  | process_name, service, component | Number of processes that exist with this process name
@@ -668,16 +684,16 @@ The Zookeeper checks return the following metrics:
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
-| zookeeper.latency.max | hostname, mode, service=zookeeper | |
-| zookeeper.latency.min | hostname, mode, service=zookeeper | |
-| zookeeper.latency.avg | hostname, mode, service=zookeeper | |
-| zookeeper.bytes_sent | hostname, mode, service=zookeeper | |
-| zookeeper.bytes_outstanding | hostname, mode, service=zookeeper | |
-| zookeeper.bytes_received | hostname, mode, service=zookeeper | |
-| zookeeper.connections | hostname, mode, service=zookeeper | |
-| zookeeper.nodes | hostname, mode, service=zookeeper | |
-| zookeeper.zxid.count | hostname, mode, service=zookeeper | |
-| zookeeper.zxid.epoch | hostname, mode, service=zookeeper | |
+| zookeeper.max_latency_sec | hostname, mode, service=zookeeper | |
+| zookeeper.min_latency_sec | hostname, mode, service=zookeeper | |
+| zookeeper.avg_latency_sec | hostname, mode, service=zookeeper | |
+| zookeeper.out_bytes | hostname, mode, service=zookeeper | |
+| zookeeper.outstanding_bytes | hostname, mode, service=zookeeper | |
+| zookeeper.in_bytes | hostname, mode, service=zookeeper | |
+| zookeeper.connections_count | hostname, mode, service=zookeeper | |
+| zookeeper.node_count | hostname, mode, service=zookeeper | |
+| zookeeper.zxid_count | hostname, mode, service=zookeeper | |
+| zookeeper.zxid_epoch | hostname, mode, service=zookeeper | |
 
 
 ## Kafka Checks
@@ -708,7 +724,9 @@ The Kafka checks return the following metrics:
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
-| TBD |  | |
+| kafka.broker_offset | topic, service, component, partition, hostname | |
+| kafka.consumer_offset | topic, service, component, partition, consumer_group, hostname | |
+| kafka.consumer_lag | topic, service, component, partition, consumer_group, hostname | |
 
 
 ## RabbitMQ Checks
@@ -732,7 +750,7 @@ instances:
     rabbitmq_pass: guest
 ```
 
-If you want the monasca-setup program to detect and auto-configure the plugin for you, you must create the file /root/.rabbitmq.cnf with the information needed in the configuration yaml file before running the setup program.  It should look like this:
+If you want the monasca-setup program to detect and auto-configure the plugin for you, you must create the file /root/.rabbitmq.cnf with the information needed in the configuration yaml file before running the setup program.  It should look something like this:
 
 ```
 [client]
@@ -1073,34 +1091,41 @@ The [monasca-statsd](https://github.com/stackforge/monasca-statsd library provid
 Here are some examples of how code can be instrumented using calls to monasca-statsd.
 ```
 
-	* Import the module once it's installed.
-		from monascastatsd import monascastatsd
+    * Import the module once it's installed.
+		from monascastatsd import monasca_statsd
+		statsd = monasca_statsd.MonascaStatsd()
 
-	* Optionally, configure the host and port if you're running Statsd on a non-standard port.
-		monascastatsd.connect('localhost', 8125)
+    * Optionally, configure the host and port if you're running Statsd on a non-standard port.
+		statsd.connect('localhost', 8125)
 
-	* Increment a counter.
-		monascastatsd.increment('page_views')
-
-		With dimensions:
-    	monascastatsd.increment('page_views', 5, dimensions={'Hostname': 'prod.mysql.abccorp.com'})
-
-	* Record a gauge 50% of the time.
-		monascastatsd.gauge('users_online', 91, sample_rate=0.5)
+    * Increment a counter.
+		statsd.increment('page_views')
 
 		With dimensions:
-		monascastatsd.gauge('users_online', 91, dimensions={'Origin': 'Dev', 'Environment': 'Test'})
+    	statsd.increment('page_views', 5, dimensions={'Hostname': 'prod.mysql.abccorp.com'})
 
-	* Sample a histogram.
-		monascastatsd.histogram('file.upload_size', 20456)
+    * Record a gauge 50% of the time.
+		statsd.gauge('users_online', 91, sample_rate=0.5)
 
 		With dimensions:
-		monascastatsd.histogram('file.upload_size', 20456, sample_rate=0.5, dimensions={'Name': 'MyFile.pdf', 'Version': '1.0'})
+		statsd.gauge('users_online', 91, dimensions={'Origin': 'Dev', 'Environment': 'Test'})
 
-	* Time a function call.
-		@monascastatsd.timed('page.render')
+    * Sample a histogram.
+		statsd.histogram('file.upload_size', 20456)
+
+		With dimensions:
+		statsd.histogram('file.upload_size', 20456, sample_rate=0.5, dimensions={'Name': 'MyFile.pdf', 'Version': '1.0'})
+
+    * Time a function call.
+		@statsd.timed('page.render')
 		def render_page():
-    	# Render things ...
+    	# Render things...
+
+    * Time a block of code.
+     with statsd.time('database_read_time',
+                      dimensions={'db_host': 'mysql1.mycompany.net'}):
+    	# Do something...
+
 ```
 
 # Log Parsing

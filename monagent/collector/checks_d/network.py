@@ -51,6 +51,8 @@ class Network(AgentCheck):
         if instance is None:
             instance = {}
 
+        self._dimensions = instance.get('dimensions', {})
+
         self._excluded_ifaces = instance.get('excluded_interfaces', [])
         self._collect_cx_state = instance.get('collect_connection_state', False)
 
@@ -73,12 +75,12 @@ class Network(AgentCheck):
             return False
 
         expected_metrics = [
-            'bytes_in',
-            'bytes_out',
-            'packets_in',
-            'errors_in',
-            'packets_out',
-            'errors_out',
+            'in_bytes',
+            'out_bytes',
+            'in_packets',
+            'in_errors',
+            'out_packets',
+            'out_errors',
         ]
         for m in expected_metrics:
             assert m in vals_by_metric
@@ -89,10 +91,10 @@ class Network(AgentCheck):
         # Not sure why the others aren't included. Until I understand why, I'm
         # going to keep the same behaviour.
         exclude_iface_metrics = [
-            'packets_in',
-            'errors_in',
-            'packets_out',
-            'errors_out',
+            'in_packets',
+            'in_errors',
+            'out_packets',
+            'out_errors',
         ]
 
         count = 0
@@ -147,7 +149,7 @@ class Network(AgentCheck):
                     metrics[metric] += 1
 
             for metric, value in metrics.iteritems():
-                self.gauge(metric, value)
+                self.gauge(metric, value, self._dimensions)
 
         proc = open('/proc/net/dev', 'r')
         try:
@@ -167,12 +169,12 @@ class Network(AgentCheck):
             if self._parse_value(x[0]) or self._parse_value(x[8]):
                 iface = cols[0].strip()
                 metrics = {
-                    'bytes_in': self._parse_value(x[0]),
-                    'bytes_out': self._parse_value(x[8]),
-                    'packets_in': self._parse_value(x[1]),
-                    'errors_in': self._parse_value(x[2]) + self._parse_value(x[3]),
-                    'packets_out': self._parse_value(x[9]),
-                    'errors_out': self._parse_value(x[10]) + self._parse_value(x[11]),
+                    'in_bytes': self._parse_value(x[0]),
+                    'out_bytes': self._parse_value(x[8]),
+                    'in_packets': self._parse_value(x[1]),
+                    'in_errors': self._parse_value(x[2]) + self._parse_value(x[3]),
+                    'out_packets': self._parse_value(x[9]),
+                    'out_errors': self._parse_value(x[10]) + self._parse_value(x[11]),
                 }
                 self._submit_devicemetrics(iface, metrics)
 
@@ -234,12 +236,12 @@ class Network(AgentCheck):
             if self._parse_value(x[-5]) or self._parse_value(x[-2]):
                 iface = current
                 metrics = {
-                    'bytes_in': self._parse_value(x[-5]),
-                    'bytes_out': self._parse_value(x[-2]),
-                    'packets_in': self._parse_value(x[-7]),
-                    'errors_in': self._parse_value(x[-6]),
-                    'packets_out': self._parse_value(x[-4]),
-                    'errors_out': self._parse_value(x[-3]),
+                    'in_bytes': self._parse_value(x[-5]),
+                    'out_bytes': self._parse_value(x[-2]),
+                    'in_packets': self._parse_value(x[-7]),
+                    'in_errors': self._parse_value(x[-6]),
+                    'out_packets': self._parse_value(x[-4]),
+                    'out_errors': self._parse_value(x[-3]),
                 }
                 self._submit_devicemetrics(iface, metrics)
 
@@ -257,9 +259,9 @@ class Network(AgentCheck):
         """Return a mapping of network metrics by interface. For example:
 
             { interface:
-                {'bytes_out': 0,
-                  'bytes_in': 0,
-                  'bytes_in': 0,
+                {'out_bytes': 0,
+                 'in_bytes': 0,
+                 'in_packets': 0,
                   ...
                 }
             }
@@ -319,12 +321,12 @@ class Network(AgentCheck):
 
         # A mapping of solaris names -> datadog names
         metric_by_solaris_name = {
-            'rbytes64': 'bytes_in',
-            'obytes64': 'bytes_out',
-            'ipackets64': 'packets_in',
-            'ierrors': 'errors_in',
-            'opackets64': 'packets_out',
-            'oerrors': 'errors_out',
+            'rbytes64': 'in_bytes',
+            'obytes64': 'out_bytes',
+            'ipackets64': 'in_packets',
+            'ierrors': 'in_errors',
+            'opackets64': 'out_packets',
+            'oerrors': 'out_errors',
         }
 
         lines = [l for l in netstat_output.split("\n") if len(l) > 0]

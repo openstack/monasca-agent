@@ -37,7 +37,7 @@ class Check(object):
 
     """(Abstract) class for all checks with the ability to:
 
-    * store 1 (and only 1) sample for gauges per metric/tag combination
+    * store 1 (and only 1) sample for gauges per metric/dimensions combination
     * compute rates for counters
     * only log error messages once (instead of each time they occur)
     """
@@ -125,8 +125,6 @@ class Check(object):
                     dimensions=None, hostname=None, device_name=None):
         """Save a simple sample, evict old values if needed.
         """
-        if dimensions is None:
-            dimensions = {}
         if timestamp is None:
             timestamp = time.time()
         if metric not in self._sample_store:
@@ -137,8 +135,7 @@ class Check(object):
             raise monagent.common.exceptions.NaN(ve)
 
         # Sort and validate dimensions
-        if dimensions is not None and not isinstance(dimensions, dict):
-            raise monagent.common.exceptions.CheckException("Dimensions must be a dictionary")
+        self._set_dimensions(dimensions)
 
         # Data eviction rules
         key = (tuple(sorted(dimensions.items())), device_name)
@@ -159,6 +156,12 @@ class Check(object):
             assert len(self._sample_store[metric][key]) == 1, self._sample_store[metric]
         elif self.is_counter(metric):
             assert len(self._sample_store[metric][key]) in (1, 2), self._sample_store[metric]
+
+    def _set_dimensions(self, dimensions):
+        new_dimensions = {'component': 'monasca-agent', 'service': 'monitoring'}
+        if dimensions is not None:
+            new_dimensions.update(dimensions.copy())
+        return new_dimensions
 
     @classmethod
     def _rate(cls, sample1, sample2):
@@ -184,8 +187,6 @@ class Check(object):
     def get_sample_with_timestamp(self, metric, dimensions=None, device_name=None, expire=True):
         """Get (timestamp-epoch-style, value).
         """
-        if dimensions is None:
-            dimensions = {}
 
         # Get the proper dimensions
         key = (tuple(sorted(dimensions.items())), device_name)
@@ -265,9 +266,9 @@ class Check(object):
                     if dimensions_list:
                         attributes['dimensions'] = dimensions
                     if hostname:
-                        attributes['host_name'] = hostname
+                        attributes['hostname'] = hostname
                     if device_name:
-                        attributes['device_name'] = device_name
+                        attributes['device'] = device_name
                     metrics.append((m, int(ts), val, attributes))
             except Exception:
                 pass
@@ -326,7 +327,13 @@ class AgentCheck(object):
         :param device_name: (optional) The device name for this metric
         :param timestamp: (optional) The timestamp for this metric value
         """
-        self.aggregator.gauge(metric, value, dimensions, delegated_tenant, hostname, device_name, timestamp)
+        self.aggregator.gauge(metric,
+                              value,
+                              self._set_dimensions(dimensions),
+                              delegated_tenant,
+                              hostname,
+                              device_name,
+                              timestamp)
 
     def increment(self, metric, value=1, dimensions=None, delegated_tenant=None, hostname=None, device_name=None):
         """Increment a counter with optional dimensions, hostname and device name.
@@ -338,7 +345,12 @@ class AgentCheck(object):
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         """
-        self.aggregator.increment(metric, value, dimensions, delegated_tenant, hostname, device_name)
+        self.aggregator.increment(metric,
+                                  value,
+                                  self._set_dimensions(dimensions),
+                                  delegated_tenant,
+                                  hostname,
+                                  device_name)
 
     def decrement(self, metric, value=-1, dimensions=None, delegated_tenant=None, hostname=None, device_name=None):
         """Decrement a counter with optional dimensions, hostname and device name.
@@ -350,7 +362,12 @@ class AgentCheck(object):
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         """
-        self.aggregator.decrement(metric, value, dimensions, delegated_tenant, hostname, device_name)
+        self.aggregator.decrement(metric,
+                                  value,
+                                  self._set_dimensions(dimensions),
+                                  delegated_tenant,
+                                  hostname,
+                                  device_name)
 
     def rate(self, metric, value, dimensions=None, delegated_tenant=None, hostname=None, device_name=None):
         """Submit a point for a metric that will be calculated as a rate on flush.
@@ -365,7 +382,12 @@ class AgentCheck(object):
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         """
-        self.aggregator.rate(metric, value, dimensions, delegated_tenant, hostname, device_name)
+        self.aggregator.rate(metric,
+                             value,
+                             self._set_dimensions(dimensions),
+                             delegated_tenant,
+                             hostname,
+                             device_name)
 
     def histogram(self, metric, value, dimensions=None, delegated_tenant=None, hostname=None, device_name=None):
         """Sample a histogram value, with optional dimensions, hostname and device name.
@@ -377,7 +399,12 @@ class AgentCheck(object):
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         """
-        self.aggregator.histogram(metric, value, dimensions, delegated_tenant, hostname, device_name)
+        self.aggregator.histogram(metric,
+                                  value,
+                                  self._set_dimensions(dimensions),
+                                  delegated_tenant,
+                                  hostname,
+                                  device_name)
 
     def set(self, metric, value, dimensions=None, delegated_tenant=None, hostname=None, device_name=None):
         """Sample a set value, with optional dimensions, hostname and device name.
@@ -389,7 +416,18 @@ class AgentCheck(object):
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         """
-        self.aggregator.set(metric, value, dimensions, delegated_tenant, hostname, device_name)
+        self.aggregator.set(metric,
+                            value,
+                            self._set_dimensions(dimensions),
+                            delegated_tenant,
+                            hostname,
+                            device_name)
+
+    def _set_dimensions(self, dimensions):
+        new_dimensions = {'component': 'monasca-agent', 'service': 'monitoring'}
+        if dimensions is not None:
+            new_dimensions.update(dimensions.copy())
+        return new_dimensions
 
     def event(self, event):
         """Save an event.
@@ -575,11 +613,14 @@ class AgentCheck(object):
             return name
 
     @staticmethod
-    def read_config(instance, key, message=None, cast=None):
+    def read_config(instance, key, message=None, cast=None, optional=False):
         val = instance.get(key)
         if val is None:
-            message = message or 'Must provide `%s` value in instance config' % key
-            raise Exception(message)
+            if optional is False:
+                message = message or 'Must provide `%s` value in instance config' % key
+                raise Exception(message)
+            else:
+                return val
 
         if cast is None:
             return val

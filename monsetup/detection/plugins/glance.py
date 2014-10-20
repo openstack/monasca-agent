@@ -9,7 +9,7 @@ class Glance(monsetup.detection.ServicePlugin):
         service_params = {
             'template_dir': template_dir,
             'overwrite': overwrite,
-            'service_name': 'glance',
+            'service_name': 'image-service',
             'process_names': ['glance-registry',
                               'glance-api'],
             'service_api_url': 'http://localhost:9292',

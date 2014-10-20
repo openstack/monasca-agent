@@ -11,7 +11,7 @@ class Keystone(monsetup.detection.ServicePlugin):
         service_params = {
             'template_dir': template_dir,
             'overwrite': overwrite,
-            'service_name': 'keystone',
+            'service_name': 'identity-service',
             'process_names': ['keystone-all'],
             'service_api_url': 'http://localhost:35357/v3',
             'search_pattern': '.*v3.0.*'

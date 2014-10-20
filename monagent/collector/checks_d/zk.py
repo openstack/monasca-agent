@@ -38,9 +38,11 @@ class Zookeeper(AgentCheck):
         port = int(instance.get('port', 2181))
         timeout = float(instance.get('timeout', 3.0))
         dimensions = instance.get('dimensions', {})
+        if dimensions is None:
+            new_dimensions = {}
+        else:
+            new_dimensions = dimensions.copy()
 
-        if 'service' not in dimensions:
-            dimensions.update({'service': 'zookeeper'})
         sock = socket.socket()
         sock.settimeout(timeout)
         buf = StringIO()
@@ -71,10 +73,13 @@ class Zookeeper(AgentCheck):
         finally:
             sock.close()
 
+        new_dimensions = {'component': 'zookeeper', 'service': 'zookeeper'}
+
         if buf is not None:
             # Parse the response
-            metrics, new_dimensions = self.parse_stat(buf)
-            new_dimensions.update(dimensions)
+            metrics, dimensions = self.parse_stat(buf)
+            if dimensions is not None:
+                new_dimensions.update(dimensions.copy())
 
             # Write the data
             for metric, value in metrics:
@@ -117,30 +122,30 @@ class Zookeeper(AgentCheck):
         # Latency min/avg/max: -10/0/20007
         _, value = buf.readline().split(':')
         l_min, l_avg, l_max = [int(v) for v in value.strip().split('/')]
-        metrics.append(('zookeeper.latency.min', l_min))
-        metrics.append(('zookeeper.latency.avg', l_avg))
-        metrics.append(('zookeeper.latency.max', l_max))
+        metrics.append(('zookeeper.min_latency_sec', float(l_min)/1000))
+        metrics.append(('zookeeper.avg_latency_sec', float(l_avg)/1000))
+        metrics.append(('zookeeper.max_latency_sec', float(l_max)/1000))
 
         # Received: 101032173
         _, value = buf.readline().split(':')
-        metrics.append(('zookeeper.bytes_received', long(value.strip())))
+        metrics.append(('zookeeper.in_bytes', long(value.strip())))
 
         # Sent: 1324
         _, value = buf.readline().split(':')
-        metrics.append(('zookeeper.bytes_sent', long(value.strip())))
+        metrics.append(('zookeeper.out_bytes', long(value.strip())))
 
         if has_connections_val:
             # Connections: 1
             _, value = buf.readline().split(':')
-            metrics.append(('zookeeper.connections', int(value.strip())))
+            metrics.append(('zookeeper.connections_count', int(value.strip())))
         else:
             # If the zk version doesnt explicitly give the Connections val,
             # use the value we computed from the client list.
-            metrics.append(('zookeeper.connections', connections))
+            metrics.append(('zookeeper.connections_count', connections))
 
         # Outstanding: 0
         _, value = buf.readline().split(':')
-        metrics.append(('zookeeper.bytes_outstanding', long(value.strip())))
+        metrics.append(('zookeeper.outstanding_bytes', long(value.strip())))
 
         # Zxid: 0x1034799c7
         _, value = buf.readline().split(':')
@@ -153,8 +158,8 @@ class Zookeeper(AgentCheck):
         # the lower order 4 bytes is the count
         (zxid_count,) = struct.unpack('>i', zxid_bytes[4:8])
 
-        metrics.append(('zookeeper.zxid.epoch', zxid_epoch))
-        metrics.append(('zookeeper.zxid.count', zxid_count))
+        metrics.append(('zookeeper.zxid_epoch', zxid_epoch))
+        metrics.append(('zookeeper.zxid_count', zxid_count))
 
         # Mode: leader
         _, value = buf.readline().split(':')
@@ -162,6 +167,6 @@ class Zookeeper(AgentCheck):
 
         # Node count: 487
         _, value = buf.readline().split(':')
-        metrics.append(('zookeeper.nodes', long(value.strip())))
+        metrics.append(('zookeeper.node_count', long(value.strip())))
 
         return metrics, dimensions

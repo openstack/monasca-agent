@@ -7,16 +7,17 @@ from monagent.common.util import Platform
 
 class ProcessCheck(AgentCheck):
 
-    PROCESS_GAUGE = ('process.threads',
-                     'process.cpu_pct',
-                     'process.mem.rss',
-                     'process.mem.vms',
-                     'process.mem.real',
+    PROCESS_GAUGE = ('process.thread_count',
+                     'process.cpu_perc',
+                     'process.mem.rss_mbytes',
+                     'process.mem.vsz_mbytes',
+                     'process.mem.real_mbytes',
                      'process.open_file_descriptors',
+                     'process.open_file_descriptors_perc',
                      'process.io.read_count',
                      'process.io.write_count',
-                     'process.io.read_bytes',
-                     'process.io.write_bytes',
+                     'process.io.read_kbytes',
+                     'process.io.write_kbytes',
                      'process.voluntary_ctx_switches',
                      'process.involuntary_ctx_switches')
 
@@ -97,14 +98,16 @@ class ProcessCheck(AgentCheck):
                                        and Platform.is_unix())
         if extended_metrics_0_5_0_unix:
             open_file_descriptors = 0
+            open_file_descriptors_perc = 0
         else:
             open_file_descriptors = None
+            open_file_descriptors_perc = None
 
         # process I/O counters (agent might not have permission to access)
         read_count = 0
         write_count = 0
-        read_bytes = 0
-        write_bytes = 0
+        read_kbytes = 0
+        write_kbytes = 0
 
         got_denied = False
 
@@ -113,7 +116,7 @@ class ProcessCheck(AgentCheck):
                 p = psutil.Process(pid)
                 if extended_metrics_0_6_0:
                     mem = p.get_ext_memory_info()
-                    real += mem.rss - mem.shared
+                    real += float((mem.rss - mem.shared) / 1048576)
                     try:
                         ctx_switches = p.get_num_ctx_switches()
                         voluntary_ctx_switches += ctx_switches.voluntary
@@ -128,11 +131,16 @@ class ProcessCheck(AgentCheck):
                 if extended_metrics_0_5_0_unix:
                     try:
                         open_file_descriptors += p.get_num_fds()
+                        max_open_file_descriptors = p.rlimit(psutil.RLIMIT_NOFILE)
+                        if max_open_file_descriptors > 0:
+                            open_file_descriptors_perc = float((open_file_descriptors / max_open_file_descriptors) * 100)
+                        else:
+                            open_file_descriptors_perc = 0
                     except psutil.AccessDenied:
                         got_denied = True
 
-                rss += mem.rss
-                vms += mem.vms
+                rss += float(mem.rss/1048576)
+                vms += float(mem.vms/1048576)
                 thr += p.get_num_threads()
                 cpu += p.get_cpu_percent(cpu_check_interval)
 
@@ -142,8 +150,8 @@ class ProcessCheck(AgentCheck):
                         io_counters = p.get_io_counters()
                         read_count += io_counters.read_count
                         write_count += io_counters.write_count
-                        read_bytes += io_counters.read_bytes
-                        write_bytes += io_counters.write_bytes
+                        read_kbytes += float(io_counters.read_bytes/1024)
+                        write_kbytes += float(io_counters.write_bytes/1024)
                     except psutil.AccessDenied:
                         self.log.debug('monasca-agent user does not have ' +
                                        'access to I/O counters for process' +
@@ -151,8 +159,8 @@ class ProcessCheck(AgentCheck):
                                        % (pid, p.name))
                         read_count = None
                         write_count = None
-                        read_bytes = None
-                        write_bytes = None
+                        read_kbytes = None
+                        write_kbytes = None
 
             # Skip processes dead in the meantime
             except psutil.NoSuchProcess:
@@ -165,8 +173,9 @@ class ProcessCheck(AgentCheck):
 
         # Memory values are in Byte
         return (thr, cpu, rss, vms, real, open_file_descriptors,
-                read_count, write_count, read_bytes, write_bytes,
-                voluntary_ctx_switches, involuntary_ctx_switches)
+                open_file_descriptors_perc, read_count, write_count,
+                read_kbytes, write_kbytes, voluntary_ctx_switches,
+                involuntary_ctx_switches)
 
     def check(self, instance):
         try:

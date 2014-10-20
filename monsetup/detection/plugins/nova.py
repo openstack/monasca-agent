@@ -11,7 +11,7 @@ class Nova(monsetup.detection.ServicePlugin):
         service_params = {
             'template_dir': template_dir,
             'overwrite': overwrite,
-            'service_name': 'nova',
+            'service_name': 'compute',
             'process_names': ['nova-compute', 'nova-conductor',
                               'nova-cert', 'nova-network',
                               'nova-scheduler', 'nova-novncproxy',
