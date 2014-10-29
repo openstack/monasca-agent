@@ -65,6 +65,7 @@ consumer_groups:
                     topics[topic].update(set(partitions))
                     for partition in partitions:
                         consumer_offsets[(consumer_group, topic, partition)] = consumer.offsets[partition]
+                    consumer.stop()
 
             # Query Kafka for the broker offsets, done in a separate loop so only one query is done
             # per topic even if multiple consumer groups watch the same topic
@@ -98,4 +99,3 @@ consumer_groups:
                 self.gauge('kafka.consumer_offset', consumer_offset, dimensions=dimensions)
             self.gauge('kafka.consumer_lag', broker_offset - consumer_offset,
                        dimensions=dimensions)
-
