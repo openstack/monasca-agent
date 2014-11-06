@@ -163,7 +163,7 @@ class MetricsBucketAggregator(Aggregator):
             new_dimensions = {}
         else:
             new_dimensions = dimensions.copy()
-        new_dimensions = {'component': 'monasca-agent', 'service': 'monitoring'}.update(new_dimensions)
+	new_dimensions.update({'component': 'monasca-agent', 'service': 'monitoring'})
         context = (name, tuple(new_dimensions.items()), hostname, device_name)
 
         cur_time = time()
