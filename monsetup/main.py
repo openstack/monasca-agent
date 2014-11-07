@@ -44,14 +44,20 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description='Detect running daemons then configure and start the agent.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
-        '-u', '--username', help="Keystone username used to post metrics", required=True)
+        '-u', '--username', help="Username used for keystone authentication", required=True)
     parser.add_argument(
-        '-p', '--password', help="Keystone password used to post metrics", required=True)
-    parser.add_argument('--project_name', help="Keystone project/tenant name", required=True)
+        '-p', '--password', help="Password used for keystone authentication", required=True)
     parser.add_argument(
         '-s', '--service', help="Service this node is associated with.", required=True)
     parser.add_argument('--keystone_url', help="Keystone url", required=True)
     parser.add_argument('--monasca_url', help="Monasca API url", required=True)
+    parser.add_argument('--insecure', help="Set whether certificates are used for Keystone authentication", required=False, default=False)
+    parser.add_argument('--project_name', help="Project name for keystone authentication", required=False, default='')
+    parser.add_argument('--project_domain_id', help="Project domain id for keystone authentication", required=False, default='')
+    parser.add_argument('--project_domain_name', help="Project domain name for keystone authentication", required=False, default='')
+    parser.add_argument('--project_id', help="Keystone project id  for keystone authentication", required=False, default='')
+    parser.add_argument('--ca_file', help="Sets the path to the ca certs file if using certificates" +
+                        "Required only if insecure is set to False", required=False, default='')
     parser.add_argument('--config_dir', help="Configuration directory", default='/etc/monasca/agent')
     parser.add_argument('--log_dir', help="monasca-agent log directory", default='/var/log/monasca/agent')
     parser.add_argument(

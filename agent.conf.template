@@ -1,4 +1,11 @@
 [Api]
+# To configure Keystone correctly, a project-scoped token must be acquired.
+# To accomplish this, the configuration must be set up with one of the
+# following scenarios:
+#   Set username and password and you have a default project set in keystone.
+#   Set username, password and project id.
+#   Set username, password, project name and (domain id or domain name).
+#
 # Monitoring API URL: URL for the monitoring API
 # Example: https://region-a.geo-1.monitoring.hpcloudsvc.com/v1.1/metrics
 url: {args.monasca_url}
@@ -11,6 +18,20 @@ password: {args.password}
 keystone_url: {args.keystone_url}
 # Project name to be used by this agent
 project_name: {args.project_name}
+# Project domain id to be used by this agent
+project_domain_id: {args.project_domain_id}
+# Project domain id to be used by this agent
+project_domain_name: {args.project_domain_name}
+# Project id to be used by this agent
+project_id: {args.project_id}
+# Set whether certificates are used for Keystone
+# *******************************************************************************************
+# **** CAUTION ****: The insecure flag should NOT be set to True in a production environment!
+# *******************************************************************************************
+# If insecure is set to False, a ca_file name must be set to authenticate with Keystone
+insecure: {args.insecure}
+# Name of the ca certs file
+ca_file: {args.ca_file}
 
 # The following 2 options are for handling buffering and reconnection to the monasca-api
 # If you want the messages to be sent as fast as possible, set these two options to

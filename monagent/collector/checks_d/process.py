@@ -130,10 +130,10 @@ class ProcessCheck(AgentCheck):
 
                 if extended_metrics_0_5_0_unix:
                     try:
-                        open_file_descriptors += p.get_num_fds()
-                        max_open_file_descriptors = p.rlimit(psutil.RLIMIT_NOFILE)
-                        if max_open_file_descriptors > 0:
-                            open_file_descriptors_perc = float((open_file_descriptors / max_open_file_descriptors) * 100)
+                        open_file_descriptors = float(p.get_num_fds())
+                        max_open_file_descriptors = float(p.rlimit(psutil.RLIMIT_NOFILE)[1])
+                        if max_open_file_descriptors > 0.0:
+                            open_file_descriptors_perc = open_file_descriptors / max_open_file_descriptors * 100
                         else:
                             open_file_descriptors_perc = 0
                     except psutil.AccessDenied:

@@ -15,10 +15,10 @@ import traceback
 
 import yaml
 
-import monagent.common.aggregator
+from monagent.common.keystone import Keystone
+from monagent.common.aggregator import MetricsAggregator
 import monagent.common.config
 import monagent.common.exceptions
-import monagent.common.keystone
 import monagent.common.util
 
 log = logging.getLogger(__name__)
@@ -279,8 +279,6 @@ class Check(object):
 
 class AgentCheck(object):
 
-    keystone = None
-
     def __init__(self, name, init_config, agent_config, instances=None):
         """Initialize a new check.
 
@@ -295,9 +293,9 @@ class AgentCheck(object):
         self.hostname = monagent.common.util.get_hostname(agent_config)
         self.log = logging.getLogger('%s.%s' % (__name__, name))
 
-        self.aggregator = monagent.common.aggregator.MetricsAggregator(self.hostname,
-                                                                       recent_point_threshold=agent_config.get('recent_point_threshold',
-                                                                                                               None))
+        self.aggregator = MetricsAggregator(self.hostname,
+                                            recent_point_threshold=agent_config.get('recent_point_threshold',
+                                                                                    None))
 
         self.events = []
         self.instances = instances or []
@@ -305,10 +303,7 @@ class AgentCheck(object):
         self.library_versions = None
 
         api_config = self.agent_config['Api']
-        AgentCheck.keystone = monagent.common.keystone.Keystone(api_config['keystone_url'],
-                                                                api_config['username'],
-                                                                api_config['password'],
-                                                                api_config['project_name'])
+        self.keystone = Keystone(api_config)
 
     def instance_count(self):
         """Return the number of instances that are configured for this check.
@@ -535,7 +530,7 @@ class AgentCheck(object):
         instance_statuses = []
         for i, instance in enumerate(self.instances):
             try:
-                instance['keystone'] = AgentCheck.keystone
+                instance['keystone'] = self.keystone
                 self.check(instance)
                 if self.has_warnings():
                     instance_status = monagent.common.check_status.InstanceStatus(i,

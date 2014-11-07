@@ -30,16 +30,7 @@ class MonAPI(object):
         if 'hostname' not in self.default_dimensions:
             self.default_dimensions['hostname'] = get_hostname()
 
-        log.debug("Getting token from Keystone")
-        self.keystone_url = config['keystone_url']
-        self.username = config['username']
-        self.password = config['password']
-        self.project_name = config['project_name']
-
-        self.keystone = Keystone(self.keystone_url,
-                                 self.username,
-                                 self.password,
-                                 self.project_name)
+        self.keystone = Keystone(config)
         self.mon_client = None
         self.max_buffer_size = config['max_buffer_size']
         self.backlog_send_rate = config['backlog_send_rate']
@@ -57,7 +48,7 @@ class MonAPI(object):
             kwargs['tenant_id'] = delegated_tenant
         if not self.mon_client:
             # construct the monasca client
-            self.mon_client = self.get_client()
+            self.mon_client = self.get_monclient()
 
         if self._send_message(**kwargs):
             if len(self.message_queue) > 0:
@@ -103,16 +94,14 @@ class MonAPI(object):
         for tenant in tenant_group:
             self._post(tenant_group[tenant], tenant)
 
-    def get_client(self):
-        """get_client
+
+    def get_monclient(self):
+        """get_monclient
             get a new monasca-client object
         """
-        token = self.keystone.refresh_token()
-        # Re-create the client.  This is temporary until
-        # the client is updated to be able to reset the
-        # token.
+        # Create the client.
         kwargs = {
-            'token': token
+            'token': self.keystone.get_token()
         }
         return client.Client(self.api_version, self.url, **kwargs)
 
@@ -123,7 +112,7 @@ class MonAPI(object):
         except exc.HTTPException as he:
             if 'unauthorized' in str(he):
                 log.info("Invalid token detected. Getting a new token...")
-                # Get a new token
+                # Get a new keystone client and token
                 self.mon_client.replace_token(self.keystone.refresh_token())
             else:
                 log.debug("Error sending message to monasca-api. Error is {0}."

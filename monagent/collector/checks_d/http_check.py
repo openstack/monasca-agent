@@ -37,9 +37,8 @@ class HTTPCheck(ServicesCheck):
         if url is None:
             raise Exception("Bad configuration. You must specify a url")
         ssl = instance.get('disable_ssl_validation', True)
-        token = AgentCheck.keystone.get_token()
 
-        return url, username, password, timeout, headers, response_time, dimensions, ssl, pattern, use_keystone, token
+        return url, username, password, timeout, headers, response_time, dimensions, ssl, pattern, use_keystone
 
     def _create_status_event(self, status, msg, instance):
         """Does nothing: status events are not yet supported by Mon API.
@@ -64,6 +63,7 @@ class HTTPCheck(ServicesCheck):
         retry = False
         while not done or retry:
             if use_keystone:
+                token = self.keystone.get_token()
                 if token:
                     headers["X-Auth-Token"] = token
                     headers["Content-type"] = "application/json"
