@@ -51,7 +51,7 @@ hostname: {hostname}
 # Optional dimensions to be sent with every metric from this node
 # They should be in the format name:value and seperated by a comma
 # Example (dimensions: service:nova, group:group_a, ...)
-dimensions: service:{args.service}
+dimensions: {args.dimensions}
 
 # Set the threshold for accepting points to allow anything
 # with recent_point_threshold seconds
