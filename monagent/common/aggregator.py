@@ -48,12 +48,10 @@ class Aggregator(object):
             (metric, timestamp, value, {"dimensions": {"name1": "value1", "name2": "value2"}, ...})
             dimensions should be a dictionary
         """
-        if dimensions is None:
-            dimensions = {}
         if hostname:
-            dimensions['hostname'] = hostname
+            dimensions.update({'hostname': hostname})
         if device_name:
-            dimensions['device'] = device_name
+            dimensions.update({'device': device_name})
 
         return Measurement(metric, int(timestamp), value, dimensions,
                            delegated_tenant)
@@ -127,6 +125,11 @@ class Aggregator(object):
 
         return events
 
+    def set_dimensions(self, dimensions):
+        new_dimensions = {'component': 'monasca-agent', 'service': 'monitoring'}
+        if dimensions is not None:
+            new_dimensions.update(dimensions.copy())
+        return new_dimensions
 
 class MetricsBucketAggregator(Aggregator):
 
@@ -156,15 +159,11 @@ class MetricsBucketAggregator(Aggregator):
     def submit_metric(self, name, value, mtype, dimensions=None,
                       delegated_tenant=None, hostname=None, device_name=None,
                       timestamp=None, sample_rate=1):
-        # Avoid calling extra functions to dedupe dimensions if there are none
         # Note: if you change the way that context is created, please also change create_empty_metrics,
         #  which counts on this order
-        if dimensions is None:
-            new_dimensions = {}
-        else:
-            new_dimensions = dimensions.copy()
-	new_dimensions.update({'component': 'monasca-agent', 'service': 'monitoring'})
-        context = (name, tuple(new_dimensions.items()), hostname, device_name)
+        new_dimensions = self.set_dimensions(dimensions)
+        context = (name, tuple(new_dimensions.items()),
+                   delegated_tenant, hostname, device_name)
 
         cur_time = time()
         # Check to make sure that the timestamp that is passed in (if any) is not older than
@@ -205,7 +204,7 @@ class MetricsBucketAggregator(Aggregator):
             else:
                 # The expiration currently only applies to Counters
                 # This counts on the ordering of the context created in submit_metric not changing
-                metric = Counter(self.formatter, context[0], context[1], context[2], context[3])
+                metric = Counter(self.formatter, context[0], context[1], context[2], context[3], context[4])
                 metrics += metric.flush(flush_timestamp, self.interval)
 
     def flush(self):
@@ -291,15 +290,9 @@ class MetricsAggregator(Aggregator):
                       delegated_tenant=None, hostname=None, device_name=None,
                       timestamp=None, sample_rate=1):
 
-        # Avoid calling extra functions to dedupe dimensions if there are none
-        if dimensions is not None:
-            new_dimensions = dimensions.copy()
-            context = (name, tuple(new_dimensions.items()), delegated_tenant,
-                       hostname, device_name)
-        else:
-            new_dimensions = None
-            context = (name, new_dimensions, delegated_tenant,
-                       hostname, device_name)
+        new_dimensions = self.set_dimensions(dimensions)
+        context = (name, tuple(new_dimensions.items()),
+                   delegated_tenant, hostname, device_name)
 
         if context not in self.metrics:
             metric_class = self.metric_type_to_class[mtype]
