@@ -11,6 +11,7 @@ from monagent.collector.checks import AgentCheck
 
 try:
     from kafka.client import KafkaClient
+    from kafka.common import KafkaError
     from kafka.common import OffsetRequest
     from kafka.consumer import SimpleConsumer
 except ImportError:
@@ -68,15 +69,24 @@ consumer_groups:
                     # look up their broker offsets later
                     topics[topic].update(set(partitions))
                     for partition in partitions:
-                        consumer_offsets[(consumer_group, topic, partition)] = consumer.offsets[partition]
+                        try:
+                            consumer_offsets[(consumer_group, topic, partition)] = consumer.offsets[partition]
+                        except KeyError:
+                            consumer.stop()
+                            self.log.error('Error fetching consumer offset for {} partition {}'.format(topic, partition))
                     consumer.stop()
 
             # Query Kafka for the broker offsets, done in a separate loop so only one query is done
             # per topic even if multiple consumer groups watch the same topic
             broker_offsets = {}
             for topic, partitions in topics.items():
-                offset_responses = kafka_conn.send_offset_request([
-                    OffsetRequest(topic, p, -1, 1) for p in partitions])
+                offset_responses = []
+                for p in partitions:
+                    try:
+                        response = kafka_conn.send_offset_request([OffsetRequest(topic, p, -1, 1)])
+                        offset_responses.append(response[0])
+                    except KafkaError as e:
+                        self.log.error("Error fetching broker offset: {}".format(e))
 
                 for resp in offset_responses:
                     broker_offsets[(resp.topic, resp.partition)] = resp.offsets[0]
