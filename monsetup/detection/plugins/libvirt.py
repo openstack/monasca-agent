@@ -6,7 +6,7 @@ import monsetup.agent_config
 
 log = logging.getLogger(__name__)
 
-# Location of nova.conf to read sql_connect string
+# Location of nova.conf from which to read credentials
 nova_conf = "/etc/nova/nova.conf"
 # Directory to use for instance and metric caches (preferred tmpfs "/dev/shm")
 cache_dir = "/dev/shm"
@@ -34,10 +34,9 @@ class Libvirt(monsetup.detection.Plugin):
         if self.dependencies_installed():
             nova_cfg = ConfigParser.SafeConfigParser()
             nova_cfg.read(nova_conf)
-            sql_conn = nova_cfg.get('DEFAULT', 'sql_connection')
             # Which configuration options are needed for the plugin YAML?
             cfg_needed = ['admin_user', 'admin_password',
-                          'admin_tenant_name', 'identity_uri']
+                          'admin_tenant_name']
             cfg_section = 'keystone_authtoken'
 
             # Start with plugin-specific configuration parameters
@@ -48,8 +47,10 @@ class Libvirt(monsetup.detection.Plugin):
             for option in cfg_needed:
                 init_config[option] = nova_cfg.get(cfg_section, option)
 
-            # Add version to identity_uri
-            init_config['identity_uri'] += '/v2.0'
+            # Create an identity server URI
+            init_config['identity_uri'] = "{}://{}:{}/v3".format(nova_cfg.get(cfg_section, 'auth_protocol'),
+                                                                 nova_cfg.get(cfg_section, 'auth_host'),
+                                                                 nova_cfg.get(cfg_section, 'auth_port'))
 
             config['libvirt'] = {'init_config': init_config,
                                  'instances': [{}]}
