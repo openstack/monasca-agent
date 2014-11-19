@@ -13,7 +13,7 @@ import re
 import imp
 from optparse import OptionParser, Values
 from cStringIO import StringIO
-from version import __version__
+import pkg_resources
 
 import yaml
 
@@ -59,7 +59,7 @@ def get_parsed_args():
 
 
 def get_version():
-    return __version__
+    return pkg_resources.require("monasca-agent")[0].version
 
 
 def skip_leading_wsp(f):
