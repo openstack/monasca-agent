@@ -48,9 +48,9 @@ class Libvirt(monsetup.detection.Plugin):
                 init_config[option] = nova_cfg.get(cfg_section, option)
 
             # Create an identity server URI
-            init_config['identity_uri'] = "{}://{}:{}/v3".format(nova_cfg.get(cfg_section, 'auth_protocol'),
-                                                                 nova_cfg.get(cfg_section, 'auth_host'),
-                                                                 nova_cfg.get(cfg_section, 'auth_port'))
+            init_config['identity_uri'] = "{}://{}:{}/v2.0".format(nova_cfg.get(cfg_section, 'auth_protocol'),
+                                                                   nova_cfg.get(cfg_section, 'auth_host'),
+                                                                   nova_cfg.get(cfg_section, 'auth_port'))
 
             config['libvirt'] = {'init_config': init_config,
                                  'instances': [{}]}
