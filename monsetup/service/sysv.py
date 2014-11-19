@@ -66,7 +66,10 @@ class SysV(service.Service):
             return False
 
         log.info('Starting {0} service via SysV init script'.format(self.name))
-        subprocess.check_call([self.init_script, 'start'])  # Throws CalledProcessError on error
+        if restart:
+            subprocess.check_call([self.init_script, 'restart'])  # Throws CalledProcessError on error
+        else:
+            subprocess.check_call([self.init_script, 'start'])  # Throws CalledProcessError on error
         return True
 
     def stop(self):
