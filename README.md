@@ -187,6 +187,7 @@ All parameters require a '--' before the parameter such as '--verbose'
 | skip_enable | This is an optional parameter. By default the service is enabled, which requires the script run as root. Set this parameter to skip that step. | |
 | verbose | This is an optional parameter that specifies whether the monasca-setup script will print additional information for debugging purposes | |
 | overwrite | This is an optional parameter to overwrite the plugin configuration.  Use this if you don't want to keep the original configuration.  If this parameter is not specified, the configuration will be appended to the existing configuration, possibly creating duplicate checks.  **NOTE:** The agent config file, agent.conf, will always be overwritten, even if this parameter is not specified |  |
+| amplifier | For load testing purposes, this value will multiply the number of metrics submitted in each payload.  Set to 1 for one additional set of metrics, 2 for two additional sets, etc.  Additional sets of metrics are identified by the 'amplifier' dimension.  Set to 0 for typical production use. | 0 |
 
 ### Manual Configuration of the Agent
 

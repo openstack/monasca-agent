@@ -54,8 +54,8 @@ def main(argv=None):
     parser.add_argument('--project_domain_id', help="Project domain id for keystone authentication", required=False, default='')
     parser.add_argument('--project_domain_name', help="Project domain name for keystone authentication", required=False, default='')
     parser.add_argument('--project_id', help="Keystone project id  for keystone authentication", required=False, default='')
-    parser.add_argument('--ca_file', help="Sets the path to the ca certs file if using certificates" +
-                        "Required only if insecure is set to False", required=False, default='')
+    parser.add_argument('--ca_file', help="Sets the path to the ca certs file if using certificates. " +
+                                          "Required only if insecure is set to False", required=False, default='')
     parser.add_argument('--config_dir', help="Configuration directory", default='/etc/monasca/agent')
     parser.add_argument('--dimensions', help="Additional dimensions to set for all metrics. A comma seperated list " +
                                              "of name/value pairs, 'name:value,name2:value2'")
@@ -64,16 +64,16 @@ def main(argv=None):
         '--template_dir', help="Alternative template directory", default='/usr/local/share/monasca/agent')
     parser.add_argument('--headless', help="Run in a non-interactive mode", action="store_true")
     parser.add_argument('--overwrite',
-                        help="Overwrite existing plugin configuration." +
+                        help="Overwrite existing plugin configuration. " +
                              "The default is to merge. Agent.conf is always overwritten.",
                         action="store_true")
-    parser.add_argument('--skip_enable', help="By default the service is enabled," +
-                                              " which requires the script run as root. Set this to skip that step.",
+    parser.add_argument('--skip_enable', help="By default the service is enabled, " +
+                                              "which requires the script run as root. Set this to skip that step.",
                         action="store_true")
     parser.add_argument('--user', help="User name to run monasca-agent as", default='monasca-agent')
     parser.add_argument('-s', '--service', help="Service this node is associated with, added as a dimension.")
-    parser.add_argument('--amplifier', help="Integer for the number of additional measurements to create." +
-                                            "Additional measurements contain the 'amplifier' dimension." +
+    parser.add_argument('--amplifier', help="Integer for the number of additional measurements to create. " +
+                                            "Additional measurements contain the 'amplifier' dimension. " +
                                             "Useful for load testing; not for production use.", default=0, required=False)
     parser.add_argument('-v', '--verbose', help="Verbose Output", action="store_true")
     args = parser.parse_args()
