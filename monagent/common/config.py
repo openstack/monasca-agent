@@ -888,7 +888,8 @@ def get_mon_api_config(config):
                    "use_keystone": config.getboolean,
                    "keystone_url": config.get,
                    "max_buffer_size": config.getint,
-                   "backlog_send_rate": config.getint}
+                   "backlog_send_rate": config.getint,
+                   "amplifier": config.getint}
 
         for name, func in options.iteritems():
             if config.has_option("Api", name):

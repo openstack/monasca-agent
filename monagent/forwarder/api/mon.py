@@ -1,3 +1,4 @@
+import copy
 import logging
 from collections import deque
 
@@ -8,6 +9,7 @@ from monagent.common.util import get_hostname
 import requests
 
 log = logging.getLogger(__name__)
+
 
 class MonAPI(object):
 
@@ -35,6 +37,11 @@ class MonAPI(object):
         self.max_buffer_size = config['max_buffer_size']
         self.backlog_send_rate = config['backlog_send_rate']
         self.message_queue = deque(maxlen=self.max_buffer_size)
+        # 'amplifier' is completely optional and may not exist in the config
+        try:
+            self.amplifier = config['amplifier']
+        except KeyError:
+            self.amplifier = None
 
     def _post(self, measurements, delegated_tenant=None):
         """Does the actual http post
@@ -83,6 +90,18 @@ class MonAPI(object):
                     if dimension not in measurement.dimensions.keys():
                         measurement.dimensions.update({dimension: self.default_dimensions[dimension]})
 
+        # "Amplify" these measurements to produce extra load, if so configured
+        if self.amplifier is not None and self.amplifier > 0:
+            extra_measurements = []
+            for measurement in measurements:
+                for multiple in range(1, self.amplifier + 1):
+                    # Create a copy of the measurement, but with the addition
+                    # of an 'amplifier' dimension
+                    measurement_copy = copy.deepcopy(measurement)
+                    measurement_copy.dimensions.update({'amplifier': multiple})
+                    extra_measurements.append(measurement_copy)
+            measurements.extend(extra_measurements)
+
         # Split out separate POSTs for each delegated tenant (includes 'None')
         tenant_group = {}
         for measurement in measurements:
@@ -93,7 +112,6 @@ class MonAPI(object):
             tenant_group[delegated_tenant].extend([m_dict.copy()])
         for tenant in tenant_group:
             self._post(tenant_group[tenant], tenant)
-
 
     def get_monclient(self):
         """get_monclient

@@ -43,6 +43,10 @@ max_buffer_size: 1000
 # Maximum number of messages to send at one time when communication with the monasca-api is restored
 backlog_send_rate: 1000
 
+# Publish extra metrics to the API by adding this number of 'amplifier' dimensions.
+# For load testing purposes only; set to 0 for production use.
+amplifier: {args.amplifier}
+
 [Main]
 
 # Force the hostname to whatever you want.

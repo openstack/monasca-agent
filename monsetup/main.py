@@ -72,6 +72,9 @@ def main(argv=None):
                         action="store_true")
     parser.add_argument('--user', help="User name to run monasca-agent as", default='monasca-agent')
     parser.add_argument('-s', '--service', help="Service this node is associated with, added as a dimension.")
+    parser.add_argument('--amplifier', help="Integer for the number of additional measurements to create." +
+                                            "Additional measurements contain the 'amplifier' dimension." +
+                                            "Useful for load testing; not for production use.", default=0, required=False)
     parser.add_argument('-v', '--verbose', help="Verbose Output", action="store_true")
     args = parser.parse_args()
 
