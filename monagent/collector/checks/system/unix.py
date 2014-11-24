@@ -121,10 +121,20 @@ class Disk(monagent.collector.checks.check.Check):
             if parts[1] == 0:
                 continue
 
+            #
+            # Remote shared storage device names like '10.103.0.220:/instances'
+            # cause invalid metrics on the api server side, so if we encounter
+            # a colon, remove everything to the left of it (including the
+            # offending colon).
+            #
+            device_name = parts[0]
+            idx = device_name.find(":")
+            if idx > 0:
+                device_name = device_name[(idx+1):]
             if inodes:
-                usage_data['%s.disk.inode_used_perc' % parts[0]] = float(parts[2]) / parts[1] * 100
+                usage_data['%s.disk.inode_used_perc' % device_name] = float(parts[2]) / parts[1] * 100
             else:
-                usage_data['%s.disk.space_used_perc' % parts[0]] = float(parts[2]) / parts[1] * 100
+                usage_data['%s.disk.space_used_perc' % device_name] = float(parts[2]) / parts[1] * 100
 
         return usage_data
 
