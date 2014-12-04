@@ -47,7 +47,7 @@ class HTTPCheck(ServicesCheck):
         return
 
     def _check(self, instance):
-        addr, username, password, timeout, headers, response_time, dimensions, disable_ssl_validation, pattern, use_keystone, token = self._load_conf(
+        addr, username, password, timeout, headers, response_time, dimensions, disable_ssl_validation, pattern, use_keystone = self._load_conf(
             instance)
 
         content = ''
