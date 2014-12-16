@@ -1,5 +1,8 @@
+import logging
+
 from keystoneclient.v3 import client as ksclient
 
+log = logging.getLogger(__name__)
 
 class Keystone(object):
 
@@ -15,7 +18,8 @@ class Keystone(object):
 
     def __init__(self, config):
         self.config = config
-        self._keystone_client = self._get_ksclient()
+        self._keystone_client = None
+        self._token = None
 
     def _get_ksclient(self):
         """Get an endpoint and auth token from Keystone.
@@ -57,13 +61,25 @@ class Keystone(object):
         project_id and auth_token were fetched when keystone client was created
 
         """
-        if self._keystone_client.project_id:
-            return self._keystone_client.auth_token
-        raise exc.CommandError("User does not have a default project. "
-                               "You must provide the following parameters "
-                               "in the agent config file: "
-                               "project_id OR (project_name AND "
-                               "(project_domain OR project_domain_name)).")
+        if not self._token:
+            if not self._keystone_client:
+                try:
+                    self._keystone_client = self._get_ksclient()
+                except Exception as exc:
+                    log.error("Unable to create the Keystone Client. " +
+                              "Error was {}".format(repr(exc)))
+                    return None
+            if self._keystone_client.project_id:
+                self._token = self._keystone_client.auth_token
+            else:
+                self._token = None
+                self._keystone_client = None
+                raise exc.CommandError("User does not have a default project. "
+                                       "You must provide the following parameters "
+                                       "in the agent config file: "
+                                       "project_id OR (project_name AND "
+                                       "(project_domain OR project_domain_name)).")
+        return self._token
 
     def refresh_token(self):
         """Gets a new keystone client object and token
@@ -71,5 +87,6 @@ class Keystone(object):
         This method should be called if the token has expired
 
         """
-        self._get_ksclient()
+        self._token = None
+        self._keystone_client = None
         return self.get_token()

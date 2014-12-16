@@ -15,6 +15,7 @@ from httplib2 import HttpLib2Error
 from monagent.collector.checks.check import AgentCheck
 from monagent.collector.checks.services_checks import ServicesCheck
 from monagent.collector.checks.services_checks import Status
+from monagent.common.keystone import Keystone
 
 
 class HTTPCheck(ServicesCheck):
@@ -63,12 +64,15 @@ class HTTPCheck(ServicesCheck):
         retry = False
         while not done or retry:
             if use_keystone:
-                token = self.keystone.get_token()
+                api_config = self.agent_config['Api']
+                keystone = Keystone(api_config)
+                token = keystone.get_token()
                 if token:
                     headers["X-Auth-Token"] = token
                     headers["Content-type"] = "application/json"
                 else:
-                    self.log.warning("Unable to get token, skipping check...")
+                    self.log.warning("""Unable to get token. Keystone API server may be down.
+                                     Skipping check for {}""".format(addr))
                     return
             try:
                 self.log.debug("Connecting to %s" % addr)

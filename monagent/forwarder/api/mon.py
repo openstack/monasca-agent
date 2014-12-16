@@ -54,8 +54,11 @@ class MonAPI(object):
         if delegated_tenant is not None:
             kwargs['tenant_id'] = delegated_tenant
         if not self.mon_client:
-            # construct the monasca client
             self.mon_client = self.get_monclient()
+            if not self.mon_client:
+                # Keystone is down, queue the message
+                self._queue_message(kwargs.copy())
+                return
 
         if self._send_message(**kwargs):
             if len(self.message_queue) > 0:
@@ -117,11 +120,16 @@ class MonAPI(object):
         """get_monclient
             get a new monasca-client object
         """
-        # Create the client.
-        kwargs = {
-            'token': self.keystone.get_token()
-        }
-        return client.Client(self.api_version, self.url, **kwargs)
+        token = self.keystone.get_token()
+        if token:
+            # Create the client.
+            kwargs = {
+                'token': token
+            }
+
+            return client.Client(self.api_version, self.url, **kwargs)
+
+        return None
 
     def _send_message(self, **kwargs):
         try:
@@ -145,7 +153,7 @@ class MonAPI(object):
         self.message_queue.append(msg)
         queue_size = len(self.message_queue)
         if queue_size is 1 or queue_size % MonAPI.LOG_INTERVAL == 0:
-            log.warn("API is down or unreachable.  Queuing the messages to send later...")
+            log.warn("Monasca API or Keystone API are down or unreachable.  Queuing the messages to send later...")
             log.info("Current agent queue size: {0} of {1}.".format(len(self.message_queue),
                                                                     self.max_buffer_size))
             log.info("A message will be logged for every {0} messages queued.".format(MonAPI.LOG_INTERVAL))

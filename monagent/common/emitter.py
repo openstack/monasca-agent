@@ -39,11 +39,17 @@ def http_emitter(message, log, url):
         # Should this be installed as the default opener and reused?
         opener = urllib2.build_opener(proxy_handler)
         request = urllib2.Request(url, payload, headers)
-        response = opener.open(request)
+        response = None
         try:
+            response = opener.open(request)
             log.debug('http_emitter: postback response: ' + str(response.read()))
+        except Exception as exc:
+            log.error("""Forwarder at {} is down or not responding...
+                      Error is {}
+                      Please restart the monasca-agent.""".format(url, repr(exc)))
         finally:
-            response.close()
+            if response:
+                response.close()
     except urllib2.HTTPError as e:
         if e.code == 202:
             log.debug("http payload accepted")

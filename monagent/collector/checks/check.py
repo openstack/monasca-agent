@@ -15,7 +15,6 @@ import traceback
 
 import yaml
 
-from monagent.common.keystone import Keystone
 from monagent.common.aggregator import MetricsAggregator
 import monagent.common.config
 import monagent.common.exceptions
@@ -302,9 +301,6 @@ class AgentCheck(object):
         self.warnings = []
         self.library_versions = None
 
-        api_config = self.agent_config['Api']
-        self.keystone = Keystone(api_config)
-
     def instance_count(self):
         """Return the number of instances that are configured for this check.
         """
@@ -530,7 +526,6 @@ class AgentCheck(object):
         instance_statuses = []
         for i, instance in enumerate(self.instances):
             try:
-                instance['keystone'] = self.keystone
                 self.check(instance)
                 if self.has_warnings():
                     instance_status = monagent.common.check_status.InstanceStatus(i,
