@@ -1,0 +1,17 @@
+init_config:
+    # These are Nova credentials, [keystone_authtoken] in /etc/nova/nova.conf
+    admin_password: pass
+    admin_tenant_name: service
+    admin_user: nova
+    identity_uri: 'http://192.168.10.5:35357/v2.0'
+    # Location of temporary files maintained by the plugin.  Ramdisk preferred.
+    cache_dir: /dev/shm
+    # How long to wait before querying Nova for instance updates? (seconds)
+    # Note that there is an automatic refresh if new instances are encountered.
+    nova_refresh: 14400
+    # How long before gathering data on newly-provisioned instances? (seconds)
+    vm_probation: 300
+instances:
+    # Instances are automatically detected through queries to the Nova API,
+    # and therefore do not need to be listed here, so this remains empty.
+    - {}
