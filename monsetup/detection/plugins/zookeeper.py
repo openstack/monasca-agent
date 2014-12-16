@@ -19,7 +19,7 @@ class Zookeeper(monsetup.detection.Plugin):
         """Run detection, set self.available True if the service is detected.
 
         """
-        if monsetup.detection.find_process_cmdline('zookeeper') is not None:
+        if monsetup.detection.find_process_cmdline('org.apache.zookeeper') is not None:
             self.available = True
 
     def build_config(self):
