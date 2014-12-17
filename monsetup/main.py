@@ -12,6 +12,7 @@ import socket
 import subprocess
 import sys
 import yaml
+
 from detection.plugins import ceilometer
 from detection.plugins import cinder
 from detection.plugins import glance
@@ -86,7 +87,21 @@ def main(argv=None):
     # Detect os
     detected_os = platform.system()
     if detected_os == 'Linux':
-        pass
+        linux_flavor = platform.linux_distribution()[0]
+        if 'Ubuntu' or 'debian' in linux_flavor:
+            for package in ['coreutils', 'sysstat']:
+                #Check for required dependencies for system checks
+                try:
+                    output = subprocess.check_output('dpkg -s {}'.format(package),
+                                                     stderr=subprocess.STDOUT,
+                                                     shell=True)
+                except subprocess.CalledProcessError:
+                    log.warn("*** {} package is not installed! ***".format(package) +
+                             "\nNOTE: If you do not install the {} ".format(package) +
+                             "package, you will not receive all of the standard " +
+                             "operating system type metrics!")
+        else:
+            pass
     elif detected_os == 'Darwin':
         print("Mac OS is not currently supported by the Monasca Agent")
         sys.exit()
