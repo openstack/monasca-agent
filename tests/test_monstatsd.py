@@ -4,10 +4,10 @@ import unittest
 
 import nose.tools as nt
 
-from monagent.common.aggregator import MetricsAggregator
+from monasca_agent.common.aggregator import MetricsAggregator
 
 
-class TestUnitMonStatsd(unittest.TestCase):
+class TestUnitMonascaStatsd(unittest.TestCase):
 
     @staticmethod
     def sort_metrics(metrics):
@@ -413,7 +413,7 @@ class TestUnitMonStatsd(unittest.TestCase):
     def test_event_title(self):
         stats = MetricsAggregator('myhost')
         stats.submit_packets('_e{0,4}:|text')
-        stats.submit_packets(u'_e{9,4}:2intitulé|text')
+        stats.submit_packets(u'_e{9,4}:2intitul��|text')
         stats.submit_packets('_e{14,4}:3title content|text')
         stats.submit_packets('_e{14,4}:4title|content|text')
         stats.submit_packets('_e{13,4}:5title\\ntitle|text')  # \n stays escaped
@@ -424,7 +424,7 @@ class TestUnitMonStatsd(unittest.TestCase):
         first, second, third, fourth, fifth = events
 
         nt.assert_equal(first['title'], '')
-        nt.assert_equal(second['title'], u'2intitulé')
+        nt.assert_equal(second['title'], u'2intitul��')
         nt.assert_equal(third['title'], '3title content')
         nt.assert_equal(fourth['title'], '4title|content')
         nt.assert_equal(fifth['title'], '5title\\ntitle')
@@ -434,7 +434,7 @@ class TestUnitMonStatsd(unittest.TestCase):
         stats.submit_packets('_e{2,0}:t1|')
         stats.submit_packets('_e{2,12}:t2|text|content')
         stats.submit_packets('_e{2,23}:t3|First line\\nSecond line')  # \n is a newline
-        stats.submit_packets(u'_e{2,19}:t4|♬ †øU †øU ¥ºu T0µ ♪')  # utf-8 compliant
+        stats.submit_packets(u'_e{2,19}:t4|��� �����U �����U ����u T0�� ���')  # utf-8 compliant
 
         events = self.sort_events(stats.flush_events())
 
@@ -444,7 +444,7 @@ class TestUnitMonStatsd(unittest.TestCase):
         nt.assert_equal(first['text'], '')
         nt.assert_equal(second['text'], 'text|content')
         nt.assert_equal(third['text'], 'First line\nSecond line')
-        nt.assert_equal(fourth['text'], u'♬ †øU †øU ¥ºu T0µ ♪')
+        nt.assert_equal(fourth['text'], u'��� �����U �����U ����u T0�� ���')
 
 
 if __name__ == "__main__":

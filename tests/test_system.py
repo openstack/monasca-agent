@@ -8,10 +8,10 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__file__)
 
 from common import get_check
-from monagent.collector.checks.system.unix import Cpu
-from monagent.collector.checks.system.unix import Disk
-from monagent.collector.checks.system.unix import IO
-from monagent.collector.checks.system.unix import Memory
+from monasca_agent.collector.checks.system.unix import Cpu
+from monasca_agent.collector.checks.system.unix import Disk
+from monasca_agent.collector.checks.system.unix import IO
+from monasca_agent.collector.checks.system.unix import Memory
 
 
 class TestSystem(unittest.TestCase):

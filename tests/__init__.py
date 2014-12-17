@@ -1,4 +1,4 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '../monagent'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../monasca_agent'))

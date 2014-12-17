@@ -6,9 +6,9 @@ from random import random, randrange
 import urllib as url
 import time
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '../monagent'))
-from monagent.collector.daemon import CollectorDaemon
-from monagent.common.util import Watchdog
+sys.path.append(os.path.join(os.path.dirname(__file__), '../monasca_agent'))
+from monasca_agent.collector.daemon import CollectorDaemon
+from monasca_agent.common.util import Watchdog
 
 
 class TestWatchdog(unittest.TestCase):

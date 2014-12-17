@@ -79,24 +79,24 @@ use_mount: no
 # non_local_traffic: no
 
 # ========================================================================== #
-# MonStatsd configuration                                                    #
+# Monasca Statsd configuration                                                    #
 # ========================================================================== #
 
-# MonStatsd is a small server that aggregates your custom app metrics.
+# Monasca Statsd is a small server that aggregates your custom app metrics.
 
 #  Make sure your client is sending to the same port.
-monstatsd_port : 8125
+monasca_statsd_port : 8125
 
-## The monstatsd flush period.
-# monstatsd_interval : 10
+## The monasca_statsd flush period.
+# monasca_statsd_interval : 10
 
 ## If 'yes', counters and rates will be normalized to 1 second (that is divided
-## by the monstatsd_interval) before being sent to the server. Defaults to 'yes'
-# monstatsd_normalize : yes
+## by the monasca_statsd_interval) before being sent to the server. Defaults to 'yes'
+# monasca_statsd_normalize : yes
 
-# If you want to forward every packet received by the monstatsd server
+# If you want to forward every packet received by the monasca_statsd server
 # to another statsd server, uncomment these lines.
-# WARNING: Make sure that forwarded packets are regular statsd packets and not "monstatsd" packets,
+# WARNING: Make sure that forwarded packets are regular statsd packets and not "monasca_statsd" packets,
 # as your other statsd server might not be able to handle them.
 # statsd_forward_host: address_of_own_statsd_server
 # statsd_forward_port: 8125
@@ -155,7 +155,7 @@ log_level: INFO
 
 collector_log_file: /var/log/monasca/agent/collector.log
 forwarder_log_file: /var/log/monasca/agent/forwarder.log
-monstatsd_log_file: /var/log/monasca/agent/monstatsd.log
+statsd_log_file: /var/log/monasca/agent/statsd.log
 
 # if syslog is enabled but a host and port are not set, a local domain socket
 # connection will be attempted

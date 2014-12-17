@@ -1,7 +1,7 @@
 import nose.tools as nt
 
-from monagent.collector.checks import AgentCheck
-from monagent.common.check_status import STATUS_OK, STATUS_ERROR, InstanceStatus, CheckStatus, CollectorStatus
+from monasca_agent.collector.checks import AgentCheck
+from monasca_agent.common.check_status import STATUS_OK, STATUS_ERROR, InstanceStatus, CheckStatus, CollectorStatus
 
 
 class DummyAgentCheck(AgentCheck):

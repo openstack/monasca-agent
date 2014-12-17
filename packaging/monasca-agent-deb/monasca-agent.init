@@ -16,7 +16,7 @@ export PYTHONPATH=$PYTHONPATH:/usr/monasca/agent/
 
 AGENTPATH="/usr/local/bin/monasca-collector"
 AGENTCONF="/etc/monasca/agent/agent.conf"
-MONSTATSDPATH="/usr/local/bin/monasca-statsd"
+MONASCASTATSDPATH="/usr/local/bin/monasca-statsd"
 AGENTUSER="monasca-agent"
 FORWARDERPATH="/usr/local/bin/monasca-forwarder"
 NAME="monasca-agent"
@@ -125,11 +125,11 @@ case "$1" in
               # (right now only monasca-agent supports additional flags)
         su $AGENTUSER -c "$AGENTPATH info $@"
         COLLECTOR_RETURN=$?
-        su $AGENTUSER -c "$MONSTATSDPATH info"
-        MONSTATSD_RETURN=$?
+        su $AGENTUSER -c "$MONASCASTATSDPATH info"
+        MONASCASTATSD_RETURN=$?
         su $AGENTUSER -c "$FORWARDERPATH info"
         FORWARDER_RETURN=$?
-        exit $(($COLLECTOR_RETURN+$MONSTATSD_RETURN+$FORWARDER_RETURN))
+        exit $(($COLLECTOR_RETURN+$MONASCASTATSD_RETURN+$FORWARDER_RETURN))
         ;;
 
     status)

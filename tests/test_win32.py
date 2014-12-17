@@ -8,7 +8,7 @@ import sys
 # from nose.plugins.attrib import attr
 
 # project
-from monagent.collector import checks as w32
+from monasca_agent.collector import checks as w32
 from nose.plugins.skip import SkipTest
 
 logging.basicConfig(level=logging.DEBUG)

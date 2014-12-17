@@ -10,7 +10,7 @@ SRC=../
 ROOT=root
 BUILD_NUMBER ?= 0
 
-VERSION=`PYTHONPATH=$(SRC) python -c "from monagent.common.config import get_version; print get_version()"`
+VERSION=`PYTHONPATH=$(SRC) python -c "from monasca_agent.common.config import get_version; print get_version()"`
 
 FPM_BUILD=fpm --epoch 1 -s dir -e -C $(BUILD) \
 -a all -m "HP Cloud Monitoring <hpcs-mon@hp.com>" \
@@ -34,7 +34,7 @@ clean:
 # root directory.
 source:
 	mkdir -p $(ROOT)
-	cp -r $(SRC)/monagent $(ROOT)/
+	cp -r $(SRC)/monasca_agent $(ROOT)/
 	cp -r $(SRC)/conf.d $(ROOT)/
 	cp -r $(SRC)/LICENSE* $(ROOT)/
 	cp -r $(SRC)/agent.conf.template $(ROOT)/
@@ -54,9 +54,9 @@ install_full: source
 	# Install the source to usr/share
 	cp -r $(ROOT)/* $(BUILD)/usr/share/monasca/agent
 	# Install the common executables.
-	ln -sf ../share/monasca/agent/monagent/monstatsd/daemon.py $(BUILD)/usr/bin/monasca-statsd
-	ln -sf ../share/monasca/agent/monagent/forwarder/daemon.py $(BUILD)/usr/bin/monasca-forwarder
-	ln -sf ../share/monasca/agent/monagent/collector/daemon.py $(BUILD)/usr/bin/monasca-collector
+	ln -sf ../share/monasca/agent/monasca_agent/statsd/daemon.py $(BUILD)/usr/bin/monasca-statsd
+	ln -sf ../share/monasca/agent/monasca_agent/forwarder/daemon.py $(BUILD)/usr/bin/monasca-forwarder
+	ln -sf ../share/monasca/agent/monasca_agent/collector/daemon.py $(BUILD)/usr/bin/monasca-collector
 	chmod 755 $(BUILD)/usr/bin/monasca-statsd
 	chmod 755 $(BUILD)/usr/bin/monasca-forwarder
 	chmod 755 $(BUILD)/usr/bin/monasca-collector

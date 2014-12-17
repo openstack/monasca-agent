@@ -3,8 +3,8 @@ import unittest
 import os.path
 import tempfile
 
-from monagent.common.config import get_config
-from monagent.common.util import PidFile, is_valid_hostname
+from monasca_agent.common.config import get_config
+from monasca_agent.common.util import PidFile, is_valid_hostname
 
 
 class TestConfig(unittest.TestCase):

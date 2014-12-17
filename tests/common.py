@@ -3,9 +3,9 @@ import inspect
 import os
 import signal
 
-from monagent.collector.checks import AgentCheck
-from monagent.common.config import get_checksd_path
-from monagent.common.util import get_os
+from monasca_agent.collector.checks import AgentCheck
+from monasca_agent.common.config import get_checksd_path
+from monasca_agent.common.util import get_os
 
 
 def load_check(name, config, agent_config):
