@@ -560,14 +560,13 @@ class Memory(monagent.collector.checks.check.Check):
                 memData['mem.used_cached'] = int(meminfo.get('Cached', 0)) / 1024
                 memData['mem.used_shared'] = int(meminfo.get('Shmem', 0)) / 1024
 
-                memData['mem.usable_perc'] = memData['mem.total_mb'] - memData['mem.free_mb']
                 # Usable is relative since cached and buffers are actually used to speed things up.
                 memData['mem.usable_mb'] = memData['mem.free_mb'] + \
                     memData['mem.used_buffers'] + memData['mem.used_cached']
 
                 if memData['mem.total_mb'] > 0:
                     memData['mem.usable_perc'] = float(
-                        memData['mem.usable_mb']) / float(memData['mem.total_mb'])
+                        (memData['mem.usable_mb']) / float(memData['mem.total_mb']) * 100)
             except Exception:
                 self.logger.exception('Cannot compute stats from /proc/meminfo')
 
@@ -582,7 +581,7 @@ class Memory(monagent.collector.checks.check.Check):
 
                 if memData['mem.swap_total_mb'] > 0:
                     memData['mem.swap_free_perc'] = float(
-                        memData['mem.swap_free_mb']) / float(memData['mem.swap_total_mb'])
+                        (memData['mem.swap_free_mb']) / float(memData['mem.swap_total_mb']) * 100)
             except Exception:
                 self.logger.exception('Cannot compute swap stats')
 
