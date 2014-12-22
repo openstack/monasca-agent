@@ -131,6 +131,7 @@ class Aggregator(object):
             new_dimensions.update(dimensions.copy())
         return new_dimensions
 
+
 class MetricsBucketAggregator(Aggregator):
 
     """
@@ -171,24 +172,25 @@ class MetricsBucketAggregator(Aggregator):
         if timestamp is not None and cur_time - int(timestamp) > self.recent_point_threshold:
             log.debug("Discarding %s - ts = %s , current ts = %s " % (name, timestamp, cur_time))
             self.num_discarded_old_points += 1
+            return
+
+        timestamp = timestamp or cur_time
+        # Keep track of the buckets using the timestamp at the start time of the bucket
+        bucket_start_timestamp = self.calculate_bucket_start(timestamp)
+        if bucket_start_timestamp == self.current_bucket:
+            metric_by_context = self.current_mbc
         else:
-            timestamp = timestamp or cur_time
-            # Keep track of the buckets using the timestamp at the start time of the bucket
-            bucket_start_timestamp = self.calculate_bucket_start(timestamp)
-            if bucket_start_timestamp == self.current_bucket:
-                metric_by_context = self.current_mbc
-            else:
-                if bucket_start_timestamp not in self.metric_by_bucket:
-                    self.metric_by_bucket[bucket_start_timestamp] = {}
-                metric_by_context = self.metric_by_bucket[bucket_start_timestamp]
-                self.current_bucket = bucket_start_timestamp
-                self.current_mbc = metric_by_context
+            if bucket_start_timestamp not in self.metric_by_bucket:
+                self.metric_by_bucket[bucket_start_timestamp] = {}
+            metric_by_context = self.metric_by_bucket[bucket_start_timestamp]
+            self.current_bucket = bucket_start_timestamp
+            self.current_mbc = metric_by_context
 
         if context not in metric_by_context:
             metric_class = self.metric_type_to_class[mtype]
             metric_by_context[context] = metric_class(self.formatter, name,
-                                                      new_dimensions, delegated_tenant,
-                                                      hostname or self.hostname, device_name)
+                                                      new_dimensions, hostname or self.hostname,
+                                                      device_name, delegated_tenant)
 
         metric_by_context[context].sample(value, sample_rate, timestamp)
 
@@ -204,7 +206,8 @@ class MetricsBucketAggregator(Aggregator):
             else:
                 # The expiration currently only applies to Counters
                 # This counts on the ordering of the context created in submit_metric not changing
-                metric = Counter(self.formatter, context[0], context[1], context[2], context[3], context[4])
+                metric = Counter(self.formatter, context[0], self.set_dimensions(dict(context[1])),
+                                 context[2] or self.hostname, context[3], context[4])
                 metrics += metric.flush(flush_timestamp, self.interval)
 
     def flush(self):

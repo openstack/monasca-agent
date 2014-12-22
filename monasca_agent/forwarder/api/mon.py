@@ -6,8 +6,6 @@ from monascaclient import exc as exc, client
 from monasca_agent.common.keystone import Keystone
 from monasca_agent.common.util import get_hostname
 
-import requests
-
 log = logging.getLogger(__name__)
 
 

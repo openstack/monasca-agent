@@ -46,7 +46,7 @@ class Gauge(Metric):
     """ A metric that tracks a value at particular points in time. """
 
     def __init__(self, formatter, name, dimensions,
-                 hostname, device_name, delegated_tenant = None):
+                 hostname, device_name, delegated_tenant=None):
         self.formatter = formatter
         self.name = name
         self.value = None
@@ -114,7 +114,7 @@ class Counter(Metric):
     """ A metric that tracks a counter value. """
 
     def __init__(self, formatter, name, dimensions,
-                 hostname, device_name, delegated_tenant = None):
+                 hostname, device_name, delegated_tenant=None):
         self.formatter = formatter
         self.name = name
         self.value = 0
@@ -263,7 +263,7 @@ class Rate(Metric):
     """ Track the rate of metrics over each flush interval """
 
     def __init__(self, formatter, name, dimensions,
-                 hostname, device_name, delegated_tenant = None):
+                 hostname, device_name, delegated_tenant=None):
         self.formatter = formatter
         self.name = name
         self.dimensions = dimensions

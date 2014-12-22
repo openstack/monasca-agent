@@ -10,12 +10,9 @@ from monasca_agent.statsd.udp import Server
 
 initialize_logging('statsd')
 
-import os
-os.umask(0o22)
-
 # stdlib
+import argparse
 import logging
-import optparse
 import signal
 import sys
 
@@ -23,20 +20,36 @@ import sys
 from monasca_agent.common.aggregator import MetricsBucketAggregator
 from monasca_agent.common.check_status import MonascaStatsdStatus
 from monasca_agent.common.config import get_config
-from monasca_agent.common.daemon import Daemon, AgentSupervisor
-from monasca_agent.common.util import PidFile, get_hostname
+from monasca_agent.common.util import get_hostname
 
 log = logging.getLogger('statsd')
 
 
-class MonascaStatsd(Daemon):
-
+class MonascaStatsd(object):
     """ This class is the monasca_statsd daemon. """
 
-    def __init__(self, pid_file, server, reporter, autorestart):
-        Daemon.__init__(self, pid_file, autorestart=autorestart)
-        self.server = server
-        self.reporter = reporter
+    def __init__(self, config_path):
+        config = get_config(parse_args=False, cfg_path=config_path)
+
+        # Create the aggregator (which is the point of communication between the server and reporting threads.
+        aggregator = MetricsBucketAggregator(get_hostname(config),
+                                             int(config['monasca_statsd_agregator_bucket_size']),
+                                             recent_point_threshold=config.get('recent_point_threshold', None))
+
+        # Start the reporting thread.
+        interval = int(config['monasca_statsd_interval'])
+        assert 0 < interval
+        self.reporter = Reporter(interval, aggregator, config['forwarder_url'], True, config.get('event_chunk_size'))
+
+        # Start the server on an IPv4 stack
+        if config['non_local_traffic']:
+            server_host = ''
+        else:
+            server_host = 'localhost'
+
+        self.server = Server(aggregator, server_host, config['monasca_statsd_port'],
+                             forward_to_host=config.get('statsd_forward_host'),
+                             forward_to_port=config.get('statsd_forward_port'))
 
     def _handle_sigterm(self, signum, frame):
         log.debug("Caught sigterm. Stopping run loop.")
@@ -64,96 +77,22 @@ class MonascaStatsd(Daemon):
             self.reporter.stop()
             self.reporter.join()
             log.info("monasca_statsd is stopped")
-            # Restart if asked to restart
-            if self.autorestart:
-                sys.exit(AgentSupervisor.RESTART_EXIT_STATUS)
 
-    def info(self):
+
+def main():
+    """ The main entry point for the unix version of monasca_statsd. """
+    parser = argparse.ArgumentParser(description='Monasca statsd - statsd server supporting metric dimensions')
+    parser.add_argument('--config', '-c',
+                        help="Location for an alternate config rather than using the default config location.")
+    parser.add_argument('--info', action='store_true', help="Output info about the running Monasca Statsd")
+    args = parser.parse_args()
+
+    if args.info:
         logging.getLogger().setLevel(logging.ERROR)
         return MonascaStatsdStatus.print_latest_status()
 
-
-def init_monasca_statsd(config_path=None, use_watchdog=False):
-    """Configure the server and the reporting thread.
-    """
-    c = get_config(parse_args=False, cfg_path=config_path)
-    log.debug("Configuration monasca_statsd")
-
-    port = c['monasca_statsd_port']
-    interval = int(c['monasca_statsd_interval'])
-    aggregator_interval = int(c['monasca_statsd_agregator_bucket_size'])
-    non_local_traffic = c['non_local_traffic']
-    forward_to_host = c.get('statsd_forward_host')
-    forward_to_port = c.get('statsd_forward_port')
-    event_chunk_size = c.get('event_chunk_size')
-
-    target = c['forwarder_url']
-
-    hostname = get_hostname(c)
-
-    # Create the aggregator (which is the point of communication between the
-    # server and reporting threads.
-    assert 0 < interval
-
-    aggregator = MetricsBucketAggregator(
-        hostname,
-        aggregator_interval,
-        recent_point_threshold=c.get(
-            'recent_point_threshold',
-            None))
-
-    # Start the reporting thread.
-    reporter = Reporter(interval, aggregator, target, use_watchdog, event_chunk_size)
-
-    # Start the server on an IPv4 stack
-    # Default to loopback
-    server_host = 'localhost'
-    # If specified, bind to all addressses
-    if non_local_traffic:
-        server_host = ''
-
-    server = Server(aggregator, server_host, port, forward_to_host=forward_to_host,
-                    forward_to_port=forward_to_port)
-
-    return reporter, server, c
-
-
-def main(config_path=None):
-    """ The main entry point for the unix version of monasca_statsd. """
-    parser = optparse.OptionParser("%prog [start|stop|restart|status]")
-    opts, args = parser.parse_args()
-
-    reporter, server, cnf = init_monasca_statsd(config_path, use_watchdog=True)
-    pid_file = PidFile('monasca_statsd')
-    daemon = MonascaStatsd(pid_file.get_path(), server, reporter,
-                           cnf.get('autorestart', False))
-
-    # If no args were passed in, run the server in the foreground.
-    # todo does this need to be a daemon even when it basically always runs in the foreground, if not
-    # restructure and get rid of the silly init_function
-    if not args:
-        daemon.run()
-        return 0
-
-    # Otherwise, we're process the deamon command.
-    else:
-        command = args[0]
-
-        if command == 'start':
-            daemon.start()
-        elif command == 'stop':
-            daemon.stop()
-        elif command == 'restart':
-            daemon.restart()
-        elif command == 'status':
-            daemon.status()
-        elif command == 'info':
-            return daemon.info()
-        else:
-            sys.stderr.write("Unknown command: %s\n\n" % command)
-            parser.print_help()
-            return 1
-        return 0
+    monasca_statsd = MonascaStatsd(args.config)
+    monasca_statsd.run()
 
 
 if __name__ == '__main__':

@@ -30,7 +30,7 @@ from monasca_agent.collector.jmxfetch import JMXFetch, JMX_COLLECT_COMMAND
 # CONSTANTS
 AGENT_CONF = "agent.conf"
 DEFAULT_CHECK_FREQUENCY = 15  # seconds
-DEFAULT_STATSD_FREQUENCY = 2  # seconds
+DEFAULT_STATSD_FREQUENCY = 20  # seconds
 DEFAULT_STATSD_BUCKET_SIZE = 10  # seconds
 LOGGING_MAX_BYTES = 5 * 1024 * 1024
 DEFAULT_CONFIG_DIR = '/etc/monasca/agent'
@@ -192,7 +192,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         'check_freq': DEFAULT_CHECK_FREQUENCY,
         'monasca_statsd_interval': DEFAULT_STATSD_FREQUENCY,
         'monasca_statsd_agregator_bucket_size': DEFAULT_STATSD_BUCKET_SIZE,
-        'monasca_statsd_normalize': 'yes',
         'monasca_statsd_port': 8125,
         'forwarder_url': 'http://localhost:17123',
         'hostname': None,
@@ -263,7 +262,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
             'monasca_statsd_port': 8125,
             'monasca_statsd_interval': monasca_statsd_interval,
             'monasca_statsd_agregator_bucket_size': monasca_statsd_agregator_bucket_size,
-            'monasca_statsd_normalize': 'yes',
         }
         for key, value in monasca_statsd_defaults.iteritems():
             if config.has_option('Main', key):
@@ -276,10 +274,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
             agent_config['statsd_forward_host'] = config.get('Main', 'statsd_forward_host')
             if config.has_option('Main', 'statsd_forward_port'):
                 agent_config['statsd_forward_port'] = int(config.get('Main', 'statsd_forward_port'))
-
-        # normalize 'yes'/'no' to boolean
-        monasca_statsd_defaults['monasca_statsd_normalize'] = _is_affirmative(
-            monasca_statsd_defaults['monasca_statsd_normalize'])
 
         # Optional config
         # FIXME not the prettiest code ever...

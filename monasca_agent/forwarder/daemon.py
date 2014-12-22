@@ -18,7 +18,7 @@ initialize_logging('forwarder')
 from monasca_agent.common.config import get_logging_config
 
 import os
-os.umask(0o22)
+os.umask(022)
 
 # Standard imports
 import logging

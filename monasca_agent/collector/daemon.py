@@ -19,7 +19,7 @@ import monasca_agent.common.util
 
 # set up logging before importing any other components
 monasca_agent.common.config.initialize_logging('collector')
-os.umask(0o22)
+os.umask(022)
 
 # Check we're not using an old version of Python. We need 2.4 above because
 # some modules (like subprocess) were only introduced in 2.4.

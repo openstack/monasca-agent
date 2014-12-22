@@ -19,7 +19,6 @@ EVENT_CHUNK_SIZE = 50
 
 
 class Reporter(threading.Thread):
-
     """
     The reporter periodically sends the aggregated metrics to the
     server.
