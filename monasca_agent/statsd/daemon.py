@@ -8,7 +8,7 @@ from monasca_agent.common.config import initialize_logging
 from monasca_agent.statsd.reporter import Reporter
 from monasca_agent.statsd.udp import Server
 
-initialize_logging('monasca_statsd')
+initialize_logging('statsd')
 
 import os
 os.umask(0o22)
@@ -26,7 +26,7 @@ from monasca_agent.common.config import get_config
 from monasca_agent.common.daemon import Daemon, AgentSupervisor
 from monasca_agent.common.util import PidFile, get_hostname
 
-log = logging.getLogger('monasca_statsd')
+log = logging.getLogger('statsd')
 
 
 class MonascaStatsd(Daemon):
@@ -125,8 +125,8 @@ def main(config_path=None):
 
     reporter, server, cnf = init_monasca_statsd(config_path, use_watchdog=True)
     pid_file = PidFile('monasca_statsd')
-    daemon = monasca_statsd(pid_file.get_path(), server, reporter,
-                            cnf.get('autorestart', False))
+    daemon = MonascaStatsd(pid_file.get_path(), server, reporter,
+                           cnf.get('autorestart', False))
 
     # If no args were passed in, run the server in the foreground.
     # todo does this need to be a daemon even when it basically always runs in the foreground, if not

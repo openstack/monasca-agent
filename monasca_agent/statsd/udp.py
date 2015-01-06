@@ -3,8 +3,8 @@ import logging
 import select
 import socket
 from monasca_agent.common.config import initialize_logging
-initialize_logging('monasca_statsd')
-log = logging.getLogger('monasca_statsd')
+initialize_logging('statsd')
+log = logging.getLogger('statsd')
 
 
 UDP_SOCKET_TIMEOUT = 5

@@ -5,8 +5,8 @@ from monasca_agent.common.check_status import MonascaStatsdStatus
 from monasca_agent.common.emitter import http_emitter
 from monasca_agent.common.util import plural
 from monasca_agent.common.config import initialize_logging
-initialize_logging('monasca_statsd')
-log = logging.getLogger('monasca_statsd')
+initialize_logging('statsd')
+log = logging.getLogger('statsd')
 
 
 WATCHDOG_TIMEOUT = 120
