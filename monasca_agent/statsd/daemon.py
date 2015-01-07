@@ -4,11 +4,14 @@ A Python Statsd implementation with dimensions added
 """
 
 # set up logging before importing any other components
-from monasca_agent.common.config import initialize_logging
-from monasca_agent.statsd.reporter import Reporter
-from monasca_agent.statsd.udp import Server
+import monasca_agent.common.util as util
+util.initialize_logging('statsd')
 
-initialize_logging('statsd')
+import monasca_agent.common.config as cfg
+
+import monasca_agent.statsd.reporter as reporter
+import monasca_agent.statsd.udp as udp
+
 
 # stdlib
 import argparse
@@ -17,10 +20,8 @@ import signal
 import sys
 
 # project
-from monasca_agent.common.aggregator import MetricsAggregator
-from monasca_agent.common.check_status import MonascaStatsdStatus
-from monasca_agent.common.config import get_config
-from monasca_agent.common.util import get_hostname
+import monasca_agent.common.aggregator as agg
+import monasca_agent.common.check_status as check_status
 
 log = logging.getLogger('statsd')
 
@@ -29,27 +30,32 @@ class MonascaStatsd(object):
     """ This class is the monasca_statsd daemon. """
 
     def __init__(self, config_path):
-        config = get_config(parse_args=False, cfg_path=config_path)
+        config = cfg.Config()
+        statsd_config = config.get_config(['Main', 'Statsd'])
 
         # Create the aggregator (which is the point of communication between the server and reporting threads.
-        aggregator = MetricsAggregator(get_hostname(config),
-                                             int(config['monasca_statsd_agregator_interval']),
-                                             recent_point_threshold=config.get('recent_point_threshold', None))
+        aggregator = agg.MetricsAggregator(util.get_hostname(),
+                                           int(statsd_config['monasca_statsd_agregator_interval']),
+                                           recent_point_threshold=statsd_config['recent_point_threshold'])
 
         # Start the reporting thread.
-        interval = int(config['monasca_statsd_interval'])
+        interval = int(statsd_config['monasca_statsd_interval'])
         assert 0 < interval
-        self.reporter = Reporter(interval, aggregator, config['forwarder_url'], True, config.get('event_chunk_size'))
+        self.reporter = reporter.Reporter(interval,
+                                          aggregator,
+                                          statsd_config['forwarder_url'],
+                                          True,
+                                          statsd_config.get('event_chunk_size'))
 
         # Start the server on an IPv4 stack
-        if config['non_local_traffic']:
+        if statsd_config['non_local_traffic']:
             server_host = ''
         else:
             server_host = 'localhost'
 
-        self.server = Server(aggregator, server_host, config['monasca_statsd_port'],
-                             forward_to_host=config.get('statsd_forward_host'),
-                             forward_to_port=config.get('statsd_forward_port'))
+        self.server = udp.Server(aggregator, server_host, statsd_config['monasca_statsd_port'],
+                                 forward_to_host=statsd_config.get('monasca_statsd_forward_host'),
+                                 forward_to_port=int(statsd_config.get('monasca_statsd_forward_port')))
 
     def _handle_sigterm(self, signum, frame):
         log.debug("Caught sigterm. Stopping run loop.")
@@ -89,7 +95,7 @@ def main():
 
     if args.info:
         logging.getLogger().setLevel(logging.ERROR)
-        return MonascaStatsdStatus.print_latest_status()
+        return check_status.MonascaStatsdStatus.print_latest_status()
 
     monasca_statsd = MonascaStatsd(args.config)
     monasca_statsd.run()

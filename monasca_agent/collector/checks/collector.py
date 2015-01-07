@@ -31,8 +31,8 @@ class Collector(util.Dimensions):
 
     def __init__(self, agent_config, emitter, checksd=None):
         super(Collector, self).__init__(agent_config)
-        self.emit_duration = None
         self.agent_config = agent_config
+        self.emit_duration = None
         self.os = util.get_os()
         self.plugins = None
         self.emitter = emitter
@@ -59,7 +59,7 @@ class Collector(util.Dimensions):
             self._checks = []
             # Only setup the configured system checks
             for check in self.agent_config.get('system_metrics', []):
-                self._checks.append(possible_checks[check](log, agent_config))
+                self._checks.append(possible_checks[check](log, self.agent_config))
 
         if checksd:
             # is of type {check_name: check}

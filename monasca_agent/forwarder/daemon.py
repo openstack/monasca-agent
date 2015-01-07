@@ -1,63 +1,56 @@
 #!/usr/bin/env python
 """
-    Datadog
-    www.datadoghq.com
-    ----
-    Make sense of your IT Data
-
     Licensed under Simplified BSD License (see LICENSE)
     (C) Boxed Ice 2010 all rights reserved
     (C) Datadog, Inc. 2010-2013 all rights reserved
 """
 
-# set up logging before importing any other components
-from monasca_agent.common.config import initialize_logging
-from monasca_agent.forwarder.api.mon import MonAPI
+# Standard imports
+import socket
+import logging
+import signal
+import sys
+import datetime
 
-initialize_logging('forwarder')
-from monasca_agent.common.config import get_logging_config
+# set up logging before importing any other components
+import monasca_agent.common.util as util
+import monasca_agent.forwarder.api.mon as mon
+import monasca_agent.common.config as cfg
+
+util.initialize_logging('forwarder')
 
 import os
 os.umask(022)
-
-# Standard imports
-import logging
-import sys
-from datetime import timedelta
-import signal
-from socket import gaierror, error as socket_error
 
 # Tornado
 import tornado.httpclient
 import tornado.httpserver
 import tornado.ioloop
 import tornado.web
-from tornado.escape import json_decode
-from tornado.options import define, parse_command_line, options
+import tornado.escape
+import tornado.options
 
 # agent import
-from monasca_agent.common.check_status import ForwarderStatus
-from monasca_agent.common.config import get_config
-from monasca_agent.common.metrics import Measurement
-from monasca_agent.common.util import Watchdog, get_tornado_ioloop
-from transaction import Transaction, TransactionManager
+import monasca_agent.common.check_status as check_status
+import monasca_agent.common.metrics as metrics
+import monasca_agent.common.util as util
+import transaction
 
 log = logging.getLogger('forwarder')
-log.setLevel(get_logging_config()['log_level'] or logging.INFO)
 
 TRANSACTION_FLUSH_INTERVAL = 5000  # Every 5 seconds
 WATCHDOG_INTERVAL_MULTIPLIER = 10  # 10x flush interval
 
 # Maximum delay before replaying a transaction
-MAX_WAIT_FOR_REPLAY = timedelta(seconds=90)
+MAX_WAIT_FOR_REPLAY = datetime.timedelta(seconds=90)
 
 # Maximum queue size in bytes (when this is reached, old messages are dropped)
 MAX_QUEUE_SIZE = 30 * 1024 * 1024  # 30MB
 
-THROTTLING_DELAY = timedelta(microseconds=1000000 / 2)  # 2 msg/second
+THROTTLING_DELAY = datetime.timedelta(microseconds=1000000 / 2)  # 2 msg/second
 
 
-class MetricTransaction(Transaction):
+class MetricTransaction(transaction.Transaction):
 
     _application = None
     _trManager = None
@@ -87,7 +80,7 @@ class MetricTransaction(Transaction):
         self._headers = headers
 
         # Call after data has been set (size is computed in Transaction's init)
-        Transaction.__init__(self)
+        transaction.Transaction.__init__(self)
 
         # Insert the transaction in the Manager
         self._trManager.append(self)
@@ -140,7 +133,7 @@ class AgentInputHandler(tornado.web.RequestHandler):
         # monasca_agent.common.metrics.Measurements expressed as a dict
         msg = tornado.escape.json_decode(self.request.body)
         try:
-            measurements = [Measurement(**m) for m in msg]
+            measurements = [metrics.Measurement(**m) for m in msg]
         except Exception:
             log.exception('Error parsing body of Agent Input')
             raise tornado.web.HTTPError(500)
@@ -161,11 +154,11 @@ class Forwarder(tornado.web.Application):
     def __init__(self, port, agent_config, watchdog=True, skip_ssl_validation=False,
                  use_simple_http_client=False):
         self._port = int(port)
-        self._agentConfig = agent_config
+        self._agent_config = agent_config
         self._metrics = {}
         MetricTransaction.set_application(self)
-        MetricTransaction.set_endpoints(MonAPI(agent_config['Api']))
-        self._tr_manager = TransactionManager(MAX_WAIT_FOR_REPLAY, MAX_QUEUE_SIZE, THROTTLING_DELAY)
+        MetricTransaction.set_endpoints(mon.MonAPI(agent_config))
+        self._tr_manager = transaction.TransactionManager(MAX_WAIT_FOR_REPLAY, MAX_QUEUE_SIZE, THROTTLING_DELAY)
         MetricTransaction.set_tr_manager(self._tr_manager)
 
         self._watchdog = None
@@ -177,7 +170,7 @@ class Forwarder(tornado.web.Application):
 
         if watchdog:
             watchdog_timeout = TRANSACTION_FLUSH_INTERVAL * WATCHDOG_INTERVAL_MULTIPLIER
-            self._watchdog = Watchdog(
+            self._watchdog = util.Watchdog(
                 watchdog_timeout, max_mem_mb=agent_config.get('limit_memory_consumption', None))
 
     def _post_metrics(self):
@@ -215,7 +208,7 @@ class Forwarder(tornado.web.Application):
             log_function=self.log_request
         )
 
-        non_local_traffic = self._agentConfig.get("non_local_traffic", False)
+        non_local_traffic = self._agent_config.get("non_local_traffic", False)
 
         tornado.web.Application.__init__(self, handlers, **settings)
         http_server = tornado.httpserver.HTTPServer(self)
@@ -228,17 +221,17 @@ class Forwarder(tornado.web.Application):
                 # localhost in lieu of 127.0.0.1 to support IPv6
                 try:
                     http_server.listen(self._port, address="localhost")
-                except gaierror:
+                except socket.gaierror:
                     log.warning(
                         "localhost seems undefined in your host file, using 127.0.0.1 instead")
                     http_server.listen(self._port, address="127.0.0.1")
-                except socket_error as e:
+                except socket.error as e:
                     if "Errno 99" in str(e):
                         log.warning("IPv6 doesn't seem to be fully supported. Falling back to IPv4")
                         http_server.listen(self._port, address="127.0.0.1")
                     else:
                         raise
-        except socket_error as e:
+        except socket.error as e:
             log.exception(
                 "Socket error %s. Is another application listening on the same port ? Exiting", e)
             sys.exit(1)
@@ -249,9 +242,9 @@ class Forwarder(tornado.web.Application):
         log.info("Listening on port %d" % self._port)
 
         # Register callbacks
-        self.mloop = get_tornado_ioloop()
+        self.mloop = util.get_tornado_ioloop()
 
-        logging.getLogger().setLevel(get_logging_config()['log_level'] or logging.INFO)
+        logging.getLogger().setLevel(self._agent_config.get('log_level', logging.INFO))
 
         def flush_trs():
             if self._watchdog:
@@ -275,9 +268,10 @@ class Forwarder(tornado.web.Application):
 
 
 def init_forwarder(skip_ssl_validation=False, use_simple_http_client=False):
-    agent_config = get_config(parse_args=False)
+    config = cfg.Config()
+    agent_config = config.get_config(['Main', 'Api', 'Logging'])
 
-    port = agent_config.get('listen_port', 17123)
+    port = agent_config['listen_port']
     if port is None:
         port = 17123
     else:
@@ -297,17 +291,17 @@ def init_forwarder(skip_ssl_validation=False, use_simple_http_client=False):
 
 
 def main():
-    define("sslcheck", default=1, help="Verify SSL hostname, on by default")
-    define("use_simple_http_client", default=0,
-           help="Use Tornado SimpleHTTPClient instead of CurlAsyncHTTPClient")
-    args = parse_command_line()
+    tornado.options.define("sslcheck", default=1, help="Verify SSL hostname, on by default")
+    tornado.options.define("use_simple_http_client", default=0,
+                           help="Use Tornado SimpleHTTPClient instead of CurlAsyncHTTPClient")
+    args = tornado.options.parse_command_line()
     skip_ssl_validation = False
     use_simple_http_client = False
 
-    if unicode(options.sslcheck) == u"0":
+    if unicode(tornado.options.options.sslcheck) == u"0":
         skip_ssl_validation = True
 
-    if unicode(options.use_simple_http_client) == u"1":
+    if unicode(tornado.options.options.use_simple_http_client) == u"1":
         use_simple_http_client = True
 
     # If we don't have any arguments, run the server.
@@ -316,14 +310,14 @@ def main():
         try:
             app.run()
         finally:
-            ForwarderStatus.remove_latest_status()
+            check_status.ForwarderStatus.remove_latest_status()
 
     else:
         usage = "%s [help|info]. Run with no commands to start the server" % (sys.argv[0])
         command = args[0]
         if command == 'info':
             logging.getLogger().setLevel(logging.ERROR)
-            return ForwarderStatus.print_latest_status()
+            return check_status.ForwarderStatus.print_latest_status()
         elif command == 'help':
             print(usage)
         else:

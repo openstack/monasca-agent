@@ -26,12 +26,12 @@ class MonAPI(object):
         self.api_version = '2_0'
         self.keystone = keystone.Keystone(config)
         self.mon_client = None
-        self.max_buffer_size = config['max_buffer_size']
-        self.backlog_send_rate = config['backlog_send_rate']
+        self.max_buffer_size = int(config['max_buffer_size'])
+        self.backlog_send_rate = int(config['backlog_send_rate'])
         self.message_queue = collections.deque(maxlen=self.max_buffer_size)
         # 'amplifier' is completely optional and may not exist in the config
         try:
-            self.amplifier = config['amplifier']
+            self.amplifier = int(config['amplifier'])
         except KeyError:
             self.amplifier = None
 

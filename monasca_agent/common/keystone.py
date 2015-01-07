@@ -2,19 +2,14 @@ import logging
 
 from keystoneclient.v3 import client as ksclient
 
+import monasca_agent.common.singleton as singleton
+
 log = logging.getLogger(__name__)
 
 class Keystone(object):
-
     # Make this a singleton class so we don't get the token every time
     # the class is created
-    _instance = None
-
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super(Keystone, cls).__new__(
-                cls, *args, **kwargs)
-        return cls._instance
+    __metaclass__ = singleton.Singleton
 
     def __init__(self, config):
         self.config = config

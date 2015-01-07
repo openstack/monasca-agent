@@ -13,7 +13,7 @@ from httplib2 import HttpLib2Error
 
 import monasca_agent.collector.checks.services_checks as services_checks
 import monasca_agent.common.keystone as keystone
-
+import monasca_agent.common.config as cfg
 
 class HTTPCheck(services_checks.ServicesCheck):
 
@@ -47,7 +47,8 @@ class HTTPCheck(services_checks.ServicesCheck):
     def _check(self, instance):
         addr, username, password, timeout, headers, response_time, dimensions, disable_ssl_validation, pattern, use_keystone = self._load_conf(
             instance)
-
+        config = cfg.Config()
+        api_config = config.get_config('Api')
         content = ''
 
         new_dimensions = self._set_dimensions({'url': addr})
@@ -59,7 +60,6 @@ class HTTPCheck(services_checks.ServicesCheck):
         retry = False
         while not done or retry:
             if use_keystone:
-                api_config = self.agent_config['Api']
                 key = keystone.Keystone(api_config)
                 token = key.get_token()
                 if token:

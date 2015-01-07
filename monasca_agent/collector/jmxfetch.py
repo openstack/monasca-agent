@@ -54,8 +54,8 @@ class JMXFetch(object):
     pid_file_path = pid_file.get_path()
 
     @classmethod
-    def init(cls, confd_path, agentConfig, logging_config,
-             default_check_frequency, command=None, checks_list=None, reporter=None):
+    def init(cls, confd_path, agent_config, default_check_frequency,
+             command=None, checks_list=None, reporter=None):
         try:
             command = command or JMX_COLLECT_COMMAND
             jmx_checks, invalid_checks, java_bin_path, java_options = JMXFetch.should_run(
@@ -71,8 +71,8 @@ class JMXFetch(object):
                     log.warning("JMXFetch is already running, restarting it.")
                     JMXFetch.stop()
 
-                JMXFetch.start(confd_path, agentConfig, logging_config,
-                               java_bin_path, java_options, default_check_frequency,
+                JMXFetch.start(confd_path, agent_config, java_bin_path,
+                               java_options, default_check_frequency,
                                jmx_checks, command, reporter)
                 return True
         except Exception:
@@ -299,9 +299,9 @@ class JMXFetch(object):
             os.path.join(os.path.abspath(__file__), "..", "../../", "jmxfetch", JMX_FETCH_JAR_NAME))
 
     @classmethod
-    def start(cls, confd_path, agentConfig, logging_config, path_to_java, java_run_opts,
+    def start(cls, confd_path, agent_config, path_to_java, java_run_opts,
               default_check_frequency, jmx_checks, command, reporter=None):
-        statsd_port = agentConfig.get('monasca_statsd_port', "8125")
+        statsd_port = agent_config.get('monasca_statsd_port', "8125")
 
         if reporter is None:
             reporter = "statsd:%s" % str(statsd_port)
@@ -323,9 +323,9 @@ class JMXFetch(object):
                 # Path of the conf.d directory that will be read by jmxfetch,
                 '--conf_directory', r"%s" % confd_path,
                 # Log Level: Mapping from Python log level to log4j log levels
-                '--log_level', JAVA_LOGGING_LEVEL.get(logging_config.get("log_level"), "INFO"),
+                '--log_level', JAVA_LOGGING_LEVEL.get(agent_config.get("log_level"), "INFO"),
                 # Path of the log file
-                '--log_location', r"%s" % logging_config.get('jmxfetch_log_file'),
+                '--log_location', r"%s" % agent_config.get('jmxfetch_log_file'),
                 '--reporter', reporter,  # Reporter to use
                 # Path to the status file to write
                 '--status_location', r"%s" % path_to_status_file,

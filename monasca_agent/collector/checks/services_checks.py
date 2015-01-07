@@ -38,8 +38,8 @@ class ServicesCheck(monasca_agent.collector.checks.AgentCheck):
             when the service turns down.
     """
 
-    def __init__(self, name, init_config, agentConfig, instances):
-        monasca_agent.collector.checks.AgentCheck.__init__(self, name, init_config, agentConfig, instances)
+    def __init__(self, name, init_config, agent_config, instances):
+        monasca_agent.collector.checks.AgentCheck.__init__(self, name, init_config, agent_config, instances)
 
         # A dictionary to keep track of service statuses
         self.statuses = {}

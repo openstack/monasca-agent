@@ -79,6 +79,25 @@ use_mount: no
 # non_local_traffic: no
 
 # ========================================================================== #
+# System Metrics configuration                                               #
+# ========================================================================== #
+
+# Enabled categories of system metrics to collect
+# Current system metrics available: cpu,disk,io,load,memory
+system_metrics: cpu,disk,io,load,memory
+
+#   Disk and IO                                                                   #
+# Some infrastrucures have many constantly changing virtual devices (e.g. folks
+# running constantly churning linux containers) whose metrics aren't
+# interesting. To filter out a particular pattern of devices
+# from disk and IO collection, configure a regex here:
+# device_blacklist_re: .*\/dev\/mapper\/lxc-box.*
+
+# For disk metrics it is also possible to ignore entire filesystem types
+ignore_filesystem_types: tmpfs,devtmpfs
+
+[Statsd]
+# ========================================================================== #
 # Monasca Statsd configuration                                                    #
 # ========================================================================== #
 
@@ -98,26 +117,10 @@ monasca_statsd_port : 8125
 # to another statsd server, uncomment these lines.
 # WARNING: Make sure that forwarded packets are regular statsd packets and not "monasca_statsd" packets,
 # as your other statsd server might not be able to handle them.
-# statsd_forward_host: address_of_own_statsd_server
-# statsd_forward_port: 8125
+# monasca_statsd_forward_host: address_of_own_statsd_server
+# monasca_statsd_statsd_forward_port: 8125
 
-# ========================================================================== #
-# System Metrics configuration                                               #
-# ========================================================================== #
-
-# Enabled categories of system metrics to collect
-system_metrics: cpu,disk,io,load,memory
-
-#   Disk and IO                                                                   #
-# Some infrastrucures have many constantly changing virtual devices (e.g. folks
-# running constantly churning linux containers) whose metrics aren't
-# interesting. To filter out a particular pattern of devices
-# from disk and IO collection, configure a regex here:
-# device_blacklist_re: .*\/dev\/mapper\/lxc-box.*
-
-# For disk metrics it is also possible to ignore entire filesystem types
-ignore_filesystem_types: tmpfs,devtmpfs
-
+[Logging]
 # ========================================================================== #
 # Logging
 # ========================================================================== #

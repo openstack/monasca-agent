@@ -46,7 +46,6 @@ class Check(util.Dimensions):
         #               None: [(ts, value), (ts, value)]}
         #                 untagged values are indexed by None
         super(Check, self).__init__(agent_config)
-        self.agent_config = agent_config
         self._sample_store = {}
         self._counters = {}  # metric_name: bool
         self.logger = logger
@@ -279,8 +278,7 @@ class AgentCheck(util.Dimensions):
         super(AgentCheck, self).__init__(agent_config)
         self.name = name
         self.init_config = init_config
-        self.agent_config = agent_config
-        self.hostname = util.get_hostname(agent_config)
+        self.hostname = util.get_hostname()
         self.log = logging.getLogger('%s.%s' % (__name__, name))
 
         self.aggregator = aggregator.MetricsAggregator(self.hostname,
@@ -607,8 +605,9 @@ def run_check(name, path=None):
     import tests.common
 
     # Read the config file
-    confd_path = path or os.path.join(config.get_confd_path(util.get_os()),
-                                      '%s.yaml' % name)
+    config = Config()
+    confd_path = path or os.path.join(config.get_confd_path(),
+                                      '{}.yaml'.format(name))
 
     try:
         f = open(confd_path)

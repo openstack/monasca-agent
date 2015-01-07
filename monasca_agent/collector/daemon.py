@@ -12,13 +12,13 @@ import time
 import checks.collector
 import jmxfetch
 import monasca_agent.common.check_status
-import monasca_agent.common.config
+import monasca_agent.common.config as cfg
 import monasca_agent.common.daemon
 import monasca_agent.common.emitter
-import monasca_agent.common.util
+import monasca_agent.common.util as util
 
 # set up logging before importing any other components
-monasca_agent.common.config.initialize_logging('collector')
+util.initialize_logging('collector')
 os.umask(022)
 
 # Check we're not using an old version of Python. We need 2.4 above because
@@ -70,11 +70,10 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
         logging.getLogger().setLevel(logging.ERROR)
         return monasca_agent.common.check_status.CollectorStatus.print_latest_status(verbose=verbose)
 
-    def run(self, config=None):
+    def run(self, config):
         """Main loop of the collector.
 
         """
-
         # Gracefully exit on sigterm.
         signal.signal(signal.SIGTERM, self._handle_sigterm)
 
@@ -87,12 +86,9 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
         # Save the agent start-up stats.
         monasca_agent.common.check_status.CollectorStatus().persist()
 
-        # Intialize the collector.
-        if config is None:
-            config = monasca_agent.common.config.get_config(parse_args=True)
-
         # Load the checks_d checks
-        checksd = monasca_agent.common.config.load_check_directory(config)
+        checksd = util.load_check_directory()
+
         self.collector = checks.collector.Collector(config, monasca_agent.common.emitter.http_emitter, checksd)
 
         # Configure the watchdog.
@@ -160,9 +156,9 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
     def _get_watchdog(check_freq, agentConfig):
         watchdog = None
         if agentConfig.get("watchdog", True):
-            watchdog = monasca_agent.common.util.Watchdog(check_freq * WATCHDOG_MULTIPLIER,
-                                                          max_mem_mb=agentConfig.get('limit_memory_consumption',
-                                                                                     None))
+            watchdog = util.Watchdog(check_freq * WATCHDOG_MULTIPLIER,
+                                     max_mem_mb=agentConfig.get('limit_memory_consumption',
+                                                                None))
             watchdog.reset()
         return watchdog
 
@@ -179,10 +175,11 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
 
 
 def main():
-    options, args = monasca_agent.common.config.get_parsed_args()
-    agentConfig = monasca_agent.common.config.get_config(options=options)
+    options, args = util.get_parsed_args()
+    config = cfg.Config()
+    collector_config = config.get_config(['Main', 'Api', 'Logging'])
     # todo autorestart isn't used remove
-    autorestart = agentConfig.get('autorestart', False)
+    autorestart = collector_config.get('autorestart', False)
 
     COMMANDS = [
         'start',
@@ -206,7 +203,7 @@ def main():
         sys.stderr.write("Unknown command: %s\n" % command)
         return 3
 
-    pid_file = monasca_agent.common.util.PidFile('monasca-agent')
+    pid_file = util.PidFile('monasca-agent')
 
     if options.clean:
         pid_file.clean()
@@ -214,7 +211,7 @@ def main():
     agent = CollectorDaemon(pid_file.get_path(), autorestart)
 
     if command in START_COMMANDS:
-        log.info('Agent version %s' % monasca_agent.common.config.get_version())
+        log.info('Agent version %s' % config.get_version())
 
     if 'start' == command:
         log.info('Start daemon')
@@ -249,11 +246,11 @@ def main():
             monasca_agent.common.daemon.AgentSupervisor.start(parent_func, child_func)
         else:
             # Run in the standard foreground.
-            agent.run(config=agentConfig)
+            agent.run(collector_config)
 
     elif 'check' == command:
         check_name = args[1]
-        checks = monasca_agent.common.config.load_check_directory(agentConfig)
+        checks = util.load_check_directory()
         for check in checks['initialized_checks']:
             if check.name == check_name:
                 check.run()
@@ -268,7 +265,7 @@ def main():
 
     elif 'check_all' == command:
         print("Loading check directory...")
-        checks = monasca_agent.common.config.load_check_directory(agentConfig)
+        checks = util.load_check_directory()
         print("...directory loaded.\n")
         for check in checks['initialized_checks']:
             print("#" * 80)
@@ -279,12 +276,13 @@ def main():
             print("#" * 80 + "\n\n")
 
     elif 'configcheck' == command or 'configtest' == command:
-        osname = monasca_agent.common.util.get_os()
+        osname = util.get_os()
         all_valid = True
-        for conf_path in glob.glob(os.path.join(monasca_agent.common.config.get_confd_path(osname), "*.yaml")):
+        paths = util.Paths()
+        for conf_path in glob.glob(os.path.join(paths.get_confd_path(), "*.yaml")):
             basename = os.path.basename(conf_path)
             try:
-                monasca_agent.common.config.check_yaml(conf_path)
+                config.check_yaml(conf_path)
             except Exception as e:
                 all_valid = False
                 print("%s contains errors:\n    %s" % (basename, e))
@@ -303,11 +301,11 @@ def main():
 
         if len(args) < 2 or args[1] not in jmxfetch.JMX_LIST_COMMANDS.keys():
             print("#" * 80)
-            print("JMX tool to be used to help configuring your JMX checks.")
+            print("JMX tool to be used to help configure your JMX checks.")
             print("See http://docs.datadoghq.com/integrations/java/ for more information")
             print("#" * 80)
             print("\n")
-            print("You have to specify one of the following command:")
+            print("You have to specify one of the following commands:")
             for command, desc in jmxfetch.JMX_LIST_COMMANDS.iteritems():
                 print("      - %s [OPTIONAL: LIST OF CHECKS]: %s" % (command, desc))
             print("Example: sudo /etc/init.d/monasca-agent jmx list_matching_attributes tomcat jmx solr")
@@ -316,18 +314,18 @@ def main():
         else:
             jmx_command = args[1]
             checks_list = args[2:]
-            confd_directory = monasca_agent.common.config.get_confd_path(monasca_agent.common.util.get_os())
-            should_run = jmxfetch.JMXFetch.init(
-                confd_directory,
-                agentConfig,
-                monasca_agent.common.config.get_logging_config(),
-                15,
-                jmx_command,
-                checks_list,
-                reporter="console")
+            paths = util.Paths()
+            confd_path = paths.get_confd_path()
+            # Start JMXFetch if needed
+            should_run = jmxfetch.JMXFetch.init(confd_path,
+                                                config,
+                                                15,
+                                                jmx_command,
+                                                checks_list,
+                                                reporter="console")
             if not should_run:
-                print("Couldn't find any valid JMX configuration in your conf.d directory: %s" % confd_directory)
-                print("Have you enabled any JMX check ?")
+                print("Couldn't find any valid JMX configuration in your conf.d directory: %s" % confd_path)
+                print("Have you enabled any JMX checks ?")
 
     return 0
 

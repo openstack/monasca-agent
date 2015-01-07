@@ -14,8 +14,9 @@ import tempfile
 import time
 
 # project
+import collections
 import config
-from collections import defaultdict
+import util
 import yaml
 
 # 3rd party
@@ -29,7 +30,6 @@ NTP_OFFSET_THRESHOLD = 600
 
 
 log = logging.getLogger(__name__)
-
 
 class Stylizer(object):
 
@@ -108,6 +108,7 @@ class AgentStatus(object):
     """
 
     NAME = None
+    agent_config = config.Config()
 
     def __init__(self):
         self.created_at = datetime.datetime.now()
@@ -141,7 +142,7 @@ class AgentStatus(object):
 
     @classmethod
     def _title_lines(cls):
-        name_line = "%s (v %s)" % (cls.NAME, config.get_version())
+        name_line = "%s (v %s)" % (cls.NAME, AgentStatus.agent_config.get_version())
         lines = [
             "=" * len(name_line),
             "%s" % name_line,
@@ -348,16 +349,15 @@ class CollectorStatus(AgentStatus):
             ''
         ]
 
-        osname = config.get_os()
-
+        paths = util.Paths()
         try:
-            confd_path = config.get_confd_path(osname)
-        except config.PathNotFound:
+            confd_path = paths.get_confd_path()
+        except util.PathNotFound:
             confd_path = 'Not found'
 
         try:
-            checksd_path = config.get_checksd_path(osname)
-        except config.PathNotFound:
+            checksd_path = paths.get_checksd_path()
+        except util.PathNotFound:
             checksd_path = 'Not found'
 
         lines.append('  conf.d: ' + confd_path)
@@ -499,13 +499,14 @@ class CollectorStatus(AgentStatus):
 
         osname = config.get_os()
 
+        paths = util.Paths()
         try:
-            status_info['confd_path'] = config.get_confd_path(osname)
+            status_info['confd_path'] = paths.get_confd_path()
         except config.PathNotFound:
             status_info['confd_path'] = 'Not found'
 
         try:
-            status_info['checksd_path'] = config.get_checksd_path(osname)
+            status_info['checksd_path'] = paths.get_checksd_path()
         except config.PathNotFound:
             status_info['checksd_path'] = 'Not found'
 
@@ -651,7 +652,7 @@ def get_jmx_status():
                   (java_status_path, python_status_path))
         return []
 
-    check_data = defaultdict(lambda: defaultdict(list))
+    check_data = collections.defaultdict(lambda: collections.defaultdict(list))
     try:
         if os.path.exists(java_status_path):
             java_jmx_stats = yaml.load(file(java_status_path))

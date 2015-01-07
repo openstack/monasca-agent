@@ -1,12 +1,11 @@
 import json
 import logging
 import threading
-from monasca_agent.common.check_status import MonascaStatsdStatus
-from monasca_agent.common.emitter import http_emitter
-from monasca_agent.common.util import plural
-from monasca_agent.common.config import initialize_logging
-initialize_logging('statsd')
-log = logging.getLogger('statsd')
+import monasca_agent.common.check_status as check_status
+import monasca_agent.common.emitter as emitter
+import monasca_agent.common.util as util
+
+log = logging.getLogger(__name__)
 
 
 WATCHDOG_TIMEOUT = 120
@@ -54,7 +53,7 @@ class Reporter(threading.Thread):
         log.debug("Watchdog enabled: %s" % bool(self.watchdog))
 
         # Persist a start-up message.
-        MonascaStatsdStatus().persist()
+        check_status.MonascaStatsdStatus().persist()
 
         while not self.finished.isSet():  # Use camel case isSet for 2.4 support.
             self.finished.wait(self.interval)
@@ -64,7 +63,7 @@ class Reporter(threading.Thread):
 
         # Clean up the status messages.
         log.debug("Stopped reporter")
-        MonascaStatsdStatus.remove_latest_status()
+        check_status.MonascaStatsdStatus.remove_latest_status()
 
     def flush(self):
         try:
@@ -77,7 +76,7 @@ class Reporter(threading.Thread):
                 self.log_count = 0
             if count:
                 try:
-                    http_emitter(metrics, log, self.api_host)
+                    emitter.http_emitter(metrics, log, self.api_host)
                 except Exception:
                     log.exception("Error running emitter.")
 
@@ -94,9 +93,9 @@ class Reporter(threading.Thread):
                 "Flush #%s: flushed %s metric%s and %s event%s" %
                 (self.flush_count,
                  count,
-                 plural(count),
-                    event_count,
-                    plural(event_count)))
+                 util.plural(count),
+                 event_count,
+                 util.plural(event_count)))
             if self.flush_count == FLUSH_LOGGING_INITIAL:
                 log.info(
                     "First flushes done, %s flushes will be logged every %s flushes." %
@@ -105,13 +104,11 @@ class Reporter(threading.Thread):
             # Persist a status message.
             packet_count = self.aggregator.total_count
             packets_per_second = self.aggregator.packets_per_second(self.interval)
-            MonascaStatsdStatus(
-                flush_count=self.flush_count,
-                packet_count=packet_count,
-                packets_per_second=packets_per_second,
-                metric_count=count,
-                event_count=event_count,
-            ).persist()
+            check_status.MonascaStatsdStatus(flush_count=self.flush_count,
+                                             packet_count=packet_count,
+                                             packets_per_second=packets_per_second,
+                                             metric_count=count,
+                                             event_count=event_count).persist()
 
         except Exception:
             log.exception("Error flushing metrics")
