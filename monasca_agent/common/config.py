@@ -31,7 +31,7 @@ from monasca_agent.collector.jmxfetch import JMXFetch, JMX_COLLECT_COMMAND
 AGENT_CONF = "agent.conf"
 DEFAULT_CHECK_FREQUENCY = 15  # seconds
 DEFAULT_STATSD_FREQUENCY = 20  # seconds
-DEFAULT_STATSD_BUCKET_SIZE = 10  # seconds
+DEFAULT_STATSD_INTERVAL = 10  # seconds
 LOGGING_MAX_BYTES = 5 * 1024 * 1024
 DEFAULT_CONFIG_DIR = '/etc/monasca/agent'
 DEFAULT_LOG_DIR = '/var/log/monasca/agent'
@@ -191,7 +191,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
     agent_config = {
         'check_freq': DEFAULT_CHECK_FREQUENCY,
         'monasca_statsd_interval': DEFAULT_STATSD_FREQUENCY,
-        'monasca_statsd_agregator_bucket_size': DEFAULT_STATSD_BUCKET_SIZE,
+        'monasca_statsd_agregator_interval': DEFAULT_STATSD_INTERVAL,
         'monasca_statsd_port': 8125,
         'forwarder_url': 'http://localhost:17123',
         'hostname': None,
@@ -202,7 +202,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
     }
 
     monasca_statsd_interval = DEFAULT_STATSD_FREQUENCY
-    monasca_statsd_agregator_bucket_size = DEFAULT_STATSD_BUCKET_SIZE
+    monasca_statsd_agregator_interval = DEFAULT_STATSD_INTERVAL
 
     # Config handling
     try:
@@ -261,7 +261,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         monasca_statsd_defaults = {
             'monasca_statsd_port': 8125,
             'monasca_statsd_interval': monasca_statsd_interval,
-            'monasca_statsd_agregator_bucket_size': monasca_statsd_agregator_bucket_size,
+            'monasca_statsd_agregator_interval': monasca_statsd_agregator_interval,
         }
         for key, value in monasca_statsd_defaults.iteritems():
             if config.has_option('Main', key):

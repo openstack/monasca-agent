@@ -54,12 +54,10 @@ class Gauge(Metric):
         self.delegated_tenant = delegated_tenant
         self.hostname = hostname
         self.device_name = device_name
-        self.last_sample_time = None
         self.timestamp = time()
 
     def sample(self, value, sample_rate, timestamp=None):
         self.value = value
-        self.last_sample_time = time()
         self.timestamp = timestamp
 
     def flush(self, timestamp, interval):
@@ -122,11 +120,9 @@ class Counter(Metric):
         self.delegated_tenant = delegated_tenant
         self.hostname = hostname
         self.device_name = device_name
-        self.last_sample_time = None
 
     def sample(self, value, sample_rate, timestamp=None):
         self.value += value * int(1 / sample_rate)
-        self.last_sample_time = time()
 
     def flush(self, timestamp, interval):
         try:
@@ -161,12 +157,10 @@ class Histogram(Metric):
         self.delegated_tenant = delegated_tenant
         self.hostname = hostname
         self.device_name = device_name
-        self.last_sample_time = None
 
     def sample(self, value, sample_rate, timestamp=None):
         self.count += int(1 / sample_rate)
         self.samples.append(value)
-        self.last_sample_time = time()
 
     def flush(self, ts, interval):
         if not self.count:
@@ -233,11 +227,9 @@ class Set(Metric):
         self.hostname = hostname
         self.device_name = device_name
         self.values = set()
-        self.last_sample_time = None
 
     def sample(self, value, sample_rate, timestamp=None):
         self.values.add(value)
-        self.last_sample_time = time()
 
     def flush(self, timestamp, interval):
         if not self.values:
@@ -271,12 +263,10 @@ class Rate(Metric):
         self.hostname = hostname
         self.device_name = device_name
         self.samples = []
-        self.last_sample_time = None
 
     def sample(self, value, sample_rate, timestamp=None):
         ts = time()
         self.samples.append((int(ts), value))
-        self.last_sample_time = ts
 
     def _rate(self, sample1, sample2):
         interval = sample2[0] - sample1[0]

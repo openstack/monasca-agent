@@ -84,7 +84,7 @@ class Reporter(threading.Thread):
             events = self.aggregator.flush_events()
             event_count = len(events)
             if event_count:
-                log.warn('Event received but events are not available in the mon api')
+                log.warn('Event received but events are not available in the monasca api')
 
             should_log = self.flush_count <= FLUSH_LOGGING_INITIAL or self.log_count <= FLUSH_LOGGING_COUNT
             log_func = log.info

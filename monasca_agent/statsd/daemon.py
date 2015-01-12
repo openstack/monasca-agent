@@ -17,7 +17,7 @@ import signal
 import sys
 
 # project
-from monasca_agent.common.aggregator import MetricsBucketAggregator
+from monasca_agent.common.aggregator import MetricsAggregator
 from monasca_agent.common.check_status import MonascaStatsdStatus
 from monasca_agent.common.config import get_config
 from monasca_agent.common.util import get_hostname
@@ -32,8 +32,8 @@ class MonascaStatsd(object):
         config = get_config(parse_args=False, cfg_path=config_path)
 
         # Create the aggregator (which is the point of communication between the server and reporting threads.
-        aggregator = MetricsBucketAggregator(get_hostname(config),
-                                             int(config['monasca_statsd_agregator_bucket_size']),
+        aggregator = MetricsAggregator(get_hostname(config),
+                                             int(config['monasca_statsd_agregator_interval']),
                                              recent_point_threshold=config.get('recent_point_threshold', None))
 
         # Start the reporting thread.
