@@ -6,19 +6,18 @@ if sys.version_info < (2, 6):
     # be too much work to rewrite, so raise an exception here.
     raise Exception('kafka_consumer check requires at least Python 2.6')
 
-from collections import defaultdict
-from monasca_agent.collector.checks import AgentCheck
+import collections
+import monasca_agent.collector.checks as checks
 
 try:
-    from kafka.client import KafkaClient
-    from kafka.common import KafkaError
-    from kafka.common import OffsetRequest
-    from kafka.consumer import SimpleConsumer
+    import kafka.client as client
+    import kafka.common as common
+    import kafka.consumer as consumer
 except ImportError:
     raise Exception('Missing python dependency: kafka (https://github.com/mumrah/kafka-python)')
 
 
-class KafkaCheck(AgentCheck):
+class KafkaCheck(checks.AgentCheck):
     """ Checks the configured kafka instance reporting the consumption lag
         for each partition per topic in each consumer group. If full_output
         is set also reports broker offsets and the current consumer offset.
@@ -57,24 +56,24 @@ consumer_groups:
 
         try:
             # Connect to Kafka
-            kafka_conn = KafkaClient(kafka_host_ports)
+            kafka_conn = client.KafkaClient(kafka_host_ports)
 
             # Query Kafka for consumer offsets
             consumer_offsets = {}
-            topics = defaultdict(set)
+            topics = collections.defaultdict(set)
             for consumer_group, topic_partitions in consumer_groups.iteritems():
                 for topic, partitions in topic_partitions.iteritems():
-                    consumer = SimpleConsumer(kafka_conn, consumer_group, topic)
+                    kafka_consumer = consumer.SimpleConsumer(kafka_conn, consumer_group, topic)
                     # Remember the topic partitions that we've see so that we can
                     # look up their broker offsets later
                     topics[topic].update(set(partitions))
                     for partition in partitions:
                         try:
-                            consumer_offsets[(consumer_group, topic, partition)] = consumer.offsets[partition]
+                            consumer_offsets[(consumer_group, topic, partition)] = kafka_consumer.offsets[partition]
                         except KeyError:
-                            consumer.stop()
+                            kafka_consumer.stop()
                             self.log.error('Error fetching consumer offset for {} partition {}'.format(topic, partition))
-                    consumer.stop()
+                    kafka_consumer.stop()
 
             # Query Kafka for the broker offsets, done in a separate loop so only one query is done
             # per topic even if multiple consumer groups watch the same topic
@@ -83,9 +82,9 @@ consumer_groups:
                 offset_responses = []
                 for p in partitions:
                     try:
-                        response = kafka_conn.send_offset_request([OffsetRequest(topic, p, -1, 1)])
+                        response = kafka_conn.send_offset_request([common.OffsetRequest(topic, p, -1, 1)])
                         offset_responses.append(response[0])
-                    except KafkaError as e:
+                    except common.KafkaError as e:
                         self.log.error("Error fetching broker offset: {}".format(e))
 
                 for resp in offset_responses:
@@ -100,29 +99,26 @@ consumer_groups:
         if full_output:
             for (topic, partition), broker_offset in broker_offsets.items():
                 broker_dimensions = new_dimensions.copy()
+                broker_dimensions.update({'topic': topic,
+                                          'partition': partition})
                 broker_offset = broker_offsets.get((topic, partition))
                 self.gauge('kafka.broker_offset',
                            broker_offset,
-                           dimensions={'topic': topic,
-                                       'partition': partition}.update(broker_dimensions))
+                           dimensions=self._set_dimensions(broker_dimensions))
 
         # Report the consumer data
         for (consumer_group, topic, partition), consumer_offset in consumer_offsets.items():
             # Get the broker offset
             broker_offset = broker_offsets.get((topic, partition))
             # Report the consumer offset and lag
-            consumer_dimensions = new_dimensions.copy()
-            consumer_dimensions['topic'] = topic
-            consumer_dimensions['partition'] = partition
-            consumer_dimensions['consumer_group'] = consumer_group
+            consumer_dimensions=new_dimensions.copy()
+            consumer_dimensions.update({'topic': topic,
+                                        'partition': partition,
+                                        'consumer_group': consumer_group})
             if full_output:
                 self.gauge('kafka.consumer_offset',
                            consumer_offset,
-                           dimensions={'topic': topic,
-                                       'partition': partition,
-                                       'consumer_group': consumer_group}.update(consumer_dimensions))
+                           dimensions=self._set_dimensions(consumer_dimensions))
             self.gauge('kafka.consumer_lag',
                        broker_offset - consumer_offset,
-                       dimensions={'topic': topic,
-                                   'partition': partition,
-                                   'consumer_group': consumer_group}.update(consumer_dimensions))
+                       dimensions=self._set_dimensions(consumer_dimensions))

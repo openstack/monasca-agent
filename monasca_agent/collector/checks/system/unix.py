@@ -13,16 +13,16 @@ import time
 
 # project
 
-import monasca_agent.collector.checks.check
-import monasca_agent.common.metrics
-import monasca_agent.common.util
+import monasca_agent.collector.checks.check as check
+import monasca_agent.common.metrics as metrics
+import monasca_agent.common.util as util
 
 
 # locale-resilient float converter
 to_float = lambda s: float(s.replace(",", "."))
 
 
-class Disk(monasca_agent.collector.checks.check.Check):
+class Disk(check.Check):
 
     """Collects metrics about the machine's disks.
     """
@@ -60,13 +60,11 @@ class Disk(monasca_agent.collector.checks.check.Check):
             # parse into a list of Measurements
             stats.update(inodes)
             timestamp = time.time()
-            measurements = [monasca_agent.common.metrics.Measurement(key.split('.', 1)[1],
-                                                                     timestamp,
-                                                                     value,
-                                                                     {'device': key.split('.', 1)[0],
-                                                                      'service': 'monitoring',
-                                                                      'component': 'monasca-agent'},
-                                                                     None)
+            measurements = [metrics.Measurement(key.split('.', 1)[1],
+                                                timestamp,
+                                                value,
+                                                self._set_dimensions({'device': key.split('.', 1)[0]}),
+                                                None)
                             for key, value in stats.iteritems()]
 
             return measurements
@@ -93,14 +91,14 @@ class Disk(monasca_agent.collector.checks.check.Check):
                 if use_mount:
                     parts[0] = parts[-1]
                 if inodes:
-                    if monasca_agent.common.util.Platform.is_darwin(platform_name):
+                    if util.Platform.is_darwin(platform_name):
                         # Filesystem 512-blocks Used Available Capacity iused ifree %iused  Mounted
                         # Inodes are in position 5, 6 and we need to compute the total
                         # Total
                         parts[1] = int(parts[5]) + int(parts[6])  # Total
                         parts[2] = int(parts[5])  # Used
                         parts[3] = int(parts[6])  # Available
-                    elif monasca_agent.common.util.Platform.is_freebsd(platform_name):
+                    elif util.Platform.is_freebsd(platform_name):
                         # Filesystem 1K-blocks Used Avail Capacity iused ifree %iused Mounted
                         # Inodes are in position 5, 6 and we need to compute the total
                         parts[1] = int(parts[5]) + int(parts[6])  # Total
@@ -207,10 +205,10 @@ class Disk(monasca_agent.collector.checks.check.Check):
         return devices
 
 
-class IO(monasca_agent.collector.checks.check.Check):
+class IO(check.Check):
 
-    def __init__(self, logger):
-        monasca_agent.collector.checks.check.Check.__init__(self, logger)
+    def __init__(self, logger, agent_config):
+        super(IO, self).__init__(logger, agent_config)
         self.header_re = re.compile(r'([%\\/\-_a-zA-Z0-9]+)[\s+]?')
         self.item_re = re.compile(r'^([a-zA-Z0-9\/]+)')
         self.value_re = re.compile(r'\d+\.\d+')
@@ -300,7 +298,7 @@ class IO(monasca_agent.collector.checks.check.Check):
         """
         io = {}
         try:
-            if monasca_agent.common.util.Platform.is_linux():
+            if util.Platform.is_linux():
                 stdout = sp.Popen(['iostat', '-d', '1', '2', '-x', '-k'],
                                   stdout=sp.PIPE,
                                   close_fds=True).communicate()[0]
@@ -412,13 +410,11 @@ class IO(monasca_agent.collector.checks.check.Check):
             for dev_name, stats in filtered_io.iteritems():
                 filtered_stats = {stat: stats[stat]
                                   for stat in stats.iterkeys() if stat not in self.stat_blacklist}
-                m_list = [monasca_agent.common.metrics.Measurement(key,
-                                                                   timestamp,
-                                                                   value,
-                                                                   {'device': dev_name,
-                                                                    'service': 'monitoring',
-                                                                    'component': 'monasca-agent'},
-                                                                   None)
+                m_list = [metrics.Measurement(key,
+                                              timestamp,
+                                              value,
+                                              self._set_dimensions({'device': dev_name}),
+                                              None)
                           for key, value in filtered_stats.iteritems()]
                 measurements.extend(m_list)
 
@@ -429,10 +425,10 @@ class IO(monasca_agent.collector.checks.check.Check):
             return {}
 
 
-class Load(monasca_agent.collector.checks.check.Check):
+class Load(check.Check):
 
     def check(self):
-        if monasca_agent.common.util.Platform.is_linux():
+        if util.Platform.is_linux():
             try:
                 loadAvrgProc = open('/proc/loadavg', 'r')
                 uptime = loadAvrgProc.readlines()
@@ -461,10 +457,10 @@ class Load(monasca_agent.collector.checks.check.Check):
                 }
 
 
-class Memory(monasca_agent.collector.checks.check.Check):
+class Memory(check.Check):
 
-    def __init__(self, logger):
-        monasca_agent.collector.checks.check.Check.__init__(self, logger)
+    def __init__(self, logger, agent_config):
+        super(Memory, self).__init__(logger, agent_config)
         macV = None
         if sys.platform == 'darwin':
             macV = platform.mac_ver()
@@ -488,7 +484,7 @@ class Memory(monasca_agent.collector.checks.check.Check):
                 pass
 
     def check(self):
-        if monasca_agent.common.util.Platform.is_linux():
+        if util.Platform.is_linux():
             try:
                 meminfoProc = open('/proc/meminfo', 'r')
                 lines = meminfoProc.readlines()
@@ -759,7 +755,7 @@ class Memory(monasca_agent.collector.checks.check.Check):
             return {}
 
 
-class Cpu(monasca_agent.collector.checks.check.Check):
+class Cpu(check.Check):
 
     def check(self):
         """Return an aggregate of CPU stats across all CPUs.
@@ -792,7 +788,7 @@ class Cpu(monasca_agent.collector.checks.check.Check):
                 self.logger.debug("Cannot extract cpu value %s from %s (%s)" % (name, data, legend))
                 return 0.0
 
-        if monasca_agent.common.util.Platform.is_linux():
+        if util.Platform.is_linux():
             mpstat = sp.Popen(['mpstat', '1', '3'], stdout=sp.PIPE, close_fds=True).communicate()[0]
             # topdog@ip:~$ mpstat 1 3
             # Linux 2.6.32-341-ec2 (ip)   01/19/2012  _x86_64_  (2 CPU)

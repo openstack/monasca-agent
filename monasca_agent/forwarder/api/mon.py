@@ -1,10 +1,9 @@
+import collections
 import copy
 import logging
-from collections import deque
 
-from monascaclient import exc as exc, client
-from monasca_agent.common.keystone import Keystone
-from monasca_agent.common.util import get_hostname
+import monascaclient.client
+import monasca_agent.common.keystone as keystone
 
 log = logging.getLogger(__name__)
 
@@ -25,16 +24,11 @@ class MonAPI(object):
         self.config = config
         self.url = config['url']
         self.api_version = '2_0'
-        self.default_dimensions = config['dimensions']
-        # Verify the hostname is set as a dimension
-        if 'hostname' not in self.default_dimensions:
-            self.default_dimensions['hostname'] = get_hostname()
-
-        self.keystone = Keystone(config)
+        self.keystone = keystone.Keystone(config)
         self.mon_client = None
         self.max_buffer_size = config['max_buffer_size']
         self.backlog_send_rate = config['backlog_send_rate']
-        self.message_queue = deque(maxlen=self.max_buffer_size)
+        self.message_queue = collections.deque(maxlen=self.max_buffer_size)
         # 'amplifier' is completely optional and may not exist in the config
         try:
             self.amplifier = config['amplifier']
@@ -86,10 +80,6 @@ class MonAPI(object):
         for measurement in measurements:
             if isinstance(measurement.dimensions, list):
                 measurement.dimensions = dict([(d[0], d[1]) for d in measurement.dimensions])
-            else:
-                for dimension in self.default_dimensions.keys():
-                    if dimension not in measurement.dimensions.keys():
-                        measurement.dimensions.update({dimension: self.default_dimensions[dimension]})
 
         # "Amplify" these measurements to produce extra load, if so configured
         if self.amplifier is not None and self.amplifier > 0:
@@ -125,7 +115,7 @@ class MonAPI(object):
                 'token': token
             }
 
-            return client.Client(self.api_version, self.url, **kwargs)
+            return monascaclient.client.Client(self.api_version, self.url, **kwargs)
 
         return None
 
@@ -133,7 +123,7 @@ class MonAPI(object):
         try:
             self.mon_client.metrics.create(**kwargs)
             return True
-        except exc.HTTPException as he:
+        except monascaclient.exc.HTTPException as he:
             if 'unauthorized' in str(he):
                 log.info("Invalid token detected. Getting a new token...")
                 # Get a new keystone client and token

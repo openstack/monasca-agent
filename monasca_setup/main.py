@@ -2,7 +2,6 @@
 """ Detect running daemons then configure and start the agent.
 """
 
-import agent_config
 import argparse
 import logging
 import os
@@ -13,21 +12,22 @@ import subprocess
 import sys
 import yaml
 
-from detection.plugins import ceilometer
-from detection.plugins import cinder
-from detection.plugins import glance
-from detection.plugins import kafka_consumer
-from detection.plugins import keystone
-from detection.plugins import libvirt
-from detection.plugins import mon
-from detection.plugins import mysql
-from detection.plugins import network
-from detection.plugins import neutron
-from detection.plugins import nova
-from detection.plugins import rabbitmq
-from detection.plugins import swift
-from detection.plugins import zookeeper
-from service import sysv
+import agent_config
+import detection.plugins.ceilometer as ceilometer
+import detection.plugins.cinder as cinder
+import detection.plugins.glance as glance
+import detection.plugins.kafka_consumer as kafka_consumer
+import detection.plugins.keystone as keystone
+import detection.plugins.libvirt as libvirt
+import detection.plugins.mon as mon
+import detection.plugins.mysql as mysql
+import detection.plugins.network as network
+import detection.plugins.neutron as neutron
+import detection.plugins.nova as nova
+import detection.plugins.rabbitmq as rabbitmq
+import detection.plugins.swift as swift
+import detection.plugins.zookeeper as zookeeper
+import service.sysv as sysv
 
 # List of all detection plugins to run
 DETECTION_PLUGINS = [ceilometer.Ceilometer, cinder.Cinder, glance.Glance,
@@ -126,7 +126,7 @@ def main(argv=None):
     with open(os.path.join(args.template_dir, 'agent.conf.template'), 'r') as agent_template:
         with open(agent_conf_path, 'w') as agent_conf:
             # Join service in with the dimensions
-            if args.service is not None:
+            if args.service:
                 if args.dimensions is None:
                     args.dimensions = 'service:' + args.service
                 else:

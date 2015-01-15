@@ -1,11 +1,11 @@
 """Gather metrics on specific processes.
 
 """
-from monasca_agent.collector.checks import AgentCheck
-from monasca_agent.common.util import Platform
+import monasca_agent.collector.checks as checks
+import monasca_agent.common.util as util
 
 
-class ProcessCheck(AgentCheck):
+class ProcessCheck(checks.AgentCheck):
 
     PROCESS_GAUGE = ('process.thread_count',
                      'process.cpu_perc',
@@ -82,7 +82,7 @@ class ProcessCheck(AgentCheck):
 
         # process metrics available for psutil versions 0.6.0 and later
         extended_metrics_0_6_0 = (self.is_psutil_version_later_than((0, 6, 0))
-                                  and not Platform.is_win32())
+                                  and not util.Platform.is_win32())
         # On Windows get_ext_memory_info returns different metrics
         if extended_metrics_0_6_0:
             real = 0
@@ -95,7 +95,7 @@ class ProcessCheck(AgentCheck):
 
         # process metrics available for psutil versions 0.5.0 and later on UNIX
         extended_metrics_0_5_0_unix = (self.is_psutil_version_later_than((0, 5, 0))
-                                       and Platform.is_unix())
+                                       and util.Platform.is_unix())
         if extended_metrics_0_5_0_unix:
             open_file_descriptors = 0
             open_file_descriptors_perc = 0
@@ -200,7 +200,9 @@ class ProcessCheck(AgentCheck):
             cpu_check_interval = 0.1
 
         pids = self.find_pids(search_string, psutil, exact_match=exact_match)
-        dimensions.update({'process_name': name})
+        new_dimensions = self._set_dimensions({'process_name': name})
+        if dimensions is not None:
+            new_dimensions.update(dimensions.copy())
 
         self.log.debug('ProcessCheck: process %s analysed' % name)
 
@@ -213,4 +215,4 @@ class ProcessCheck(AgentCheck):
 
         for metric, value in metrics.iteritems():
             if value is not None:
-                self.gauge(metric, value, dimensions=dimensions)
+                self.gauge(metric, value, dimensions=new_dimensions)

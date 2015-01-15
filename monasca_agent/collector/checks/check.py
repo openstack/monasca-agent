@@ -15,14 +15,11 @@ import traceback
 
 import yaml
 
-from monasca_agent.common.keystone import Keystone
-from monasca_agent.common.aggregator import MetricsAggregator
-import monasca_agent.common.config
-import monasca_agent.common.exceptions
-import monasca_agent.common.util
-
-log = logging.getLogger(__name__)
-
+import monasca_agent.common.aggregator as aggregator
+import monasca_agent.common.check_status as check_status
+import monasca_agent.common.config as config
+import monasca_agent.common.exceptions as exceptions
+import monasca_agent.common.util as util
 
 # todo convert all checks to the new interface then remove this.
 #      Is the LaconicFilter on logs used elsewhere?
@@ -33,7 +30,7 @@ log = logging.getLogger(__name__)
 # and not this class. This class will be removed in a future version
 # of the agent.
 # =============================================================================
-class Check(object):
+class Check(util.Dimensions):
 
     """(Abstract) class for all checks with the ability to:
 
@@ -48,12 +45,13 @@ class Check(object):
         #                 tuple(dimensions) are stored as a key since lists are not hashable
         #               None: [(ts, value), (ts, value)]}
         #                 untagged values are indexed by None
+        super(Check, self).__init__(agent_config)
         self.agent_config = agent_config
         self._sample_store = {}
         self._counters = {}  # metric_name: bool
         self.logger = logger
         try:
-            self.logger.addFilter(monasca_agent.common.util.LaconicFilter())
+            self.logger.addFilter(util.LaconicFilter())
         except Exception:
             self.logger.exception("Trying to install laconic log filter and failed")
 
@@ -128,14 +126,11 @@ class Check(object):
         if timestamp is None:
             timestamp = time.time()
         if metric not in self._sample_store:
-            raise monasca_agent.common.exceptions.CheckException("Saving a sample for an undefined metric: %s" % metric)
+            raise exceptions.CheckException("Saving a sample for an undefined metric: %s" % metric)
         try:
-            value = monasca_agent.common.util.cast_metric_val(value)
+            value = util.cast_metric_val(value)
         except ValueError as ve:
-            raise monasca_agent.common.exceptions.NaN(ve)
-
-        # Sort and validate dimensions
-        self._set_dimensions(dimensions)
+            raise exceptions.NaN(ve)
 
         # Data eviction rules
         key = (tuple(sorted(dimensions.items())), device_name)
@@ -148,7 +143,7 @@ class Check(object):
                 self._sample_store[metric][key] = self._sample_store[metric][key][-1:] + \
                     [(timestamp, value, hostname, device_name)]
         else:
-            raise monasca_agent.common.exceptions.CheckException("%s must be either gauge or counter, skipping sample at %s" %
+            raise exceptions.CheckException("%s must be either gauge or counter, skipping sample at %s" %
                                                                  (metric, time.ctime(timestamp)))
 
         if self.is_gauge(metric):
@@ -157,12 +152,6 @@ class Check(object):
         elif self.is_counter(metric):
             assert len(self._sample_store[metric][key]) in (1, 2), self._sample_store[metric]
 
-    def _set_dimensions(self, dimensions):
-        new_dimensions = {'component': 'monasca-agent', 'service': 'monitoring'}
-        if dimensions is not None:
-            new_dimensions.update(dimensions.copy())
-        return new_dimensions
-
     @classmethod
     def _rate(cls, sample1, sample2):
         """Simple rate.
@@ -170,19 +159,19 @@ class Check(object):
         try:
             interval = sample2[0] - sample1[0]
             if interval == 0:
-                raise monasca_agent.common.exceptions.Infinity()
+                raise exceptions.Infinity()
 
             delta = sample2[1] - sample1[1]
             if delta < 0:
-                raise monasca_agent.common.exceptions.UnknownValue()
+                raise exceptions.UnknownValue()
 
             return (sample2[0], delta / interval, sample2[2], sample2[3])
-        except monasca_agent.common.exceptions.Infinity:
+        except exceptions.Infinity:
             raise
-        except monasca_agent.common.exceptions.UnknownValue:
+        except exceptions.UnknownValue:
             raise
         except Exception as e:
-            raise monasca_agent.common.exceptions.NaN(e)
+            raise exceptions.NaN(e)
 
     def get_sample_with_timestamp(self, metric, dimensions=None, device_name=None, expire=True):
         """Get (timestamp-epoch-style, value).
@@ -193,11 +182,11 @@ class Check(object):
 
         # Never seen this metric
         if metric not in self._sample_store:
-            raise monasca_agent.common.exceptions.UnknownValue()
+            raise exceptions.UnknownValue()
 
         # Not enough value to compute rate
         elif self.is_counter(metric) and len(self._sample_store[metric][key]) < 2:
-            raise monasca_agent.common.exceptions.UnknownValue()
+            raise exceptions.UnknownValue()
 
         elif self.is_counter(metric) and len(self._sample_store[metric][key]) >= 2:
             res = self._rate(
@@ -210,7 +199,7 @@ class Check(object):
             return self._sample_store[metric][key][-1]
 
         else:
-            raise monasca_agent.common.exceptions.UnknownValue()
+            raise exceptions.UnknownValue()
 
     def get_sample(self, metric, dimensions=None, device_name=None, expire=True):
         """Return the last value for that metric.
@@ -260,11 +249,11 @@ class Check(object):
                     try:
                         ts, val, hostname, device_name = self.get_sample_with_timestamp(
                             m, dimensions, device_name, expire)
-                    except monasca_agent.common.exceptions.UnknownValue:
+                    except exceptions.UnknownValue:
                         continue
                     attributes = {}
                     if dimensions_list:
-                        attributes['dimensions'] = dimensions
+                        attributes['dimensions'] = self._set_dimensions(dimensions)
                     if hostname:
                         attributes['hostname'] = hostname
                     if device_name:
@@ -277,7 +266,7 @@ class Check(object):
         return metrics
 
 
-class AgentCheck(object):
+class AgentCheck(util.Dimensions):
 
     def __init__(self, name, init_config, agent_config, instances=None):
         """Initialize a new check.
@@ -287,15 +276,16 @@ class AgentCheck(object):
         :param agent_config: The global configuration for the agent
         :param instances: A list of configuration objects for each instance.
         """
+        super(AgentCheck, self).__init__(agent_config)
         self.name = name
         self.init_config = init_config
         self.agent_config = agent_config
-        self.hostname = monasca_agent.common.util.get_hostname(agent_config)
+        self.hostname = util.get_hostname(agent_config)
         self.log = logging.getLogger('%s.%s' % (__name__, name))
 
-        self.aggregator = MetricsAggregator(self.hostname,
-                                            recent_point_threshold=agent_config.get('recent_point_threshold',
-                                                                                    None))
+        self.aggregator = aggregator.MetricsAggregator(self.hostname,
+                                                       recent_point_threshold=agent_config.get('recent_point_threshold',
+                                                                                               None))
 
         self.events = []
         self.instances = instances or []
@@ -415,12 +405,6 @@ class AgentCheck(object):
                             hostname,
                             device_name)
 
-    def _set_dimensions(self, dimensions):
-        new_dimensions = {'component': 'monasca-agent', 'service': 'monitoring'}
-        if dimensions is not None:
-            new_dimensions.update(dimensions.copy())
-        return new_dimensions
-
     def event(self, event):
         """Save an event.
 
@@ -529,18 +513,18 @@ class AgentCheck(object):
             try:
                 self.check(instance)
                 if self.has_warnings():
-                    instance_status = monasca_agent.common.check_status.InstanceStatus(i,
-                                                                                       monasca_agent.common.check_status.STATUS_WARNING,
-                                                                                       warnings=self.get_warnings())
+                    instance_status = check_status.InstanceStatus(i,
+                                                                  check_status.STATUS_WARNING,
+                                                                  warnings=self.get_warnings())
                 else:
-                    instance_status = monasca_agent.common.check_status.InstanceStatus(i,
-                                                                                       monasca_agent.common.check_status.STATUS_OK)
+                    instance_status = check_status.InstanceStatus(i,
+                                                                  check_status.STATUS_OK)
             except Exception as e:
                 self.log.exception("Check '%s' instance #%s failed" % (self.name, i))
-                instance_status = monasca_agent.common.check_status.InstanceStatus(i,
-                                                                                   monasca_agent.common.check_status.STATUS_ERROR,
-                                                                                   error=e,
-                                                                                   tb=traceback.format_exc())
+                instance_status = check_status.InstanceStatus(i,
+                                                              check_status.STATUS_ERROR,
+                                                              error=e,
+                                                              tb=traceback.format_exc())
             instance_statuses.append(instance_status)
         return instance_statuses
 
@@ -623,7 +607,7 @@ def run_check(name, path=None):
     import tests.common
 
     # Read the config file
-    confd_path = path or os.path.join(monasca_agent.common.config.get_confd_path(monasca_agent.common.util.get_os()),
+    confd_path = path or os.path.join(config.get_confd_path(util.get_os()),
                                       '%s.yaml' % name)
 
     try:

@@ -390,6 +390,29 @@ class Platform(object):
         name = name or sys.platform
         return name == "win32"
 
+
+class Dimensions(object):
+
+    """
+    Class to update the default dimensions.
+    """
+    
+    def __init__(self, config):
+        self.agent_config = config
+
+    def _set_dimensions(self, dimensions):
+        """Method to append the default dimensions from the config file.
+        """
+        new_dimensions = {'hostname': get_hostname()}
+        if dimensions is not None:
+            new_dimensions.update(dimensions.copy())
+        default_dimensions = self.agent_config['Api'].get('dimensions', {})
+        if default_dimensions:
+            # Add or update any default dimensions that were set in the agent config file
+            new_dimensions.update(default_dimensions)
+        return new_dimensions
+
+
 """
 Iterable Recipes
 """

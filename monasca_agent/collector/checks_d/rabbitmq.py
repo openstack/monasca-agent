@@ -3,7 +3,7 @@ import time
 import urllib2
 import urlparse
 
-from monasca_agent.collector.checks import AgentCheck
+import monasca_agent.collector.checks as checks
 
 
 EVENT_TYPE = SOURCE_TYPE_NAME = 'rabbitmq'
@@ -75,7 +75,7 @@ DIMENSIONS_MAP = {
 METRIC_SUFFIX = {QUEUE_TYPE: "queue", EXCHANGE_TYPE: "exchange", NODE_TYPE: "node"}
 
 
-class RabbitMQ(AgentCheck):
+class RabbitMQ(checks.AgentCheck):
 
     """This check is for gathering statistics from the RabbitMQ
 
@@ -218,7 +218,7 @@ class RabbitMQ(AgentCheck):
             dim = data.get(d, None)
             if dim not in [None, ""]:
                 dimensions[dimensions_list[d]] = dim
-        new_dimensions = {'component': 'rabbitmq', 'service': 'rabbitmq'}
+        new_dimensions = self._set_dimensions({'component': 'rabbitmq', 'service': 'rabbitmq'})
         if dimensions is not None:
             new_dimensions.update(dimensions.copy())
 

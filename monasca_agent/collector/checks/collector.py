@@ -6,9 +6,9 @@ import system.win32 as w32
 import threading
 import time
 
-import monasca_agent.common.check_status
-import monasca_agent.common.metrics
-import monasca_agent.common.util
+import monasca_agent.common.check_status as check_status
+import monasca_agent.common.metrics as metrics
+import monasca_agent.common.util as util
 
 
 log = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ FLUSH_LOGGING_PERIOD = 10
 FLUSH_LOGGING_INITIAL = 5
 
 
-class Collector(object):
+class Collector(util.Dimensions):
 
     """The collector is responsible for collecting data from each check and
 
@@ -30,9 +30,10 @@ class Collector(object):
     """
 
     def __init__(self, agent_config, emitter, checksd=None):
+        super(Collector, self).__init__(agent_config)
         self.emit_duration = None
         self.agent_config = agent_config
-        self.os = monasca_agent.common.util.get_os()
+        self.os = util.get_os()
         self.plugins = None
         self.emitter = emitter
         socket.setdefaulttimeout(15)
@@ -59,9 +60,10 @@ class Collector(object):
                              w32.Cpu(log)]
             system_checks = []
         else:
-            system_checks = [u.Disk(log, agent_config), u.IO(log)]
+            system_checks = [u.Disk(log, agent_config),
+                             u.IO(log, agent_config)]
             legacy_checks = [u.Load(log, agent_config),
-                             u.Memory(log),
+                             u.Memory(log, agent_config),
                              u.Cpu(log, agent_config)]
         self._checks.extend(system_checks)
         self._legacy_checks.extend(legacy_checks)
@@ -79,18 +81,18 @@ class Collector(object):
         # Don't try to send to an emitter if we're stopping/
         if self.continue_running:
             name = self.emitter.__name__
-            emitter_status = monasca_agent.common.check_status.EmitterStatus(name)
+            emitter_status = check_status.EmitterStatus(name)
             try:
                 self.emitter(payload, log, self.agent_config['forwarder_url'])
             except Exception as e:
                 log.exception("Error running emitter: %s" % self.emitter.__name__)
-                emitter_status = monasca_agent.common.check_status.EmitterStatus(name, e)
+                emitter_status = check_status.EmitterStatus(name, e)
             statuses.append(emitter_status)
         return statuses
 
     def _set_status(self, check_statuses, emitter_statuses, collect_duration):
         try:
-            monasca_agent.common.check_status.CollectorStatus(check_statuses, emitter_statuses).persist()
+            check_status.CollectorStatus(check_statuses, emitter_statuses).persist()
         except Exception:
             log.exception("Error persisting collector status")
 
@@ -129,7 +131,7 @@ class Collector(object):
 
         There are currently two types of checks the system checks and the configured ones from checks_d
         """
-        timer = monasca_agent.common.util.Timer()
+        timer = util.Timer()
         self.run_count += 1
         log.debug("Starting collection run #%s" % self.run_count)
 
@@ -137,17 +139,17 @@ class Collector(object):
 
         timestamp = time.time()
         events = {}
+        dimensions = {}
 
         # Run the system checks. These checks output a dictionary of name/value pairs
         for check_type in self._legacy_checks:
             try:
                 for name, value in check_type.check().iteritems():
-                    metrics_list.append(monasca_agent.common.metrics.Measurement(name,
-                                                                                 timestamp,
-                                                                                 value,
-                                                                                 {'component': 'monasca-agent',
-                                                                                  'service': 'monitoring'},
-                                                                                 None))
+                    metrics_list.append(metrics.Measurement(name,
+                                                            timestamp,
+                                                            value,
+                                                            self._set_dimensions(dimensions),
+                                                            None))
             except Exception:
                 log.exception('Error running check.')
 
@@ -163,15 +165,15 @@ class Collector(object):
         # Store the metrics and events in the payload.
         collect_duration = timer.step()
 
+        dimensions.update({'component': 'monasca-agent'})
         # Add in metrics on the collector run, emit_duration is from the previous run
         for name, value in self.collector_stats(len(metrics_list), len(events),
                                                 collect_duration, self.emit_duration).iteritems():
-            metrics_list.append(monasca_agent.common.metrics.Measurement(name,
-                                                                         timestamp,
-                                                                         value,
-                                                                         {'component': 'monasca-agent',
-                                                                          'service': 'monitoring'},
-                                                                         None))
+            metrics_list.append(metrics.Measurement(name,
+                                                    timestamp,
+                                                    value,
+                                                    self._set_dimensions(dimensions),
+                                                    None))
         emitter_statuses = self._emit(metrics_list)
         self.emit_duration = timer.step()
 
@@ -215,17 +217,17 @@ class Collector(object):
             except Exception:
                 log.exception("Error running check %s" % check.name)
 
-            check_status = monasca_agent.common.check_status.CheckStatus(check.name, instance_statuses, metric_count, event_count,
-                                                                         library_versions=check.get_library_info())
-            check_statuses.append(check_status)
+            status_check = check_status.CheckStatus(check.name, instance_statuses, metric_count, event_count,
+                                                    library_versions=check.get_library_info())
+            check_statuses.append(status_check)
 
         for check_name, info in self.init_failed_checks_d.iteritems():
             if not self.continue_running:
                 return
-            check_status = monasca_agent.common.check_status.CheckStatus(check_name, None, None, None,
-                                                                         init_failed_error=info['error'],
-                                                                         init_failed_traceback=info['traceback'])
-            check_statuses.append(check_status)
+            status_check = check_status.CheckStatus(check_name, None, None, None,
+                                                    init_failed_error=info['error'],
+                                                    init_failed_traceback=info['traceback'])
+            check_statuses.append(status_check)
 
         return measurements, events, check_statuses
 

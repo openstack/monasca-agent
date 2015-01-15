@@ -4,7 +4,7 @@ import subprocess
 import sys
 import traceback
 
-from monasca_agent.collector.checks import AgentCheck
+import monasca_agent.collector.checks as checks
 
 
 GAUGE = "gauge"
@@ -44,10 +44,10 @@ STATUS_VARS = {
 }
 
 
-class MySql(AgentCheck):
+class MySql(checks.AgentCheck):
 
     def __init__(self, name, init_config, agent_config):
-        AgentCheck.__init__(self, name, init_config, agent_config)
+        super(MySql, self).__init__(name, init_config, agent_config)
         self.mysql_version = {}
         self.greater_502 = {}
 
@@ -67,7 +67,7 @@ class MySql(AgentCheck):
         host, port, user, password, mysql_sock, defaults_file, dimensions, options = self._get_config(
             instance)
 
-        new_dimensions = {'component': 'mysql', 'service': 'mysql'}
+        new_dimensions = self._set_dimensions({'component': 'mysql', 'service': 'mysql'})
         if dimensions is not None:
             new_dimensions.update(dimensions.copy())
 

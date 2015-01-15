@@ -7,18 +7,17 @@ import socket
 import subprocess
 import sys
 
-from monasca_agent.collector.checks.services_checks import ServicesCheck
-from monasca_agent.collector.checks.services_checks import Status
+import monasca_agent.collector.checks.services_checks as services_checks
 
 
-class HostAlive(ServicesCheck):
+class HostAlive(services_checks.ServicesCheck):
 
     """Inherit ServicesCheck class to test if a host is alive or not.
 
     """
 
     def __init__(self, name, init_config, agent_config, instances=None):
-        ServicesCheck.__init__(self, name, init_config, agent_config, instances)
+        super(HostAlive, self).__init__(name, init_config, agent_config, instances)
 
     def _test_ssh(self, host, port, timeout=None):
         """Connect to the SSH port (typically 22) and look for a banner.
@@ -89,11 +88,11 @@ class HostAlive(ServicesCheck):
 
         """
 
-        dimensions = {'target_host': instance['host_name'],
-                      'observer_host': socket.getfqdn()}
+        new_dimensions = self._set_dimensions({'target_host': instance['host_name'],
+                                               'observer_host': socket.getfqdn()})
         # Add per-instance dimensions, if any
         if 'dimensions' in instance.keys() and instance['dimensions'] is not None:
-            dimensions.update(instance['dimensions'])
+            new_dimensions.update(instance['dimensions'])
 
         success = False
 
@@ -108,9 +107,9 @@ class HostAlive(ServicesCheck):
             self.log.info("Unrecognized alive_test " + instance['alive_test'])
 
         if success is True:
-            self.gauge('host_alive_status', 0, dimensions=dimensions)
-            return Status.UP, "UP"
+            self.gauge('host_alive_status', 0, dimensions=new_dimensions)
+            return services_checks.Status.UP, "UP"
         else:
-            self.gauge('host_alive_status', 1, dimensions=dimensions)
+            self.gauge('host_alive_status', 1, dimensions=new_dimensions)
             self.log.error("Host down: " + instance['host_name'])
-            return Status.DOWN, "DOWN"
+            return services_checks.Status.DOWN, "DOWN"

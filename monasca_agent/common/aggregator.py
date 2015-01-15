@@ -3,11 +3,10 @@
 import logging
 from time import time
 
-from monasca_agent.common.metrics import Gauge, BucketGauge, Counter, Histogram, Measurement, Set, Rate
+import monasca_agent.common.metrics as metrics_pkg
 
 
 log = logging.getLogger(__name__)
-
 
 # This is used to ensure that metrics with a timestamp older than
 # RECENT_POINT_THRESHOLD_DEFAULT seconds (or the value passed in to
@@ -38,12 +37,12 @@ class MetricsAggregator(object):
 
         self.metrics = {}
         self.metric_type_to_class = {
-            'g': Gauge,
-            'c': Counter,
-            'h': Histogram,
-            'ms': Histogram,
-            's': Set,
-            '_dd-r': Rate,
+            'g': metrics_pkg.Gauge,
+            'c': metrics_pkg.Counter,
+            'h': metrics_pkg.Histogram,
+            'ms': metrics_pkg.Histogram,
+            's': metrics_pkg.Set,
+            '_dd-r': metrics_pkg.Rate,
         }
 
     def decrement(self, name, value=-1, dimensions=None, delegated_tenant=None,
@@ -133,8 +132,11 @@ class MetricsAggregator(object):
         if device_name:
             dimensions.update({'device': device_name})
 
-        return Measurement(metric, int(timestamp), value, dimensions,
-                           delegated_tenant)
+        return metrics_pkg.Measurement(metric,
+                                       int(timestamp),
+                                       value,
+                                       dimensions,
+                                       delegated_tenant)
 
     def gauge(self, name, value, dimensions=None, delegated_tenant=None,
               hostname=None, device_name=None, timestamp=None):
@@ -166,26 +168,18 @@ class MetricsAggregator(object):
         self.submit_metric(name, value, 's', dimensions, delegated_tenant,
                            hostname, device_name)
 
-    @staticmethod
-    def set_dimensions(dimensions):
-        new_dimensions = {'component': 'monasca-agent', 'service': 'monitoring'}
-        if dimensions is not None:
-            new_dimensions.update(dimensions.copy())
-        return new_dimensions
-
     def submit_metric(self, name, value, mtype, dimensions=None,
                       delegated_tenant=None, hostname=None, device_name=None,
                       timestamp=None, sample_rate=1):
 
-        new_dimensions = self.set_dimensions(dimensions)
-        context = (name, tuple(new_dimensions.items()),
+        context = (name, tuple(dimensions.items()),
                    delegated_tenant, hostname, device_name)
 
         if context not in self.metrics:
             metric_class = self.metric_type_to_class[mtype]
             self.metrics[context] = metric_class(self.formatter,
                                                  name,
-                                                 new_dimensions,
+                                                 dimensions,
                                                  hostname or self.hostname,
                                                  device_name,
                                                  delegated_tenant)

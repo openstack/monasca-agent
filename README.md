@@ -321,6 +321,13 @@ This section documents some of the common naming conventions for dimensions that
 
 All key/value pairs are optional and dependent on the metric.
 
+The order of precedence for all dimensions is:
+1) Any dimension defined in an Agent plugin config file.
+2) Any dimension defined in the Agent config file.
+3) Any default dimension set in the plugin code itself.
+
+1 being the highest precedence and 3 being the lowest precedence.  So if a dimension is defined in more than one place, the dimension will be set to the value of the highest precedence above.  This allows dimensions to be overridden at any level if desired.
+
 | Name | Description |
 | ---- | ----------- | 
 | hostname | The FQDN of the host being measured. |
