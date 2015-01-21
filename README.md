@@ -965,7 +965,11 @@ The following ceilometer processes are monitored, if they exist when the monasca
 The Libvirt plugin provides metrics for virtual machines when run on the hypervisor server.  It provides two sets of metrics per measurement: one designed for the owner of the VM, and one intended for the owner of the hypervisor server.
 
 ### Configuration
-The `monasca-setup` program will configure the Libvirt plugin if `nova-api` is running, `/etc/nova/nova.conf` exists, and `python-novaclient` is installed.  It uses a cache directory to persist data, which is `/dev/shm` by default.  On non-Linux systems (BSD, Mac OSX), `/dev/shm` may not exist, so `cache_dir` would need to be changed accordingly, either in `monasca_setup/detection/plugins/libvirt.py` prior to running `monasca-setup`, or `/etc/monasca/agent/conf.d/libvirt.yaml` afterwards.
+The `monasca-setup` program will configure the Libvirt plugin if `nova-api` is running, `/etc/nova/nova.conf` exists, and `python-novaclient` is installed.
+
+In order to fetch data on hosted compute instances, the Libvirt plugin needs to be able to talk to the Nova API.  It does this using credentials found in `/etc/nova/nova.conf` under `[keystone_authtoken]`, obtained when `monasca-setup` is run, and stored in `/etc/monasca/agent/conf.d/libvirt.yaml` as `admin_user`, `admin_password`, `admin_tenant_name`, and `admin_password`.  These credentials are only used to build and update the [Instance Cache](#instance-cache).
+
+The Libvirt plugin uses a cache directory to persist data, which is `/dev/shm` by default.  On non-Linux systems (BSD, Mac OSX), `/dev/shm` may not exist, so `cache_dir` would need to be changed accordingly, either in `monasca_setup/detection/plugins/libvirt.py` prior to running `monasca-setup`, or `/etc/monasca/agent/conf.d/libvirt.yaml` afterwards.
 
 `nova_refresh` specifies the number of seconds between calls to the Nova API to refresh the instance cache.  This is helpful for updating VM hostname and pruning deleted instances from the cache.  By default, it is set to 14,400 seconds (four hours).  Set to 0 to refresh every time the Collector runs, or to None to disable regular refreshes entirely (though the instance cache will still be refreshed if a new instance is detected).
 
@@ -1056,7 +1060,11 @@ All metrics include `resource_id` and `zone` (availability zone) dimensions.  Be
 | tenant_id      | (N/A)                     | owner of VM             |
 
 ### Cross-Tenant Metric Submission
-If the owner of the VM is to receive his or her own metrics, the Agent needs to be able to submit metrics on their behalf.  This is called cross-tenant metric submission.  For this to work, a keystone role called "monitoring-delegate" needs to be created, and the monasca-agent user assigned to it.
+If the owner of the VM is to receive his or her own metrics, the Agent needs to be able to submit metrics on their behalf.  This is called cross-tenant metric submission.  For this to work, a Keystone role called "monitoring-delegate" needs to be created, and the Agent's Keystone username and project (tenant) assigned to it.  This username is contained as `username` in `/etc/monasca/agent/agent.conf`, and passed to `monasca-setup` as the `-u` parameter.   The Agent's project name which is contained in `agent.conf` as the variable `project_name`, and passed to `monasca-setup` as the `--project-name` parameter.
+
+In the below example, the Agent's Keystone username is "monasca-agent" and the Agent's Keystone project name is "mini-mon".
+
+Example commands to add the Agent user/project to the monitoring-delegate role:
 ```
 keystone role-create --name=monitoring-delegate
 
@@ -1066,9 +1074,8 @@ tenant_id=`keystone tenant-list |grep mini-mon |cut -d'|' -f2`
 
 keystone user-role-add --user=${user_id// /} --role=${role_id// /} --tenant_id=${tenant_id// /}
 ```
-The tenant name "mini-mon" in the example above may differ depending on your installation (it is set by the `--project-name` parameter of `monasca-setup` and can be referenced as `project_name` in `/etc/monasca/agent/agent.conf`).  Once assigned to the `monitoring-delegate` group, the Agent can submit metrics for other tenants.
 
-
+Once the Agent's user and project are assigned to the `monitoring-delegate` group, the Agent can submit metrics for other tenants.
 
 # Statsd
 The Monasca Agent ships with a Statsd daemon implementation called monasca-statsd. A statsd client can be used to send metrics to the Forwarder via the Statsd daemon.
