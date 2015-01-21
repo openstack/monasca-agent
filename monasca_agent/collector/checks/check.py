@@ -21,14 +21,14 @@ import monasca_agent.common.config as config
 import monasca_agent.common.exceptions as exceptions
 import monasca_agent.common.util as util
 
-# todo convert all checks to the new interface then remove this.
-#      Is the LaconicFilter on logs used elsewhere?
+
+# todo convert all checks to the new interface then remove this and Laconic filter which isn't used elsewhere
 # =============================================================================
 # DEPRECATED
 # ------------------------------
 # If you are writing your own check, you should inherit from AgentCheck
 # and not this class. This class will be removed in a future version
-# of the agent.
+# of the agent and is currently only used for Windows.
 # =============================================================================
 class Check(util.Dimensions):
 
