@@ -3,7 +3,6 @@
 
 """
 
-import json
 import re
 import socket
 import time
@@ -13,6 +12,7 @@ from httplib2 import httplib
 from httplib2 import HttpLib2Error
 
 import monasca_agent.collector.checks.services_checks as services_checks
+import monasca_agent.common.keystone as keystone
 
 
 class HTTPCheck(services_checks.ServicesCheck):
@@ -60,8 +60,8 @@ class HTTPCheck(services_checks.ServicesCheck):
         while not done or retry:
             if use_keystone:
                 api_config = self.agent_config['Api']
-                keystone = Keystone(api_config)
-                token = keystone.get_token()
+                key = keystone.Keystone(api_config)
+                token = key.get_token()
                 if token:
                     headers["X-Auth-Token"] = token
                     headers["Content-type"] = "application/json"
@@ -132,9 +132,8 @@ class HTTPCheck(services_checks.ServicesCheck):
                         return services_checks.Status.DOWN, "%s is DOWN, unable to get a valid token to connect with" % (
                             addr)
                     else:
-                        # Get a new token and retry
+                        # Get a new token (done at top of the loop) and retry
                         self.log.warning("Token expired, getting new token and retrying...")
-                        HTTPCheck.token = self.keystone.refresh_token()
                         retry = True
                         continue
                 else:

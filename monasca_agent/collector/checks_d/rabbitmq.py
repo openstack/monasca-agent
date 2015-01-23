@@ -83,7 +83,7 @@ class RabbitMQ(checks.AgentCheck):
     """
 
     def __init__(self, name, init_config, agent_config, instances=None):
-        AgentCheck.__init__(self, name, init_config, agent_config, instances)
+        checks.AgentCheck.__init__(self, name, init_config, agent_config, instances)
         self.already_alerted = []
 
     @staticmethod
