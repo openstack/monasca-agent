@@ -283,30 +283,20 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         if config.has_option('Main', 'autorestart'):
             agent_config['autorestart'] = _is_affirmative(config.get('Main', 'autorestart'))
 
+        if config.has_option('Main', 'system_metrics'):
+            agent_config['system_metrics'] = config.get('Main', 'system_metrics').split(',')
+
         try:
             filter_device_re = config.get('Main', 'device_blacklist_re')
             agent_config['device_blacklist_re'] = re.compile(filter_device_re)
         except ConfigParser.NoOptionError:
             pass
 
+        if config.has_option('Main', 'ignore_filesystem_types'):
+            agent_config['ignore_filesystem_types'] = config.get('Main', 'ignore_filesystem_types').split(',')
+
         if config.has_option('datadog', 'ddforwarder_log'):
             agent_config['has_datadog'] = True
-
-        # Dogstream config
-        if config.has_option("Main", "dogstream_log"):
-            # Older version, single log support
-            log_path = config.get("Main", "dogstream_log")
-            if config.has_option("Main", "dogstream_line_parser"):
-                agent_config["dogstreams"] = ':'.join(
-                    [log_path, config.get("Main", "dogstream_line_parser")])
-            else:
-                agent_config["dogstreams"] = log_path
-
-        elif config.has_option("Main", "dogstreams"):
-            agent_config["dogstreams"] = config.get("Main", "dogstreams")
-
-        if config.has_option("Main", "nagios_perf_cfg"):
-            agent_config["nagios_perf_cfg"] = config.get("Main", "nagios_perf_cfg")
 
         if config.has_section('WMI'):
             agent_config['WMI'] = {}

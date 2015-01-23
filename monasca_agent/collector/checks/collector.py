@@ -42,31 +42,24 @@ class Collector(util.Dimensions):
         self.initialized_checks_d = []
         self.init_failed_checks_d = []
 
-        self._checks = []
-        self._legacy_checks = [
-            # todo dogstreams should be removed or moved over to a standard output type
-            # Dogstreams.init(log, self.agent_config)  # dogstreams
-        ]
-
         # add system checks
-        # todo all these (legacy and system) should be moved to the newer
-        # AgentCheck class rather than check
         if self.os == 'windows':
-            legacy_checks = [w32.Disk(log),
+            self._checks = [w32.Disk(log),
                              w32.IO(log),
                              w32.Processes(log),
                              w32.Memory(log),
                              w32.Network(log),
                              w32.Cpu(log)]
-            system_checks = []
         else:
-            system_checks = [u.Disk(log, agent_config),
-                             u.IO(log, agent_config)]
-            legacy_checks = [u.Load(log, agent_config),
-                             u.Memory(log, agent_config),
-                             u.Cpu(log, agent_config)]
-        self._checks.extend(system_checks)
-        self._legacy_checks.extend(legacy_checks)
+            possible_checks = {'cpu': u.Cpu,
+                               'disk': u.Disk,
+                               'io': u.IO,
+                               'load': u.Load,
+                               'memory': u.Memory}
+            self._checks = []
+            # Only setup the configured system checks
+            for check in self.agent_config.get('system_metrics', []):
+                self._checks.append(possible_checks[check](log, agent_config))
 
         if checksd:
             # is of type {check_name: check}
@@ -139,23 +132,21 @@ class Collector(util.Dimensions):
 
         timestamp = time.time()
         events = {}
-        dimensions = {}
 
-        # Run the system checks. These checks output a dictionary of name/value pairs
-        for check_type in self._legacy_checks:
-            try:
-                for name, value in check_type.check().iteritems():
-                    metrics_list.append(metrics.Measurement(name,
-                                                            timestamp,
-                                                            value,
-                                                            self._set_dimensions(dimensions),
-                                                            None))
-            except Exception:
-                log.exception('Error running check.')
-
-        # These are still implemented using the older check class but do output Measurements
-        for check_type in self._checks:
-            metrics_list.extend(check_type.check())
+        if self.os == 'windows':  # Windows uses old style checks.
+            for check_type in self._checks:
+                try:
+                    for name, value in check_type.check().iteritems():
+                        metrics_list.append(metrics.Measurement(name,
+                                                                timestamp,
+                                                                value,
+                                                                self._set_dimensions(None),
+                                                                None))
+                except Exception:
+                    log.exception('Error running check.')
+        else:
+            for check_type in self._checks:
+                metrics_list.extend(check_type.check())
 
         # checks_d checks
         checks_d_metrics, checks_d_events, checks_statuses = self.run_checks_d()
@@ -165,7 +156,7 @@ class Collector(util.Dimensions):
         # Store the metrics and events in the payload.
         collect_duration = timer.step()
 
-        dimensions.update({'component': 'monasca-agent'})
+        dimensions = {'component': 'monasca-agent'}
         # Add in metrics on the collector run, emit_duration is from the previous run
         for name, value in self.collector_stats(len(metrics_list), len(events),
                                                 collect_duration, self.emit_duration).iteritems():

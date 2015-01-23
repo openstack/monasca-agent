@@ -30,17 +30,20 @@ class Disk(check.Check):
     def check(self):
         """Get disk space/inode stats.
         """
+        fs_types_to_ignore = []
         # First get the configuration.
         if self.agent_config is not None:
             use_mount = self.agent_config.get("use_mount", False)
             blacklist_re = self.agent_config.get('device_blacklist_re', None)
+            for fs_type in self.agent_config.get('ignore_filesystem_types', []):
+                fs_types_to_ignore.extend(['-x', fs_type])
         else:
             use_mount = False
             blacklist_re = None
         platform_name = sys.platform
 
         try:
-            dfk_out = _get_subprocess_output(['df', '-k'])
+            dfk_out = _get_subprocess_output(['df', '-k'] + fs_types_to_ignore)
             stats = self.parse_df_output(
                 dfk_out,
                 platform_name,
@@ -49,7 +52,7 @@ class Disk(check.Check):
             )
 
             # Collect inode metrics.
-            dfi_out = _get_subprocess_output(['df', '-i'])
+            dfi_out = _get_subprocess_output(['df', '-i'] + fs_types_to_ignore)
             inodes = self.parse_df_output(
                 dfi_out,
                 platform_name,
@@ -71,7 +74,7 @@ class Disk(check.Check):
 
         except Exception:
             self.logger.exception('Error collecting disk stats')
-            return {}
+            return []
 
     def parse_df_output(
             self, df_output, platform_name, inodes=False, use_mount=False, blacklist_re=None):
@@ -207,7 +210,7 @@ class Disk(check.Check):
 
 class IO(check.Check):
 
-    def __init__(self, logger, agent_config):
+    def __init__(self, logger, agent_config=None):
         super(IO, self).__init__(logger, agent_config)
         self.header_re = re.compile(r'([%\\/\-_a-zA-Z0-9]+)[\s+]?')
         self.item_re = re.compile(r'^([a-zA-Z0-9\/]+)')
@@ -294,7 +297,7 @@ class IO(check.Check):
         """Capture io stats.
 
         @rtype dict
-        @return {"device": {"metric": value, "metric": value}, ...}
+        @return [metrics.Measurement, ]
         """
         io = {}
         try:
@@ -390,7 +393,7 @@ class IO(check.Check):
                 #    6.67   3  0.02     0.00   0  0.00    <-- line of interest
                 io = self._parse_darwin(iostat)
             else:
-                return {}
+                return []
 
             # If we filter devices, do it know.
             if self.agent_config is not None:
@@ -422,7 +425,7 @@ class IO(check.Check):
 
         except Exception:
             self.logger.exception("Cannot extract IO statistics")
-            return {}
+            return []
 
 
 class Load(check.Check):
@@ -435,7 +438,7 @@ class Load(check.Check):
                 loadAvrgProc.close()
             except Exception:
                 self.logger.exception('Cannot extract load')
-                return {}
+                return []
 
             uptime = uptime[0]  # readlines() provides a list but we want a string
 
@@ -451,15 +454,17 @@ class Load(check.Check):
 
         # Split out the 3 load average values
         load = [res.replace(',', '.') for res in re.findall(r'([0-9]+[\.,]\d+)', uptime)]
-        return {'load.avg_1_min': float(load[0]),
-                'load.avg_5_min': float(load[1]),
-                'load.avg_15_min': float(load[2]),
-                }
+        timestamp = time.time()
+        dimensions = self._set_dimensions(None)
+
+        return [metrics.Measurement('load.avg_1_min', timestamp, float(load[0]), dimensions),
+                metrics.Measurement('load.avg_5_min', timestamp, float(load[1]), dimensions),
+                metrics.Measurement('load.avg_15_min', timestamp, float(load[2]), dimensions)]
 
 
 class Memory(check.Check):
 
-    def __init__(self, logger, agent_config):
+    def __init__(self, logger, agent_config=None):
         super(Memory, self).__init__(logger, agent_config)
         macV = None
         if sys.platform == 'darwin':
@@ -484,6 +489,8 @@ class Memory(check.Check):
                 pass
 
     def check(self):
+        memData = {}
+
         if util.Platform.is_linux():
             try:
                 meminfoProc = open('/proc/meminfo', 'r')
@@ -491,7 +498,7 @@ class Memory(check.Check):
                 meminfoProc.close()
             except Exception:
                 self.logger.exception('Cannot get memory metrics from /proc/meminfo')
-                return {}
+                return []
 
             # $ cat /proc/meminfo
             # MemTotal:        7995360 kB
@@ -548,8 +555,6 @@ class Memory(check.Check):
                 except Exception:
                     self.logger.exception("Cannot parse /proc/meminfo")
 
-            memData = {}
-
             # Physical memory
             # FIXME units are in MB, we should use bytes instead
             try:
@@ -583,9 +588,7 @@ class Memory(check.Check):
                         (memData['mem.swap_free_mb']) / float(memData['mem.swap_total_mb']) * 100)
             except Exception:
                 self.logger.exception('Cannot compute swap stats')
-
-            return memData
-
+                return []
         elif sys.platform == 'darwin':
             macV = platform.mac_ver()
             macV_minor_version = int(re.match(r'10\.(\d+)\.?.*', macV[0]).group(1))
@@ -596,7 +599,7 @@ class Memory(check.Check):
                     ['sysctl', 'vm.swapusage'], stdout=sp.PIPE, close_fds=True).communicate()[0]
             except Exception:
                 self.logger.exception('getMemoryUsage')
-                return {}
+                return []
 
             # Deal with top
             lines = top.split('\n')
@@ -612,10 +615,10 @@ class Memory(check.Check):
                 physUsedPartIndex = 0
                 physFreePartIndex = 2
 
-            return {'physUsed': physParts[physUsedPartIndex],
-                    'physFree': physParts[physFreePartIndex],
-                    'swapUsed': swapParts[1],
-                    'swapFree': swapParts[2]}
+            memData = {'physUsed': physParts[physUsedPartIndex],
+                       'physFree': physParts[physFreePartIndex],
+                       'swapUsed': swapParts[1],
+                       'swapFree': swapParts[2]}
 
         elif sys.platform.startswith("freebsd"):
             try:
@@ -623,7 +626,7 @@ class Memory(check.Check):
                     ['sysctl', 'vm.stats.vm'], stdout=sp.PIPE, close_fds=True).communicate()[0]
             except Exception:
                 self.logger.exception('getMemoryUsage')
-                return {}
+                return []
 
             lines = sysctl.split('\n')
 
@@ -648,8 +651,6 @@ class Memory(check.Check):
                         meminfo[match.group(1)] = match.group(2)
                 except Exception:
                     self.logger.exception("Cannot parse sysctl vm.stats.vm output")
-
-            memData = {}
 
             # Physical memory
             try:
@@ -681,7 +682,7 @@ class Memory(check.Check):
                     ['swapinfo', '-m'], stdout=sp.PIPE, close_fds=True).communicate()[0]
             except Exception:
                 self.logger.exception('getMemoryUsage')
-                return {}
+                return []
 
             lines = sysctl.split('\n')
 
@@ -703,8 +704,7 @@ class Memory(check.Check):
                     memData['swapUsed'] += int(line[2])
             except Exception:
                 self.logger.exception('Cannot compute stats from swapinfo')
-
-            return memData
+                return []
         elif sys.platform == 'sunos5':
             try:
                 memData = {}
@@ -747,12 +747,13 @@ class Memory(check.Check):
                 if memData['swapTotal'] > 0:
                     memData['swapPctFree'] = float(
                         memData['swapFree']) / float(memData['swapTotal'])
-                return memData
             except Exception:
                 self.logger.exception("Cannot compute mem stats from kstat -c zone_memory_cap")
-                return {}
-        else:
-            return {}
+                return []
+
+        timestamp = time.time()
+        dimensions = self._set_dimensions(None)
+        return [metrics.Measurement(key, timestamp, value, dimensions) for key, value in memData.iteritems()]
 
 
 class Cpu(check.Check):
@@ -762,31 +763,6 @@ class Cpu(check.Check):
 
         When figures are not available, False is sent back.
         """
-        def format_results(us, sy, wa, idle, st):
-            data = {'cpu.user_perc': us,
-                    'cpu.system_perc': sy,
-                    'cpu.wait_perc': wa,
-                    'cpu.idle_perc': idle,
-                    'cpu.stolen_perc': st}
-            for key in data.keys():
-                if data[key] is None:
-                    del data[key]
-            return data
-
-        def get_value(legend, data, name, filter_value=None):
-            """Using the legend and a metric name, get the value or None from the data line.
-            """
-            if name in legend:
-                value = to_float(data[legend.index(name)])
-                if filter_value is not None:
-                    if value > filter_value:
-                        return None
-                return value
-
-            else:
-                # FIXME return a float or False, would trigger type error if not python
-                self.logger.debug("Cannot extract cpu value %s from %s (%s)" % (name, data, legend))
-                return 0.0
 
         if util.Platform.is_linux():
             mpstat = sp.Popen(['mpstat', '1', '3'], stdout=sp.PIPE, close_fds=True).communicate()[0]
@@ -823,7 +799,7 @@ class Cpu(check.Check):
                                "%irq": None, "%soft": None, "%steal": None}
 
                 for cpu_m in cpu_metrics:
-                    cpu_metrics[cpu_m] = get_value(headers, data, cpu_m, filter_value=110)
+                    cpu_metrics[cpu_m] = self._get_value(headers, data, cpu_m, filter_value=110)
 
                 if any([v is None for v in cpu_metrics.values()]):
                     self.logger.warning("Invalid mpstat data: %s" % data)
@@ -834,13 +810,13 @@ class Cpu(check.Check):
                 cpu_idle = cpu_metrics["%idle"]
                 cpu_stolen = cpu_metrics["%steal"]
 
-                return format_results(cpu_user,
-                                      cpu_system,
-                                      cpu_wait,
-                                      cpu_idle,
-                                      cpu_stolen)
+                return self._format_results(cpu_user,
+                                            cpu_system,
+                                            cpu_wait,
+                                            cpu_idle,
+                                            cpu_stolen)
             else:
-                return {}
+                return []
 
         elif sys.platform == 'darwin':
             # generate 3 seconds of data
@@ -858,12 +834,12 @@ class Cpu(check.Check):
             if len(legend) == 1:
                 headers = legend[0].split()
                 data = lines[-1].split()
-                cpu_user = get_value(headers, data, "us")
-                cpu_sys = get_value(headers, data, "sy")
+                cpu_user = self._get_value(headers, data, "us")
+                cpu_sys = self._get_value(headers, data, "sy")
                 cpu_wait = 0
-                cpu_idle = get_value(headers, data, "id")
+                cpu_idle = self._get_value(headers, data, "id")
                 cpu_st = 0
-                return format_results(cpu_user, cpu_sys, cpu_wait, cpu_idle, cpu_st)
+                return self._format_results(cpu_user, cpu_sys, cpu_wait, cpu_idle, cpu_st)
             else:
                 self.logger.warn(
                     "Expected to get at least 4 lines of data from iostat instead of just " +
@@ -872,7 +848,7 @@ class Cpu(check.Check):
                             : max(
                                 80,
                                 len(iostats))]))
-                return {}
+                return []
 
         elif sys.platform.startswith("freebsd"):
             # generate 3 seconds of data
@@ -887,15 +863,14 @@ class Cpu(check.Check):
             if len(legend) == 1:
                 headers = legend[0].split()
                 data = lines[-1].split()
-                cpu_user = get_value(headers, data, "us")
-                cpu_nice = get_value(headers, data, "ni")
-                cpu_sys = get_value(headers, data, "sy")
-                cpu_intr = get_value(headers, data, "in")
+                cpu_user = self._get_value(headers, data, "us")
+                cpu_nice = self._get_value(headers, data, "ni")
+                cpu_sys = self._get_value(headers, data, "sy")
+                cpu_intr = self._get_value(headers, data, "in")
                 cpu_wait = 0
-                cpu_idle = get_value(headers, data, "id")
+                cpu_idle = self._get_value(headers, data, "id")
                 cpu_stol = 0
-                return format_results(
-                    cpu_user + cpu_nice, cpu_sys + cpu_intr, cpu_wait, cpu_idle, cpu_stol)
+                return self._format_results(cpu_user + cpu_nice, cpu_sys + cpu_intr, cpu_wait, cpu_idle, cpu_stol)
 
             else:
                 self.logger.warn(
@@ -905,7 +880,7 @@ class Cpu(check.Check):
                             :max(
                                 80,
                                 len(iostats))]))
-                return {}
+                return []
 
         elif sys.platform == 'sunos5':
             # mpstat -aq 1 2
@@ -931,25 +906,54 @@ class Cpu(check.Check):
                     # collect stats for each processor set
                     # and aggregate them based on the relative set size
                     d_lines = [l for l in lines if "SET" not in l]
-                    user = [get_value(headers, l.split(), "usr") for l in d_lines]
-                    kern = [get_value(headers, l.split(), "sys") for l in d_lines]
-                    wait = [get_value(headers, l.split(), "wt") for l in d_lines]
-                    idle = [get_value(headers, l.split(), "idl") for l in d_lines]
-                    size = [get_value(headers, l.split(), "sze") for l in d_lines]
+                    user = [self._get_value(headers, l.split(), "usr") for l in d_lines]
+                    kern = [self._get_value(headers, l.split(), "sys") for l in d_lines]
+                    wait = [self._get_value(headers, l.split(), "wt") for l in d_lines]
+                    idle = [self._get_value(headers, l.split(), "idl") for l in d_lines]
+                    size = [self._get_value(headers, l.split(), "sze") for l in d_lines]
                     count = sum(size)
                     rel_size = [s / count for s in size]
                     dot = lambda v1, v2: functools.reduce(operator.add, map(operator.mul, v1, v2))
-                    return format_results(dot(user, rel_size),
-                                          dot(kern, rel_size),
-                                          dot(wait, rel_size),
-                                          dot(idle, rel_size),
-                                          0.0)
+                    return self._format_results(dot(user, rel_size),
+                                                dot(kern, rel_size),
+                                                dot(wait, rel_size),
+                                                dot(idle, rel_size),
+                                                0.0)
             except Exception:
                 self.logger.exception("Cannot compute CPU stats")
-                return {}
+                return []
         else:
             self.logger.warn("CPUStats: unsupported platform")
-            return {}
+            return []
+
+    def _format_results(self, us, sy, wa, idle, st):
+        data = {'cpu.user_perc': us,
+                'cpu.system_perc': sy,
+                'cpu.wait_perc': wa,
+                'cpu.idle_perc': idle,
+                'cpu.stolen_perc': st}
+        for key in data.keys():
+            if data[key] is None:
+                del data[key]
+
+        timestamp = time.time()
+        dimensions = self._set_dimensions(None)
+        return [metrics.Measurement(key, timestamp, value, dimensions) for key, value in data.iteritems()]
+
+    def _get_value(self, legend, data, name, filter_value=None):
+        """Using the legend and a metric name, get the value or None from the data line.
+        """
+        if name in legend:
+            value = to_float(data[legend.index(name)])
+            if filter_value is not None:
+                if value > filter_value:
+                    return None
+            return value
+
+        else:
+            # FIXME return a float or False, would trigger type error if not python
+            self.logger.debug("Cannot extract cpu value %s from %s (%s)" % (name, data, legend))
+            return 0.0
 
 
 def _get_subprocess_output(command):
@@ -966,24 +970,24 @@ if __name__ == '__main__':
 
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)-15s %(message)s')
     log = logging.getLogger()
-    cpu = Cpu(log)
-    disk = Disk(log)
-    io = IO(log)
-    load = Load(log)
-    mem = Memory(log)
-
     config = {"device_blacklist_re": re.compile('.*disk0.*')}
+    cpu = Cpu(log, config)
+    disk = Disk(log, config)
+    io = IO(log, config)
+    load = Load(log, config)
+    mem = Memory(log, config)
+
     while True:
         print("=" * 10)
         print("--- IO ---")
-        print(io.check(config))
+        print(io.check())
         print("--- Disk ---")
-        print(disk.check(config))
+        print(disk.check())
         print("--- CPU ---")
-        print(cpu.check(config))
+        print(cpu.check())
         print("--- Load ---")
-        print(load.check(config))
+        print(load.check())
         print("--- Memory ---")
-        print(mem.check(config))
+        print(mem.check())
         print("\n\n\n")
         time.sleep(1)
