@@ -79,34 +79,6 @@ class Gauge(Metric):
         return []
 
 
-class BucketGauge(Gauge):
-
-    """ A metric that tracks a value at particular points in time.
-    The difference beween this class and Gauge is that this class will
-    report that gauge sample time as the time that Metric is flushed, as
-    opposed to the time that the sample was collected.
-
-    """
-
-    def flush(self, timestamp, interval):
-        if self.value is not None:
-            res = [self.formatter(
-                metric=self.name,
-                timestamp=timestamp,
-                value=self.value,
-                dimensions=self.dimensions,
-                delegated_tenant=self.delegated_tenant,
-                hostname=self.hostname,
-                device_name=self.device_name,
-                metric_type=MetricTypes.GAUGE,
-                interval=interval,
-            )]
-            self.value = None
-            return res
-
-        return []
-
-
 class Counter(Metric):
 
     """ A metric that tracks a counter value. """
