@@ -1,90 +1,112 @@
+# stdlib
+import logging
+import socket
 import urllib2
+import urlparse
 
-from monasca_agent.collector.checks import AgentCheck
-from monasca_agent.collector.checks.utils import add_basic_auth
-from monasca_agent.common.util import headers
+# project
+import monasca_agent.common.util as util
+import monasca_agent.collector.checks as checks
+import monasca_agent.collector.checks.utils as utils
 
+log = logging.getLogger(__name__)
 
-class Apache(AgentCheck):
-
+class Apache(checks.AgentCheck):
     """Tracks basic connection/requests/workers metrics
-
     See http://httpd.apache.org/docs/2.2/mod/mod_status.html for more details
     """
-    GAUGES = {
-        'IdleWorkers': 'apache.performance.idle_workers',
-        'BusyWorkers': 'apache.performance.busy_workers',
-        'CPULoad': 'apache.performance.cpu_load',
-        'Uptime': 'apache.performance.uptime',
-        'Total kBytes': 'apache.net.bytes',
-        'Total Accesses': 'apache.net.hits',
-    }
-
-    RATES = {
-        'Total kBytes': 'apache.net.bytes_per_s',
-        'Total Accesses': 'apache.net.request_per_s'
-    }
+    GAUGES = {'IdleWorkers': 'apache.performance.idle_worker_count',
+              'BusyWorkers': 'apache.performance.busy_worker_count',
+              'CPULoad': 'apache.performance.cpu_load_perc',
+              'Total kBytes': 'apache.net.total_kbytes',
+              'Total Accesses': 'apache.net.hits',
+              }
+    RATES = {'Total kBytes': 'apache.net.kbytes_sec',
+             'Total Accesses': 'apache.net.requests_sec'
+             }
 
     def __init__(self, name, init_config, agent_config, instances=None):
-        AgentCheck.__init__(self, name, init_config, agent_config, instances)
-        self.assumed_url = {}
+        super(Apache, self).__init__(name, init_config, agent_config, instances)
+        self.url = None
 
     def check(self, instance):
-        if 'apache_status_url' not in instance:
+        self.url = instance.get('apache_status_url', None)
+        if not self.url:
             raise Exception("Missing 'apache_status_url' in Apache config")
 
-        url = self.assumed_url.get(instance['apache_status_url'], instance['apache_status_url'])
-
+        # Load the dimensions
         dimensions = instance.get('dimensions', {})
-        req = urllib2.Request(url, None, headers(self.agent_config))
-        if 'apache_user' in instance and 'apache_password' in instance:
-            add_basic_auth(req, instance['apache_user'], instance['apache_password'])
-        request = urllib2.urlopen(req)
-        response = request.read()
+        req = urllib2.Request(self.url, None, util.headers(self.agent_config))
+        apache_user = instance.get('apache_user', None)
+        apache_password = instance.get('apache_password', None)
+        if apache_user and apache_password:
+            utils.add_basic_auth(req, apache_user, apache_password)
+        else:
+            log.debug("Not using authentication for Apache Web Server")
 
+        # Submit a service check for status page availability.
+        parsed_url = urlparse.urlparse(self.url)
+        apache_host = parsed_url.hostname
+        apache_port = parsed_url.port or 80
+        service_check_name = 'apache.status'
+
+        # Add additional dimensions
+        if apache_host == 'localhost':
+            # Localhost is not very useful, so get the actual hostname
+            apache_host = socket.gethostname()
+
+        new_dimensions = self._set_dimensions({'apache_host': apache_host,
+                                               'apache_port': apache_port,
+                                               'service': 'apache',
+                                               'component': 'apache'})
+        if dimensions is not None:
+            new_dimensions.update(dimensions.copy())
+
+        try:
+            request = urllib2.urlopen(req)
+        except Exception as e:
+            self.log.info(
+                "%s is DOWN, error: %s. Connection failed." % (service_check_name, str(e)))
+            self.gauge(service_check_name, 1, dimensions=new_dimensions)
+            return services_checks.Status.DOWN, "%s is DOWN, error: %s. Connection failed." % (
+                service_check_name, str(e))
+        else:
+            self.log.debug("%s is UP" % service_check_name)
+            self.gauge(service_check_name, 0, dimensions=new_dimensions)
+
+        response = request.read()
         metric_count = 0
+
         # Loop through and extract the numerical values
         for line in response.split('\n'):
             values = line.split(': ')
-            if len(values) == 2:  # match
+            if len(values) == 2: # match
                 metric, value = values
                 try:
                     value = float(value)
                 except ValueError:
                     continue
 
-                # Special case: kBytes => bytes
-                if metric == 'Total kBytes':
-                    value *= 1024
-
                 # Send metric as a gauge, if applicable
                 if metric in self.GAUGES:
                     metric_count += 1
                     metric_name = self.GAUGES[metric]
-                    self.gauge(metric_name, value, dimensions=dimensions)
+                    log.debug('Collecting gauge data for: {0}'.format(metric_name))
+                    self.gauge(metric_name, value, dimensions=new_dimensions)
 
                 # Send metric as a rate, if applicable
                 if metric in self.RATES:
                     metric_count += 1
                     metric_name = self.RATES[metric]
-                    self.rate(metric_name, value, dimensions=dimensions)
+                    log.debug('Collecting rate data for: {0}'.format(metric_name))
+                    self.rate(metric_name, value, dimensions=new_dimensions)
 
         if metric_count == 0:
-            if self.assumed_url.get(
-                    instance['apache_status_url'], None) is None and url[-5:] != '?auto':
-                self.assumed_url[instance['apache_status_url']] = '%s?auto' % url
+            if self.url[-5:] != '?auto':
+                self.url = '%s?auto' % self.url
                 self.warning("Assuming url was not correct. Trying to add ?auto suffix to the url")
                 self.check(instance)
             else:
-                raise Exception(
-                    "No metrics were fetched for this instance. Make sure that %s is the proper url." %
-                    instance['apache_status_url'])
-
-    @staticmethod
-    def parse_agent_config(agentConfig):
-        if not agentConfig.get('apache_status_url'):
-            return False
-
-        return {
-            'instances': [{'apache_status_url': agentConfig.get('apache_status_url')}]
-        }
+                return services_checks.Status.DOWN, "%s is DOWN, error: No metrics available.".format(service_check_name)
+        else:
+            log.debug("Collected {0} metrics for {1} Apache Web Server".format(apache_host, metric_count))

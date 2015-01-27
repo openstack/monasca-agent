@@ -42,6 +42,7 @@
   - [ZooKeeper Checks](#zookeeper-checks)
   - [Kafka Checks](#kafka-checks)
   - [RabbitMQ Checks](#rabbitmq-checks)
+  - [Apache Web Server Checks](#apache-web-server-checks)
   - [OpenStack Monitoring](#openstack-monitoring)
     - [Nova Checks](#nova-checks)
         - [Nova Processes Monitored](#nova-processes-monitored)
@@ -801,6 +802,43 @@ The RabbitMQ checks return the following metrics:
 | rabbitmq.queue.messages.deliver_get_rate | hostname, queue, vhost, service=rabbitmq | Queue |
 | rabbitmq.queue.messages.ack_count | hostname, queue, vhost, service=rabbitmq | Queue |
 | rabbitmq.queue.messages.ack_rate | hostname, queue, vhost, service=rabbitmq | Queue |
+
+
+## Apache Web Server Checks
+This section describes the Apache Web Server check that can be performed by the Agent.  The Apache check gathers metrics on the Apache Web Server.  The Apache check requires a configuration file called apache.yaml to be available in the agent conf.d configuration directory.  The config file must contain the server url, username and password (If you are using authentication) that you are interested in monitoring.
+
+Sample config:
+
+```
+init_config:
+
+instances:
+  - apache_status_url: http://localhost/server-status?auto
+    apache_user: root
+    apache_password: password
+```
+
+If you want the monasca-setup program to detect and auto-configure the plugin for you, you must create the file /root/.apache.cnf with the information needed in the configuration yaml file before running the setup program.  It should look something like this:
+
+```
+[client]
+url=http://localhost/server-status?auto
+user=root
+password=password
+```
+
+The Apache checks return the following metrics:
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| apache.performance.idle_worker_count | hostname, service=apache component=apache ||
+| apache.performance.busy_worker_count | hostname, service=apache component=apache ||
+| apache.performance.cpu_load_perc | hostname, service=apache component=apache ||
+| apache.performance.uptime_sec | hostname, service=apache component=apache ||
+| apache.net.total_kbytes | hostname, service=apache component=apache ||
+| apache.net.hits | hostname, service=apache component=apache ||
+| apache.net.kbytes_sec | hostname, service=apache component=apache ||
+| apache.net.requests_sec | hostname, service=apache component=apache ||
 
 
 ## OpenStack Monitoring

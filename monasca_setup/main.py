@@ -13,6 +13,7 @@ import sys
 import yaml
 
 import agent_config
+import detection.plugins.apache as apache
 import detection.plugins.ceilometer as ceilometer
 import detection.plugins.cinder as cinder
 import detection.plugins.glance as glance
@@ -30,10 +31,10 @@ import detection.plugins.zookeeper as zookeeper
 import service.sysv as sysv
 
 # List of all detection plugins to run
-DETECTION_PLUGINS = [ceilometer.Ceilometer, cinder.Cinder, glance.Glance,
-                     kafka_consumer.Kafka, keystone.Keystone, libvirt.Libvirt,
-                     mon.MonAPI, mon.MonPersister, mon.MonThresh, mysql.MySQL,
-                     network.Network, neutron.Neutron, nova.Nova,
+DETECTION_PLUGINS = [apache.Apache, ceilometer.Ceilometer, cinder.Cinder,
+                     glance.Glance, kafka_consumer.Kafka, keystone.Keystone,
+                     libvirt.Libvirt, mon.MonAPI, mon.MonPersister, mon.MonThresh,
+                     mysql.MySQL, network.Network, neutron.Neutron, nova.Nova,
                      rabbitmq.RabbitMQ, swift.Swift, zookeeper.Zookeeper]
 # Map OS to service type
 OS_SERVICE_MAP = {'Linux': sysv.SysV}
