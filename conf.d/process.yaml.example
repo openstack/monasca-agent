@@ -2,6 +2,8 @@ init_config:
 
 instances:
 #  - name: (required) STRING. It will be used to uniquely identify your metrics as they will be tagged with this name
+#    detailed: (optional) Boolean. Defaults to False, if set detailed metrics are pulled for the process. When false
+               only the process.pid_count metric is returned.
 #    search_string: (required) LIST OF STRINGS. If one of the elements in the list matches,
 #                    return the counter of all the processes that contain the string
 #    exact_match: (optional) Boolean. Default to True, if you want to look for an arbitrary
@@ -13,15 +15,19 @@ instances:
 
  - name: ssh
    search_string: ['ssh', 'sshd']
+   detailed: false
 
  - name: postgres
    search_string: ['postgres']
+   detailed: true
 
  - name: All
    search_string: ['All']
+   detailed: false
 
  - name: nodeserver
    search_string: ['node server.js']
+   detailed: false
 
 #  -  name: python
 #     process: ['python']

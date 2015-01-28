@@ -51,20 +51,19 @@ class ProcessCheck(checks.AgentCheck):
                         self.log.error('Error: %s' % e)
                         raise
                 else:
-                    if not found:
-                        try:
-                            cmdline = proc.cmdline()
+                    try:
+                        cmdline = proc.cmdline()
 
-                            if string in ' '.join(cmdline):
-                                found = True
-                        except psutil.NoSuchProcess:
-                            self.warning('Process disappeared while scanning')
-                            pass
-                        except psutil.AccessDenied as e:
-                            self.log.error('Access denied to %s process'
-                                           % string)
-                            self.log.error('Error: %s' % e)
-                            raise
+                        if string in ' '.join(cmdline):
+                            found = True
+                    except psutil.NoSuchProcess:
+                        self.warning('Process disappeared while scanning')
+                        pass
+                    except psutil.AccessDenied as e:
+                        self.log.error('Access denied to %s process'
+                                       % string)
+                        self.log.error('Error: %s' % e)
+                        raise
 
                 if found or string == 'All':
                     found_process_list.append(proc.pid)
@@ -200,19 +199,19 @@ class ProcessCheck(checks.AgentCheck):
             cpu_check_interval = 0.1
 
         pids = self.find_pids(search_string, psutil, exact_match=exact_match)
-        new_dimensions = self._set_dimensions({'process_name': name})
-        if dimensions is not None:
-            new_dimensions.update(dimensions.copy())
+        new_dimensions = self._set_dimensions(dimensions)
+        new_dimensions['process_name'] = name
 
         self.log.debug('ProcessCheck: process %s analysed' % name)
 
-        self.gauge('process.pid_count', len(pids), dimensions=dimensions)
+        self.gauge('process.pid_count', len(pids), dimensions=new_dimensions)
 
-        metrics = dict(zip(ProcessCheck.PROCESS_GAUGE,
-                           self.get_process_metrics(pids,
-                                                    psutil,
-                                                    cpu_check_interval)))
+        if instance.get('detailed', False):
+            metrics = dict(zip(ProcessCheck.PROCESS_GAUGE,
+                               self.get_process_metrics(pids,
+                                                        psutil,
+                                                        cpu_check_interval)))
 
-        for metric, value in metrics.iteritems():
-            if value is not None:
-                self.gauge(metric, value, dimensions=new_dimensions)
+            for metric, value in metrics.iteritems():
+                if value is not None:
+                    self.gauge(metric, value, dimensions=new_dimensions)

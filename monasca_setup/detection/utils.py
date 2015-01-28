@@ -33,12 +33,14 @@ def find_addr_listening_on_port(port):
             return conn.laddr[0].lstrip("::ffff:")
 
 
-def watch_process(search_strings, service=None, component=None):
+def watch_process(search_strings, service=None, component=None, exact_match=True, detailed=False):
     """Takes a list of process search strings and returns a Plugins object with the config set.
         This was built as a helper as many plugins setup process watching
     """
     config = agent_config.Plugins()
     parameters = {'name': search_strings[0],
+                  'detailed': detailed,
+                  'exact_match': exact_match,
                   'search_string': search_strings}
 
     dimensions = _get_dimensions(service, component)
