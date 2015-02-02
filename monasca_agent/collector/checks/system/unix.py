@@ -2,10 +2,8 @@
 """
 
 # stdlib
-import functools
 import logging
-import operator
-import platform
+import psutil
 import re
 import subprocess as sp
 import sys
@@ -23,13 +21,14 @@ to_float = lambda s: float(s.replace(",", "."))
 
 
 class Disk(check.Check):
-
     """Collects metrics about the machine's disks.
     """
 
     def check(self):
         """Get disk space/inode stats.
         """
+        # psutil can be used for disk usage stats but not for inode information, so df is used.
+
         fs_types_to_ignore = []
         # First get the configuration.
         if self.agent_config is not None:
@@ -299,6 +298,9 @@ class IO(check.Check):
         @rtype dict
         @return [metrics.Measurement, ]
         """
+
+        # TODO psutil.disk_io_counters() will also return this infomration but it isn't per second and so must be
+        # converted possibly by doing two runs a second apart or storing timestamp+data from the previous collection
         io = {}
         try:
             if util.Platform.is_linux():
@@ -464,467 +466,45 @@ class Load(check.Check):
 
 class Memory(check.Check):
 
-    def __init__(self, logger, agent_config=None):
-        super(Memory, self).__init__(logger, agent_config)
-        macV = None
-        if sys.platform == 'darwin':
-            macV = platform.mac_ver()
-            macV_minor_version = int(re.match(r'10\.(\d+)\.?.*', macV[0]).group(1))
-
-        # Output from top is slightly modified on OS X 10.6 (case #28239) and greater
-        if macV and (macV_minor_version >= 6):
-            self.topIndex = 6
-        else:
-            self.topIndex = 5
-
-        self.pagesize = 0
-        if sys.platform == 'sunos5':
-            try:
-                pgsz = sp.Popen(['pagesize'],
-                                stdout=sp.PIPE,
-                                close_fds=True).communicate()[0]
-                self.pagesize = int(pgsz.strip())
-            except Exception:
-                # No page size available
-                pass
-
     def check(self):
-        memData = {}
+        mem_info = psutil.virtual_memory()
+        swap_info = psutil.swap_memory()
+        mem_data = {
+            'mem.total_mb': int(mem_info.total/1048576),
+            'mem.free_mb': int(mem_info.free/1048576),
+            'mem.usable_mb': int(mem_info.available/1048576),
+            'mem.usable_perc': float(100 - mem_info.percent),
+            'mem.swap_total_mb': int(swap_info.total/1048576),
+            'mem.swap_used_mb': int(swap_info.used/1048576),
+            'mem.swap_free_mb': int(swap_info.free/1048576),
+            'mem.swap_free_perc': float(100 - swap_info.percent)
+        }
 
-        if util.Platform.is_linux():
-            try:
-                meminfoProc = open('/proc/meminfo', 'r')
-                lines = meminfoProc.readlines()
-                meminfoProc.close()
-            except Exception:
-                self.logger.exception('Cannot get memory metrics from /proc/meminfo')
-                return []
+        if 'buffers' in mem_info:
+            mem_data['mem.used_buffers'] = int(mem_info.buffers/1048576)
 
-            # $ cat /proc/meminfo
-            # MemTotal:        7995360 kB
-            # MemFree:         1045120 kB
-            # Buffers:          226284 kB
-            # Cached:           775516 kB
-            # SwapCached:       248868 kB
-            # Active:          1004816 kB
-            # Inactive:        1011948 kB
-            # Active(anon):     455152 kB
-            # Inactive(anon):   584664 kB
-            # Active(file):     549664 kB
-            # Inactive(file):   427284 kB
-            # Unevictable:     4392476 kB
-            # Mlocked:         4392476 kB
-            # SwapTotal:      11120632 kB
-            # SwapFree:       10555044 kB
-            # Dirty:              2948 kB
-            # Writeback:             0 kB
-            # AnonPages:       5203560 kB
-            # Mapped:            50520 kB
-            # Shmem:             10108 kB
-            # Slab:             161300 kB
-            # SReclaimable:     136108 kB
-            # SUnreclaim:        25192 kB
-            # KernelStack:        3160 kB
-            # PageTables:        26776 kB
-            # NFS_Unstable:          0 kB
-            # Bounce:                0 kB
-            # WritebackTmp:          0 kB
-            # CommitLimit:    15118312 kB
-            # Committed_AS:    6703508 kB
-            # VmallocTotal:   34359738367 kB
-            # VmallocUsed:      400668 kB
-            # VmallocChunk:   34359329524 kB
-            # HardwareCorrupted:     0 kB
-            # HugePages_Total:       0
-            # HugePages_Free:        0
-            # HugePages_Rsvd:        0
-            # HugePages_Surp:        0
-            # Hugepagesize:       2048 kB
-            # DirectMap4k:       10112 kB
-            # DirectMap2M:     8243200 kB
+        if 'cached' in mem_info:
+            mem_data['mem.used_cache'] = int(mem_info.cached/1048576)
 
-            # We run this several times so one-time compile now
-            regexp = re.compile(r'^(\w+):\s+([0-9]+)')
-            meminfo = {}
-
-            for line in lines:
-                try:
-                    match = re.search(regexp, line)
-                    if match is not None:
-                        meminfo[match.group(1)] = match.group(2)
-                except Exception:
-                    self.logger.exception("Cannot parse /proc/meminfo")
-
-            # Physical memory
-            # FIXME units are in MB, we should use bytes instead
-            try:
-                memData['mem.total_mb'] = int(meminfo.get('MemTotal', 0)) / 1024
-                memData['mem.free_mb'] = int(meminfo.get('MemFree', 0)) / 1024
-                memData['mem.used_buffers'] = int(meminfo.get('Buffers', 0)) / 1024
-                memData['mem.used_cached'] = int(meminfo.get('Cached', 0)) / 1024
-                memData['mem.used_shared'] = int(meminfo.get('Shmem', 0)) / 1024
-
-                # Usable is relative since cached and buffers are actually used to speed things up.
-                memData['mem.usable_mb'] = memData['mem.free_mb'] + \
-                    memData['mem.used_buffers'] + memData['mem.used_cached']
-
-                if memData['mem.total_mb'] > 0:
-                    memData['mem.usable_perc'] = float(
-                        (memData['mem.usable_mb']) / float(memData['mem.total_mb']) * 100)
-            except Exception:
-                self.logger.exception('Cannot compute stats from /proc/meminfo')
-
-            # Swap
-            # FIXME units are in MB, we should use bytes instead
-            try:
-                memData['mem.swap_total_mb'] = int(meminfo.get('SwapTotal', 0)) / 1024
-                memData['mem.swap_free_mb'] = int(meminfo.get('SwapFree', 0)) / 1024
-
-                memData['mem.swap_used_mb'] = memData[
-                    'mem.swap_total_mb'] - memData['mem.swap_free_mb']
-
-                if memData['mem.swap_total_mb'] > 0:
-                    memData['mem.swap_free_perc'] = float(
-                        (memData['mem.swap_free_mb']) / float(memData['mem.swap_total_mb']) * 100)
-            except Exception:
-                self.logger.exception('Cannot compute swap stats')
-                return []
-        elif sys.platform == 'darwin':
-            macV = platform.mac_ver()
-            macV_minor_version = int(re.match(r'10\.(\d+)\.?.*', macV[0]).group(1))
-
-            try:
-                top = sp.Popen(['top', '-l 1'], stdout=sp.PIPE, close_fds=True).communicate()[0]
-                sysctl = sp.Popen(
-                    ['sysctl', 'vm.swapusage'], stdout=sp.PIPE, close_fds=True).communicate()[0]
-            except Exception:
-                self.logger.exception('getMemoryUsage')
-                return []
-
-            # Deal with top
-            lines = top.split('\n')
-            physParts = re.findall(r'([0-9]\d+)', lines[self.topIndex])
-
-            # Deal with sysctl
-            swapParts = re.findall(r'([0-9]+\.\d+)', sysctl)
-
-            # Mavericks changes the layout of physical memory format in `top`
-            physUsedPartIndex = 3
-            physFreePartIndex = 4
-            if macV and (macV_minor_version >= 9):
-                physUsedPartIndex = 0
-                physFreePartIndex = 2
-
-            memData = {'physUsed': physParts[physUsedPartIndex],
-                       'physFree': physParts[physFreePartIndex],
-                       'swapUsed': swapParts[1],
-                       'swapFree': swapParts[2]}
-
-        elif sys.platform.startswith("freebsd"):
-            try:
-                sysctl = sp.Popen(
-                    ['sysctl', 'vm.stats.vm'], stdout=sp.PIPE, close_fds=True).communicate()[0]
-            except Exception:
-                self.logger.exception('getMemoryUsage')
-                return []
-
-            lines = sysctl.split('\n')
-
-            # ...
-            # vm.stats.vm.v_page_size: 4096
-            # vm.stats.vm.v_page_count: 759884
-            # vm.stats.vm.v_wire_count: 122726
-            # vm.stats.vm.v_active_count: 109350
-            # vm.stats.vm.v_cache_count: 17437
-            # vm.stats.vm.v_inactive_count: 479673
-            # vm.stats.vm.v_free_count: 30542
-            # ...
-
-            # We run this several times so one-time compile now
-            regexp = re.compile(r'^vm\.stats\.vm\.(\w+):\s+([0-9]+)')
-            meminfo = {}
-
-            for line in lines:
-                try:
-                    match = re.search(regexp, line)
-                    if match is not None:
-                        meminfo[match.group(1)] = match.group(2)
-                except Exception:
-                    self.logger.exception("Cannot parse sysctl vm.stats.vm output")
-
-            # Physical memory
-            try:
-                pageSize = int(meminfo.get('v_page_size'))
-
-                memData['physTotal'] = (int(meminfo.get('v_page_count', 0))
-                                        * pageSize) / 1048576
-                memData['physFree'] = (int(meminfo.get('v_free_count', 0))
-                                       * pageSize) / 1048576
-                memData['physCached'] = (int(meminfo.get('v_cache_count', 0))
-                                         * pageSize) / 1048576
-                memData['physUsed'] = ((int(meminfo.get('v_active_count'), 0) +
-                                        int(meminfo.get('v_wire_count', 0)))
-                                       * pageSize) / 1048576
-                memData['physUsable'] = ((int(meminfo.get('v_free_count'), 0) +
-                                          int(meminfo.get('v_cache_count', 0)) +
-                                          int(meminfo.get('v_inactive_count', 0))) *
-                                         pageSize) / 1048576
-
-                if memData['physTotal'] > 0:
-                    memData['physPctUsable'] = float(
-                        memData['physUsable']) / float(memData['physTotal'])
-            except Exception:
-                self.logger.exception('Cannot compute stats from /proc/meminfo')
-
-            # Swap
-            try:
-                sysctl = sp.Popen(
-                    ['swapinfo', '-m'], stdout=sp.PIPE, close_fds=True).communicate()[0]
-            except Exception:
-                self.logger.exception('getMemoryUsage')
-                return []
-
-            lines = sysctl.split('\n')
-
-            # ...
-            # Device          1M-blocks     Used    Avail Capacity
-            # /dev/ad0s1b           570        0      570     0%
-            # ...
-
-            assert "Device" in lines[0]
-
-            try:
-                memData['swapTotal'] = 0
-                memData['swapFree'] = 0
-                memData['swapUsed'] = 0
-                for line in lines[1:-1]:
-                    line = line.split()
-                    memData['swapTotal'] += int(line[1])
-                    memData['swapFree'] += int(line[3])
-                    memData['swapUsed'] += int(line[2])
-            except Exception:
-                self.logger.exception('Cannot compute stats from swapinfo')
-                return []
-        elif sys.platform == 'sunos5':
-            try:
-                memData = {}
-                kmem = sp.Popen(["kstat", "-c", "zone_memory_cap", "-p"],
-                                stdout=sp.PIPE,
-                                close_fds=True).communicate()[0]
-
-                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:anon_alloc_fail   0
-                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:anonpgin  0
-                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:class     zone_memory_cap
-                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:crtime    16359935.0680834
-                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:execpgin  185
-                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:fspgin    2556
-                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:n_pf_throttle     0
-                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:n_pf_throttle_usec        0
-                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:nover     0
-                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:pagedout  0
-                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:pgpgin    2741
-                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:physcap   536870912  <--
-                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:rss       115544064  <--
-                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:snaptime  16787393.9439095
-                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:swap      91828224   <--
-                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:swapcap   1073741824 <--
-                # memory_cap:360:53aa9b7e-48ba-4152-a52b-a6368c:zonename
-                # 53aa9b7e-48ba-4152-a52b-a6368c3d9e7c
-
-                # turn memory_cap:360:zone_name:key value
-                # into { "key": value, ...}
-                kv = [l.strip().split() for l in kmem.split("\n") if len(l) > 0]
-                entries = dict([(k.split(":")[-1], v) for (k, v) in kv])
-                # extract rss, physcap, swap, swapcap, turn into MB
-                convert = lambda v: int(long(v)) / 2 ** 20
-                memData["physTotal"] = convert(entries["physcap"])
-                memData["physUsed"] = convert(entries["rss"])
-                memData["physFree"] = memData["physTotal"] - memData["physUsed"]
-                memData["swapTotal"] = convert(entries["swapcap"])
-                memData["swapUsed"] = convert(entries["swap"])
-                memData["swapFree"] = memData["swapTotal"] - memData["swapUsed"]
-
-                if memData['swapTotal'] > 0:
-                    memData['swapPctFree'] = float(
-                        memData['swapFree']) / float(memData['swapTotal'])
-            except Exception:
-                self.logger.exception("Cannot compute mem stats from kstat -c zone_memory_cap")
-                return []
+        if 'shared' in mem_info:
+            mem_data['mem.used_shared'] = int(mem_info.shared/1048576)
 
         timestamp = time.time()
         dimensions = self._set_dimensions(None)
-        return [metrics.Measurement(key, timestamp, value, dimensions) for key, value in memData.iteritems()]
+        return [metrics.Measurement(key, timestamp, value, dimensions) for key, value in mem_data.iteritems()]
 
 
 class Cpu(check.Check):
 
     def check(self):
         """Return an aggregate of CPU stats across all CPUs.
-
-        When figures are not available, False is sent back.
         """
-
-        if util.Platform.is_linux():
-            mpstat = sp.Popen(['mpstat', '1', '3'], stdout=sp.PIPE, close_fds=True).communicate()[0]
-            # topdog@ip:~$ mpstat 1 3
-            # Linux 2.6.32-341-ec2 (ip)   01/19/2012  _x86_64_  (2 CPU)
-            #
-            # 04:22:41 PM  CPU    %usr   %nice    %sys %iowait    %irq   %soft  %steal  %guest   %idle
-            # 04:22:42 PM  all    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00  100.00
-            # 04:22:43 PM  all    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00  100.00
-            # 04:22:44 PM  all    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00  100.00
-            # Average:     all    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00  100.00
-            #
-            # OR
-            #
-            # Thanks to Mart Visser to spotting this one.
-            # blah:/etc/dd-agent# mpstat
-            # Linux 2.6.26-2-xen-amd64 (atira)  02/17/2012  _x86_64_
-            #
-            # 05:27:03 PM  CPU    %user   %nice   %sys %iowait    %irq   %soft  %steal  %idle   intr/s
-            # 05:27:03 PM  all    3.59    0.00    0.68    0.69    0.00   0.00    0.01   95.03    43.65
-            #
-            lines = mpstat.split("\n")
-            legend = [l for l in lines if "%usr" in l or "%user" in l]
-            avg = [l for l in lines if "Average" in l]
-            if len(legend) == 1 and len(avg) == 1:
-                headers = [h for h in legend[0].split() if h not in ("AM", "PM")]
-                data = avg[0].split()
-
-                # Userland
-                # Debian lenny says %user so we look for both
-                # One of them will be 0
-                cpu_metrics = {"%usr": None, "%user": None, "%nice": None,
-                               "%iowait": None, "%idle": None, "%sys": None,
-                               "%irq": None, "%soft": None, "%steal": None}
-
-                for cpu_m in cpu_metrics:
-                    cpu_metrics[cpu_m] = self._get_value(headers, data, cpu_m, filter_value=110)
-
-                if any([v is None for v in cpu_metrics.values()]):
-                    self.logger.warning("Invalid mpstat data: %s" % data)
-
-                cpu_user = cpu_metrics["%usr"] + cpu_metrics["%user"] + cpu_metrics["%nice"]
-                cpu_system = cpu_metrics["%sys"] + cpu_metrics["%irq"] + cpu_metrics["%soft"]
-                cpu_wait = cpu_metrics["%iowait"]
-                cpu_idle = cpu_metrics["%idle"]
-                cpu_stolen = cpu_metrics["%steal"]
-
-                return self._format_results(cpu_user,
-                                            cpu_system,
-                                            cpu_wait,
-                                            cpu_idle,
-                                            cpu_stolen)
-            else:
-                return []
-
-        elif sys.platform == 'darwin':
-            # generate 3 seconds of data
-            # ['          disk0           disk1       cpu     load average', '    KB/t tps  MB/s     KB/t tps  MB/s  us sy id   1m   5m   15m', '   21.23  13  0.27    17.85   7  0.13  14  7 79  1.04 1.27 1.31', '    4.00   3  0.01     5.00   8  0.04  12 10 78  1.04 1.27 1.31', '']
-            iostats = sp.Popen(['iostat',
-                                '-C',
-                                '-w',
-                                '3',
-                                '-c',
-                                '2'],
-                               stdout=sp.PIPE,
-                               close_fds=True).communicate()[0]
-            lines = [l for l in iostats.split("\n") if len(l) > 0]
-            legend = [l for l in lines if "us" in l]
-            if len(legend) == 1:
-                headers = legend[0].split()
-                data = lines[-1].split()
-                cpu_user = self._get_value(headers, data, "us")
-                cpu_sys = self._get_value(headers, data, "sy")
-                cpu_wait = 0
-                cpu_idle = self._get_value(headers, data, "id")
-                cpu_st = 0
-                return self._format_results(cpu_user, cpu_sys, cpu_wait, cpu_idle, cpu_st)
-            else:
-                self.logger.warn(
-                    "Expected to get at least 4 lines of data from iostat instead of just " +
-                    str(
-                        iostats[
-                            : max(
-                                80,
-                                len(iostats))]))
-                return []
-
-        elif sys.platform.startswith("freebsd"):
-            # generate 3 seconds of data
-            # tty            ada0              cd0            pass0             cpu
-            # tin  tout  KB/t tps  MB/s   KB/t tps  MB/s   KB/t tps  MB/s  us ni sy in id
-            # 0    69 26.71   0  0.01   0.00   0  0.00   0.00   0  0.00   2  0  0  1 97
-            # 0    78  0.00   0  0.00   0.00   0  0.00   0.00   0  0.00   0  0  0  0 100
-            iostats = sp.Popen(
-                ['iostat', '-w', '3', '-c', '2'], stdout=sp.PIPE, close_fds=True).communicate()[0]
-            lines = [l for l in iostats.split("\n") if len(l) > 0]
-            legend = [l for l in lines if "us" in l]
-            if len(legend) == 1:
-                headers = legend[0].split()
-                data = lines[-1].split()
-                cpu_user = self._get_value(headers, data, "us")
-                cpu_nice = self._get_value(headers, data, "ni")
-                cpu_sys = self._get_value(headers, data, "sy")
-                cpu_intr = self._get_value(headers, data, "in")
-                cpu_wait = 0
-                cpu_idle = self._get_value(headers, data, "id")
-                cpu_stol = 0
-                return self._format_results(cpu_user + cpu_nice, cpu_sys + cpu_intr, cpu_wait, cpu_idle, cpu_stol)
-
-            else:
-                self.logger.warn(
-                    "Expected to get at least 4 lines of data from iostat instead of just " +
-                    str(
-                        iostats[
-                            :max(
-                                80,
-                                len(iostats))]))
-                return []
-
-        elif sys.platform == 'sunos5':
-            # mpstat -aq 1 2
-            # SET minf mjf xcal  intr ithr  csw icsw migr smtx  srw syscl  usr sys  wt idl sze
-            # 0 5239   0 12857 22969 5523 14628   73  546 4055    1 146856    5   6   0  89  24 <-- since boot
-            # 1 ...
-            # SET minf mjf xcal  intr ithr  csw icsw migr smtx  srw syscl  usr sys  wt idl sze
-            # 0 20374   0 45634 57792 5786 26767   80  876 20036    2 724475   13  13   0  75  24 <-- past 1s
-            # 1 ...
-            # http://docs.oracle.com/cd/E23824_01/html/821-1462/mpstat-1m.html
-            #
-            # Will aggregate over all processor sets
-            try:
-                mpstat = sp.Popen(
-                    ['mpstat', '-aq', '1', '2'], stdout=sp.PIPE, close_fds=True).communicate()[0]
-                lines = [l for l in mpstat.split("\n") if len(l) > 0]
-                # discard the first len(lines)/2 lines
-                lines = lines[len(lines) / 2:]
-                legend = [l for l in lines if "SET" in l]
-                assert len(legend) == 1
-                if len(legend) == 1:
-                    headers = legend[0].split()
-                    # collect stats for each processor set
-                    # and aggregate them based on the relative set size
-                    d_lines = [l for l in lines if "SET" not in l]
-                    user = [self._get_value(headers, l.split(), "usr") for l in d_lines]
-                    kern = [self._get_value(headers, l.split(), "sys") for l in d_lines]
-                    wait = [self._get_value(headers, l.split(), "wt") for l in d_lines]
-                    idle = [self._get_value(headers, l.split(), "idl") for l in d_lines]
-                    size = [self._get_value(headers, l.split(), "sze") for l in d_lines]
-                    count = sum(size)
-                    rel_size = [s / count for s in size]
-                    dot = lambda v1, v2: functools.reduce(operator.add, map(operator.mul, v1, v2))
-                    return self._format_results(dot(user, rel_size),
-                                                dot(kern, rel_size),
-                                                dot(wait, rel_size),
-                                                dot(idle, rel_size),
-                                                0.0)
-            except Exception:
-                self.logger.exception("Cannot compute CPU stats")
-                return []
-        else:
-            self.logger.warn("CPUStats: unsupported platform")
-            return []
+        cpu_stats = psutil.cpu_times_percent(percpu=False)
+        return self._format_results(cpu_stats.user + cpu_stats.nice,
+                                    cpu_stats.system + cpu_stats.irq + cpu_stats.softirq,
+                                    cpu_stats.iowait,
+                                    cpu_stats.idle,
+                                    cpu_stats.steal)
 
     def _format_results(self, us, sy, wa, idle, st):
         data = {'cpu.user_perc': us,
@@ -939,21 +519,6 @@ class Cpu(check.Check):
         timestamp = time.time()
         dimensions = self._set_dimensions(None)
         return [metrics.Measurement(key, timestamp, value, dimensions) for key, value in data.iteritems()]
-
-    def _get_value(self, legend, data, name, filter_value=None):
-        """Using the legend and a metric name, get the value or None from the data line.
-        """
-        if name in legend:
-            value = to_float(data[legend.index(name)])
-            if filter_value is not None:
-                if value > filter_value:
-                    return None
-            return value
-
-        else:
-            # FIXME return a float or False, would trigger type error if not python
-            self.logger.debug("Cannot extract cpu value %s from %s (%s)" % (name, data, legend))
-            return 0.0
 
 
 def _get_subprocess_output(command):
