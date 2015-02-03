@@ -42,7 +42,7 @@ class MetricsAggregator(object):
             'h': metrics_pkg.Histogram,
             'ms': metrics_pkg.Histogram,
             's': metrics_pkg.Set,
-            '_dd-r': metrics_pkg.Rate,
+            'r': metrics_pkg.Rate,
         }
 
     def decrement(self, name, value=-1, dimensions=None, delegated_tenant=None,
@@ -89,12 +89,11 @@ class MetricsAggregator(object):
     def flush(self):
         timestamp = time()
 
-        # Flush points and remove expired metrics. We mutate this dictionary
-        # while iterating so don't use an iterator.
+        # Flush samples.  The individual metrics reset their internal samples
+        # when required
         metrics = []
         for context, metric in self.metrics.items():
-            metrics += metric.flush(timestamp, self.interval)
-            del self.metrics[context]
+            metrics.extend(metric.flush(timestamp, self.interval))
 
         # Log a warning regarding metrics with old timestamps being submitted
         if self.num_discarded_old_points > 0:
@@ -160,7 +159,7 @@ class MetricsAggregator(object):
 
     def rate(self, name, value, dimensions=None, delegated_tenant=None,
              hostname=None, device_name=None):
-        self.submit_metric(name, value, '_dd-r', dimensions, delegated_tenant,
+        self.submit_metric(name, value, 'r', dimensions, delegated_tenant,
                            hostname, device_name)
 
     def set(self, name, value, dimensions=None, delegated_tenant=None,
@@ -184,8 +183,11 @@ class MetricsAggregator(object):
                                                  device_name,
                                                  delegated_tenant)
         cur_time = time()
-        if timestamp is not None and cur_time - int(timestamp) > self.recent_point_threshold:
-            log.debug("Discarding {0} - ts = {1}, current ts = {2} ".format(name, timestamp, cur_time))
-            self.num_discarded_old_points += 1
+        if timestamp is not None:
+            if cur_time - int(timestamp) > self.recent_point_threshold:
+                log.debug("Discarding {0} - ts = {1}, current ts = {2} ".format(name, timestamp, cur_time))
+                self.num_discarded_old_points += 1
+                return
         else:
-            self.metrics[context].sample(value, sample_rate, timestamp)
+            timestamp = cur_time
+        self.metrics[context].sample(value, sample_rate, timestamp)

@@ -237,8 +237,9 @@ class Rate(Metric):
         self.samples = []
 
     def sample(self, value, sample_rate, timestamp=None):
-        ts = time()
-        self.samples.append((int(ts), value))
+        if not timestamp:
+            timestamp = time()
+        self.samples.append((int(timestamp), value))
 
     def _rate(self, sample1, sample2):
         interval = sample2[0] - sample1[0]
@@ -257,22 +258,18 @@ class Rate(Metric):
         if len(self.samples) < 2:
             return []
         try:
-            try:
-                val = self._rate(self.samples[-2], self.samples[-1])
-            except Exception:
-                log.exception("Error flushing sample.")
-                return []
-
-            return [self.formatter(
-                hostname=self.hostname,
-                device_name=self.device_name,
-                dimensions=self.dimensions,
-                delegated_tenant=self.delegated_tenant,
-                metric=self.name,
-                value=val,
-                timestamp=timestamp,
-                metric_type=MetricTypes.GAUGE,
-                interval=interval
-            )]
-        finally:
+            val = self._rate(self.samples[-2], self.samples[-1])
             self.samples = self.samples[-1:]
+        except Exception:
+            log.warn('Error flushing {0} sample.'.format(self.name))
+            return []
+
+        return [self.formatter(hostname=self.hostname,
+                               device_name=self.device_name,
+                               dimensions=self.dimensions,
+                               delegated_tenant=self.delegated_tenant,
+                               metric=self.name,
+                               value=val,
+                               timestamp=timestamp,
+                               metric_type=MetricTypes.GAUGE,
+                               interval=interval)]

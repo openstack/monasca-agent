@@ -440,8 +440,8 @@ class AgentCheck(util.Dimensions):
         @return the list of samples
         @rtype list of Measurement objects from monasca_agent.common.metrics
         """
+        metrics = self.aggregator.flush()
         if prettyprint:
-            metrics = self.aggregator.flush()
             for metric in metrics:
                 print(" Timestamp:  {}".format(metric.timestamp))
                 print(" Name:       {}".format(metric.name))
@@ -457,7 +457,7 @@ class AgentCheck(util.Dimensions):
                     print("{0}={1}".format(name, metric.dimensions[name]))
                     line += 1
                 print("-" * 24)
-        return self.aggregator.flush()
+        return metrics
 
     def get_events(self):
         """Return a list of the events saved by the check, if any
