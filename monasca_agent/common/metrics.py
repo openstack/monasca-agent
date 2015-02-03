@@ -260,6 +260,7 @@ class Rate(Metric):
             try:
                 val = self._rate(self.samples[-2], self.samples[-1])
             except Exception:
+                log.exception("Error flushing sample.")
                 return []
 
             return [self.formatter(
