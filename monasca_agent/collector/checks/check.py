@@ -17,7 +17,6 @@ import yaml
 
 import monasca_agent.common.aggregator as aggregator
 import monasca_agent.common.check_status as check_status
-import monasca_agent.common.config as config
 import monasca_agent.common.exceptions as exceptions
 import monasca_agent.common.util as util
 

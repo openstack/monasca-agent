@@ -3,7 +3,7 @@ import unittest
 import logging
 logger = logging.getLogger()
 from monasca_agent.common.exceptions import UnknownValue, CheckException, Infinity
-from monasca_agent.collector.checks import Check
+from monasca_agent.collector.checks.check import Check
 from monasca_agent.common.aggregator import MetricsAggregator
 
 

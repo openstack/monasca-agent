@@ -52,7 +52,7 @@ class ServicePlugin(Plugin):
             # Setup an active http_status check on the API
             log.info("\tConfiguring an http_check for the {0} API.".format(self.service_name))
             config.merge(service_api_check(self.service_name + '-api', self.service_api_url,
-                                           self.search_pattern, self.service_name + '_api'))
+                                           self.search_pattern, self.service_name))
 
         return config
 

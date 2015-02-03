@@ -1,5 +1,6 @@
 import ConfigParser as parser
 import logging
+import os
 import pkg_resources
 import re
 import six
@@ -14,14 +15,12 @@ except ImportError:
 
 import monasca_agent.common.singleton as singleton
 
-DEFAULT_CONFIG_DIR = '/etc/monasca/agent'
-DEFAULT_CONFIG_FILE = DEFAULT_CONFIG_DIR + '/agent.conf'
+DEFAULT_CONFIG_FILE = '/etc/monasca/agent/agent.conf'
 DEFAULT_CHECK_FREQUENCY = 15  # seconds
+DEFAULT_LOG_DIR = '/var/log/monasca/agent'
 DEFAULT_STATSD_FREQUENCY = 20  # seconds
 DEFAULT_STATSD_INTERVAL = 10  # seconds
 LOGGING_MAX_BYTES = 5 * 1024 * 1024
-DEFAULT_CONFIG_DIR = '/etc/monasca/agent'
-DEFAULT_LOG_DIR = '/var/log/monasca/agent'
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +31,15 @@ class Config(object):
 
     def __init__(self, configFile=None):
         self._config = None
-        self._configFile = configFile
+        if configFile is not None:
+            self._configFile = configFile
+        elif os.path.exists(DEFAULT_CONFIG_FILE):
+            self._configFile = DEFAULT_CONFIG_FILE
+        elif os.path.exists(os.getcwd() + '/agent.conf'):
+            self._configFile = os.getcwd() + '/agent.conf'
+        else:
+            log.error('No config file found at {} nor in the working directory.'.format(DEFAULT_CONFIG_FILE))
+
         self._read_config()
 
     def get_config(self, sections='Main'):
@@ -59,11 +66,8 @@ class Config(object):
         '''Read in the config file.'''
 
         file_config = parser.SafeConfigParser()
-        configFile = DEFAULT_CONFIG_FILE
-        if self._configFile:
-            configFile = self._configFile
-        log.debug("Loading config file from {}".format(configFile))
-        file_config.readfp(self._skip_leading_wsp(open(configFile)))
+        log.debug("Loading config file from {}".format(self._configFile))
+        file_config.readfp(self._skip_leading_wsp(open(self._configFile)))
         self._config = self._retrieve_sections(file_config)
 
         # Process and update any special case configuration
@@ -80,7 +84,7 @@ class Config(object):
                 'dimensions': None,
                 'listen_port': None,
                 'version': self.get_version(),
-                'additional_checksd': DEFAULT_CONFIG_DIR + '/checks_d/',
+                'additional_checksd': os.path.join(os.path.dirname(self._configFile), '/checks_d/'),
                 'system_metrics': None,
                 'ignore_filesystem_types': None,
                 'device_blacklist_re': None,
@@ -188,7 +192,7 @@ class Config(object):
             self._config['Main']['ignore_filesystem_types'] = file_system_list
 
     def get_confd_path(self):
-        path = os.path.join(DEFAULT_CONFIG_DIR, 'conf.d')
+        path = os.path.join(os.path.dirname(self._configFile), 'conf.d')
         if os.path.exists(path):
             return path
         raise PathNotFound(path)

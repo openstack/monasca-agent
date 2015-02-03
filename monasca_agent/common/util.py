@@ -301,9 +301,12 @@ class Paths(object):
         raise PathNotFound(bad_path)
 
     def _unix_confd_path(self):
-        path = os.path.join(configuration.DEFAULT_CONFIG_DIR, 'conf.d')
+        path = os.path.join(os.path.dirname(configuration.DEFAULT_CONFIG_FILE), 'conf.d')
+        path2 = os.path.join(os.getcwd(), 'conf.d')
         if os.path.exists(path):
             return path
+        elif os.path.exists(path2):
+            return path2
         raise PathNotFound(path)
 
     def _windows_confd_path(self):

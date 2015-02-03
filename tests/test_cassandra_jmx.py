@@ -7,7 +7,6 @@ from nose.plugins.skip import SkipTest
 
 from monasca_agent.common.aggregator import MetricsAggregator
 from monasca_agent.statsd import Server
-from monasca_agent.common.util import PidFile
 from monasca_agent.common.config import get_logging_config
 from monasca_agent.collector.jmxfetch import JMXFetch
 

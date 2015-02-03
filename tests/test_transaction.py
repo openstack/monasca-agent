@@ -2,7 +2,7 @@ import unittest
 from datetime import timedelta, datetime
 
 from monasca_agent.forwarder.transaction import Transaction, TransactionManager
-from monasca_agent.forwarder import MAX_QUEUE_SIZE, THROTTLING_DELAY
+from monasca_agent.forwarder.daemon import MAX_QUEUE_SIZE, THROTTLING_DELAY
 
 
 class memTransaction(Transaction):
@@ -34,7 +34,7 @@ class TestTransaction(unittest.TestCase):
         """Test memory limit as well as simple flush"""
 
         # No throttling, no delay for replay
-        trManager = TransactionManager(timedelta(seconds=0), MAX_QUEUE_SIZE, timedelta(seconds=0))
+        trManager = TransactionManager(timedelta(seconds=0), MAX_QUEUE_SIZE, timedelta(seconds=0), {'dimensions': {}})
 
         step = 10
         oneTrSize = (MAX_QUEUE_SIZE / step) - 1
@@ -77,7 +77,7 @@ class TestTransaction(unittest.TestCase):
         """Test throttling while flushing"""
 
         # No throttling, no delay for replay
-        trManager = TransactionManager(timedelta(seconds=0), MAX_QUEUE_SIZE, THROTTLING_DELAY)
+        trManager = TransactionManager(timedelta(seconds=0), MAX_QUEUE_SIZE, THROTTLING_DELAY, {'dimensions': {}})
         trManager._flush_without_ioloop = True  # Use blocking API to emulate tornado ioloop
 
         # Add 3 transactions, make sure no memory limit is in the way

@@ -14,8 +14,6 @@ import datetime
 
 # set up logging before importing any other components
 import monasca_agent.common.util as util
-import monasca_agent.forwarder.api.mon as mon
-import monasca_agent.common.config as cfg
 
 util.initialize_logging('forwarder')
 
@@ -31,10 +29,12 @@ import tornado.escape
 import tornado.options
 
 # agent import
+import monasca_agent.common.config as cfg
 import monasca_agent.common.check_status as check_status
 import monasca_agent.common.metrics as metrics
 import monasca_agent.common.util as util
-import transaction
+import monasca_agent.forwarder.api.mon as mon
+import monasca_agent.forwarder.transaction as transaction
 
 log = logging.getLogger('forwarder')
 
@@ -50,64 +50,12 @@ MAX_QUEUE_SIZE = 30 * 1024 * 1024  # 30MB
 THROTTLING_DELAY = datetime.timedelta(microseconds=1000000 / 2)  # 2 msg/second
 
 
-class MetricTransaction(transaction.Transaction):
-
-    _application = None
-    _trManager = None
-    _endpoints = []
-
-    @classmethod
-    def set_application(cls, app):
-        cls._application = app
-
-    @classmethod
-    def set_tr_manager(cls, manager):
-        cls._trManager = manager
-
-    @classmethod
-    def get_tr_manager(cls):
-        return cls._trManager
-
-    @classmethod
-    def set_endpoints(cls, endpoint):
-        # todo we only have one endpoint option, generalize it better
-        # the immediate use case for two endpoints could be our own monitoring boxes, they could send to
-        # the main api and mini-mon api
-        cls._endpoints.append(endpoint)
-
-    def __init__(self, data, headers):
-        self._data = data
-        self._headers = headers
-
-        # Call after data has been set (size is computed in Transaction's init)
-        transaction.Transaction.__init__(self)
-
-        # Insert the transaction in the Manager
-        self._trManager.append(self)
-        log.debug("Created transaction %d" % self.get_id())
-        self._trManager.flush()
-
-    def __sizeof__(self):
-        return sys.getsizeof(self._data)
-
-    def flush(self):
-        try:
-            for endpoint in self._endpoints:
-                endpoint.post_metrics(self._data)
-        except Exception:
-            log.exception('Error flushing metrics to remote endpoints')
-            self._trManager.tr_error(self)
-        else:
-            self._trManager.tr_success(self)
-        self._trManager.flush_next()
-
-
 class StatusHandler(tornado.web.RequestHandler):
 
     def get(self):
         threshold = int(self.get_argument('threshold', -1))
 
-        m = MetricTransaction.get_tr_manager()
+        m = transaction.MetricTransaction.get_tr_manager()
 
         self.write(
             "<table><tr><td>Id</td><td>Size</td><td>Error count</td><td>Next flush</td></tr>")
@@ -142,7 +90,7 @@ class AgentInputHandler(tornado.web.RequestHandler):
 
         if len(measurements) > 0:
             # Setup a transaction for this message
-            tr = MetricTransaction(measurements, headers)
+            tr = transaction.MetricTransaction(measurements, headers)
         else:
             raise tornado.web.HTTPError(500)
 
@@ -156,10 +104,13 @@ class Forwarder(tornado.web.Application):
         self._port = int(port)
         self._agent_config = agent_config
         self._metrics = {}
-        MetricTransaction.set_application(self)
-        MetricTransaction.set_endpoints(mon.MonAPI(agent_config))
-        self._tr_manager = transaction.TransactionManager(MAX_WAIT_FOR_REPLAY, MAX_QUEUE_SIZE, THROTTLING_DELAY)
-        MetricTransaction.set_tr_manager(self._tr_manager)
+        transaction.MetricTransaction.set_application(self)
+        transaction.MetricTransaction.set_endpoints(mon.MonAPI(agent_config))
+        self._tr_manager = transaction.TransactionManager(MAX_WAIT_FOR_REPLAY,
+                                                          MAX_QUEUE_SIZE,
+                                                          THROTTLING_DELAY,
+                                                          agent_config)
+        transaction.MetricTransaction.set_tr_manager(self._tr_manager)
 
         self._watchdog = None
         self.skip_ssl_validation = skip_ssl_validation or agent_config.get(
@@ -176,7 +127,7 @@ class Forwarder(tornado.web.Application):
     def _post_metrics(self):
 
         if len(self._metrics) > 0:
-            MetricTransaction(self._metrics, headers={'Content-Type': 'application/json'})
+            transaction.MetricTransaction(self._metrics, headers={'Content-Type': 'application/json'})
             self._metrics = {}
 
     # todo why is the tornado logging method overridden? Perhaps ditch this.

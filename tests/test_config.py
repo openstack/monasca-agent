@@ -3,7 +3,7 @@ import unittest
 import os.path
 import tempfile
 
-from monasca_agent.common.config import get_config
+from monasca_agent.common.config import Config
 from monasca_agent.common.util import PidFile, is_valid_hostname
 
 
@@ -12,7 +12,7 @@ class TestConfig(unittest.TestCase):
     def testWhiteSpaceConfig(self):
         """Leading whitespace confuse ConfigParser
         """
-        agent_config = get_config(
+        agent_config = Config.get_config(
             cfg_path=os.path.join(os.path.dirname(os.path.realpath(__file__)), "badconfig.conf"))
         self.assertEqual(agent_config["api_key"], "1234")
 

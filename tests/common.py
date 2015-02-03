@@ -4,12 +4,12 @@ import os
 import signal
 
 from monasca_agent.collector.checks import AgentCheck
-from monasca_agent.common.config import get_checksd_path
+from monasca_agent.common.util import load_check_directory
 from monasca_agent.common.util import get_os
 
 
 def load_check(name, config, agent_config):
-    checksd_path = get_checksd_path(get_os())
+    checksd_path = load_check_directory()
     if checksd_path not in sys.path:
         sys.path.append(checksd_path)
 
@@ -61,7 +61,7 @@ def kill_subprocess(process_obj):
 
 
 def get_check(name, config_str):
-    checksd_path = get_checksd_path(get_os())
+    checksd_path = load_check_directory()
     if checksd_path not in sys.path:
         sys.path.append(checksd_path)
     check_module = __import__(name)

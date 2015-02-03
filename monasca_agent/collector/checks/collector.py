@@ -16,7 +16,6 @@ log = logging.getLogger(__name__)
 
 MAX_THREADS_COUNT = 50
 MAX_COLLECTION_TIME = 30
-MAX_EMIT_TIME = 5
 MAX_CPU_PCT = 10
 FLUSH_LOGGING_PERIOD = 10
 FLUSH_LOGGING_INITIAL = 5
@@ -32,7 +31,6 @@ class Collector(util.Dimensions):
     def __init__(self, agent_config, emitter, checksd=None):
         super(Collector, self).__init__(agent_config)
         self.agent_config = agent_config
-        self.emit_duration = None
         self.os = util.get_os()
         self.plugins = None
         self.emitter = emitter
@@ -90,17 +88,17 @@ class Collector(util.Dimensions):
             log.exception("Error persisting collector status")
 
         if self.run_count <= FLUSH_LOGGING_INITIAL or self.run_count % FLUSH_LOGGING_PERIOD == 0:
-            log.info("Finished run #%s. Collection time: %ss. Emit time: %ss" %
-                     (self.run_count, round(collect_duration, 2), round(self.emit_duration, 2)))
+            log.info("Finished run #%s. Collection time: %ss." %
+                     (self.run_count, round(collect_duration, 2)))
             if self.run_count == FLUSH_LOGGING_INITIAL:
                 log.info("First flushes done, next flushes will be logged every %s flushes." %
                          FLUSH_LOGGING_PERIOD)
 
         else:
-            log.debug("Finished run #%s. Collection time: %ss. Emit time: %ss" %
-                      (self.run_count, round(collect_duration, 2), round(self.emit_duration, 2)))
+            log.debug("Finished run #%s. Collection time: %ss." %
+                      (self.run_count, round(collect_duration, 2),))
 
-    def collector_stats(self, num_metrics, num_events, collection_time, emit_time):
+    def collector_stats(self, num_metrics, num_events, collection_time):
         metrics = {}
         thread_count = threading.active_count()
         metrics['monasca.thread_count'] = thread_count
@@ -111,11 +109,6 @@ class Collector(util.Dimensions):
         if collection_time > MAX_COLLECTION_TIME:
             log.info("Collection time (s) is high: %.1f, metrics count: %d, events count: %d" %
                      (collection_time, num_metrics, num_events))
-
-        metrics['monasca.emit_time_sec'] = emit_time
-        if emit_time is not None and emit_time > MAX_EMIT_TIME:
-            log.info("Emit time (s) is high: %.1f, metrics count: %d, events count: %d" %
-                     (emit_time, num_metrics, num_events))
 
         return metrics
 
@@ -157,16 +150,15 @@ class Collector(util.Dimensions):
         collect_duration = timer.step()
 
         dimensions = {'component': 'monasca-agent'}
-        # Add in metrics on the collector run, emit_duration is from the previous run
+        # Add in metrics on the collector run
         for name, value in self.collector_stats(len(metrics_list), len(events),
-                                                collect_duration, self.emit_duration).iteritems():
+                                                collect_duration).iteritems():
             metrics_list.append(metrics.Measurement(name,
                                                     timestamp,
                                                     value,
                                                     self._set_dimensions(dimensions),
                                                     None))
         emitter_statuses = self._emit(metrics_list)
-        self.emit_duration = timer.step()
 
         # Persist the status of the collection run.
         self._set_status(checks_statuses, emitter_statuses, collect_duration)

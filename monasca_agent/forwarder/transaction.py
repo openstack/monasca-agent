@@ -6,8 +6,9 @@ import logging
 from operator import attrgetter
 
 # project
-from monasca_agent.common.check_status import ForwarderStatus
-from monasca_agent.common.util import get_tornado_ioloop, plural
+import monasca_agent.common.check_status as check_status
+import monasca_agent.common.metrics as metrics
+import monasca_agent.common.util as util
 
 log = logging.getLogger(__name__)
 
@@ -63,12 +64,64 @@ class Transaction(object):
         raise NotImplementedError("To be implemented in a subclass")
 
 
-class TransactionManager(object):
+class MetricTransaction(Transaction):
+
+    _application = None
+    _trManager = None
+    _endpoints = []
+
+    @classmethod
+    def set_application(cls, app):
+        cls._application = app
+
+    @classmethod
+    def set_tr_manager(cls, manager):
+        cls._trManager = manager
+
+    @classmethod
+    def get_tr_manager(cls):
+        return cls._trManager
+
+    @classmethod
+    def set_endpoints(cls, endpoint):
+        # todo we only have one endpoint option, generalize it better
+        # the immediate use case for two endpoints could be our own monitoring boxes, they could send to
+        # the main api and mini-mon api
+        cls._endpoints.append(endpoint)
+
+    def __init__(self, data, headers):
+        self._data = data
+        self._headers = headers
+
+        # Call after data has been set (size is computed in Transaction's init)
+        Transaction.__init__(self)
+
+        # Insert the transaction in the Manager
+        self._trManager.append(self)
+        log.debug("Created transaction %d" % self.get_id())
+
+    def __sizeof__(self):
+        return sys.getsizeof(self._data)
+
+    def flush(self):
+        try:
+            for endpoint in self._endpoints:
+                endpoint.post_metrics(self._data)
+        except Exception:
+            log.exception('Error flushing metrics to remote endpoints')
+            self._trManager.tr_error(self)
+        else:
+            self._trManager.tr_success(self)
+        self._trManager.flush_next()
+
+
+class TransactionManager(util.Dimensions):
 
     """Holds any transaction derived object list and make sure they
        are all commited, without exceeding parameters (throttling, memory consumption) """
 
-    def __init__(self, max_wait_for_replay, max_queue_size, throttling_delay):
+    def __init__(self, max_wait_for_replay, max_queue_size, throttling_delay, agent_config):
+        super(TransactionManager, self).__init__(agent_config)
         self._MAX_WAIT_FOR_REPLAY = max_wait_for_replay
         self._MAX_QUEUE_SIZE = max_queue_size
         self._THROTTLING_DELAY = throttling_delay
@@ -90,7 +143,7 @@ class TransactionManager(object):
         self._last_flush = datetime.now()  # Last flush (for throttling)
 
         # Track an initial status message.
-        ForwarderStatus().persist()
+        check_status.ForwarderStatus().persist()
 
     def get_transactions(self):
         return self._transactions
@@ -152,13 +205,18 @@ class TransactionManager(object):
         if count > 0:
             if should_log:
                 log.info("Flushing %s transaction%s during flush #%s" %
-                         (count, plural(count), str(self._flush_count + 1)))
+                         (count, util.plural(count), str(self._flush_count + 1)))
             else:
                 log.debug("Flushing %s transaction%s during flush #%s" %
-                          (count, plural(count), str(self._flush_count + 1)))
+                          (count, util.plural(count), str(self._flush_count + 1)))
 
+            timer = util.Timer()
             self._trs_to_flush = to_flush
             self.flush_next()
+            # The emit time is reported on the next run.
+            dimensions = self._set_dimensions({'component': 'monasca-agent'})
+            emit_measurement = metrics.Measurement('monasca.emit_time_sec', time.time(), timer.step(), dimensions)
+            MetricTransaction([emit_measurement], headers={'Content-Type': 'application/json'})
         else:
             if should_log:
                 log.info("No transaction to flush during flush #%s" % str(self._flush_count + 1))
@@ -171,12 +229,11 @@ class TransactionManager(object):
 
         self._flush_count += 1
 
-        ForwarderStatus(
-            queue_length=self._total_count,
-            queue_size=self._total_size,
-            flush_count=self._flush_count,
-            transactions_received=self._transactions_received,
-            transactions_flushed=self._transactions_flushed).persist()
+        check_status.ForwarderStatus(queue_length=self._total_count,
+                                     queue_size=self._total_size,
+                                     flush_count=self._flush_count,
+                                     transactions_received=self._transactions_received,
+                                     transactions_flushed=self._transactions_flushed).persist()
 
     def flush_next(self):
 
@@ -201,7 +258,7 @@ class TransactionManager(object):
                     self.flush_next()
             else:
                 # Wait a little bit more
-                tornado_ioloop = get_tornado_ioloop()
+                tornado_ioloop = util.get_tornado_ioloop()
                 if tornado_ioloop._running:
                     tornado_ioloop.add_timeout(time.time() + delay, lambda: self.flush_next())
                 elif self._flush_without_ioloop:
@@ -218,9 +275,8 @@ class TransactionManager(object):
             "Transaction %d in error (%s error%s), it will be replayed after %s" %
             (tr.get_id(),
              tr.get_error_count(),
-             plural(
-                tr.get_error_count()),
-                tr.get_next_flush()))
+             util.plural(tr.get_error_count()),
+             tr.get_next_flush()))
 
     def tr_success(self, tr):
         log.debug("Transaction %d completed" % tr.get_id())
