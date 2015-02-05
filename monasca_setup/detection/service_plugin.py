@@ -46,7 +46,7 @@ class ServicePlugin(Plugin):
         for process in self.found_processes:
             # Watch the service processes
             log.info("\tMonitoring the {0} {1} process.".format(process, self.service_name))
-            config.merge(watch_process([process], self.service_name, process))
+            config.merge(watch_process([process], self.service_name, process, exact_match=False))
 
         if self.service_api_url and self.search_pattern:
             # Setup an active http_status check on the API
