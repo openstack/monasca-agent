@@ -694,8 +694,9 @@ def load_check_directory():
 
         log.debug('Loaded check.d/%s.py' % check_name)
 
-    log.info('initialized checks_d checks: %s' % initialized_checks.keys())
-    log.info('initialization failed checks_d checks: %s' % init_failed_checks.keys())
+    log.info('Successfully initialized checks: %s' % initialized_checks.keys())
+    if len(init_failed_checks) > 0:
+        log.info('Initialization failed for checks: %s' % init_failed_checks.keys())
     return {'initialized_checks': initialized_checks.values(),
             'init_failed_checks': init_failed_checks,
             }

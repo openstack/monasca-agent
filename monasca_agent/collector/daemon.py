@@ -10,6 +10,7 @@ import time
 
 # Custom modules
 import checks.collector
+import checks.services_checks as status_checks
 import jmxfetch
 import monasca_agent.common.check_status
 import monasca_agent.common.config as cfg
@@ -253,27 +254,14 @@ def main():
         checks = util.load_check_directory()
         for check in checks['initialized_checks']:
             if check.name == check_name:
-                check.run()
-                print("Metrics: ")
-                check.get_metrics(prettyprint=True)
-                if len(args) == 3 and args[2] == 'check_rate':
-                    print("Running 2nd iteration to capture rate metrics")
-                    time.sleep(1)
-                    check.run()
-                    print("Metrics: ")
-                    check.get_metrics(prettyprint=True)
+                run_check(check)
 
     elif 'check_all' == command:
         print("Loading check directory...")
         checks = util.load_check_directory()
         print("...directory loaded.\n")
         for check in checks['initialized_checks']:
-            print("#" * 80)
-            print("Check name: '{}'\n".format(check.name))
-            check.run()
-            print("Metrics: ")
-            check.get_metrics(prettyprint=True)
-            print("#" * 80 + "\n\n")
+            run_check(check)
 
     elif 'configcheck' == command or 'configtest' == command:
         osname = util.get_os()
@@ -329,6 +317,24 @@ def main():
 
     return 0
 
+def run_check(check):
+
+    is_multi_threaded = False
+    if isinstance(check, status_checks.ServicesCheck):
+        is_multi_threaded = True
+    print("#" * 80)
+    print("Check name: '{}'\n".format(check.name))
+    check.run()
+    # Sleep for a second and then run a second check to capture rate metrics
+    time.sleep(1)
+    check.run()
+    if is_multi_threaded:
+        # Sleep for a second to allow async threads to finish
+        time.sleep(1)
+        check.stop_pool()
+    print("Metrics: ")
+    check.get_metrics(prettyprint=True)
+    print("#" * 80 + "\n\n")
 
 if __name__ == '__main__':
     try:
