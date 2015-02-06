@@ -1,9 +1,10 @@
 import logging
 import re
-from subprocess import CalledProcessError, check_output
+from subprocess import CalledProcessError
 
 from monasca_setup.detection import Plugin, find_process_cmdline, watch_process
 from monasca_setup.detection.utils import find_addr_listening_on_port
+from monasca_setup.detection.utils import check_output
 from monasca_setup import agent_config
 
 log = logging.getLogger(__name__)
@@ -45,8 +46,8 @@ class Kafka(Plugin):
             consumers = {}
             # Find consumers and topics
             for consumer in self._ls_zookeeper('/consumers'):
-                consumers[consumer] = {topic: kafka.topic_partitions[topic]
-                                       for topic in self._ls_zookeeper('/consumers/%s/offsets' % consumer)}
+                consumers[consumer] = dict((topic, kafka.topic_partitions[topic])
+                                       for topic in self._ls_zookeeper('/consumers/%s/offsets' % consumer))
 
             log.info("\tInstalling kafka_consumer plugin.")
             self.config['kafka_consumer'] = {'init_config': None,

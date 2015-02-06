@@ -1,9 +1,28 @@
 """ Util functions to assist in detection.
 """
 import psutil
+import subprocess
 
 from monasca_setup import agent_config
+from subprocess import Popen, PIPE, CalledProcessError
 
+# check_output was introduced in python 2.7, function added
+# to accommodate python 2.6
+try:
+    check_output = subprocess.check_output
+except AttributeError:
+    def check_output(*popenargs, **kwargs):
+        if 'stdout' in kwargs:
+            raise ValueError('stdout argument not allowed, it will be overridden.')
+        process = Popen(stdout=PIPE, *popenargs, **kwargs)
+        output, unused_err = process.communicate()
+        retcode = process.poll()
+        if retcode:
+            cmd = kwargs.get("args")
+            if cmd is None:
+                cmd = popenargs[0]
+            raise CalledProcessError(retcode, cmd)
+        return output
 
 def find_process_cmdline(search_string):
     """Simple function to search running process for one with cmdline containing.

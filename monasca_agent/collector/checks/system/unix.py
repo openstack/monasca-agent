@@ -413,8 +413,8 @@ class IO(check.Check):
             measurements = []
             timestamp = time.time()
             for dev_name, stats in filtered_io.iteritems():
-                filtered_stats = {stat: stats[stat]
-                                  for stat in stats.iterkeys() if stat not in self.stat_blacklist}
+                filtered_stats = dict((stat, stats[stat])
+                                  for stat in stats.iterkeys() if stat not in self.stat_blacklist)
                 m_list = [metrics.Measurement(key,
                                               timestamp,
                                               value,

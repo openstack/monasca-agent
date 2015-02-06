@@ -30,6 +30,8 @@ import detection.plugins.swift as swift
 import detection.plugins.zookeeper as zookeeper
 import service.sysv as sysv
 
+from detection.utils import check_output
+
 # List of all detection plugins to run
 DETECTION_PLUGINS = [apache.Apache, ceilometer.Ceilometer, cinder.Cinder,
                      glance.Glance, kafka_consumer.Kafka, keystone.Keystone,
@@ -93,12 +95,12 @@ def main(argv=None):
             for package in ['coreutils', 'sysstat']:
                 #Check for required dependencies for system checks
                 try:
-                    output = subprocess.check_output('dpkg -s {}'.format(package),
+                    output = check_output('dpkg -s {0}'.format(package),
                                                      stderr=subprocess.STDOUT,
                                                      shell=True)
                 except subprocess.CalledProcessError:
-                    log.warn("*** {} package is not installed! ***".format(package) +
-                             "\nNOTE: If you do not install the {} ".format(package) +
+                    log.warn("*** {0} package is not installed! ***".format(package) +
+                             "\nNOTE: If you do not install the {0} ".format(package) +
                              "package, you will not receive all of the standard " +
                              "operating system type metrics!")
         else:
