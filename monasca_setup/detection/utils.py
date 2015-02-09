@@ -24,6 +24,7 @@ except AttributeError:
             raise CalledProcessError(retcode, cmd)
         return output
 
+
 def find_process_cmdline(search_string):
     """Simple function to search running process for one with cmdline containing.
     """

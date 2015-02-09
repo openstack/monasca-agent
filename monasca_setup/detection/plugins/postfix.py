@@ -1,25 +1,29 @@
+import logging
 import os
-
 import yaml
 
 import monasca_setup.agent_config
 import monasca_setup.detection
 
+log = logging.getLogger(__name__)
+
 
 class Postfix(monasca_setup.detection.Plugin):
-
     """If postfix is running install the default config.
-
     """
-    # todo this is is disabled as postfix requires passwordless sudo for the
-    # monasca-agent user, a bad practice
-
     def _detect(self):
         """Run detection, set self.available True if the service is detected.
 
         """
-        if monasca_setup.detection.find_process_name('postfix') is not None:
-            self.available = True
+        if monasca_setup.detection.find_process_cmdline('postfix') is not None:
+            # Test for sudo access
+            test_sudo = os.system('sudo -l -U monasca-agent find /var/spool/postfix/incoming -type f > /dev/null')
+            if test_sudo != 0:
+                log.info("Postfix found but the required sudo access is not configured.\n\t" +
+                         "Refer to plugin documentation for more detail")
+                return False
+
+        self.available = True
 
     def build_config(self):
         """Build the config as a Plugins object and return.
