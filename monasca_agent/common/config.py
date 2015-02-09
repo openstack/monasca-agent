@@ -66,7 +66,7 @@ class Config(object):
         '''Read in the config file.'''
 
         file_config = parser.SafeConfigParser()
-        log.debug("Loading config file from {}".format(self._configFile))
+        log.debug("Loading config file from {0}".format(self._configFile))
         file_config.readfp(self._skip_leading_wsp(open(self._configFile)))
         self._config = self._retrieve_sections(file_config)
 
@@ -157,7 +157,7 @@ class Config(object):
             dimensions = {}
             try:
                 dim_list = [dim.split(':') for dim in self._config['Main']['dimensions'].split(',')]
-                dimensions.update({key.strip(): value.strip() for key, value in dim_list})
+                dimensions.update(dict((key.strip(), value.strip()) for key, value in dim_list))
             except ValueError:
                 log.info("Unable to process dimensions.")
                 dimensions = {}
