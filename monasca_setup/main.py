@@ -45,6 +45,7 @@ def main(argv=None):
     parser.add_argument('--dimensions', help="Additional dimensions to set for all metrics. A comma seperated list " +
                                              "of name/value pairs, 'name:value,name2:value2'")
     parser.add_argument('--log_dir', help="monasca-agent log directory", default='/var/log/monasca/agent')
+    parser.add_argument('--log_level', help="monasca-agent logging level (ERROR, WARNING, INFO, DEBUG)", required=False, default='INFO')
     parser.add_argument(
         '--template_dir', help="Alternative template directory", default='/usr/local/share/monasca/agent')
     parser.add_argument('--headless', help="Run in a non-interactive mode", action="store_true")

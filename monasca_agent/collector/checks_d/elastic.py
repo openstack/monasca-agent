@@ -119,7 +119,6 @@ class ElasticSearch(AgentCheck):
 
     def check(self, instance):
         config_url = instance.get('url')
-        dimensions = instance.get('dimensions', {})
         if config_url is None:
             raise Exception("An url must be specified")
 
@@ -137,7 +136,7 @@ class ElasticSearch(AgentCheck):
             config_url = "%s://%s" % (parsed[0], parsed[1])
 
         # Tag by URL so we can differentiate the metrics from multiple instances
-        dimensions['url'] = config_url
+        dimensions = self._set_dimensions({'url': config_url}, instance)
 
         # Check ES version for this instance and define parameters (URLs and metrics) accordingly
         version = self._get_es_version(config_url, auth)
@@ -389,14 +388,3 @@ class ElasticSearch(AgentCheck):
                 "source_type_name": "elasticsearch",
                 "event_object": hostname
                 }
-
-    @staticmethod
-    def parse_agent_config(agentConfig):
-        if not agentConfig.get('elasticsearch'):
-            return False
-
-        return {
-            'instances': [{
-                'url': agentConfig.get('elasticsearch'),
-            }]
-        }

@@ -118,6 +118,7 @@ class Jenkins(AgentCheck):
             self.log.error("Error while working on job %s, exception: %s" % (job_name, e))
 
     def check(self, instance, create_event=True):
+        dimensions = self._set_dimensions(None, instance)
         if self.high_watermarks.get(instance.get('name'), None) is None:
             # On the first run of check(), prime the high_watermarks dict
             # so that we only send events that occured after the agent
@@ -147,9 +148,9 @@ class Jenkins(AgentCheck):
                     self.log.debug("Creating event for job: %s" % output['job_name'])
                     self.event(output)
 
-                    dimensions = {'job_name': output['job_name']}
+                    dimensions.update({'job_name': output['job_name']})
                     if 'branch' in output:
-                        dimensions['branch'] = output['branch']
+                        dimensions.update({'branch': output['branch']})
                     self.gauge("jenkins.job.duration", float(
                         output['duration']) / 1000.0, dimensions=dimensions)
 
@@ -157,15 +158,3 @@ class Jenkins(AgentCheck):
                         self.increment('jenkins.job.success', dimensions=dimensions)
                     else:
                         self.increment('jenkins.job.failure', dimensions=dimensions)
-
-    @staticmethod
-    def parse_agent_config(agentConfig):
-        if not agentConfig.get('hudson_home'):
-            return False
-
-        return {
-            'instances': [{
-                'name': 'default',
-                'jenkins_home': agentConfig.get('hudson_home'),
-            }]
-        }

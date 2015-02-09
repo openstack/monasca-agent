@@ -235,20 +235,14 @@ SELECT relname,
         port = instance.get('port', '')
         user = instance.get('username', '')
         password = instance.get('password', '')
-        dimensions = instance.get('dimensions', {})
         dbname = instance.get('dbname', 'postgres')
         relations = instance.get('relations', [])
 
         key = '%s:%s:%s' % (host, port, dbname)
         db = self.get_connection(key, host, port, user, password, dbname)
 
-        # Clean up dimensions in case there was a None entry in the instance
-        # e.g. if the yaml contains dimensions: but no actual dimensions
-        if dimensions is None:
-            dimensions = {}
-
         # preset dimensions to the database name
-        dimensions["db"] = dbname
+        dimensions = self._set_dimensions({'db': dbname}, instance)
 
         # Check version
         version = self._get_version(key, db)
@@ -261,22 +255,3 @@ SELECT relname,
             self.log.info("Resetting the connection")
             db = self.get_connection(key, host, port, user, password, dbname, use_cached=False)
             self._collect_stats(key, db, dimensions, relations)
-
-    @staticmethod
-    def parse_agent_config(agentConfig):
-        server = agentConfig.get('postgresql_server', '')
-        port = agentConfig.get('postgresql_port', '')
-        user = agentConfig.get('postgresql_user', '')
-        passwd = agentConfig.get('postgresql_pass', '')
-
-        if server != '' and user != '':
-            return {
-                'instances': [{
-                    'host': server,
-                    'port': port,
-                    'username': user,
-                    'password': passwd
-                }]
-            }
-
-        return False

@@ -68,7 +68,7 @@ class Lighttpd(AgentCheck):
 
         url = self.assumed_url.get(instance['lighttpd_status_url'], instance['lighttpd_status_url'])
 
-        dimensions = instance.get('dimensions', {})
+        dimensions = self._set_dimensions(None, instance)
         self.log.debug("Connecting to %s" % url)
         req = urllib2.Request(url, None, headers(self.agent_config))
         if 'user' in instance and 'password' in instance:

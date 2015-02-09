@@ -68,8 +68,8 @@ class SQLServer(AgentCheck):
         username = instance.get('username')
         password = instance.get('password')
         database = instance.get('database', 'master')
-        dimensions = instance.get('dimensions', {})
         conn_key = self._conn_key(host, username, password, database)
+        dimensions = self._set_dimensions(None, instance)
 
         if conn_key not in self.connections:
             try:
@@ -124,7 +124,7 @@ class SQLServer(AgentCheck):
                 metric_func = getattr(self, mtype)
                 metric_func(mname, value, dimensions=custom_dimensions)
 
-    def _fetch_all_instances(self, metric, cursor, custom_dimensions):
+    def _fetch_all_instances(self, metric, cursor, dimensions):
         mname, mtype, counter, instance_n, tag_by = metric
         cursor.execute("""
             select instance_name, cntr_value
@@ -136,7 +136,6 @@ class SQLServer(AgentCheck):
 
         for instance_name, cntr_value in rows:
             value = cntr_value
-            dimensions = custom_dimensions.copy()
-            dimensions[tag_by] = instance_name.strip()
+            dimensions.update({tag_by: instance_name.strip()})
             metric_func = getattr(self, mtype)
             metric_func(mname, value, dimensions=dimensions)

@@ -83,7 +83,7 @@ class Varnish(AgentCheck):
         # Not configured? Not a problem.
         if instance.get("varnishstat", None) is None:
             raise Exception("varnishstat is not configured")
-        dimensions = instance.get('dimensions', {})
+        dimensions = self._set_dimensions(None, instance)
         name = instance.get('name')
 
         # Get the varnish version from varnishstat
@@ -119,9 +119,9 @@ class Varnish(AgentCheck):
         cmd = [instance.get("varnishstat"), arg]
         if name is not None:
             cmd.extend(['-n', name])
-            dimensions[u'varnish_name': name]
+            dimensions.update({'varnish_name': name})
         else:
-            dimensions[u'varnish_name': 'default']
+            dimensions.update({'varnish_name': 'default'})
         try:
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
@@ -133,8 +133,7 @@ class Varnish(AgentCheck):
             self.log.error(error)
         self._parse_varnishstat(output, use_xml, dimensions)
 
-    def _parse_varnishstat(self, output, use_xml, dimensions=None):
-        dimensions = dimensions or {}
+    def _parse_varnishstat(self, output, use_xml, dimensions):
         if use_xml:
             p = xml.parsers.expat.ParserCreate()
             p.StartElementHandler = self._start_element
@@ -160,12 +159,3 @@ class Varnish(AgentCheck):
                     # col 3 has a rate (since restart)
                     self.log.debug("Varnish (rate) %s %d" % (metric_name, int(gauge_val)))
                     self.rate(metric_name, float(gauge_val), dimensions=dimensions)
-
-    @staticmethod
-    def parse_agent_config(agentConfig):
-        if not agentConfig.get('varnishstat'):
-            return False
-
-        return {
-            'instances': [{'varnishstat': agentConfig.get('varnishstat')}]
-        }

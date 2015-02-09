@@ -34,7 +34,7 @@ class Win32EventLog(AgentCheck):
         host = instance.get('host')
         user = instance.get('username')
         password = instance.get('password')
-        tags = instance.get('tags')
+        dimensions = self._set_dimensions(None, instance)
         notify = instance.get('notify', [])
         w = self._get_wmi_conn(host, user, password)
 
@@ -60,7 +60,7 @@ class Win32EventLog(AgentCheck):
         # Save any events returned to the payload as Datadog events
         for ev in events:
             log_ev = LogEvent(ev, self.agent_config.get('api_key', ''),
-                              self.hostname, tags, notify)
+                              self.hostname, dimensions, notify)
 
             # Since WQL only compares on the date and NOT the time, we have to
             # do a secondary check to make sure events are after the last
@@ -159,11 +159,11 @@ class EventLogQuery(object):
 
 class LogEvent(object):
 
-    def __init__(self, ev, api_key, hostname, tags, notify_list):
+    def __init__(self, ev, api_key, hostname, dimensions, notify_list):
         self.event = ev
         self.api_key = api_key
         self.hostname = hostname
-        self.tags = tags
+        self.dimensions = dimensions
         self.notify_list = notify_list
         self.timestamp = self._wmi_to_ts(self.event.TimeGenerated)
 
@@ -178,7 +178,7 @@ class LogEvent(object):
             'alert_type': self._alert_type(self.event),
             'source_type_name': SOURCE_TYPE_NAME,
             'host': self.hostname,
-            'tags': self.tags
+            'dimensions': self.dimensions
         }
 
     def is_after(self, ts):

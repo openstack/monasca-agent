@@ -24,10 +24,6 @@ class GUnicornCheck(AgentCheck):
     # Number of seconds to sleep between cpu time checks.
     CPU_SLEEP_SECS = 0.1
 
-    # Worker state dimensions.
-    IDLE_DIMENSIONS = {"state": "idle"}
-    WORKING_DIMENSIONS = {"state": "working"}
-
     @staticmethod
     def get_library_versions():
         try:
@@ -53,6 +49,10 @@ class GUnicornCheck(AgentCheck):
         if not instance or self.PROC_NAME not in instance:
             raise GUnicornCheckError("instance must specify: %s" % self.PROC_NAME)
 
+        # Load the dimensions
+        working_dimensions = self._set_dimensions({"state": "working"}, instance)
+        idle_dimensions = self._set_dimensions({"state": "idle"}, instance)
+
         # Load the gunicorn master procedure.
         proc_name = instance.get(self.PROC_NAME)
         master_proc = self._get_master_proc_by_name(proc_name)
@@ -63,8 +63,8 @@ class GUnicornCheck(AgentCheck):
 
         # Submit the data.
         self.log.debug("instance %s procs - working:%s idle:%s" % (proc_name, working, idle))
-        self.gauge("gunicorn.workers", working, self.WORKING_DIMENSIONS)
-        self.gauge("gunicorn.workers", idle, self.IDLE_DIMENSIONS)
+        self.gauge("gunicorn.workers", working, working_dimensions)
+        self.gauge("gunicorn.workers", idle, idle_dimensions)
 
     def _count_workers(self, worker_procs):
         working = 0

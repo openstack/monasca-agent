@@ -62,7 +62,7 @@ class IIS(AgentCheck):
         host = instance.get('host', None)
         user = instance.get('username', None)
         password = instance.get('password', None)
-        instance_dimensions = instance.get('dimensions', {})
+        dimensions = self._set_dimensions(None, instance)
         sites = instance.get('sites', ['_Total'])
         w = self._get_wmi_conn(host, user, password)
 
@@ -81,11 +81,10 @@ class IIS(AgentCheck):
                 continue
 
             # Tag with the site name if we're not using the aggregate
-            if iis_site.Name != '_Total':
-                dimensions = instance_dimensions.copy()
-                dimensions['site'] = iis_site.Name
+            if iis_site.Name == '_Total':
+                dimensions.pop('site', None)
             else:
-                dimensions = instance_dimensions.copy()
+                dimensions.update({'site': iis_site.Name})                
 
             for metric, mtype, wmi_val in self.METRICS:
                 if not hasattr(iis_site, wmi_val):

@@ -137,7 +137,7 @@ class LibvirtCheck(AgentCheck):
         instance_cache = self._load_instance_cache()
 
         # Build dimensions for both the customer and for operations
-        dims_base = {'service': 'compute', 'component': 'vm'}
+        dims_base = self._set_dimensions({'service': 'compute', 'component': 'vm'}, instance)
 
         insp = inspector.get_hypervisor_inspector()
         for inst in insp.inspect_instances():

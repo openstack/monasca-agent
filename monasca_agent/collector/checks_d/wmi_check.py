@@ -58,9 +58,9 @@ class WMICheck(AgentCheck):
                 self._extract_metrics(results, metrics, tag_by)
         else:
             results = getattr(w, wmi_class)()
-            self._extract_metrics(results, metrics, tag_by)
+            self._extract_metrics(results, metrics, tag_by, instance)
 
-    def _extract_metrics(self, results, metrics, tag_by):
+    def _extract_metrics(self, results, metrics, tag_by, instance):
         if len(results) > 1 and tag_by is None:
             raise Exception(
                 'WMI query returned multiple rows but no `tag_by` value was given. metrics=%s' %
@@ -77,30 +77,14 @@ class WMICheck(AgentCheck):
 
                 # Grab the tag from the result if there's a `tag_by` value (e.g.: "name:jenkins")
                 if tag_by:
-                    tags = ['%s:%s' % (tag_by.lower(), getattr(res, tag_by))]
+                    dimensions = {'{0}'.format(tag_by.lower()): getattr(res, tag_by)}
                 else:
-                    tags = None
+                    dimensions = None
 
                 try:
                     func = getattr(self, mtype)
                 except AttributeError:
                     raise Exception('Invalid metric type: {0}'.format(mtype))
 
-                # submit the metric to datadog
-                func(name, val, tags=tags)
-
-    @staticmethod
-    def parse_agent_config(agentConfig):
-        if not agentConfig.get('WMI'):
-            return False
-
-        config = []
-        metrics = agentConfig['WMI']
-        for metric_name, wmi_conf in metrics.items():
-            wmi_class, wmi_prop = wmi_conf.split(':')
-            config.append({
-                'class': wmi_class,
-                'metrics': [[wmi_prop, metric_name, 'gauge']]
-            })
-
-        return config
+                # submit the metric
+                func(name, val, dimensions=self._set_dimensions(dimensions, instance))

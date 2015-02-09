@@ -256,16 +256,21 @@ class Dimensions(object):
     def __init__(self, agent_config):
         self.agent_config = agent_config
 
-    def _set_dimensions(self, dimensions):
-        """Method to append the default dimensions from the config file.
+    def _set_dimensions(self, dimensions, instance=None):
+        """Method to append the default dimensions and per instance dimensions from the config files.
         """
         new_dimensions = {'hostname': get_hostname()}
+
         if dimensions is not None:
+            # Add or update any dimensions from the plugin itself
             new_dimensions.update(dimensions.copy())
         default_dimensions = self.agent_config.get('dimensions', {})
         if default_dimensions:
             # Add or update any default dimensions that were set in the agent config file
             new_dimensions.update(default_dimensions)
+        if instance:
+            # Add or update any per instance dimensions that were set in the plugin config file
+            new_dimensions.update(instance.get('dimensions', {}))
         return new_dimensions
 
 
@@ -626,7 +631,7 @@ def load_check_directory():
                 log.error('No check class (inheriting from AgentCheck) found in %s.py' % check_name)
                 continue
 
-        # Check if the config exists OR we match the old-style config
+        # Check if the config exists
         conf_path = os.path.join(confd_path, '%s.yaml' % check_name)
         if os.path.exists(conf_path):
             try:
@@ -636,21 +641,6 @@ def load_check_directory():
                 traceback_message = traceback.format_exc()
                 init_failed_checks[check_name] = {'error': e, 'traceback': traceback_message}
                 continue
-        elif hasattr(check_class, 'parse_agent_config'):
-            # FIXME: Remove this check once all old-style checks are gone
-            try:
-                check_config = check_class.parse_agent_config(agent_config)
-            except Exception as e:
-                continue
-            if not check_config:
-                continue
-            d = [
-                "Configuring %s in agent.conf is deprecated." % (check_name),
-                "Please use conf.d. In a future release, support for the",
-                "old style of configuration will be dropped.",
-            ]
-            log.warn(" ".join(d))
-
         else:
             log.debug('No conf.d/%s.yaml found for checks_d/%s.py' % (check_name, check_name))
             continue

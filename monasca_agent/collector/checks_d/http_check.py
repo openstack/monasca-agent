@@ -23,7 +23,6 @@ class HTTPCheck(services_checks.ServicesCheck):
     @staticmethod
     def _load_conf(instance):
         # Fetches the conf
-        dimensions = instance.get('dimensions', {})
         username = instance.get('username', None)
         password = instance.get('password', None)
         timeout = int(instance.get('timeout', 10))
@@ -36,7 +35,7 @@ class HTTPCheck(services_checks.ServicesCheck):
             raise Exception("Bad configuration. You must specify a url")
         ssl = instance.get('disable_ssl_validation', True)
 
-        return url, username, password, timeout, headers, response_time, dimensions, ssl, pattern, use_keystone
+        return url, username, password, timeout, headers, response_time, ssl, pattern, use_keystone
 
     def _create_status_event(self, status, msg, instance):
         """Does nothing: status events are not yet supported by Mon API.
@@ -45,15 +44,13 @@ class HTTPCheck(services_checks.ServicesCheck):
         return
 
     def _check(self, instance):
-        addr, username, password, timeout, headers, response_time, dimensions, disable_ssl_validation, pattern, use_keystone = self._load_conf(
+        addr, username, password, timeout, headers, response_time, disable_ssl_validation, pattern, use_keystone = self._load_conf(
             instance)
         config = cfg.Config()
         api_config = config.get_config('Api')
         content = ''
 
-        new_dimensions = self._set_dimensions({'url': addr})
-        if dimensions is not None:
-            new_dimensions.update(dimensions.copy())
+        dimensions = self._set_dimensions({'url': addr}, instance)
 
         start = time.time()
         done = False
@@ -83,7 +80,7 @@ class HTTPCheck(services_checks.ServicesCheck):
                 length = int((time.time() - start) * 1000)
                 self.log.info(
                     "%s is DOWN, error: %s. Connection failed after %s ms" % (addr, str(e), length))
-                self.gauge('http_status', 1, dimensions=new_dimensions)
+                self.gauge('http_status', 1, dimensions=dimensions)
                 return services_checks.Status.DOWN, "%s is DOWN, error: %s. Connection failed after %s ms" % (
                     addr, str(e), length)
 
@@ -91,7 +88,7 @@ class HTTPCheck(services_checks.ServicesCheck):
                 length = int((time.time() - start) * 1000)
                 self.log.info(
                     "%s is DOWN, error: %s. Connection failed after %s ms" % (addr, str(e), length))
-                self.gauge('http_status', 1, dimensions=new_dimensions)
+                self.gauge('http_status', 1, dimensions=dimensions)
                 return services_checks.Status.DOWN, "%s is DOWN, error: %s. Connection failed after %s ms" % (
                     addr, str(e), length)
 
@@ -99,7 +96,7 @@ class HTTPCheck(services_checks.ServicesCheck):
                 length = int((time.time() - start) * 1000)
                 self.log.info("%s is DOWN, error: %s. Connection failed after %s ms" % (
                     addr, repr(e), length))
-                self.gauge('http_status', 1, dimensions=new_dimensions)
+                self.gauge('http_status', 1, dimensions=dimensions)
                 return services_checks.Status.DOWN, "%s is DOWN, error: %s. Connection failed after %s ms" % (
                     addr, str(e), length)
 
@@ -107,7 +104,7 @@ class HTTPCheck(services_checks.ServicesCheck):
                 length = int((time.time() - start) * 1000)
                 self.log.info("%s is DOWN, error: %s. Network is not routable after %s ms" % (
                     addr, repr(e), length))
-                self.gauge('http_status', 1, dimensions=new_dimensions)
+                self.gauge('http_status', 1, dimensions=dimensions)
                 return services_checks.Status.DOWN, "%s is DOWN, error: %s. Network is not routable after %s ms" % (
                     addr, str(e), length)
 
@@ -115,14 +112,14 @@ class HTTPCheck(services_checks.ServicesCheck):
                 length = int((time.time() - start) * 1000)
                 self.log.error(
                     "Unhandled exception %s. Connection failed after %s ms" % (str(e), length))
-                self.gauge('http_status', 1, dimensions=new_dimensions)
+                self.gauge('http_status', 1, dimensions=dimensions)
                 return services_checks.Status.DOWN, "%s is DOWN, error: %s. Connection failed after %s ms" % (
                     addr, str(e), length)
 
             if response_time:
                 # Stop the timer as early as possible
                 running_time = time.time() - start
-                self.gauge('http_response_time', running_time, dimensions=new_dimensions)
+                self.gauge('http_response_time', running_time, dimensions=dimensions)
 
             # TODO(dschroeder): Save/send content data when supported by API
 
@@ -138,7 +135,7 @@ class HTTPCheck(services_checks.ServicesCheck):
                         continue
                 else:
                     self.log.info("%s is DOWN, error code: %s" % (addr, str(resp.status)))
-                    self.gauge('http_status', 1, dimensions=new_dimensions)
+                    self.gauge('http_status', 1, dimensions=dimensions)
                     return services_checks.Status.DOWN, "%s is DOWN, error code: %s" % (addr, str(resp.status))
 
             if pattern is not None:
@@ -146,11 +143,11 @@ class HTTPCheck(services_checks.ServicesCheck):
                     self.log.debug("Pattern match successful")
                 else:
                     self.log.info("Pattern match failed! '%s' not in '%s'" % (pattern, content))
-                    self.gauge('http_status', 1, dimensions=new_dimensions)
+                    self.gauge('http_status', 1, dimensions=dimensions)
                     return services_checks.Status.DOWN, "Pattern match failed! '%s' not in '%s'" % (
                         pattern, content)
 
             self.log.debug("%s is UP" % addr)
-            self.gauge('http_status', 0, dimensions=new_dimensions)
+            self.gauge('http_status', 0, dimensions=dimensions)
             done = True
             return services_checks.Status.UP, "%s is UP" % addr

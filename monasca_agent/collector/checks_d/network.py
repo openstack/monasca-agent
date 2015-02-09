@@ -51,7 +51,7 @@ class Network(AgentCheck):
         if instance is None:
             instance = {}
 
-        self._dimensions = instance.get('dimensions', {})
+        dimensions = self._set_dimensions(None, instance)
 
         self._excluded_ifaces = instance.get('excluded_interfaces', [])
         self._collect_cx_state = instance.get('collect_connection_state', False)
@@ -63,13 +63,13 @@ class Network(AgentCheck):
             self._exclude_iface_re = re.compile(exclude_re)
 
         if Platform.is_linux():
-            self._check_linux(instance)
+            self._check_linux(instance, dimensions)
         elif Platform.is_bsd():
-            self._check_bsd(instance)
+            self._check_bsd(instance, dimensions)
         elif Platform.is_solaris():
-            self._check_solaris(instance)
+            self._check_solaris(instance, dimensions)
 
-    def _submit_devicemetrics(self, iface, vals_by_metric):
+    def _submit_devicemetrics(self, iface, vals_by_metric, dimensions):
         if self._exclude_iface_re and self._exclude_iface_re.match(iface):
             # Skip this network interface.
             return False
@@ -102,7 +102,7 @@ class Network(AgentCheck):
             if iface in self._excluded_ifaces and metric in exclude_iface_metrics:
                 # skip it!
                 continue
-            self.rate('net.%s' % metric, val, device_name=iface)
+            self.rate('net.%s' % metric, val, device_name=iface, dimensions=dimensions)
             count += 1
         self.log.debug("tracked %s network metrics for interface %s" % (count, iface))
 
@@ -116,7 +116,7 @@ class Network(AgentCheck):
             except ValueError:
                 return 0
 
-    def _check_linux(self, instance):
+    def _check_linux(self, instance, dimensions):
         if self._collect_cx_state:
             netstat = subprocess.Popen(["netstat", "-n", "-u", "-t", "-a"],
                                        stdout=subprocess.PIPE,
@@ -149,7 +149,7 @@ class Network(AgentCheck):
                     metrics[metric] += 1
 
             for metric, value in metrics.iteritems():
-                self.gauge(metric, value, self._dimensions)
+                self.gauge(metric, value, dimensions=dimensions)
 
         proc = open('/proc/net/dev', 'r')
         try:
@@ -176,9 +176,9 @@ class Network(AgentCheck):
                     'out_packets': self._parse_value(x[9]),
                     'out_errors': self._parse_value(x[10]) + self._parse_value(x[11]),
                 }
-                self._submit_devicemetrics(iface, metrics)
+                self._submit_devicemetrics(iface, metrics, dimensions)
 
-    def _check_bsd(self, instance):
+    def _check_bsd(self, instance, dimensions):
         netstat = subprocess.Popen(["netstat", "-i", "-b"],
                                    stdout=subprocess.PIPE,
                                    close_fds=True).communicate()[0]
@@ -243,9 +243,9 @@ class Network(AgentCheck):
                     'out_packets': self._parse_value(x[-4]),
                     'out_errors': self._parse_value(x[-3]),
                 }
-                self._submit_devicemetrics(iface, metrics)
+                self._submit_devicemetrics(iface, metrics, dimensions)
 
-    def _check_solaris(self, instance):
+    def _check_solaris(self, instance, dimensions):
         # Can't get bytes sent and received via netstat
         # Default to kstat -p link:0:
         netstat = subprocess.Popen(["kstat", "-p", "link:0:"],
@@ -253,7 +253,7 @@ class Network(AgentCheck):
                                    close_fds=True).communicate()[0]
         metrics_by_interface = self._parse_solaris_netstat(netstat)
         for interface, metrics in metrics_by_interface.iteritems():
-            self._submit_devicemetrics(interface, metrics)
+            self._submit_devicemetrics(interface, metrics, dimensions)
 
     def _parse_solaris_netstat(self, netstat_output):
         """Return a mapping of network metrics by interface. For example:

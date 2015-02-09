@@ -88,11 +88,12 @@ class HostAlive(services_checks.ServicesCheck):
 
         """
 
-        new_dimensions = self._set_dimensions({'target_host': instance['host_name'],
-                                               'observer_host': socket.getfqdn()})
-        # Add per-instance dimensions, if any
-        if 'dimensions' in instance.keys() and instance['dimensions'] is not None:
-            new_dimensions.update(instance['dimensions'])
+        if not instance['host_name']:
+            raise ValueError('Target hostname not specified!')
+
+        dimensions = self._set_dimensions({'target_host': instance['host_name'],
+                                           'observer_host': socket.getfqdn()},
+                                          instance)
 
         success = False
 
@@ -107,9 +108,9 @@ class HostAlive(services_checks.ServicesCheck):
             self.log.info("Unrecognized alive_test " + instance['alive_test'])
 
         if success is True:
-            self.gauge('host_alive_status', 0, dimensions=new_dimensions)
+            self.gauge('host_alive_status', 0, dimensions=dimensions)
             return services_checks.Status.UP, "UP"
         else:
-            self.gauge('host_alive_status', 1, dimensions=new_dimensions)
+            self.gauge('host_alive_status', 1, dimensions=dimensions)
             self.log.error("Host down: " + instance['host_name'])
             return services_checks.Status.DOWN, "DOWN"

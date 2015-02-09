@@ -171,8 +171,7 @@ class MongoDb(AgentCheck):
             if param is None:
                 del ssl_params[key]
 
-        dimensions = instance.get('dimensions', {})
-        dimensions['server'] = server
+        dimensions = self._set_dimensions({'server': server}, instance)
 
         try:
             from pymongo import Connection
@@ -288,14 +287,3 @@ class MongoDb(AgentCheck):
             if m in self.RATES:
                 m = self.normalize(m.lower(), 'mongodb') + "ps"
                 self.rate(m, value, dimensions=dimensions)
-
-    @staticmethod
-    def parse_agent_config(agentConfig):
-        if not agentConfig.get('mongodb_server'):
-            return False
-
-        return {
-            'instances': [{
-                'server': agentConfig.get('mongodb_server')
-            }]
-        }

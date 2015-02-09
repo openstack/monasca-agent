@@ -308,7 +308,7 @@ class AgentCheck(util.Dimensions):
         """
         self.aggregator.gauge(metric,
                               value,
-                              self._set_dimensions(dimensions),
+                              dimensions,
                               delegated_tenant,
                               hostname,
                               device_name,
@@ -326,7 +326,7 @@ class AgentCheck(util.Dimensions):
         """
         self.aggregator.increment(metric,
                                   value,
-                                  self._set_dimensions(dimensions),
+                                  dimensions,
                                   delegated_tenant,
                                   hostname,
                                   device_name)
@@ -343,7 +343,7 @@ class AgentCheck(util.Dimensions):
         """
         self.aggregator.decrement(metric,
                                   value,
-                                  self._set_dimensions(dimensions),
+                                  dimensions,
                                   delegated_tenant,
                                   hostname,
                                   device_name)
@@ -363,7 +363,7 @@ class AgentCheck(util.Dimensions):
         """
         self.aggregator.rate(metric,
                              value,
-                             self._set_dimensions(dimensions),
+                             dimensions,
                              delegated_tenant,
                              hostname,
                              device_name)
@@ -380,7 +380,7 @@ class AgentCheck(util.Dimensions):
         """
         self.aggregator.histogram(metric,
                                   value,
-                                  self._set_dimensions(dimensions),
+                                  dimensions,
                                   delegated_tenant,
                                   hostname,
                                   device_name)
@@ -397,7 +397,7 @@ class AgentCheck(util.Dimensions):
         """
         self.aggregator.set(metric,
                             value,
-                            self._set_dimensions(dimensions),
+                            dimensions,
                             delegated_tenant,
                             hostname,
                             device_name)

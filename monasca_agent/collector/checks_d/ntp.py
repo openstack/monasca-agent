@@ -13,7 +13,7 @@ class NtpCheck(AgentCheck):
     """
 
     def check(self, instance):
-        dimensions = instance.get('dimensions', {})
+        dimensions = self._set_dimensions(None, instance)
         req_args = {
             'host':    instance.get('host', DEFAULT_HOST),
             'port':    instance.get('port', DEFAULT_PORT),

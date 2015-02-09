@@ -176,58 +176,6 @@ class Memcache(AgentCheck):
             pass
 
         port = int(instance.get('port', self.DEFAULT_PORT))
-        dimensions = instance.get('dimensions', None)
+        dimensions = self._set_dimensions(None, instance)
 
         self._get_metrics(server, port, dimensions, memcache)
-
-    @staticmethod
-    def parse_agent_config(agentConfig):
-        all_instances = []
-
-        # Load the conf according to the old schema
-        memcache_url = agentConfig.get("memcache_server", None)
-        memcache_port = agentConfig.get("memcache_port", Memcache.DEFAULT_PORT)
-        if memcache_url is not None:
-            instance = {
-                'url': memcache_url,
-                'port': memcache_port,
-                'dimensions': {"instance": "%s_%s" % (memcache_url, memcache_port)}
-            }
-            all_instances.append(instance)
-
-        # Load the conf according to the new schema
-        # memcache_instance_1: first_host:first_port:first_tag
-        # memcache_instance_2: second_host:second_port:second_tag
-        # memcache_instance_3: third_host:third_port:third_tag
-        index = 1
-        instance = agentConfig.get("memcache_instance_%s" % index, None)
-        while instance:
-            instance = instance.split(":")
-
-            url = instance[0]
-            port = Memcache.DEFAULT_PORT
-            dimensions = None
-
-            if len(instance) > 1:
-                port = instance[1]
-
-            if len(instance) == 3:
-                dimensions = {"instance": instance[2]}
-            else:
-                dimensions = {"instance": "%s_%s" % (url, port)}
-
-            all_instances.append({
-                'url': url,
-                'port': port,
-                'dimensions': dimensions
-            })
-
-            index += 1
-            instance = agentConfig.get("memcache_instance_%s" % index, None)
-
-        if len(all_instances) == 0:
-            return False
-
-        return {
-            'instances': all_instances
-        }

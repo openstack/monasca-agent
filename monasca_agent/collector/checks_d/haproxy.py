@@ -49,6 +49,7 @@ class HAProxy(AgentCheck):
     }
 
     def check(self, instance):
+        self.dimensions = self._set_dimensions(None, instance)
         url = instance.get('url')
         username = instance.get('username')
         password = instance.get('password')
@@ -150,11 +151,12 @@ class HAProxy(AgentCheck):
 
     def _process_status_metric(self, hosts_statuses):
         agg_statuses = defaultdict(lambda: {'available': 0, 'unavailable': 0})
+        status_dimensions = self.dimensions.copy()
         for (service, status), count in hosts_statuses.iteritems():
             status = status.lower()
 
-            dimensions = {'status': status, 'service': service}
-            self.gauge("haproxy.count_per_status", count, dimensions=dimensions)
+            status_dimensions.update({'status': status, 'service': service})
+            self.gauge("haproxy.count_per_status", count, dimensions=status_dimensions)
 
             if 'up' in status:
                 agg_statuses[service]['available'] += count
@@ -163,8 +165,8 @@ class HAProxy(AgentCheck):
 
         for service in agg_statuses:
             for status, count in agg_statuses[service].iteritems():
-                dimensions = {'status': status, 'service': service}
-                self.gauge("haproxy.count_per_status", count, dimensions=dimensions)
+                status_dimensions.update({'status': status, 'service': service})
+                self.gauge("haproxy.count_per_status", count, dimensions=status_dimensions)
 
     def _process_metrics(self, data_list, service, url):
         for data in data_list:
@@ -179,22 +181,24 @@ class HAProxy(AgentCheck):
                 ...
             ]
             """
-            dimensions = {'type': service, 'instance_url': url}
+            metric_dimensions = self.dimensions.copy()
             hostname = data['svname']
             service_name = data['pxname']
 
+            metric_dimensions.update({'type': service,
+                                      'instance_url': url,
+                                      'service_name': service_name})
             if service == Services.BACKEND:
-                dimensions['backend'] = hostname
-            dimensions["service"] = service_name
+                metric_dimensions.update({'backend': hostname})
 
             for key, value in data.items():
                 if HAProxy.METRICS.get(key):
                     suffix = HAProxy.METRICS[key][1]
                     name = "haproxy.%s.%s" % (service.lower(), suffix)
                     if HAProxy.METRICS[key][0] == 'rate':
-                        self.rate(name, value, dimensions=dimensions)
+                        self.rate(name, value, dimensions=metric_dimensions)
                     else:
-                        self.gauge(name, value, dimensions=dimensions)
+                        self.gauge(name, value, dimensions=metric_dimensions)
 
     def _process_events(self, data_list, url):
         """Main event processing loop. Events will be created for a service status change.
@@ -236,6 +240,8 @@ class HAProxy(AgentCheck):
                 alert_type = "info"
             title = "HAProxy %s front-end reported %s back and %s" % (
                 service_name, hostname, status)
+        event_dimensions = self.dimensions.copy()
+        event_dimensions.update({"frontend": service_name, "host": hostname})
 
         return {
             'timestamp': int(time.time() - lastchg),
@@ -245,18 +251,5 @@ class HAProxy(AgentCheck):
             'alert_type': alert_type,
             "source_type_name": SOURCE_TYPE_NAME,
             "event_object": hostname,
-            "dimensions": {"frontend": service_name, "host": hostname}
-        }
-
-    @staticmethod
-    def parse_agent_config(agentConfig):
-        if not agentConfig.get('haproxy_url'):
-            return False
-
-        return {
-            'instances': [{
-                'url': agentConfig.get('haproxy_url'),
-                'username': agentConfig.get('haproxy_user'),
-                'password': agentConfig.get('haproxy_password')
-            }]
+            "dimensions": event_dimensions
         }

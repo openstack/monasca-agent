@@ -49,11 +49,11 @@ class KyotoTycoonCheck(AgentCheck):
         if not url:
             raise Exception('Invalid Kyoto Tycoon report url %r' % url)
 
-        dimensions = instance.get('dimensions', {})
+        dimensions = self._set_dimensions(None, instance)
         name = instance.get('name')
 
         if name is not None:
-            dimensions['instance'] = name
+            dimensions.update({'instance': name})
 
         response = urllib2.urlopen(url)
         body = response.read()
@@ -77,13 +77,13 @@ class KyotoTycoonCheck(AgentCheck):
                 # number in addition to the default dimensions
                 m = db_stats.match(key)
                 dbnum = int(m.group(1))
-                mydimensions = dimensions.copy()
-                mydimensions['db'] = dbnum
+                db_dimensions = dimensions.copy()
+                db_dimensions.update({'db': dbnum})
                 for part in whitespace.split(value):
                     k, v = part.split('=', 1)
                     if k in self.DB_GAUGES:
                         name = self.DB_GAUGES[k]
-                        self.gauge('kyototycoon.%s' % name, float(v), dimensions=mydimensions)
+                        self.gauge('kyototycoon.%s' % name, float(v), dimensions=db_dimensions)
 
             if key in self.TOTALS:
                 totals[self.TOTALS[key]] += float(value)

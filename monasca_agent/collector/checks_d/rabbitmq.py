@@ -98,7 +98,6 @@ class RabbitMQ(checks.AgentCheck):
             base_url += '/'
         username = instance.get('rabbitmq_user', 'guest')
         password = instance.get('rabbitmq_pass', 'guest')
-        dimensions = instance.get('dimensions', {})
 
         # Limit of queues/nodes to collect metrics from
         max_detailed = {
@@ -125,29 +124,26 @@ class RabbitMQ(checks.AgentCheck):
         opener = urllib2.build_opener(auth_handler)
         urllib2.install_opener(opener)
 
-        return base_url, max_detailed, specified, dimensions
+        return base_url, max_detailed, specified
 
     def check(self, instance):
-        base_url, max_detailed, specified, dimensions = self._get_config(instance)
+        base_url, max_detailed, specified = self._get_config(instance)
 
         self.get_stats(instance,
                        base_url,
                        QUEUE_TYPE,
                        max_detailed[QUEUE_TYPE],
-                       list(specified[QUEUE_TYPE]),
-                       dimensions.copy())
+                       list(specified[QUEUE_TYPE]))
         self.get_stats(instance,
                        base_url,
                        NODE_TYPE,
                        max_detailed[NODE_TYPE],
-                       list(specified[NODE_TYPE]),
-                       dimensions.copy())
+                       list(specified[NODE_TYPE]))
         self.get_stats(instance,
                        base_url,
                        EXCHANGE_TYPE,
                        max_detailed[EXCHANGE_TYPE],
-                       specified[EXCHANGE_TYPE],
-                       dimensions.copy())
+                       specified[EXCHANGE_TYPE])
 
     @staticmethod
     def _get_data(url):
@@ -159,7 +155,7 @@ class RabbitMQ(checks.AgentCheck):
             raise Exception('Cannot parse JSON response from API url: %s %s' % (url, str(e)))
         return data
 
-    def get_stats(self, instance, base_url, object_type, max_detailed, specified_list, dimensions):
+    def get_stats(self, instance, base_url, object_type, max_detailed, specified_list):
         """instance: the check instance
 
         base_url: the url of the rabbitmq management api (e.g. http://localhost:15672/api)
@@ -193,7 +189,7 @@ class RabbitMQ(checks.AgentCheck):
                     if object_type == QUEUE_TYPE:
                         name = '%s/%s' % (data_line.get("vhost"), name)
                 if name in specified_items:
-                    self._get_metrics(data_line, object_type, dimensions)
+                    self._get_metrics(data_line, object_type, instance)
                     specified_items.remove(name)
 
         # No queues/node are specified. We will process every queue/node if it's under the limit
@@ -210,17 +206,16 @@ class RabbitMQ(checks.AgentCheck):
 
             for data_line in data[:max_detailed]:
                 # We truncate the list of nodes/queues if it's above the limit
-                self._get_metrics(data_line, object_type, dimensions)
+                self._get_metrics(data_line, object_type, instance)
 
-    def _get_metrics(self, data, object_type, dimensions):
+    def _get_metrics(self, data, object_type, instance):
         dimensions_list = DIMENSIONS_MAP[object_type].copy()
+        dimensions = self._set_dimensions({'component': 'rabbitmq', 'service': 'rabbitmq'},
+                                          instance)
         for d in dimensions_list.iterkeys():
             dim = data.get(d, None)
             if dim not in [None, ""]:
                 dimensions[dimensions_list[d]] = dim
-        new_dimensions = self._set_dimensions({'component': 'rabbitmq', 'service': 'rabbitmq'})
-        if dimensions is not None:
-            new_dimensions.update(dimensions.copy())
 
         for attribute, metric_name in ATTRIBUTES[object_type]:
             # Walk down through the data path, e.g. foo/bar => d['foo']['bar']
@@ -234,7 +229,7 @@ class RabbitMQ(checks.AgentCheck):
                 value = 0.0
             try:
                 self.log.debug("Collected data for %s: metric name: %s: value: %f dimensions: %s" % (object_type, metric_name, float(value), str(dimensions)))
-                self.gauge('rabbitmq.%s.%s' % (METRIC_SUFFIX[object_type], metric_name), float(value), dimensions=new_dimensions)
+                self.gauge('rabbitmq.%s.%s' % (METRIC_SUFFIX[object_type], metric_name), float(value), dimensions=dimensions)
             except ValueError:
                 self.log.debug("Caught ValueError for %s %s = %s  with dimensions: %s" % (
                     METRIC_SUFFIX[object_type], attribute, value, dimensions))

@@ -64,12 +64,10 @@ class MySql(checks.AgentCheck):
         return {"MySQLdb": version}
 
     def check(self, instance):
-        host, port, user, password, mysql_sock, defaults_file, dimensions, options = self._get_config(
+        host, port, user, password, mysql_sock, defaults_file, options = self._get_config(
             instance)
 
-        new_dimensions = self._set_dimensions({'component': 'mysql', 'service': 'mysql'})
-        if dimensions is not None:
-            new_dimensions.update(dimensions.copy())
+        dimensions = self._set_dimensions({'component': 'mysql', 'service': 'mysql'}, instance)
 
         if (not host or not user) and not defaults_file:
             raise Exception("Mysql host and user are needed.")
@@ -77,8 +75,8 @@ class MySql(checks.AgentCheck):
         db = self._connect(host, port, mysql_sock, user, password, defaults_file)
 
         # Metric collection
-        self._collect_metrics(host, db, new_dimensions, options)
-        self._collect_system_metrics(host, db, new_dimensions)
+        self._collect_metrics(host, db, dimensions, options)
+        self._collect_system_metrics(host, db, dimensions)
 
     @staticmethod
     def _get_config(instance):
@@ -88,10 +86,9 @@ class MySql(checks.AgentCheck):
         password = instance.get('pass', '')
         mysql_sock = instance.get('sock', '')
         defaults_file = instance.get('defaults_file', '')
-        dimensions = instance.get('dimensions', {})
         options = instance.get('options', {})
 
-        return host, port, user, password, mysql_sock, defaults_file, dimensions, options
+        return host, port, user, password, mysql_sock, defaults_file, options
 
     def _connect(self, host, port, mysql_sock, user, password, defaults_file):
         try:
@@ -349,18 +346,3 @@ class MySql(checks.AgentCheck):
                 self.log.exception("Error while fetching mysql pid from ps")
 
         return pid
-
-    @staticmethod
-    def parse_agent_config(agent_config):
-        if not agent_config.get('mysql_server'):
-            return False
-
-        return {
-            'instances': [{
-                'server': agent_config.get('mysql_server', ''),
-                'sock': agent_config.get('mysql_sock', ''),
-                'user': agent_config.get('mysql_user', ''),
-                'pass': agent_config.get('mysql_pass', ''),
-                'options': {'replication': True},
-            }]
-        }

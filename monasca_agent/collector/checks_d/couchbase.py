@@ -71,9 +71,9 @@ class Couchbase(AgentCheck):
         server = instance.get('server', None)
         if server is None:
             raise Exception("The server must be specified")
-        dimensions = instance.get('dimensions', {})
-        dimensions['instance'] = server
         instance['is_recent_python'] = sys.version_info >= (2, 6, 0)
+        # Get dimensions
+        dimensions = self._set_dimensions({'instance': server}, instance)
         data = self.get_data(server, instance)
         self._create_metrics(data, dimensions=dimensions)
 

@@ -125,7 +125,7 @@ monasca_statsd_port : 8125
 # Logging
 # ========================================================================== #
 
-log_level: INFO
+log_level: {args.log_level}
 
 collector_log_file: /var/log/monasca/agent/collector.log
 forwarder_log_file: /var/log/monasca/agent/forwarder.log

@@ -35,10 +35,10 @@ class DirectoryCheck(AgentCheck):
         if not exists(abs_directory):
             raise Exception("DirectoryCheck: the directory (%s) does not exist" % abs_directory)
 
-        self._get_stats(abs_directory, name, pattern, recursive)
+        dimensions = self._set_dimensions({"name": name}, instance)
+        self._get_stats(abs_directory, name, pattern, recursive, dimensions)
 
-    def _get_stats(self, directory, name, pattern, recursive):
-        dimensions = {"name": name}
+    def _get_stats(self, directory, name, pattern, recursive, dimensions):
         directory_bytes = 0
         directory_files = 0
         for root, dirs, files in walk(directory):

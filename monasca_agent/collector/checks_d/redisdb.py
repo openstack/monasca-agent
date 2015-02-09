@@ -128,19 +128,18 @@ class Redis(AgentCheck):
 
         return self.connections[key]
 
-    def _check_db(self, instance, dimensions=None):
+    def _check_db(self, instance):
         conn = self._get_conn(instance)
-        if dimensions is None:
-            dimensions = {}
+        dimensions = self._set_dimensions(None, instance)
 
         if 'unix_socket_path' in instance:
-            dimensions['unix_socket_path'] = instance.get("unix_socket_path")
+            dimensions.update({'unix_socket_path': instance.get("unix_socket_path")})
         else:
-            dimensions['redis_host'] = instance.get('host')
-            dimensions['redis_port'] = instance.get('port')
+            dimensions.update({'redis_host': instance.get('host')})
+            dimensions.update({'redis_port': instance.get('port')})
 
         if instance.get('db') is not None:
-            dimensions['db'] = instance.get('db')
+            dimensions.update({'db': instance.get('db')})
 
         # Ping the database for info, and track the latency.
         start = time.time()
@@ -162,10 +161,10 @@ class Redis(AgentCheck):
         self.gauge('redis.info.latency_ms', latency_ms, dimensions=dimensions)
 
         # Save the database statistics.
+        db_dimensions = dimensions.copy()
         for key in info.keys():
             if self.db_key_pattern.match(key):
-                db_dimensions = dimensions.copy()
-                db_dimensions['redis_db'] = key
+                db_dimensions.update({'redis_db': key})
                 for subkey in self.subkeys:
                     # Old redis module on ubuntu 10.04 (python-redis 0.6.1) does not
                     # returns a dict for those key but a string: keys=3,expires=0
@@ -196,30 +195,4 @@ class Redis(AgentCheck):
 
         if ("host" not in instance or "port" not in instance) and "unix_socket_path" not in instance:
             raise Exception("You must specify a host/port couple or a unix_socket_path")
-        custom_dimensions = instance.get('dimensions', {})
-        self._check_db(instance, custom_dimensions)
-
-    @staticmethod
-    def parse_agent_config(agentConfig):
-        if not agentConfig.get('redis_urls'):
-            return False
-
-        urls = agentConfig.get('redis_urls')
-        instances = []
-        for url in [u.strip() for u in urls.split(',')]:
-            password = None
-            if '@' in url:
-                password, host_port = url.split('@')
-                host, port = host_port.split(':')
-            else:
-                host, port = url.split(':')
-
-            instances.append({
-                'host': host,
-                'port': int(port),
-                'password': password
-            })
-
-        return {
-            'instances': instances
-        }
+        self._check_db(instance)

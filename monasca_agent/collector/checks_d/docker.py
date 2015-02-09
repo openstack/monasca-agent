@@ -120,7 +120,7 @@ class Docker(AgentCheck):
             self._mounpoints[metric["cgroup"]] = self._find_cgroup(metric["cgroup"])
 
     def check(self, instance):
-        dimensions = instance.get("dimensions") or {}
+        dimensions = self._set_dimensions(None, instance)
         containers = self._get_containers(instance)
         if not containers:
             self.warning("No containers are running.")

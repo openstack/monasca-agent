@@ -52,6 +52,9 @@ class TCPCheck(ServicesCheck):
 
     def _check(self, instance):
         addr, port, socket_type, timeout, response_time = self._load_conf(instance)
+        dimensions = self._set_dimensions(None, instance)
+        if instance.get('host'):
+            dimensions.update({'url': '%s:%s'.format(instance.get('host'), port)})
         start = time.time()
         try:
             self.log.debug("Connecting to %s %s" % (addr, port))
@@ -74,7 +77,7 @@ class TCPCheck(ServicesCheck):
             length = int((time.time() - start) * 1000)
             if "timed out" in str(e):
 
-                # The connection timed out becase it took more time than the system tcp stack allows
+                # The connection timed out because it took more time than the system tcp stack allows
                 self.log.warning(
                     "The connection timed out because it took more time than the system tcp stack allows. You might want to change this setting to allow longer timeouts")
                 self.log.info("System tcp timeout. Assuming that the checked system is down")
@@ -94,7 +97,7 @@ class TCPCheck(ServicesCheck):
 
         if response_time:
             self.gauge('network.tcp.response_time', time.time() - start,
-                       dimensions={'url': '%s:%s' % (instance.get('host', None), port)})
+                       dimensions=dimensions)
 
         self.log.debug("%s:%s is UP" % (addr, port))
         return Status.UP, "UP"

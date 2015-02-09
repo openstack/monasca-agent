@@ -49,10 +49,7 @@ consumer_groups:
                                            cast=self._validate_consumer_groups)
         kafka_host_ports = self.read_config(instance, 'kafka_connect_str')
         full_output = self.read_config(instance, 'full_output', cast=bool)
-        dimensions = self.read_config(instance, 'dimensions', cast=dict, optional=True)
-        new_dimensions = {'component': 'kafka', 'service': 'kafka'}
-        if dimensions is not None:
-            new_dimensions.update(dimensions.copy())
+        dimensions = {'component': 'kafka', 'service': 'kafka'}
 
         try:
             # Connect to Kafka
@@ -97,28 +94,28 @@ consumer_groups:
 
         # Report the broker data
         if full_output:
+            broker_dimensions = dimensions.copy()
             for (topic, partition), broker_offset in broker_offsets.items():
-                broker_dimensions = new_dimensions.copy()
                 broker_dimensions.update({'topic': topic,
                                           'partition': partition})
                 broker_offset = broker_offsets.get((topic, partition))
                 self.gauge('kafka.broker_offset',
                            broker_offset,
-                           dimensions=self._set_dimensions(broker_dimensions))
+                           dimensions=self._set_dimensions(broker_dimensions, instance))
 
         # Report the consumer data
+        consumer_dimensions=dimensions.copy()
         for (consumer_group, topic, partition), consumer_offset in consumer_offsets.items():
             # Get the broker offset
             broker_offset = broker_offsets.get((topic, partition))
             # Report the consumer offset and lag
-            consumer_dimensions=new_dimensions.copy()
             consumer_dimensions.update({'topic': topic,
                                         'partition': partition,
                                         'consumer_group': consumer_group})
             if full_output:
                 self.gauge('kafka.consumer_offset',
                            consumer_offset,
-                           dimensions=self._set_dimensions(consumer_dimensions))
+                           dimensions=self._set_dimensions(consumer_dimensions, instance))
             self.gauge('kafka.consumer_lag',
                        broker_offset - consumer_offset,
-                       dimensions=self._set_dimensions(consumer_dimensions))
+                       dimensions=self._set_dimensions(consumer_dimensions, instance))

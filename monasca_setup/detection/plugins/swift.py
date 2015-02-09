@@ -28,7 +28,7 @@ class Swift(monasca_setup.detection.ServicePlugin):
         super(Swift, self).__init__(service_params)
 
     def build_config(self):
-        config = super(Swift, self).build_config(self)
+        config = super(Swift, self).build_config()
 
         # This is a bit of an abuse of the nagios_wrapper but the commands will return failed error code properly
         swift_health = "/bin/sh -c '" + \

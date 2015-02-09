@@ -23,7 +23,7 @@ class PostfixCheck(AgentCheck):
 
         directory = config['directory']
         queues = config['queues']
-        dimensions = config['dimensions']
+        dimensions = self._set_dimensions(None, instance)
 
         self._get_queue_count(directory, queues, dimensions)
 
@@ -31,14 +31,12 @@ class PostfixCheck(AgentCheck):
     def _get_config(instance):
         directory = instance.get('directory', None)
         queues = instance.get('queues', None)
-        dimensions = instance.get('dimensions', {})
         if not queues or not directory:
             raise Exception('missing required yaml config entry')
 
         instance_config = {
             'directory': directory,
-            'queues': queues,
-            'dimensions': dimensions,
+            'queues': queues
         }
 
         return instance_config

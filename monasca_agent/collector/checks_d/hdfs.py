@@ -21,7 +21,7 @@ class HDFSCheck(AgentCheck):
             # PyYAML converts the number to an int for us
             raise ValueError('Port %r is not an integer' % port)
 
-        dimensions = instance.get('dimensions', None)
+        dimensions = self._set_dimensions(None, instance)
 
         hdfs = snakebite.client.Client(host, port)
         stats = hdfs.df()

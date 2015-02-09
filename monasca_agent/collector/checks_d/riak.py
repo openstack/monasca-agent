@@ -56,6 +56,8 @@ class Riak(AgentCheck):
 
         aggregation_key = md5(url).hexdigest()
 
+        dimensions = self._set_dimensions(None, instance)
+
         try:
             h = Http(timeout=timeout)
             resp, content = h.request(url, "GET")
@@ -77,12 +79,12 @@ class Riak(AgentCheck):
 
         stats = json.loads(content)
 
-        [self.gauge("riak." + k, stats[k]) for k in self.keys if k in stats]
+        [self.gauge("riak." + k, stats[k], dimensions=dimensions) for k in self.keys if k in stats]
 
         coord_redirs_total = stats["coord_redirs_total"]
         if self.prev_coord_redirs_total > -1:
             count = coord_redirs_total - self.prev_coord_redirs_total
-            self.gauge('riak.coord_redirs', count)
+            self.gauge('riak.coord_redirs', count, dimensions=dimensions)
 
         self.prev_coord_redirs_total = coord_redirs_total
 

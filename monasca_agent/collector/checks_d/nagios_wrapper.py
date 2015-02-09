@@ -46,15 +46,12 @@ class WrapNagios(ServicesCheck):
 
         """
 
-        dimensions = {'observer_host': socket.getfqdn()}
-        # Add per-instance dimensions, if any
-        if 'dimensions' in instance.keys() and instance['dimensions'] is not None:
-            dimensions.update(instance['dimensions'])
+        dimensions = self._set_dimensions({'observer_host': socket.getfqdn()}, instance)
 
         if 'host_name' in instance:
-            dimensions['target_host'] = instance['host_name']
+            dimensions.update({'target_host': instance['host_name']})
         else:
-            dimensions['target_host'] = socket.getfqdn()
+            dimensions.update({'target_host': socket.getfqdn()})
 
         extra_path = self.init_config.get('check_path')
 

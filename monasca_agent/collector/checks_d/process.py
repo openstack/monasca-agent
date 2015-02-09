@@ -183,7 +183,6 @@ class ProcessCheck(checks.AgentCheck):
             raise Exception('You need the "psutil" package to run this check')
 
         name = instance.get('name', None)
-        dimensions = instance.get('dimensions', {})
         exact_match = instance.get('exact_match', True)
         search_string = instance.get('search_string', None)
         cpu_check_interval = instance.get('cpu_check_interval', 0.1)
@@ -199,12 +198,11 @@ class ProcessCheck(checks.AgentCheck):
             cpu_check_interval = 0.1
 
         pids = self.find_pids(search_string, psutil, exact_match=exact_match)
-        new_dimensions = self._set_dimensions(dimensions)
-        new_dimensions['process_name'] = name
+        dimensions = self._set_dimensions({'process_name': name}, instance)
 
         self.log.debug('ProcessCheck: process %s analysed' % name)
 
-        self.gauge('process.pid_count', len(pids), dimensions=new_dimensions)
+        self.gauge('process.pid_count', len(pids), dimensions=dimensions)
 
         if instance.get('detailed', False):
             metrics = dict(zip(ProcessCheck.PROCESS_GAUGE,
@@ -214,4 +212,4 @@ class ProcessCheck(checks.AgentCheck):
 
             for metric, value in metrics.iteritems():
                 if value is not None:
-                    self.gauge(metric, value, dimensions=new_dimensions)
+                    self.gauge(metric, value, dimensions=dimensions)

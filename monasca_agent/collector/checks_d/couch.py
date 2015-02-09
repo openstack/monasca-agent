@@ -44,8 +44,10 @@ class CouchDb(AgentCheck):
         server = instance.get('server', None)
         if server is None:
             raise Exception("A server must be specified")
+        # Get dimensions
+        dimensions = self._set_dimensions({'instance': server}, instance)
         data = self.get_data(server)
-        self._create_metric(data, dimensions={'instance': server})
+        self._create_metric(data, dimensions=dimensions)
 
     def get_data(self, server):
         # The dictionary to be returned.
@@ -79,14 +81,3 @@ class CouchDb(AgentCheck):
                     couchdb['databases'][dbName] = db_stats
 
         return couchdb
-
-    @staticmethod
-    def parse_agent_config(agentConfig):
-        if not agentConfig.get('couchdb_server'):
-            return False
-
-        return {
-            'instances': [{
-                'server': agentConfig.get('couchdb_server'),
-            }]
-        }

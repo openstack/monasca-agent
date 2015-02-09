@@ -49,6 +49,9 @@ class Cacti(AgentCheck):
         # Load the instance config
         config = self._get_config(instance)
 
+        # Get dimensions
+        self.dimensions = self._set_dimensions(None, instance)
+
         # The rrdtool module is required for the check to work
         try:
             import rrdtool
@@ -79,7 +82,7 @@ class Cacti(AgentCheck):
             m_count = self._read_rrd(rrd_path, hostname, device_name)
             metric_count += m_count
 
-        self.gauge('cacti.metrics.count', metric_count)
+        self.gauge('cacti.metrics.count', metric_count, dimensions=self.dimensions)
 
     def _get_whitelist_patterns(self, whitelist):
         patterns = []
@@ -170,7 +173,8 @@ class Cacti(AgentCheck):
                     # Save this metric as a gauge
                     val = self._transform_metric(m_name, p[k])
                     self.gauge(m_name, val, hostname=hostname,
-                               device_name=device_name, timestamp=ts)
+                               device_name=device_name, timestamp=ts,
+                               dimensions=self.dimensions)
                     metric_count += 1
                     last_ts = (ts + interval)
 
@@ -222,8 +226,8 @@ class Cacti(AgentCheck):
 
         # Collect stats
         num_hosts = len(set([r[0] for r in res]))
-        self.gauge('cacti.rrd.count', len(res))
-        self.gauge('cacti.hosts.count', num_hosts)
+        self.gauge('cacti.rrd.count', len(res), dimensions=self.dimensions)
+        self.gauge('cacti.hosts.count', num_hosts, dimensions=self.dimensions)
 
         return res
 
@@ -254,29 +258,3 @@ class Cacti(AgentCheck):
         if m_name[0:11] in ('system.mem.', 'system.disk'):
             return val / 1024
         return val
-
-    """For backwards compatability with pre-checks_d configuration.
-
-    Convert old-style config to new-style config.
-    """
-    @staticmethod
-    def parse_agent_config(agentConfig):
-        required = ['cacti_mysql_server', 'cacti_mysql_user', 'cacti_rrd_path']
-        for param in required:
-            if not agentConfig.get(param):
-                return False
-
-        # There was a version of this check that used `cacti_mysql_password`
-        # while the sample used `cacti_mysql_pass`. For backwards-compatibility
-        # sake, we'll allow both when parsing old versions.
-        mysql_pass = agentConfig.get('cacti_mysql_password') or agentConfig.get('cacti_mysql_pass')
-
-        return {
-            'instances': [{
-                'mysql_host': agentConfig.get('cacti_mysql_server'),
-                'mysql_user': agentConfig.get('cacti_mysql_user'),
-                'mysql_password': mysql_pass,
-                'rrd_path': agentConfig.get('cacti_rrd_path'),
-                'rrd_whitelist': agentConfig.get('cacti_rrd_whitelist')
-            }]
-        }

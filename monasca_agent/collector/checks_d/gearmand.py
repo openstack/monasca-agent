@@ -59,7 +59,7 @@ class Gearman(AgentCheck):
             self.warning("Port is not set, assuming 4730")
             port = 4730
 
-        dimensions = instance.get('dimensions', {})
+        dimensions = self._set_dimensions(None, instance)
 
         return host, port, dimensions
 

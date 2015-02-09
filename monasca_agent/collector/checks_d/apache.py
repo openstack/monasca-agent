@@ -34,8 +34,6 @@ class Apache(checks.AgentCheck):
         if not self.url:
             raise Exception("Missing 'apache_status_url' in Apache config")
 
-        # Load the dimensions
-        dimensions = instance.get('dimensions', {})
         req = urllib2.Request(self.url, None, util.headers(self.agent_config))
         apache_user = instance.get('apache_user', None)
         apache_password = instance.get('apache_password', None)
@@ -55,24 +53,23 @@ class Apache(checks.AgentCheck):
             # Localhost is not very useful, so get the actual hostname
             apache_host = socket.gethostname()
 
-        new_dimensions = self._set_dimensions({'apache_host': apache_host,
-                                               'apache_port': apache_port,
-                                               'service': 'apache',
-                                               'component': 'apache'})
-        if dimensions is not None:
-            new_dimensions.update(dimensions.copy())
+        dimensions = self._set_dimensions({'apache_host': apache_host,
+                                            'apache_port': apache_port,
+                                            'service': 'apache',
+                                            'component': 'apache'},
+                                          instance)
 
         try:
             request = urllib2.urlopen(req)
         except Exception as e:
             self.log.info(
                 "%s is DOWN, error: %s. Connection failed." % (service_check_name, str(e)))
-            self.gauge(service_check_name, 1, dimensions=new_dimensions)
+            self.gauge(service_check_name, 1, dimensions=dimensions)
             return services_checks.Status.DOWN, "%s is DOWN, error: %s. Connection failed." % (
                 service_check_name, str(e))
         else:
             self.log.debug("%s is UP" % service_check_name)
-            self.gauge(service_check_name, 0, dimensions=new_dimensions)
+            self.gauge(service_check_name, 0, dimensions=dimensions)
 
         response = request.read()
         metric_count = 0
@@ -92,14 +89,14 @@ class Apache(checks.AgentCheck):
                     metric_count += 1
                     metric_name = self.GAUGES[metric]
                     log.debug('Collecting gauge data for: {0}'.format(metric_name))
-                    self.gauge(metric_name, value, dimensions=new_dimensions)
+                    self.gauge(metric_name, value, dimensions=dimensions)
 
                 # Send metric as a rate, if applicable
                 if metric in self.RATES:
                     metric_count += 1
                     metric_name = self.RATES[metric]
                     log.debug('Collecting rate data for: {0}'.format(metric_name))
-                    self.rate(metric_name, value, dimensions=new_dimensions)
+                    self.rate(metric_name, value, dimensions=dimensions)
 
         if metric_count == 0:
             if self.url[-5:] != '?auto':

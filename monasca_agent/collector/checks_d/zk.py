@@ -37,11 +37,7 @@ class Zookeeper(AgentCheck):
         host = instance.get('host', 'localhost')
         port = int(instance.get('port', 2181))
         timeout = float(instance.get('timeout', 3.0))
-        dimensions = instance.get('dimensions', {})
-        if dimensions is None:
-            new_dimensions = {}
-        else:
-            new_dimensions = dimensions.copy()
+        dimensions = self._set_dimensions({'component': 'zookeeper', 'service': 'zookeeper'}, instance)
 
         sock = socket.socket()
         sock.settimeout(timeout)
@@ -73,20 +69,18 @@ class Zookeeper(AgentCheck):
         finally:
             sock.close()
 
-        new_dimensions = {'component': 'zookeeper', 'service': 'zookeeper'}
-
         if buf is not None:
             # Parse the response
-            metrics, dimensions = self.parse_stat(buf)
-            if dimensions is not None:
-                new_dimensions.update(dimensions.copy())
+            metrics, new_dimensions = self.parse_stat(buf)
+            if new_dimensions is not None:
+                dimensions.update(new_dimensions.copy())
 
             # Write the data
             for metric, value in metrics:
-                self.gauge(metric, value, dimensions=new_dimensions)
+                self.gauge(metric, value, dimensions=dimensions)
         else:
             # Reading from the client port timed out, track it as a metric
-            self.increment('zookeeper.timeouts', dimensions=new_dimensions)
+            self.increment('zookeeper.timeouts', dimensions=dimensions)
 
     @classmethod
     def parse_stat(cls, buf):
