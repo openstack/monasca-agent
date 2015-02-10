@@ -59,11 +59,11 @@ class Kafka(Plugin):
 
     def _find_kafka_connection(self):
         listen_ip = find_addr_listening_on_port(self.port)
-        if listen_ip is None:
-            log.error("\tKafka not found on port {:d}, using 'localhost'".format(self.port))
-            listen_ip = 'localhost'
-        else:
+        if listen_ip:
             log.info("\tKafka found listening on {:s}:{:d}".format(listen_ip, self.port))
+        else:
+            log.info("\tKafka not found listening on a specific IP (port {:d}), using 'localhost'".format(self.port))
+            listen_ip = 'localhost'
 
         return "{:s}:{:d}".format(listen_ip, self.port)
 
