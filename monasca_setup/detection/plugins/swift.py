@@ -1,3 +1,5 @@
+import os
+
 import monasca_setup.detection
 
 
@@ -24,3 +26,29 @@ class Swift(monasca_setup.detection.ServicePlugin):
         }
 
         super(Swift, self).__init__(service_params)
+
+    def build_config(self):
+        config = super(Swift, self).build_config(self)
+
+        # This is a bit of an abuse of the nagios_wrapper but the commands will return failed error code properly
+        swift_health = "/bin/sh -c '" + \
+                       "/usr/local/bin/diagnostics --check_mounts && " + \
+                       "/usr/local/bin/diagnostics --disk_monitoring && " + \
+                       "/usr/local/bin/diagnostics --file_ownership && " + \
+                       "/usr/local/bin/diagnostics --network_interface && " + \
+                       "/usr/local/bin/diagnostics --ping_hosts && " + \
+                       "/usr/local/bin/diagnostics --swift_services && " + \
+                       "/usr/local/bin/swift-checker --diskusage && " + \
+                       "/usr/local/bin/swift-checker --healthcheck && " + \
+                       "/usr/local/bin/swift-checker --replication'"
+
+        if os.path.exists('/usr/local/bin/diagnostics') and os.path.exists('/usr/local/bin/swift-checker'):
+            config['nagios_wrapper'] = {'init_config': None,
+                                        'instances': [
+                                            {'name': 'Swift.health',
+                                             'check_command': swift_health,
+                                             'check_interval': 60,
+                                             'dimensions': {'service': 'swift'}}
+                                        ]}
+
+        return config

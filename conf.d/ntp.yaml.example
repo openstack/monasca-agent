@@ -1,0 +1,12 @@
+init_config:
+
+instances:
+  # All params are optional
+  - host: pool.ntp.org
+    # Optional params:
+    #
+    # port: ntp
+    # version: 3
+    # timeout: 5
+    # dimensions:
+    #     dim1: value1
