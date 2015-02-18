@@ -16,13 +16,11 @@ except ImportError:
 import monasca_agent.common.singleton as singleton
 
 DEFAULT_CONFIG_FILE = '/etc/monasca/agent/agent.conf'
-DEFAULT_CHECK_FREQUENCY = 15  # seconds
 DEFAULT_LOG_DIR = '/var/log/monasca/agent'
-DEFAULT_STATSD_FREQUENCY = 20  # seconds
-DEFAULT_STATSD_INTERVAL = 10  # seconds
 LOGGING_MAX_BYTES = 5 * 1024 * 1024
 
 log = logging.getLogger(__name__)
+
 
 class Config(object):
     # Make this a singleton class so we don't get the config every time
@@ -43,7 +41,7 @@ class Config(object):
         self._read_config()
 
     def get_config(self, sections='Main'):
-        '''Get the config info.'''
+        """Get the config info."""
         section_list = []
         if isinstance(sections, six.string_types):
             section_list.append(sections)
@@ -63,7 +61,7 @@ class Config(object):
         return pkg_resources.require("monasca-agent")[0].version
 
     def _read_config(self):
-        '''Read in the config file.'''
+        """Read in the config file."""
 
         file_config = parser.SafeConfigParser()
         log.debug("Loading config file from {0}".format(self._configFile))
@@ -74,61 +72,55 @@ class Config(object):
         self._parse_config()
 
     def _retrieve_sections(self, config):
-        '''Get the section values from the config file.'''
+        """Get the section values from the config file."""
 
         # Define default values for the possible config items
-        the_config = { 'Main': {
-                'check_freq': DEFAULT_CHECK_FREQUENCY,
-                'forwarder_url': 'http://localhost:17123',
-                'hostname': None,
-                'dimensions': None,
-                'listen_port': None,
-                'version': self.get_version(),
-                'additional_checksd': os.path.join(os.path.dirname(self._configFile), '/checks_d/'),
-                'system_metrics': None,
-                'ignore_filesystem_types': None,
-                'device_blacklist_re': None,
-                'limit_memory_consumption': None,
-                'skip_ssl_validation': False,
-                'watchdog': True,
-                'use_mount': False,
-                'autorestart': False,
-                'non_local_traffic': False
-            }, 'Api': {
-                'is_enabled': False,
-                'url': '',
-                'project_name': '',
-                'project_id': '',
-                'project_domain_name': '',
-                'project_domain_id': '',
-                'ca_file': '',
-                'insecure': '',
-                'username': '',
-                'password': '',
-                'use_keystone': True,
-                'keystone_url': '',
-                'max_buffer_size': 1000,
-                'backlog_send_rate': 5
-            }, 'Statsd': {
-                'recent_point_threshold': None,
-                'monasca_statsd_interval': DEFAULT_STATSD_FREQUENCY,
-                'monasca_statsd_agregator_interval': DEFAULT_STATSD_INTERVAL,
-                'monasca_statsd_forward_host': None,
-                'monasca_statsd_forward_port': 8125,
-                'monasca_statsd_port': 8125
-            }, 'Logging': {
-                'disable_file_logging': False,
-                'log_level': None,
-                'collector_log_file': DEFAULT_LOG_DIR + '/collector.log',
-                'forwarder_log_file': DEFAULT_LOG_DIR + '/forwarder.log',
-                'statsd_log_file': DEFAULT_LOG_DIR + '/statsd.log',
-                'jmxfetch_log_file': DEFAULT_LOG_DIR + '/jmxfetch.log',
-                'log_to_event_viewer': False,
-                'log_to_syslog': False,
-                'syslog_host': None,
-                'syslog_port': None
-            }
-        }
+        the_config = {'Main': {'check_freq': 15,
+                               'forwarder_url': 'http://localhost:17123',
+                               'hostname': None,
+                               'dimensions': None,
+                               'listen_port': None,
+                               'version': self.get_version(),
+                               'additional_checksd': os.path.join(os.path.dirname(self._configFile), '/checks_d/'),
+                               'system_metrics': None,
+                               'ignore_filesystem_types': None,
+                               'device_blacklist_re': None,
+                               'limit_memory_consumption': None,
+                               'skip_ssl_validation': False,
+                               'watchdog': True,
+                               'use_mount': False,
+                               'autorestart': False,
+                               'non_local_traffic': False},
+                      'Api': {'is_enabled': False,
+                              'url': '',
+                              'project_name': '',
+                              'project_id': '',
+                              'project_domain_name': '',
+                              'project_domain_id': '',
+                              'ca_file': '',
+                              'insecure': '',
+                              'username': '',
+                              'password': '',
+                              'use_keystone': True,
+                              'keystone_url': '',
+                              'max_buffer_size': 1000,
+                              'backlog_send_rate': 5},
+                      'Statsd': {'recent_point_threshold': None,
+                                 'monasca_statsd_interval': 20,
+                                 'monasca_statsd_agregator_interval': 10,
+                                 'monasca_statsd_forward_host': None,
+                                 'monasca_statsd_forward_port': 8125,
+                                 'monasca_statsd_port': 8125},
+                      'Logging': {'disable_file_logging': False,
+                                  'log_level': None,
+                                  'collector_log_file': DEFAULT_LOG_DIR + '/collector.log',
+                                  'forwarder_log_file': DEFAULT_LOG_DIR + '/forwarder.log',
+                                  'statsd_log_file': DEFAULT_LOG_DIR + '/statsd.log',
+                                  'jmxfetch_log_file': DEFAULT_LOG_DIR + '/jmxfetch.log',
+                                  'log_to_event_viewer': False,
+                                  'log_to_syslog': False,
+                                  'syslog_host': None,
+                                  'syslog_port': None}}
 
         # Load values from configuration file into config file dictionary
         for section in config.sections():
@@ -137,7 +129,8 @@ class Config(object):
                     option_value = config.get(section, option)
                     if option_value == -1:
                         log.debug("Config option missing: {0}, using default value of {1}".format(option,
-                                                                                                  the_config[section][option]))
+                                                                                                  the_config[section][
+                                                                                                      option]))
                     else:
                         the_config[section][option] = option_value
 
@@ -147,7 +140,7 @@ class Config(object):
         return the_config
 
     def _skip_leading_wsp(self, file):
-        '''Works on a file, returns a file-like object'''
+        """Works on a file, returns a file-like object"""
         return cstringio.StringIO("\n".join(map(string.strip, file.readlines())))
 
     def _parse_config(self):
@@ -227,6 +220,7 @@ def main():
     api_config = configuration.get_config('Api')
     print "Main Configuration: \n {}".format(config)
     print "\nApi Configuration: \n {}".format(api_config)
+
 
 if __name__ == "__main__":
     main()

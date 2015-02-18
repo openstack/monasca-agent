@@ -115,6 +115,9 @@ class MonAPI(object):
                 'token': token
             }
 
+            if not self.url:
+                self.url = self.keystone.get_monasca_url()
+
             return monascaclient.client.Client(self.api_version, self.url, **kwargs)
 
         return None

@@ -10,7 +10,8 @@ class Service(object):
 
     """
 
-    def __init__(self, config_dir, log_dir, name='monasca-agent'):
+    def __init__(self, prefix_dir, config_dir, log_dir, name='monasca-agent'):
+        self.prefix_dir = prefix_dir
         self.config_dir = config_dir
         self.log_dir = log_dir
         self.name = name

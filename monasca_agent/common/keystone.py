@@ -1,10 +1,11 @@
 import logging
 
-from keystoneclient.v3 import client as ksclient
+from monascaclient import ksclient
 
 import monasca_agent.common.singleton as singleton
 
 log = logging.getLogger(__name__)
+
 
 class Keystone(object):
     # Make this a singleton class so we don't get the token every time
@@ -38,17 +39,26 @@ class Keystone(object):
             kc_args.update({'insecure': insecure})
         else:
             if cacert:
-                kc_args.update({'cacert': cacert})
+                kc_args.update({'os_cacert': cacert})
         if project_id:
             kc_args.update({'project_id': project_id})
         elif project_name:
             kc_args.update({'project_name': project_name})
             if project_domain_name:
-                kc_args.update({'project_domain_name': project_domain_name})
+                kc_args.update({'domain_name': project_domain_name})
             if project_domain_id:
-                kc_args.update({'project_domain_id': project_domain_id})
+                kc_args.update({'domain_id': project_domain_id})
 
-        return ksclient.Client(**kc_args)
+        return ksclient.KSClient(**kc_args)
+
+    def get_monasca_url(self):
+        if not self._keystone_client:
+            self.get_token()
+
+        if self._keystone_client:
+            return self._keystone_client.monasca_url
+        else:
+            return None
 
     def get_token(self):
         """Validate token is project scoped and return it if it is
@@ -64,16 +74,9 @@ class Keystone(object):
                     log.error("Unable to create the Keystone Client. " +
                               "Error was {}".format(repr(exc)))
                     return None
-            if self._keystone_client.project_id:
-                self._token = self._keystone_client.auth_token
-            else:
-                self._token = None
-                self._keystone_client = None
-                raise exc.CommandError("User does not have a default project. "
-                                       "You must provide the following parameters "
-                                       "in the agent config file: "
-                                       "project_id OR (project_name AND "
-                                       "(project_domain OR project_domain_name)).")
+
+            self._token = self._keystone_client.token
+
         return self._token
 
     def refresh_token(self):

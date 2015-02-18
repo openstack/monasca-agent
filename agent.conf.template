@@ -6,8 +6,8 @@
 #   Set username, password and project id.
 #   Set username, password, project name and (domain id or domain name).
 #
-# Monitoring API URL: URL for the monitoring API
-# Example: https://region-a.geo-1.monitoring.hpcloudsvc.com/v1.1/metrics
+# Monitoring API URL: URL for the monitoring API, if undefined it will be pulled from the keystone service catalog
+# Example: https://region-a.geo-1.monitoring.hpcloudsvc.com:8080/v2.0
 url: {args.monasca_url}
 # Keystone Username
 username: {args.username}
@@ -61,6 +61,9 @@ dimensions: {args.dimensions}
 # with recent_point_threshold seconds
 # Defaults to 30 seconds if no value is provided
 #recent_point_threshold: 30
+
+# time to wait between collection runs
+check_freq: {args.check_frequency}
 
 # Use mount points instead of volumes to track disk and fs metrics
 use_mount: no

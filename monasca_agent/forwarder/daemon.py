@@ -38,7 +38,6 @@ import monasca_agent.forwarder.transaction as transaction
 
 log = logging.getLogger('forwarder')
 
-TRANSACTION_FLUSH_INTERVAL = 5000  # Every 5 seconds
 WATCHDOG_INTERVAL_MULTIPLIER = 10  # 10x flush interval
 
 # Maximum delay before replaying a transaction
@@ -103,6 +102,7 @@ class Forwarder(tornado.web.Application):
                  use_simple_http_client=False):
         self._port = int(port)
         self._agent_config = agent_config
+        self.flush_interval = int(agent_config.get('check_freq'))/2
         self._metrics = {}
         transaction.MetricTransaction.set_application(self)
         transaction.MetricTransaction.set_endpoints(mon.MonAPI(agent_config))
@@ -120,7 +120,7 @@ class Forwarder(tornado.web.Application):
             log.info("Skipping SSL hostname validation, useful when using a transparent proxy")
 
         if watchdog:
-            watchdog_timeout = TRANSACTION_FLUSH_INTERVAL * WATCHDOG_INTERVAL_MULTIPLIER
+            watchdog_timeout = self.flush_interval * WATCHDOG_INTERVAL_MULTIPLIER
             self._watchdog = util.Watchdog(
                 watchdog_timeout, max_mem_mb=agent_config.get('limit_memory_consumption', None))
 
@@ -204,7 +204,7 @@ class Forwarder(tornado.web.Application):
             self._tr_manager.flush()
 
         tr_sched = tornado.ioloop.PeriodicCallback(
-            flush_trs, TRANSACTION_FLUSH_INTERVAL, io_loop=self.mloop)
+            flush_trs, self.flush_interval, io_loop=self.mloop)
 
         # Start everything
         if self._watchdog:

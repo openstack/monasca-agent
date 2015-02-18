@@ -24,6 +24,27 @@ OS_SERVICE_MAP = {'Linux': sysv.SysV}
 
 log = logging.getLogger(__name__)
 
+# dirname is called twice to get the dir 1 above the location of the script
+PREFIX_DIR = os.path.dirname(os.path.dirname(os.path.realpath(sys.argv[0])))
+
+
+def write_template(template_path, out_path, variables, group):
+    """ Write a file using a simple python string template.
+        Assumes 640 for the permissions and root:group for ownership.
+    :param template_path: Location of the Template to use
+    :param out_path: Location of the file to write
+    :param variables: dictionary with key/value pairs to use in writing the template
+    :return: None
+    """
+    if not os.path.exists(template_path):
+        print("Error no template found at {0}".format(template_path))
+        sys.exit(1)
+    with open(template_path, 'r') as template:
+        with open(out_path, 'w') as conf:
+            conf.write(template.read().format(**variables))
+    os.chown(out_path, 0, group)
+    os.chmod(out_path, 0640)
+
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Detect running daemons then configure and start the agent.',
@@ -33,7 +54,7 @@ def main(argv=None):
     parser.add_argument(
         '-p', '--password', help="Password used for keystone authentication", required=True)
     parser.add_argument('--keystone_url', help="Keystone url", required=True)
-    parser.add_argument('--monasca_url', help="Monasca API url", required=True)
+    parser.add_argument('--monasca_url', help="Monasca API url, if not defined the url is pulled from keystone", required=False, default='')
     parser.add_argument('--insecure', help="Set whether certificates are used for Keystone authentication", required=False, default=False)
     parser.add_argument('--project_name', help="Project name for keystone authentication", required=False, default='')
     parser.add_argument('--project_domain_id', help="Project domain id for keystone authentication", required=False, default='')
@@ -41,13 +62,14 @@ def main(argv=None):
     parser.add_argument('--project_id', help="Keystone project id  for keystone authentication", required=False, default='')
     parser.add_argument('--ca_file', help="Sets the path to the ca certs file if using certificates. " +
                                           "Required only if insecure is set to False", required=False, default='')
+    parser.add_argument('--check_frequency', help="How often to run metric collection in seconds", type=int, default=15)
     parser.add_argument('--config_dir', help="Configuration directory", default='/etc/monasca/agent')
     parser.add_argument('--dimensions', help="Additional dimensions to set for all metrics. A comma seperated list " +
                                              "of name/value pairs, 'name:value,name2:value2'")
     parser.add_argument('--log_dir', help="monasca-agent log directory", default='/var/log/monasca/agent')
     parser.add_argument('--log_level', help="monasca-agent logging level (ERROR, WARNING, INFO, DEBUG)", required=False, default='INFO')
     parser.add_argument(
-        '--template_dir', help="Alternative template directory", default='/usr/local/share/monasca/agent')
+        '--template_dir', help="Alternative template directory", default=os.path.join(PREFIX_DIR, 'share/monasca/agent'))
     parser.add_argument('--headless', help="Run in a non-interactive mode", action="store_true")
     parser.add_argument('--overwrite',
                         help="Overwrite existing plugin configuration. " +
@@ -75,11 +97,11 @@ def main(argv=None):
         linux_flavor = platform.linux_distribution()[0]
         if 'Ubuntu' or 'debian' in linux_flavor:
             for package in ['coreutils', 'sysstat']:
-                #Check for required dependencies for system checks
+                # Check for required dependencies for system checks
                 try:
                     output = check_output('dpkg -s {0}'.format(package),
-                                                     stderr=subprocess.STDOUT,
-                                                     shell=True)
+                                          stderr=subprocess.STDOUT,
+                                          shell=True)
                 except subprocess.CalledProcessError:
                     log.warn("*** {0} package is not installed! ***".format(package) +
                              "\nNOTE: If you do not install the {0} ".format(package) +
@@ -98,32 +120,33 @@ def main(argv=None):
 
     # Service enable, includes setup of users/config directories so must be
     # done before configuration
-    agent_service = OS_SERVICE_MAP[detected_os](os.path.join(args.template_dir, 'monasca-agent.init'),
+    agent_service = OS_SERVICE_MAP[detected_os](PREFIX_DIR,
                                                 args.config_dir,
-                                                args.log_dir, username=args.user)
+                                                args.log_dir,
+                                                args.template_dir,
+                                                username=args.user)
     if not args.skip_enable:
         agent_service.enable()
 
     gid = pwd.getpwnam(args.user).pw_gid
     # Write the main agent.conf - Note this is always overwritten
     log.info('Configuring base Agent settings.')
-    agent_conf_path = os.path.join(args.config_dir, 'agent.conf')
-    with open(os.path.join(args.template_dir, 'agent.conf.template'), 'r') as agent_template:
-        with open(agent_conf_path, 'w') as agent_conf:
-            # Join service in with the dimensions
-            if args.service:
-                if args.dimensions is None:
-                    args.dimensions = 'service:' + args.service
-                else:
-                    args.dimensions = ','.join([args.dimensions, 'service:' + args.service])
-            agent_conf.write(agent_template.read().format(args=args, hostname=socket.getfqdn()))
-    os.chown(agent_conf_path, 0, gid)
-    os.chmod(agent_conf_path, 0o640)
-    # Link the supervisor.conf
-    supervisor_path = os.path.join(args.config_dir, 'supervisor.conf')
-    if os.path.exists(supervisor_path):
-        os.remove(supervisor_path)
-    os.symlink(os.path.join(args.template_dir, 'supervisor.conf'), supervisor_path)
+    # Join service in with the dimensions
+    if args.service:
+        if args.dimensions is None:
+            args.dimensions = 'service:' + args.service
+        else:
+            args.dimensions = ','.join([args.dimensions, 'service:' + args.service])
+    write_template(os.path.join(args.template_dir, 'agent.conf.template'),
+                   os.path.join(args.config_dir, 'agent.conf'),
+                   {'args': args, 'hostname': socket.getfqdn() },
+                   gid)
+
+    # Write the supervisor.conf
+    write_template(os.path.join(args.template_dir, 'supervisor.conf.template'),
+                   os.path.join(args.config_dir, 'supervisor.conf'),
+                   {'prefix': PREFIX_DIR, 'log_dir': args.log_dir},
+                   gid)
 
     # Run through detection and config building for the plugins
     plugin_config = agent_config.Plugins()

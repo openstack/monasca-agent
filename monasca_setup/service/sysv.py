@@ -14,13 +14,13 @@ log = logging.getLogger(__name__)
 
 class SysV(service.Service):
 
-    def __init__(self, init_template, config_dir, log_dir, name='monasca-agent', username='monasca-agent'):
+    def __init__(self, prefix_dir, config_dir, log_dir, template_dir, name='monasca-agent', username='monasca-agent'):
         """Setup this service with the given init template.
 
         """
-        super(SysV, self).__init__(config_dir, log_dir, name)
+        super(SysV, self).__init__(prefix_dir, config_dir, log_dir, name)
         self.init_script = '/etc/init.d/%s' % self.name
-        self.init_template = init_template
+        self.init_template = os.path.join(template_dir, 'monasca-agent.init.template')
         self.username = username
 
     def enable(self):
@@ -39,15 +39,17 @@ class SysV(service.Service):
         # todo log dir is hardcoded
         for path in (self.log_dir, self.config_dir, '%s/conf.d' % self.config_dir):
             if not os.path.exists(path):
-                os.makedirs(path, 0o755)
+                os.makedirs(path, 0755)
                 os.chown(path, 0, user.pw_gid)
         # the log dir needs to be writable by the user
         os.chown(self.log_dir, user.pw_uid, user.pw_gid)
 
-        # link the init script, then enable
-        if not os.path.exists(self.init_script):
-            os.symlink(self.init_template, self.init_script)
-            os.chmod(self.init_script, 0o755)
+        # Write the init script and enable.
+        with open(self.init_template, 'r') as template:
+            with open(self.init_script, 'w') as conf:
+                conf.write(template.read().format(prefix=self.prefix_dir, config_dir=self.config_dir))
+        os.chown(self.init_script, 0, 0)
+        os.chmod(self.init_script, 0755)
 
         for runlevel in ['2', '3', '4', '5']:
             link_path = '/etc/rc%s.d/S10monasca-agent' % runlevel
