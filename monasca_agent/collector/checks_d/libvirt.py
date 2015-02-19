@@ -32,10 +32,10 @@ class LibvirtCheck(AgentCheck):
 
     def __init__(self, name, init_config, agent_config):
         AgentCheck.__init__(self, name, init_config, agent_config)
-        self.instance_cache_file = "{}/{}".format(self.init_config.get('cache_dir'),
-                                                  'libvirt_instances.yaml')
-        self.metric_cache_file = "{}/{}".format(self.init_config.get('cache_dir'),
-                                                'libvirt_metrics.yaml')
+        self.instance_cache_file = "{0}/{1}".format(self.init_config.get('cache_dir'),
+                                                    'libvirt_instances.yaml')
+        self.metric_cache_file = "{0}/{1}".format(self.init_config.get('cache_dir'),
+                                                  'libvirt_metrics.yaml')
 
     def _test_vm_probation(self, created):
         """Test to see if a VM was created within the probation period.
@@ -79,7 +79,7 @@ class LibvirtCheck(AgentCheck):
             if stat.S_IMODE(os.stat(self.instance_cache_file).st_mode) != 0600:
                 os.chmod(self.instance_cache_file, 0600)
         except IOError as e:
-            self.log.error("Cannot write to {}: {}".format(self.instance_cache_file, e))
+            self.log.error("Cannot write to {0}: {1}".format(self.instance_cache_file, e))
 
         return id_cache
 
@@ -125,7 +125,7 @@ class LibvirtCheck(AgentCheck):
             if stat.S_IMODE(os.stat(self.metric_cache_file).st_mode) != 0600:
                 os.chmod(self.metric_cache_file, 0600)
         except IOError as e:
-            self.log.error("Cannot write to {}: {}".format(self.metric_cache_file, e))
+            self.log.error("Cannot write to {0}: {1}".format(self.metric_cache_file, e))
 
     def check(self, instance):
         """Gather VM metrics for each instance"""
@@ -150,8 +150,8 @@ class LibvirtCheck(AgentCheck):
             # Skip instances created within the probation period
             vm_probation_remaining = self._test_vm_probation(instance_cache.get(inst.name)['created'])
             if (vm_probation_remaining >= 0):
-                self.log.info("Libvirt: {} in probation for another {} seconds".format(instance_cache.get(inst.name)['hostname'],
-                                                                                       vm_probation_remaining))
+                self.log.info("Libvirt: {0} in probation for another {1} seconds".format(instance_cache.get(inst.name)['hostname'],
+                                                                                         vm_probation_remaining))
                 continue
 
             # Build customer dimensions
@@ -187,7 +187,7 @@ class LibvirtCheck(AgentCheck):
                 sample_time = int(time.time())
                 disk_dimensions = {'device': disk[0].device}
                 for metric in disk[1]._fields:
-                    metric_name = "io.{}".format(metric)
+                    metric_name = "io.{0}".format(metric)
                     if metric_name not in metric_cache[inst.name]:
                         metric_cache[inst.name][metric_name] = {}
 
@@ -197,7 +197,7 @@ class LibvirtCheck(AgentCheck):
                         val_diff = value - metric_cache[inst.name][metric_name][disk[0].device]['value']
                         # Change the metric name to a rate, ie. "io.read_requests"
                         # gets converted to "io.read_ops_sec"
-                        rate_name = "{}_sec".format(metric_name.replace('requests', 'ops'))
+                        rate_name = "{0}_sec".format(metric_name.replace('requests', 'ops'))
                         # Customer
                         this_dimensions = disk_dimensions.copy()
                         this_dimensions.update(dims_customer)
@@ -207,7 +207,7 @@ class LibvirtCheck(AgentCheck):
                         # Operations (metric name prefixed with "vm."
                         this_dimensions = disk_dimensions.copy()
                         this_dimensions.update(dims_operations)
-                        self.gauge("vm.{}".format(rate_name), val_diff,
+                        self.gauge("vm.{0}".format(rate_name), val_diff,
                                    dimensions=this_dimensions)
                     # Save this metric to the cache
                     metric_cache[inst.name][metric_name][disk[0].device] = {
@@ -219,7 +219,7 @@ class LibvirtCheck(AgentCheck):
                 sample_time = int(time.time())
                 vnic_dimensions = {'device': vnic[0].name}
                 for metric in vnic[1]._fields:
-                    metric_name = "net.{}".format(metric)
+                    metric_name = "net.{0}".format(metric)
                     if metric_name not in metric_cache[inst.name]:
                         metric_cache[inst.name][metric_name] = {}
 
@@ -229,7 +229,7 @@ class LibvirtCheck(AgentCheck):
                         val_diff = value - metric_cache[inst.name][metric_name][vnic[0].name]['value']
                         # Change the metric name to a rate, ie. "net.rx_bytes"
                         # gets converted to "net.rx_bytes_sec"
-                        rate_name = "{}_sec".format(metric_name)
+                        rate_name = "{0}_sec".format(metric_name)
                         # Rename "tx" to "out" and "rx" to "in"
                         rate_name = rate_name.replace("tx", "out")
                         rate_name = rate_name.replace("rx", "in")
@@ -243,7 +243,7 @@ class LibvirtCheck(AgentCheck):
                         # Operations (metric name prefixed with "vm."
                         this_dimensions = vnic_dimensions.copy()
                         this_dimensions.update(dims_operations)
-                        self.gauge("vm.{}".format(rate_name), val_diff,
+                        self.gauge("vm.{0}".format(rate_name), val_diff,
                                    dimensions=this_dimensions)
                     # Save this metric to the cache
                     metric_cache[inst.name][metric_name][vnic[0].name] = {

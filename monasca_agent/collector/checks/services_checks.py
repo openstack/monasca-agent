@@ -110,7 +110,7 @@ class ServicesCheck(monasca_agent.collector.checks.AgentCheck):
             self.resultsq.put(result)
 
         except Exception:
-            self.log.exception('Failure in ServiceCheck {}'.format(name))
+            self.log.exception('Failure in ServiceCheck {0}'.format(name))
             result = (FAILURE, FAILURE, FAILURE, FAILURE)
             self.resultsq.put(result)
 

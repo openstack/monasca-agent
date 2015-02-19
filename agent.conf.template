@@ -65,9 +65,6 @@ dimensions: {args.dimensions}
 # time to wait between collection runs
 check_freq: {args.check_frequency}
 
-# Use mount points instead of volumes to track disk and fs metrics
-use_mount: no
-
 # Change port the Agent is listening to
 # listen_port: 17123
 
@@ -80,24 +77,6 @@ use_mount: no
 # For more information, please see
 # https://github.com/DataDog/dd-agent/wiki/Network-Traffic-and-Proxy-Configuration
 # non_local_traffic: no
-
-# ========================================================================== #
-# System Metrics configuration                                               #
-# ========================================================================== #
-
-# Enabled categories of system metrics to collect
-# Current system metrics available: cpu,disk,io,load,memory
-system_metrics: cpu,disk,io,load,memory
-
-#   Disk and IO                                                                   #
-# Some infrastrucures have many constantly changing virtual devices (e.g. folks
-# running constantly churning linux containers) whose metrics aren't
-# interesting. To filter out a particular pattern of devices
-# from disk and IO collection, configure a regex here:
-# device_blacklist_re: .*\/dev\/mapper\/lxc-box.*
-
-# For disk metrics it is also possible to ignore entire filesystem types
-ignore_filesystem_types: tmpfs,devtmpfs
 
 [Statsd]
 # ========================================================================== #

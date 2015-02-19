@@ -1,0 +1,5 @@
+init_config:
+
+instances:
+    # Memory check only supports one configured instance
+    - name: memory_stats

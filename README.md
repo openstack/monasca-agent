@@ -74,7 +74,6 @@
     - [Dimensions](#dimensions)
     - [Cross-Tenant Metric Submission](#cross-tenant-metric-submission)
 - [Statsd](#statsd)
-- [Log Parsing](#log-parsing)
 - [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -86,7 +85,6 @@ The Monasca Agent is a modern Python monitoring agent for gathering metrics and 
 * System metrics such as cpu and memory utilization.
 * Nagios plugins. The Monasca Agent can run Nagios plugins and send the status code returned by the plugin as a metric to the Monasca API.
 * Statsd. The Monasca Agent supports an integrated Statsd daemon which can be used by applications via a statsd client library.
-* Retrieving metrics from log files written in a specific format. 
 * Host alive. The Monasca Agent can perform active checks on a host to determine if it is alive using ping(ICMP) or SSH.
 * Process checks. The Monasca Agent can check a process and return several metrics on the process such as number of instances, memory, io and threads.
 * Http Endpoint checks. The Monasca Agent can perform active checks on http endpoints by sending an HTTP request to an API.
@@ -370,12 +368,14 @@ This section documents the system metrics that are sent by the Agent.  This sect
 | cpu.stolen_perc | | Percentage of stolen CPU time, i.e. the time spent in other OS contexts when running in a virtualized environment |
 | cpu.system_perc | | Percentage of time the CPU is used at the system level |
 | cpu.user_perc  | | Percentage of time the CPU is used at the user level |
-| disk.inode_used_perc | device | The percentage of inodes that are used on a device |
-| disk.space_used_perc | device | The percentage of disk space that is being used on a device |
+| disk.inode_used_perc | device, mount_point | The percentage of inodes that are used on a device |
+| disk.space_used_perc | device, mount_point | The percentage of disk space that is being used on a device |
 | io.read_kbytes_sec | device | Kbytes/sec read by an io device
 | io.read_req_sec | device   | Number of read requests/sec to an io device
+| io.read_time_sec | device   | Amount of read time/sec to an io device
 | io.write_kbytes_sec |device | Kbytes/sec written by an io device
 | io.write_req_sec   | device | Number of write requests/sec to an io device
+| io.write_time_sec | device   | Amount of write time/sec to an io device
 | load.avg_1_min  | | The average system load over a 1 minute period
 | load.avg_5_min  | | The average system load over a 5 minute period
 | load.avg_15_min  | | The average system load over a 15 minute period
@@ -390,12 +390,14 @@ This section documents the system metrics that are sent by the Agent.  This sect
 | mem.used_buffers | | Number of buffers being used by the kernel for block io
 | mem.used_cached | | Memory used for the page cache
 | mem.used_shared  | | Memory shared between separate processes and typically used for inter-process communication
-| net.in_bytes  | device | Number of network bytes received
-| net.out_bytes  | device | Number of network bytes sent
-| net.in_packets  | device | Number of network packets received
-| net.out_packets  | device | Number of network packets sent
-| net.in_errors  | device | Number of network errors on incoming network traffic
-| net.out_errors  | device | Number of network errors on outgoing network traffic
+| net.in_bytes_sec  | device | Number of network bytes received per second
+| net.out_bytes_sec  | device | Number of network bytes sent per second
+| net.in_packets_sec  | device | Number of network packets received per second
+| net.out_packets_sec  | device | Number of network packets sent per second
+| net.in_errors_sec  | device | Number of network errors on incoming network traffic per second
+| net.out_errors_sec  | device | Number of network errors on outgoing network traffic per second
+| net.in_packets_dropped_sec  | device | Number of inbound network packets dropped per second
+| net.out_packets_dropped_sec  | device | Number of inbound network packets dropped per second
 | monasca.thread_count  | service=monitoring component=monasca-agent | Number of threads that the collector is consuming for this collection run
 | monasca.emit_time_sec  | service=monitoring component=monasca-agent | Amount of time that the collector took for sending the collected metrics to the Forwarder for this collection run
 | monasca.collection_time_sec  | service=monitoring component=monasca-agent | Amount of time that the collector took for this collection run
@@ -1180,9 +1182,6 @@ Here are some examples of how code can be instrumented using calls to monasca-st
     	# Do something...
 
 ```
-
-# Log Parsing
-TBD
 
 # License
 Copyright (c) 2014 Hewlett-Packard Development Company, L.P.

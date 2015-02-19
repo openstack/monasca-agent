@@ -72,7 +72,7 @@ class Keystone(object):
                     self._keystone_client = self._get_ksclient()
                 except Exception as exc:
                     log.error("Unable to create the Keystone Client. " +
-                              "Error was {}".format(repr(exc)))
+                              "Error was {0}".format(repr(exc)))
                     return None
 
             self._token = self._keystone_client.token

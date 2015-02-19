@@ -100,8 +100,8 @@ class WrapNagios(ServicesCheck):
         self.gauge(instance['name'], status_code, dimensions=dimensions)
         # Return DOWN on critical, UP otherwise
         if status_code == "2":
-            return Status.DOWN, "DOWN: {}".format(detail)
-        return Status.UP, "UP: {}".format(detail)
+            return Status.DOWN, "DOWN: {0}".format(detail)
+        return Status.UP, "UP: {0}".format(detail)
 
         # Save last-run data
         file_w = open(last_run_file, "w")

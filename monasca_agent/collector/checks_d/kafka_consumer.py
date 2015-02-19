@@ -69,7 +69,7 @@ consumer_groups:
                             consumer_offsets[(consumer_group, topic, partition)] = kafka_consumer.offsets[partition]
                         except KeyError:
                             kafka_consumer.stop()
-                            self.log.error('Error fetching consumer offset for {} partition {}'.format(topic, partition))
+                            self.log.error('Error fetching consumer offset for {0} partition {1}'.format(topic, partition))
                     kafka_consumer.stop()
 
             # Query Kafka for the broker offsets, done in a separate loop so only one query is done
@@ -82,7 +82,7 @@ consumer_groups:
                         response = kafka_conn.send_offset_request([common.OffsetRequest(topic, p, -1, 1)])
                         offset_responses.append(response[0])
                     except common.KafkaError as e:
-                        self.log.error("Error fetching broker offset: {}".format(e))
+                        self.log.error("Error fetching broker offset: {0}".format(e))
 
                 for resp in offset_responses:
                     broker_offsets[(resp.topic, resp.partition)] = resp.offsets[0]

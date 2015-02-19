@@ -1,0 +1,5 @@
+init_config:
+
+instances:
+    # Cpu check only supports one configured instance
+    - name: cpu_stats

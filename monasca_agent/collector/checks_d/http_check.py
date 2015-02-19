@@ -64,7 +64,7 @@ class HTTPCheck(services_checks.ServicesCheck):
                     headers["Content-type"] = "application/json"
                 else:
                     self.log.warning("""Unable to get token. Keystone API server may be down.
-                                     Skipping check for {}""".format(addr))
+                                     Skipping check for {0}""".format(addr))
                     return
             try:
                 self.log.debug("Connecting to %s" % addr)

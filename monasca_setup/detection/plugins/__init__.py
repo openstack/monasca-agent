@@ -9,13 +9,13 @@ from keystone import Keystone
 from libvirt import Libvirt
 from mon import MonAPI, MonPersister, MonThresh
 from mysql import MySQL
-from network import Network
 from neutron import Neutron
 from nova import Nova
 from ntp import Ntp
 from postfix import Postfix
 from rabbitmq import RabbitMQ
 from swift import Swift
+from system import System
 from zookeeper import Zookeeper
 
 DETECTION_PLUGINS = [Apache,
@@ -29,11 +29,11 @@ DETECTION_PLUGINS = [Apache,
                      MonPersister,
                      MonThresh,
                      MySQL,
-                     Network,
                      Neutron,
                      Nova,
                      Ntp,
                      Postfix,
                      RabbitMQ,
                      Swift,
+                     System,
                      Zookeeper]

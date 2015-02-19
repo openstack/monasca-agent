@@ -1,7 +1,6 @@
 # Core modules
 import logging
 import socket
-import system.unix as u
 import system.win32 as w32
 import threading
 import time
@@ -40,24 +39,16 @@ class Collector(util.Dimensions):
         self.initialized_checks_d = []
         self.init_failed_checks_d = []
 
-        # add system checks
+        # add windows system checks
         if self.os == 'windows':
             self._checks = [w32.Disk(log),
-                             w32.IO(log),
-                             w32.Processes(log),
-                             w32.Memory(log),
-                             w32.Network(log),
-                             w32.Cpu(log)]
+                            w32.IO(log),
+                            w32.Processes(log),
+                            w32.Memory(log),
+                            w32.Network(log),
+                            w32.Cpu(log)]
         else:
-            possible_checks = {'cpu': u.Cpu,
-                               'disk': u.Disk,
-                               'io': u.IO,
-                               'load': u.Load,
-                               'memory': u.Memory}
             self._checks = []
-            # Only setup the configured system checks
-            for check in self.agent_config.get('system_metrics', []):
-                self._checks.append(possible_checks[check](log, self.agent_config))
 
         if checksd:
             # is of type {check_name: check}

@@ -20,6 +20,7 @@ import uuid
 import logging
 log = logging.getLogger(__name__)
 
+
 # Tornado
 try:
     from tornado import ioloop, version_info as tornado_version
@@ -383,7 +384,6 @@ class Paths(object):
         import tornado.simple_httpclient
         log.info("Windows certificate path: %s" % crt_path)
         tornado.simple_httpclient._DEFAULT_CA_CERTS = crt_path
-
 
 def plural(count):
     if count == 1:

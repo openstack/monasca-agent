@@ -44,8 +44,8 @@ def http_emitter(message, log, url):
             response = opener.open(request)
             log.debug('http_emitter: postback response: ' + str(response.read()))
         except Exception as exc:
-            log.error("""Forwarder at {} is down or not responding...
-                      Error is {}
+            log.error("""Forwarder at {0} is down or not responding...
+                      Error is {1}
                       Please restart the monasca-agent.""".format(url, repr(exc)))
         finally:
             if response:

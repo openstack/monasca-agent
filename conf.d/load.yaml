@@ -1,0 +1,5 @@
+init_config:
+
+instances:
+    # Load check only supports one configured instance
+    - name: load_stats

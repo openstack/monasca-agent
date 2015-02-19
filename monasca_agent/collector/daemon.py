@@ -323,7 +323,7 @@ def run_check(check):
     if isinstance(check, status_checks.ServicesCheck):
         is_multi_threaded = True
     print("#" * 80)
-    print("Check name: '{}'\n".format(check.name))
+    print("Check name: '{0}'\n".format(check.name))
     check.run()
     # Sleep for a second and then run a second check to capture rate metrics
     time.sleep(1)

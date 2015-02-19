@@ -260,7 +260,7 @@ class Check(util.Dimensions):
             except Exception:
                 pass
             if prettyprint:
-                print("Metrics: {}".format(metrics))
+                print("Metrics: {0}".format(metrics))
         return metrics
 
 
@@ -442,11 +442,11 @@ class AgentCheck(util.Dimensions):
         metrics = self.aggregator.flush()
         if prettyprint:
             for metric in metrics:
-                print(" Timestamp:  {}".format(metric.timestamp))
-                print(" Name:       {}".format(metric.name))
-                print(" Value:      {}".format(metric.value))
+                print(" Timestamp:  {0}".format(metric.timestamp))
+                print(" Name:       {0}".format(metric.name))
+                print(" Value:      {0}".format(metric.value))
                 if (metric.delegated_tenant):
-                    print(" Delegtd ID: {}".format(metric.delegated_tenant))
+                    print(" Delegtd ID: {0}".format(metric.delegated_tenant))
 
                 print(" Dimensions: ", end='')
                 line = 0
@@ -606,7 +606,7 @@ def run_check(name, path=None):
     # Read the config file
     config = Config()
     confd_path = path or os.path.join(config.get_confd_path(),
-                                      '{}.yaml'.format(name))
+                                      '{0}.yaml'.format(name))
 
     try:
         f = open(confd_path)

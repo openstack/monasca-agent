@@ -1,0 +1,19 @@
+init_config:
+
+instances:
+    # Disk check only supports one configured instance
+    - name: disk_stats
+      # Add a mount_point dimension to the disk system metrics (Default = True)
+      #use_mount: False
+
+      # Send additional disk i/o system metrics (Default = True)
+      #send_io_stats: False
+
+      # Some infrastructures have many constantly changing virtual devices (e.g. folks
+      # running constantly churning linux containers) whose metrics aren't
+      # interesting. To filter out a particular pattern of devices
+      # from the disk collection, configure a regex here:
+      # device_blacklist_re: .*\/dev\/mapper\/lxc-box.*
+
+      # For disk metrics it is also possible to ignore entire filesystem types
+      ignore_filesystem_types: tmpfs,devtmpfs

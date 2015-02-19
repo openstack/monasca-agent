@@ -36,7 +36,7 @@ class Config(object):
         elif os.path.exists(os.getcwd() + '/agent.conf'):
             self._configFile = os.getcwd() + '/agent.conf'
         else:
-            log.error('No config file found at {} nor in the working directory.'.format(DEFAULT_CONFIG_FILE))
+            log.error('No config file found at {0} nor in the working directory.'.format(DEFAULT_CONFIG_FILE))
 
         self._read_config()
 
@@ -48,7 +48,7 @@ class Config(object):
         elif isinstance(sections, list):
             section_list.extend(sections)
         else:
-            log.error('Unknown section: {}'.format(str(sections)))
+            log.error('Unknown section: {0}'.format(str(sections)))
             return {}
 
         new_config = {}
@@ -83,12 +83,9 @@ class Config(object):
                                'version': self.get_version(),
                                'additional_checksd': os.path.join(os.path.dirname(self._configFile), '/checks_d/'),
                                'system_metrics': None,
-                               'ignore_filesystem_types': None,
-                               'device_blacklist_re': None,
                                'limit_memory_consumption': None,
                                'skip_ssl_validation': False,
                                'watchdog': True,
-                               'use_mount': False,
                                'autorestart': False,
                                'non_local_traffic': False},
                       'Api': {'is_enabled': False,
@@ -165,24 +162,6 @@ class Config(object):
                 metrics_list = []
             self._config['Main']['system_metrics'] = metrics_list
 
-        # Parse device blacklist regular expression
-        try:
-            filter_device_re = self._config['Main']['device_blacklist_re']
-            if filter_device_re:
-                self._config['Main']['device_blacklist_re'] = re.compile(filter_device_re)
-        except re.error as err:
-            log.error('Error processing regular expression {0}'.format(filter_device_re))
-
-        # Parse file system types
-        if self._config['Main']['ignore_filesystem_types']:
-            # parse comma separated file system types to ignore list
-            try:
-                file_system_list = [x.strip() for x in self._config['Main']['ignore_filesystem_types'].split(',')]
-            except ValueError:
-                log.info("Unable to process ignore_filesystem_types.")
-                file_system_list = []
-            self._config['Main']['ignore_filesystem_types'] = file_system_list
-
     def get_confd_path(self):
         path = os.path.join(os.path.dirname(self._configFile), 'conf.d')
         if os.path.exists(path):
@@ -217,8 +196,8 @@ def main():
     configuration = Config()
     config = configuration.get_config()
     api_config = configuration.get_config('Api')
-    print "Main Configuration: \n {}".format(config)
-    print "\nApi Configuration: \n {}".format(api_config)
+    print "Main Configuration: \n {0}".format(config)
+    print "\nApi Configuration: \n {0}".format(api_config)
 
 
 if __name__ == "__main__":
