@@ -107,7 +107,6 @@ class Config(object):
                               'backlog_send_rate': 5},
                       'Statsd': {'recent_point_threshold': None,
                                  'monasca_statsd_interval': 20,
-                                 'monasca_statsd_agregator_interval': 10,
                                  'monasca_statsd_forward_host': None,
                                  'monasca_statsd_forward_port': 8125,
                                  'monasca_statsd_port': 8125},

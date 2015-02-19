@@ -23,13 +23,12 @@ class MetricsAggregator(object):
     A metric aggregator class.
     """
 
-    def __init__(self, hostname, interval=1.0, recent_point_threshold=None):
+    def __init__(self, hostname, recent_point_threshold=None):
         self.events = []
         self.total_count = 0
         self.count = 0
         self.event_count = 0
         self.hostname = hostname
-        self.interval = float(interval)
 
         recent_point_threshold = recent_point_threshold or RECENT_POINT_THRESHOLD_DEFAULT
         self.recent_point_threshold = int(recent_point_threshold)
@@ -93,7 +92,7 @@ class MetricsAggregator(object):
         # when required
         metrics = []
         for context, metric in self.metrics.items():
-            metrics.extend(metric.flush(timestamp, self.interval))
+            metrics.extend(metric.flush(timestamp))
 
         # Log a warning regarding metrics with old timestamps being submitted
         if self.num_discarded_old_points > 0:
@@ -120,8 +119,7 @@ class MetricsAggregator(object):
 
     @staticmethod
     def formatter(metric, value, timestamp, dimensions, hostname,
-                  delegated_tenant=None, device_name=None, metric_type=None,
-                  interval=None):
+                  delegated_tenant=None, device_name=None, metric_type=None):
         """ Formats metrics, put them into a Measurement class
             (metric, timestamp, value, {"dimensions": {"name1": "value1", "name2": "value2"}, ...})
             dimensions should be a dictionary

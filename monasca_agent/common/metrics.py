@@ -36,7 +36,7 @@ class Metric(object):
         """ Add a point to the given metric. """
         raise NotImplementedError()
 
-    def flush(self, timestamp, interval):
+    def flush(self, timestamp):
         """ Flush all metrics up to the given timestamp. """
         raise NotImplementedError()
 
@@ -60,7 +60,7 @@ class Gauge(Metric):
         self.value = value
         self.timestamp = timestamp
 
-    def flush(self, timestamp, interval):
+    def flush(self, timestamp):
         if self.value is not None:
             res = [self.formatter(
                 metric=self.name,
@@ -70,8 +70,7 @@ class Gauge(Metric):
                 delegated_tenant=self.delegated_tenant,
                 hostname=self.hostname,
                 device_name=self.device_name,
-                metric_type=MetricTypes.GAUGE,
-                interval=interval,
+                metric_type=MetricTypes.GAUGE
             )]
             self.value = None
             return res
@@ -96,19 +95,17 @@ class Counter(Metric):
     def sample(self, value, sample_rate, timestamp=None):
         self.value += value * int(1 / sample_rate)
 
-    def flush(self, timestamp, interval):
+    def flush(self, timestamp):
         try:
-            value = self.value / interval
             return [self.formatter(
                 metric=self.name,
-                value=value,
+                value=self.value,
                 timestamp=timestamp,
                 dimensions=self.dimensions,
                 delegated_tenant=self.delegated_tenant,
                 hostname=self.hostname,
                 device_name=self.device_name,
-                metric_type=MetricTypes.RATE,
-                interval=interval,
+                metric_type=MetricTypes.RATE
             )]
         finally:
             self.value = 0
@@ -134,7 +131,7 @@ class Histogram(Metric):
         self.count += int(1 / sample_rate)
         self.samples.append(value)
 
-    def flush(self, ts, interval):
+    def flush(self, ts):
         if not self.count:
             return []
 
@@ -149,7 +146,7 @@ class Histogram(Metric):
             ('max', max_, MetricTypes.GAUGE),
             ('median', med, MetricTypes.GAUGE),
             ('avg', avg, MetricTypes.GAUGE),
-            ('count', self.count / interval, MetricTypes.RATE)
+            ('count', self.count, MetricTypes.RATE)
         ]
 
         metrics = [self.formatter(
@@ -160,8 +157,7 @@ class Histogram(Metric):
             metric='%s.%s' % (self.name, suffix),
             value=value,
             timestamp=ts,
-            metric_type=metric_type,
-            interval=interval,
+            metric_type=metric_type
         ) for suffix, value, metric_type in metric_aggrs
         ]
 
@@ -175,8 +171,7 @@ class Histogram(Metric):
                 metric=name,
                 value=val,
                 timestamp=ts,
-                metric_type=MetricTypes.GAUGE,
-                interval=interval,
+                metric_type=MetricTypes.GAUGE
             ))
 
         # Reset our state.
@@ -203,7 +198,7 @@ class Set(Metric):
     def sample(self, value, sample_rate, timestamp=None):
         self.values.add(value)
 
-    def flush(self, timestamp, interval):
+    def flush(self, timestamp):
         if not self.values:
             return []
         try:
@@ -215,8 +210,7 @@ class Set(Metric):
                 metric=self.name,
                 value=len(self.values),
                 timestamp=timestamp,
-                metric_type=MetricTypes.GAUGE,
-                interval=interval,
+                metric_type=MetricTypes.GAUGE
             )]
         finally:
             self.values = set()
@@ -242,8 +236,8 @@ class Rate(Metric):
         self.samples.append((int(timestamp), value))
 
     def _rate(self, sample1, sample2):
-        interval = sample2[0] - sample1[0]
-        if interval == 0:
+        rate_interval = sample2[0] - sample1[0]
+        if rate_interval == 0:
             log.warn('Metric %s has an interval of 0. Not flushing.' % self.name)
             raise Infinity()
 
@@ -252,9 +246,9 @@ class Rate(Metric):
             log.info('Metric %s has a rate < 0. Counter may have been Reset.' % self.name)
             raise UnknownValue()
 
-        return (delta / float(interval))
+        return (delta / float(rate_interval))
 
-    def flush(self, timestamp, interval):
+    def flush(self, timestamp):
         if len(self.samples) < 2:
             return []
         try:
@@ -265,11 +259,10 @@ class Rate(Metric):
             return []
 
         return [self.formatter(hostname=self.hostname,
-                               device_name=self.device_name,
-                               dimensions=self.dimensions,
-                               delegated_tenant=self.delegated_tenant,
-                               metric=self.name,
-                               value=val,
-                               timestamp=timestamp,
-                               metric_type=MetricTypes.GAUGE,
-                               interval=interval)]
+           device_name=self.device_name,
+           dimensions=self.dimensions,
+           delegated_tenant=self.delegated_tenant,
+           metric=self.name,
+           value=val,
+           timestamp=timestamp,
+           metric_type=MetricTypes.GAUGE)]

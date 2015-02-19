@@ -110,11 +110,7 @@ ignore_filesystem_types: tmpfs,devtmpfs
 monasca_statsd_port : 8125
 
 ## The monasca_statsd flush period.
-# monasca_statsd_interval : 10
-
-## If 'yes', counters and rates will be normalized to 1 second (that is divided
-## by the monasca_statsd_interval) before being sent to the server. Defaults to 'yes'
-# monasca_statsd_normalize : yes
+# monasca_statsd_interval : 20
 
 # If you want to forward every packet received by the monasca_statsd server
 # to another statsd server, uncomment these lines.

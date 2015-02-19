@@ -155,15 +155,15 @@ class Check(util.Dimensions):
         """Simple rate.
         """
         try:
-            interval = sample2[0] - sample1[0]
-            if interval == 0:
+            rate_interval = sample2[0] - sample1[0]
+            if rate_interval == 0:
                 raise exceptions.Infinity()
 
             delta = sample2[1] - sample1[1]
             if delta < 0:
                 raise exceptions.UnknownValue()
 
-            return (sample2[0], delta / interval, sample2[2], sample2[3])
+            return (sample2[0], delta / rate_interval, sample2[2], sample2[3])
         except exceptions.Infinity:
             raise
         except exceptions.UnknownValue:
