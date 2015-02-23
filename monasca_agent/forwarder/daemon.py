@@ -102,7 +102,7 @@ class Forwarder(tornado.web.Application):
                  use_simple_http_client=False):
         self._port = int(port)
         self._agent_config = agent_config
-        self.flush_interval = int(agent_config.get('check_freq'))/2
+        self.flush_interval = (int(agent_config.get('check_freq'))/2) * 1000
         self._metrics = {}
         transaction.MetricTransaction.set_application(self)
         transaction.MetricTransaction.set_endpoints(mon.MonAPI(agent_config))
