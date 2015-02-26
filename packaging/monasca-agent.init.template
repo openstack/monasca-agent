@@ -14,7 +14,7 @@ PATH=$PATH:/usr/local/bin # supervisord might live here
 PATH=$PATH:/sbin
 
 AGENTPATH="{prefix}/bin/monasca-collector"
-AGENTCONF="{config_dir}/agent.conf"
+AGENTCONF="{config_dir}/agent.yaml"
 MONASCASTATSDPATH="{prefix}/bin/monasca-statsd"
 AGENTUSER="monasca-agent"
 FORWARDERPATH="{prefix}/bin/monasca-forwarder"

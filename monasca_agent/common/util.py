@@ -494,7 +494,7 @@ def get_hostname():
 
     Tries, in order:
 
-      * agent config (agent.conf, "hostname:")
+      * agent config (agent.yaml, "hostname:")
       * 'hostname -f' (on unix)
       * socket.gethostname()
     """
@@ -536,9 +536,9 @@ def get_hostname():
 
     if hostname is None:
         log.critical(
-            'Unable to reliably determine host name. You can define one in agent.conf or in your hosts file')
+            'Unable to reliably determine host name. You can define one in agent.yaml or in your hosts file')
         raise Exception(
-            'Unable to reliably determine host name. You can define one in agent.conf or in your hosts file')
+            'Unable to reliably determine host name. You can define one in agent.yaml or in your hosts file')
     else:
         return hostname
 

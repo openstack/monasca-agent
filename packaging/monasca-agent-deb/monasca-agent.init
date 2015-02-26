@@ -15,7 +15,7 @@ PATH=$PATH:/sbin # add the location of start-stop-daemon on Debian
 export PYTHONPATH=$PYTHONPATH:/usr/monasca/agent/
 
 AGENTPATH="/usr/local/bin/monasca-collector"
-AGENTCONF="/etc/monasca/agent/agent.conf"
+AGENTCONF="/etc/monasca/agent/agent.yaml"
 MONASCASTATSDPATH="/usr/local/bin/monasca-statsd"
 AGENTUSER="monasca-agent"
 FORWARDERPATH="/usr/local/bin/monasca-forwarder"

@@ -3,7 +3,7 @@
 .idea
 .settings
 *.pyc
-agent.conf
+agent.yaml
 build
 dist
 artifacts

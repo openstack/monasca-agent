@@ -129,7 +129,7 @@ The Agent is composed of the following components:
 | Agent Checks | checks.d/*.py | Python-based user-configured checks.  These checks can be for other applications or services to verify functionality or gather statistics on things such as messages processed, etc.  Each additional agent check must be configured using a yaml file for a specific plugin that provides the additional functionality located in the conf.d directory. |
 
 
-The Agent includes the "monasca-setup" script, that can be used for automatically configuring the agent to generate metrics that are sent to the API.  It creates the agent.conf file locate in /etc/monasca/agent directory.  It also sets up additional checks based on what is running locally on that machine.  For instance, if this is a compute node, the agent will setup checks to monitor the Nova processes and setup a http_status check on the nova-api.  It can also detect other servers such as mySQL and Kafka and setup checks for them as well.
+The Agent includes the "monasca-setup" script, that can be used for automatically configuring the agent to generate metrics that are sent to the API.  It creates the agent.yaml file located in /etc/monasca/agent directory.  It also sets up additional checks based on what is running locally on that machine.  For instance, if this is a compute node, the agent will setup checks to monitor the Nova processes and setup a http_status check on the nova-api.  It can also detect other servers such as mySQL and Kafka and setup checks for them as well.
 
 A metric is identified by a name and dimensions.  The fields required in a metric are name, timestamp, and value.  A metric can also have 0..n dimensions.  Some standard dimensions are sent with all metrics that are sent by the agent.  Reference the section on [Dimensions](#dimensions) for more details.
 
@@ -160,7 +160,7 @@ sudo pip install monasca-agent
 The Agent requires configuration in order to run. There are two ways to configure the agent, either using the [monasca-setup](#monasca-setup) script or manually.
 
 ## monasca-setup (Recommended)
-The Monasca agent has a script, called "monasca-setup", that should be used to automatically configure the Agent to send metrics to a Monasca API. This script will create the agent.conf configuration file as well as any plugin configuration yaml files needed to monitor the processes on the local machine.  The mon-setup script will auto-detect certain applications and OpenStack processes that are running on the machine.  The agent configuration files are located in /etc/monasca/agent.  The plugin configuration files are located in located in /etc/monasca/agent/conf.d.
+The Monasca agent has a script, called "monasca-setup", that should be used to automatically configure the Agent to send metrics to a Monasca API. This script will create the agent.yaml configuration file as well as any plugin configuration yaml files needed to monitor the processes on the local machine.  The mon-setup script will auto-detect certain applications and OpenStack processes that are running on the machine.  The agent configuration files are located in /etc/monasca/agent.  The plugin configuration files are located in /etc/monasca/agent/conf.d.
 
 To run monasca-setup:
 
@@ -185,21 +185,21 @@ All parameters require a '--' before the parameter such as '--verbose'
 | headless | This is an optional parameter that specifies whether monasca-setup should run in a non-interactive mode | |
 | skip_enable | This is an optional parameter. By default the service is enabled, which requires the script run as root. Set this parameter to skip that step. | |
 | verbose | This is an optional parameter that specifies whether the monasca-setup script will print additional information for debugging purposes | |
-| overwrite | This is an optional parameter to overwrite the plugin configuration.  Use this if you don't want to keep the original configuration.  If this parameter is not specified, the configuration will be appended to the existing configuration, possibly creating duplicate checks.  **NOTE:** The agent config file, agent.conf, will always be overwritten, even if this parameter is not specified |  |
+| overwrite | This is an optional parameter to overwrite the plugin configuration.  Use this if you don't want to keep the original configuration.  If this parameter is not specified, the configuration will be appended to the existing configuration, possibly creating duplicate checks.  **NOTE:** The agent config file, agent.yaml, will always be overwritten, even if this parameter is not specified |  |
 | amplifier | For load testing purposes, this value will multiply the number of metrics submitted in each payload.  Set to 1 for one additional set of metrics, 2 for two additional sets, etc.  Additional sets of metrics are identified by the 'amplifier' dimension.  Set to 0 for typical production use. | 0 |
 
 ### Manual Configuration of the Agent
 
 This is not the recommended way to configure the agent but if you are having trouble running the monasca-setup program, you can manually configure the agent using the steps below:
 
-Start by creating an agent.conf file.  An example configuration file can be found in /usr/local/share/monasca/agent/.
+Start by creating an agent.yaml file.  An example configuration file can be found in /usr/local/share/monasca/agent/.
 
     sudo mkdir -p /etc/monasca/agent
-    sudo cp /usr/local/share/monasca/agent/agent.conf.template /etc/monasca/agent/agent.conf
+    sudo cp /usr/local/share/monasca/agent/agent.yaml.template /etc/monasca/agent/agent.yaml
 
 and then edit the file with your favorite text editor (vi, nano, emacs, etc.)
 
-    sudo nano /etc/monasca/agent/agent.conf
+    sudo nano /etc/monasca/agent/agent.yaml
 
 In particular, replace any values that have curly braces.
 Example:
@@ -211,7 +211,7 @@ Change
 
 	username: myuser
 
-You must replace all of the curly brace values and you can also optionally tweak any of the other configuration items as well like a port number in the case of a port conflict.  The config file options are documented in the agent.conf.template file.  You may also specify zero or more dimensions that would be included in every metric generated on that node, using the dimensions: value. Example: (include no extra dimensions on every metric)
+You must replace all of the curly brace values and you can also optionally tweak any of the other configuration items as well like a port number in the case of a port conflict.  The config file options are documented in the agent.yaml.template file.  You may also specify zero or more dimensions that would be included in every metric generated on that node, using the dimensions: value. Example: (include no extra dimensions on every metric)
 
     dimensions: (This means no dimensions)
 			OR
@@ -1107,7 +1107,7 @@ All metrics include `resource_id` and `zone` (availability zone) dimensions.  Be
 | tenant_id      | (N/A)                     | owner of VM             |
 
 ### Cross-Tenant Metric Submission
-If the owner of the VM is to receive his or her own metrics, the Agent needs to be able to submit metrics on their behalf.  This is called cross-tenant metric submission.  For this to work, a Keystone role called "monitoring-delegate" needs to be created, and the Agent's Keystone username and project (tenant) assigned to it.  This username is contained as `username` in `/etc/monasca/agent/agent.conf`, and passed to `monasca-setup` as the `-u` parameter.   The Agent's project name which is contained in `agent.conf` as the variable `project_name`, and passed to `monasca-setup` as the `--project-name` parameter.
+If the owner of the VM is to receive his or her own metrics, the Agent needs to be able to submit metrics on their behalf.  This is called cross-tenant metric submission.  For this to work, a Keystone role called "monitoring-delegate" needs to be created, and the Agent's Keystone username and project (tenant) assigned to it.  This username is contained as `username` in `/etc/monasca/agent/agent.yaml`, and passed to `monasca-setup` as the `-u` parameter.   The Agent's project name which is contained in `agent.yaml` as the variable `project_name`, and passed to `monasca-setup` as the `--project-name` parameter.
 
 In the below example, the Agent's Keystone username is "monasca-agent" and the Agent's Keystone project name is "mini-mon".
 

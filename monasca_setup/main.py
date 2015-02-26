@@ -28,7 +28,7 @@ log = logging.getLogger(__name__)
 PREFIX_DIR = os.path.dirname(os.path.dirname(os.path.realpath(sys.argv[0])))
 
 
-def write_template(template_path, out_path, variables, group):
+def write_template(template_path, out_path, variables, group, is_yaml=False):
     """ Write a file using a simple python string template.
         Assumes 640 for the permissions and root:group for ownership.
     :param template_path: Location of the Template to use
@@ -40,8 +40,15 @@ def write_template(template_path, out_path, variables, group):
         print("Error no template found at {0}".format(template_path))
         sys.exit(1)
     with open(template_path, 'r') as template:
+        contents = template.read().format(**variables)
         with open(out_path, 'w') as conf:
-            conf.write(template.read().format(**variables))
+            if is_yaml:
+                conf.write(yaml.safe_dump(yaml.safe_load(contents),
+                                          encoding='utf-8',
+                                          allow_unicode=True,
+                                          default_flow_style=False))
+            else:
+                conf.write(contents)
     os.chown(out_path, 0, group)
     os.chmod(out_path, 0640)
 
@@ -73,7 +80,7 @@ def main(argv=None):
     parser.add_argument('--headless', help="Run in a non-interactive mode", action="store_true")
     parser.add_argument('--overwrite',
                         help="Overwrite existing plugin configuration. " +
-                             "The default is to merge. Agent.conf is always overwritten.",
+                             "The default is to merge. agent.yaml is always overwritten.",
                         action="store_true")
     parser.add_argument('--skip_enable', help="By default the service is enabled, " +
                                               "which requires the script run as root. Set this to skip that step.",
@@ -129,18 +136,21 @@ def main(argv=None):
         agent_service.enable()
 
     gid = pwd.getpwnam(args.user).pw_gid
-    # Write the main agent.conf - Note this is always overwritten
+    # Write the main agent.yaml - Note this is always overwritten
     log.info('Configuring base Agent settings.')
+    dimensions = {}
     # Join service in with the dimensions
     if args.service:
-        if args.dimensions is None:
-            args.dimensions = 'service:' + args.service
-        else:
-            args.dimensions = ','.join([args.dimensions, 'service:' + args.service])
-    write_template(os.path.join(args.template_dir, 'agent.conf.template'),
-                   os.path.join(args.config_dir, 'agent.conf'),
+        dimensions.update({'service': args.service})
+    if args.dimensions:
+        dimensions.update(dict(item.strip().split(":") for item in args.dimensions.split(",")))
+
+    args.dimensions = {name: value for name, value in dimensions.iteritems()}
+    write_template(os.path.join(args.template_dir, 'agent.yaml.template'),
+                   os.path.join(args.config_dir, 'agent.yaml'),
                    {'args': args, 'hostname': socket.getfqdn() },
-                   gid)
+                   gid,
+                   is_yaml=True)
 
     # Write the supervisor.conf
     write_template(os.path.join(args.template_dir, 'supervisor.conf.template'),
@@ -174,9 +184,12 @@ def main(argv=None):
         with open(config_path, 'w') as config_file:
             os.chmod(config_path, 0o640)
             os.chown(config_path, 0, gid)
-            config_file.write(yaml.safe_dump(value, encoding='utf-8', allow_unicode=True))
+            config_file.write(yaml.safe_dump(value,
+                                             encoding='utf-8',
+                                             allow_unicode=True,
+                                             default_flow_style=False))
 
-    # Now that the config is build start the service
+    # Now that the config is built, start the service
     try:
         agent_service.start(restart=True)
     except subprocess.CalledProcessError:

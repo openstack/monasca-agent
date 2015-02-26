@@ -26,9 +26,9 @@ case "$1" in
         RETVAL=$?
         if [ $RETVAL -ne 0 ]; then
           if [ $RETVAL -eq 3 ]; then
-            # No agent.conf file is present. The user is probably following
+            # No agent.yaml file is present. The user is probably following
             # the step-by-step instructions and will add the config file next.
-            echo "No /etc/monasca/agent/agent.conf found, exiting"
+            echo "No /etc/monasca/agent/agent.yaml found, exiting"
             exit 0
           else
             exit $?

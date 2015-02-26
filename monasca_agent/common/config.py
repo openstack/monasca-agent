@@ -1,4 +1,3 @@
-import ConfigParser as parser
 import logging
 import os
 import pkg_resources
@@ -15,12 +14,11 @@ except ImportError:
 
 import monasca_agent.common.singleton as singleton
 
-DEFAULT_CONFIG_FILE = '/etc/monasca/agent/agent.conf'
+DEFAULT_CONFIG_FILE = '/etc/monasca/agent/agent.yaml'
 DEFAULT_LOG_DIR = '/var/log/monasca/agent'
 LOGGING_MAX_BYTES = 5 * 1024 * 1024
 
 log = logging.getLogger(__name__)
-
 
 class Config(object):
     # Make this a singleton class so we don't get the config every time
@@ -28,15 +26,59 @@ class Config(object):
     __metaclass__ = singleton.Singleton
 
     def __init__(self, configFile=None):
-        self._config = None
         if configFile is not None:
             self._configFile = configFile
         elif os.path.exists(DEFAULT_CONFIG_FILE):
             self._configFile = DEFAULT_CONFIG_FILE
-        elif os.path.exists(os.getcwd() + '/agent.conf'):
-            self._configFile = os.getcwd() + '/agent.conf'
+        elif os.path.exists(os.getcwd() + '/agent.yaml'):
+            self._configFile = os.getcwd() + '/agent.yaml'
         else:
-            log.error('No config file found at {0} nor in the working directory.'.format(DEFAULT_CONFIG_FILE))
+            error_msg = 'No config file found at {0} nor in the working directory.'.format(DEFAULT_CONFIG_FILE)
+            log.error(error_msg)
+            raise IOError(error_msg)
+
+        # Define default values for the possible config items
+        self._config = {'Main': {'check_freq': 15,
+                                 'forwarder_url': 'http://localhost:17123',
+                                 'hostname': None,
+                                 'dimensions': None,
+                                 'listen_port': None,
+                                 'version': self.get_version(),
+                                 'additional_checksd': os.path.join(os.path.dirname(self._configFile), '/checks_d/'),
+                                 'limit_memory_consumption': None,
+                                 'skip_ssl_validation': False,
+                                 'watchdog': True,
+                                 'autorestart': False,
+                                 'non_local_traffic': False},
+                        'Api': {'is_enabled': False,
+                                'url': '',
+                                'project_name': '',
+                                'project_id': '',
+                                'project_domain_name': '',
+                                'project_domain_id': '',
+                                'ca_file': '',
+                                'insecure': '',
+                                'username': '',
+                                'password': '',
+                                'use_keystone': True,
+                                'keystone_url': '',
+                                'max_buffer_size': 1000,
+                                'backlog_send_rate': 5},
+                        'Statsd': {'recent_point_threshold': None,
+                                   'monasca_statsd_interval': 20,
+                                   'monasca_statsd_forward_host': None,
+                                   'monasca_statsd_forward_port': 8125,
+                                   'monasca_statsd_port': 8125},
+                        'Logging': {'disable_file_logging': False,
+                                    'log_level': None,
+                                    'collector_log_file': DEFAULT_LOG_DIR + '/collector.log',
+                                    'forwarder_log_file': DEFAULT_LOG_DIR + '/forwarder.log',
+                                    'statsd_log_file': DEFAULT_LOG_DIR + '/statsd.log',
+                                    'jmxfetch_log_file': DEFAULT_LOG_DIR + '/jmxfetch.log',
+                                    'log_to_event_viewer': False,
+                                    'log_to_syslog': False,
+                                    'syslog_host': None,
+                                    'syslog_port': None}}
 
         self._read_config()
 
@@ -62,105 +104,14 @@ class Config(object):
 
     def _read_config(self):
         """Read in the config file."""
-
-        file_config = parser.SafeConfigParser()
-        log.debug("Loading config file from {0}".format(self._configFile))
-        file_config.readfp(self._skip_leading_wsp(open(self._configFile)))
-        self._config = self._retrieve_sections(file_config)
-
-        # Process and update any special case configuration
-        self._parse_config()
-
-    def _retrieve_sections(self, config):
-        """Get the section values from the config file."""
-
-        # Define default values for the possible config items
-        the_config = {'Main': {'check_freq': 15,
-                               'forwarder_url': 'http://localhost:17123',
-                               'hostname': None,
-                               'dimensions': None,
-                               'listen_port': None,
-                               'version': self.get_version(),
-                               'additional_checksd': os.path.join(os.path.dirname(self._configFile), '/checks_d/'),
-                               'system_metrics': None,
-                               'limit_memory_consumption': None,
-                               'skip_ssl_validation': False,
-                               'watchdog': True,
-                               'autorestart': False,
-                               'non_local_traffic': False},
-                      'Api': {'is_enabled': False,
-                              'url': '',
-                              'project_name': '',
-                              'project_id': '',
-                              'project_domain_name': '',
-                              'project_domain_id': '',
-                              'ca_file': '',
-                              'insecure': '',
-                              'username': '',
-                              'password': '',
-                              'use_keystone': True,
-                              'keystone_url': '',
-                              'max_buffer_size': 1000,
-                              'backlog_send_rate': 5},
-                      'Statsd': {'recent_point_threshold': None,
-                                 'monasca_statsd_interval': 20,
-                                 'monasca_statsd_forward_host': None,
-                                 'monasca_statsd_forward_port': 8125,
-                                 'monasca_statsd_port': 8125},
-                      'Logging': {'disable_file_logging': False,
-                                  'log_level': None,
-                                  'collector_log_file': DEFAULT_LOG_DIR + '/collector.log',
-                                  'forwarder_log_file': DEFAULT_LOG_DIR + '/forwarder.log',
-                                  'statsd_log_file': DEFAULT_LOG_DIR + '/statsd.log',
-                                  'jmxfetch_log_file': DEFAULT_LOG_DIR + '/jmxfetch.log',
-                                  'log_to_event_viewer': False,
-                                  'log_to_syslog': False,
-                                  'syslog_host': None,
-                                  'syslog_port': None}}
-
-        # Load values from configuration file into config file dictionary
-        for section in config.sections():
-            for option in config.options(section):
-                try:
-                    option_value = config.get(section, option)
-                    if option_value == -1:
-                        log.debug("Config option missing: {0}, using default value of {1}".format(option,
-                                                                                                  the_config[section][
-                                                                                                      option]))
-                    else:
-                        the_config[section][option] = option_value
-
-                except Exception:
-                    log.error("exception on %s!" % option)
-
-        return the_config
-
-    def _skip_leading_wsp(self, file):
-        """Works on a file, returns a file-like object"""
-        return cstringio.StringIO("\n".join(map(string.strip, file.readlines())))
-
-    def _parse_config(self):
-        # Parse_dimensions
-        if self._config['Main']['dimensions'] is not None:
-            # parse comma separated dimensions into a dimension list
-            dimensions = {}
-            try:
-                dim_list = [dim.split(':') for dim in self._config['Main']['dimensions'].split(',')]
-                dimensions.update(dict((key.strip(), value.strip()) for key, value in dim_list))
-            except ValueError:
-                log.info("Unable to process dimensions.")
-                dimensions = {}
-            self._config['Main']['dimensions'] = dimensions
-
-        # Parse system metrics
-        if self._config['Main']['system_metrics']:
-            # parse comma separated system metrics into a metrics list
-            try:
-                metrics_list = [x.strip() for x in self._config['Main']['system_metrics'].split(',')]
-            except ValueError:
-                log.info("Unable to process system_metrics.")
-                metrics_list = []
-            self._config['Main']['system_metrics'] = metrics_list
+        try:
+            with open(self._configFile, 'r') as f:
+                log.debug('Loading config file from {0}'.format(self._configFile))
+                config = yaml.load(f.read(), Loader=Loader)
+                [self._config[section].update(config[section]) for section in config.keys()]
+        except Exception as e:
+            log.exception('Error loading config file from {0}'.format(self._configFile))
+            raise e
 
     def get_confd_path(self):
         path = os.path.join(os.path.dirname(self._configFile), 'conf.d')
@@ -196,9 +147,14 @@ def main():
     configuration = Config()
     config = configuration.get_config()
     api_config = configuration.get_config('Api')
+    statsd_config = configuration.get_config('Statsd')
+    logging_config = configuration.get_config('Logging')
     print "Main Configuration: \n {0}".format(config)
     print "\nApi Configuration: \n {0}".format(api_config)
+    print "\nStatsd Configuration: \n {0}".format(statsd_config)
+    print "\nLogging Configuration: \n {0}".format(logging_config)
 
 
 if __name__ == "__main__":
+    logging.basicConfig()
     main()

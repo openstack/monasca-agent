@@ -37,7 +37,7 @@ source:
 	cp -r $(SRC)/monasca_agent $(ROOT)/
 	cp -r $(SRC)/conf.d $(ROOT)/
 	cp -r $(SRC)/LICENSE* $(ROOT)/
-	cp -r $(SRC)/agent.conf.template $(ROOT)/
+	cp -r $(SRC)/agent.yaml.template $(ROOT)/
 	find $(ROOT) -name "*.pyc" -exec rm {} \;
 
 
