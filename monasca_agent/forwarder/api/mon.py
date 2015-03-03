@@ -26,6 +26,7 @@ class MonAPI(object):
         self.api_version = '2_0'
         self.keystone = keystone.Keystone(config)
         self.mon_client = None
+        self._failure_reason = None
         self.max_buffer_size = int(config['max_buffer_size'])
         self.backlog_send_rate = int(config['backlog_send_rate'])
         self.message_queue = collections.deque(maxlen=self.max_buffer_size)
@@ -49,7 +50,7 @@ class MonAPI(object):
             self.mon_client = self.get_monclient()
             if not self.mon_client:
                 # Keystone is down, queue the message
-                self._queue_message(kwargs.copy())
+                self._queue_message(kwargs.copy(), "Keystone API is down or unreachable")
                 return
 
         if self._send_message(**kwargs):
@@ -62,14 +63,14 @@ class MonAPI(object):
                         if self._send_message(**msg):
                             messages_sent += 1
                         else:
-                            self._queue_message(msg)
+                            self._queue_message(msg, self._failure_reason)
                             break
                     else:
                         break
                 log.info("Sent {0} messages from the backlog.".format(messages_sent))
                 log.info("{0} messages remaining in the queue.".format(len(self.message_queue)))
         else:
-            self._queue_message(kwargs.copy())
+            self._queue_message(kwargs.copy(), self._failure_reason)
 
     def post_metrics(self, measurements):
         """post_metrics
@@ -127,24 +128,27 @@ class MonAPI(object):
             self.mon_client.metrics.create(**kwargs)
             return True
         except monascaclient.exc.HTTPException as he:
-            if 'unauthorized' in str(he):
+            if he.code == 401:
                 log.info("Invalid token detected. Getting a new token...")
+                self._failure_reason = 'Invalid token detected. Getting a new token from Keystone'
                 # Get a new keystone client and token
                 self.mon_client.replace_token(self.keystone.refresh_token())
             else:
                 log.debug("Error sending message to monasca-api. Error is {0}."
                           .format(str(he.message)))
+                self._failure_reason = 'Error sending message to the Monasca API: {0}'.format(str(he.message))
         except Exception as ex:
-            log.debug("Error sending message to monasca-api. Error is {0}."
+            log.debug("Error sending message to Monasca API. Error is {0}."
                       .format(str(ex.message)))
+            self._failure_reason = 'The Monasca API is DOWN or unreachable'
 
         return False
 
-    def _queue_message(self, msg):
+    def _queue_message(self, msg, reason):
         self.message_queue.append(msg)
         queue_size = len(self.message_queue)
         if queue_size is 1 or queue_size % MonAPI.LOG_INTERVAL == 0:
-            log.warn("Monasca API or Keystone API are down or unreachable.  Queuing the messages to send later...")
+            log.warn("{0}. Queuing the messages to send later...".format(reason))
             log.info("Current agent queue size: {0} of {1}.".format(len(self.message_queue),
                                                                     self.max_buffer_size))
             log.info("A message will be logged for every {0} messages queued.".format(MonAPI.LOG_INTERVAL))
