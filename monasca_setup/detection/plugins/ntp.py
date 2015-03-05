@@ -1,7 +1,6 @@
 import logging
 import os
-
-import yaml
+import re
 
 import monasca_setup.agent_config
 import monasca_setup.detection
@@ -24,9 +23,17 @@ class Ntp(monasca_setup.detection.Plugin):
         """
         config = monasca_setup.agent_config.Plugins()
         log.info("\tEnabling the ntp plugin")
-        with open(os.path.join(self.template_dir, 'conf.d/ntp.yaml.example'), 'r') as ntp_template:
-            ntp_config = yaml.load(ntp_template.read())
-        config['ntp'] = ntp_config
+        if os.path.exists('/etc/ntp.conf'):
+            server = re.compile('server (.*)')
+            with open('/etc/ntp.conf', 'r') as ntp_config:
+                match = server.search(ntp_config.read())
+            if match is None:
+                ntp_server = 'pool.ntp.org'
+            else:
+                ntp_server = match.group(1)
+        else:
+            ntp_server = 'pool.ntp.org'
+        config['ntp'] = {'init_config': None, 'instances': [{'host': ntp_server}]}
 
         return config
 
