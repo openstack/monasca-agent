@@ -11,11 +11,14 @@ init_config:
 # alive_test can be either "ssh" for an SSH banner test (port 22)
 #+ or "ping" for an ICMP ping test
 instances:
-#    - host_name:     host1.domain.net
+#    - name: ssh to host1
+#      host_name:     host1.domain.net
 #      alive_test:    ssh
 
-#    - host_name:     host2.domain.net
+#    - name: ping host2
+#      host_name:     host2.domain.net
 #      alive_test:    ping
 
-#    - host_name:     192.168.0.221
+#    - name: ssh to 192.168.0.221
+#      host_name:     192.168.0.221
 #      alive_test:    ssh

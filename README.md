@@ -544,13 +544,16 @@ The instances section contains the hostname/IP to check, and the type of check t
 ```
     # alive_test can be either "ssh" for an SSH banner test (port 22)
     # or "ping" for an ICMP ping test instances:
-  - host_name: somehost.somedomain.net
+  - name: ssh to somehost
+    host_name: somehost.somedomain.net
     alive_test: ssh
  
-  - host_name: gateway.somedomain.net
+  - name: ping gateway
+    host_name: gateway.somedomain.net
     alive_test: ping
  
-  - host_name: 192.168.0.221
+  - name: ssh to 192.168.0.221
+    host_name: 192.168.0.221
     alive_test: ssh
 ```        
 
