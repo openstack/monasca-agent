@@ -145,7 +145,7 @@ def main(argv=None):
     if args.dimensions:
         dimensions.update(dict(item.strip().split(":") for item in args.dimensions.split(",")))
 
-    args.dimensions = {name: value for name, value in dimensions.iteritems()}
+    args.dimensions = dict((name, value) for (name, value) in dimensions.iteritems())
     write_template(os.path.join(args.template_dir, 'agent.yaml.template'),
                    os.path.join(args.config_dir, 'agent.yaml'),
                    {'args': args, 'hostname': socket.getfqdn() },
