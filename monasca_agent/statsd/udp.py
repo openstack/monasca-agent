@@ -119,7 +119,7 @@ class Server(object):
 
         # Parse the optional values - sample rate & dimensions.
         sample_rate = 1
-        dimensions = None
+        dimensions = {}
         for m in metadata[2:]:
             # Parse the sample rate
             if m[0] == '@':
