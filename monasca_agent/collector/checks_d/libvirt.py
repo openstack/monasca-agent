@@ -184,7 +184,7 @@ class LibvirtCheck(AgentCheck):
 
             # Disk utilization
             for disk in insp.inspect_disks(inst.name):
-                sample_time = int(time.time())
+                sample_time = time.time()
                 disk_dimensions = {'device': disk[0].device}
                 for metric in disk[1]._fields:
                     metric_name = "io.{0}".format(metric)
@@ -216,7 +216,7 @@ class LibvirtCheck(AgentCheck):
 
             # Network utilization
             for vnic in insp.inspect_vnics(inst.name):
-                sample_time = int(time.time())
+                sample_time = time.time()
                 vnic_dimensions = {'device': vnic[0].name}
                 for metric in vnic[1]._fields:
                     metric_name = "net.{0}".format(metric)

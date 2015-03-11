@@ -98,6 +98,7 @@ class MonAPI(object):
         tenant_group = {}
         for measurement in measurements:
             m_dict = measurement.__dict__
+            m_dict['timestamp'] *= 1000
             delegated_tenant = m_dict.pop('delegated_tenant')
             if delegated_tenant not in tenant_group:
                 tenant_group[delegated_tenant] = []

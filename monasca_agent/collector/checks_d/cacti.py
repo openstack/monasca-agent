@@ -145,7 +145,7 @@ class Cacti(AgentCheck):
         for c in list(c_funcs):
             last_ts_key = '%s.%s' % (rrd_path, c)
             if last_ts_key not in self.last_ts:
-                self.last_ts[last_ts_key] = int(time.time())
+                self.last_ts[last_ts_key] = time.time()
                 continue
 
             start = self.last_ts[last_ts_key]
