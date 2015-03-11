@@ -126,12 +126,14 @@ class HTTPCheck(services_checks.ServicesCheck):
             if int(resp.status) >= 400:
                 if use_keystone and int(resp.status) == 401:
                     if retry:
+                        self.log.error("%s is DOWN, unable to get a valid token to connect with" % (addr))
                         return services_checks.Status.DOWN, "%s is DOWN, unable to get a valid token to connect with" % (
                             addr)
                     else:
-                        # Get a new token (done at top of the loop) and retry
-                        self.log.warning("Token expired, getting new token and retrying...")
+                        # Get a new token and retry
+                        self.log.info("Token expired, getting new token and retrying...")
                         retry = True
+                        key.refresh_token()
                         continue
                 else:
                     self.log.info("%s is DOWN, error code: %s" % (addr, str(resp.status)))
