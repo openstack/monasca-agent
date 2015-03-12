@@ -45,9 +45,9 @@ class MetricsAggregator(object):
         }
 
     def decrement(self, name, value=-1, dimensions=None, delegated_tenant=None,
-                  hostname=None, device_name=None):
+                  hostname=None, device_name=None, value_meta=None):
         self.submit_metric(name, value, 'c', dimensions, delegated_tenant,
-                           hostname, device_name)
+                           hostname, device_name, value_meta)
 
     def event(
             self,
@@ -92,7 +92,10 @@ class MetricsAggregator(object):
         # when required
         metrics = []
         for context, metric in self.metrics.items():
-            metrics.extend(metric.flush(timestamp))
+            try:
+                metrics.extend(metric.flush(timestamp))
+            except Exception as e:
+                log.exception('Error flushing {0} metrics.'.format(metric.name))
 
         # Log a warning regarding metrics with old timestamps being submitted
         if self.num_discarded_old_points > 0:
@@ -118,8 +121,8 @@ class MetricsAggregator(object):
         return events
 
     @staticmethod
-    def formatter(metric, value, timestamp, dimensions, hostname,
-                  delegated_tenant=None, device_name=None, metric_type=None):
+    def formatter(metric, value, timestamp, dimensions, hostname, delegated_tenant=None,
+                  device_name=None, metric_type=None, value_meta=None):
         """ Formats metrics, put them into a Measurement class
             (metric, timestamp, value, {"dimensions": {"name1": "value1", "name2": "value2"}, ...})
             dimensions should be a dictionary
@@ -133,22 +136,23 @@ class MetricsAggregator(object):
                                        int(timestamp),
                                        value,
                                        dimensions,
-                                       delegated_tenant)
+                                       delegated_tenant=delegated_tenant,
+                                       value_meta=value_meta)
 
     def gauge(self, name, value, dimensions=None, delegated_tenant=None,
-              hostname=None, device_name=None, timestamp=None):
+              hostname=None, device_name=None, timestamp=None, value_meta=None):
         self.submit_metric(name, value, 'g', dimensions, delegated_tenant,
-                           hostname, device_name, timestamp)
+                           hostname, device_name, value_meta, timestamp)
 
     def histogram(self, name, value, dimensions=None, delegated_tenant=None,
-                  hostname=None, device_name=None):
+                  hostname=None, device_name=None, value_meta=None):
         self.submit_metric(name, value, 'h', dimensions, delegated_tenant,
-                           hostname, device_name)
+                           hostname, device_name, value_meta)
 
     def increment(self, name, value=1, dimensions=None, delegated_tenant=None,
-                  hostname=None, device_name=None):
+                  hostname=None, device_name=None, value_meta=None):
         self.submit_metric(name, value, 'c', dimensions, delegated_tenant,
-                           hostname, device_name)
+                           hostname, device_name, value_meta)
 
     def packets_per_second(self, interval):
         if interval == 0:
@@ -156,21 +160,26 @@ class MetricsAggregator(object):
         return round(float(self.count) / interval, 2)
 
     def rate(self, name, value, dimensions=None, delegated_tenant=None,
-             hostname=None, device_name=None):
+             hostname=None, device_name=None, value_meta=None):
         self.submit_metric(name, value, 'r', dimensions, delegated_tenant,
-                           hostname, device_name)
+                           hostname, device_name, value_meta)
 
     def set(self, name, value, dimensions=None, delegated_tenant=None,
-            hostname=None, device_name=None):
+            hostname=None, device_name=None, value_meta=None):
         self.submit_metric(name, value, 's', dimensions, delegated_tenant,
-                           hostname, device_name)
+                           hostname, device_name, value_meta)
 
     def submit_metric(self, name, value, mtype, dimensions=None,
                       delegated_tenant=None, hostname=None, device_name=None,
-                      timestamp=None, sample_rate=1):
+                      value_meta=None, timestamp=None, sample_rate=1):
 
-        context = (name, tuple(dimensions.items()),
-                   delegated_tenant, hostname, device_name)
+        if value_meta:
+            meta = tuple(value_meta.items())
+        else:
+            meta = None
+
+        context = (name, tuple(dimensions.items()), meta, delegated_tenant,
+                   hostname, device_name)
 
         if context not in self.metrics:
             metric_class = self.metric_type_to_class[mtype]
@@ -179,7 +188,8 @@ class MetricsAggregator(object):
                                                  dimensions,
                                                  hostname or self.hostname,
                                                  device_name,
-                                                 delegated_tenant)
+                                                 delegated_tenant,
+                                                 value_meta)
         cur_time = time()
         if timestamp is not None:
             if cur_time - int(timestamp) > self.recent_point_threshold:

@@ -294,9 +294,9 @@ class AgentCheck(util.Dimensions):
         """
         return len(self.instances)
 
-    def gauge(self, metric, value, dimensions=None, delegated_tenant=None,
-              hostname=None, device_name=None, timestamp=None):
-        """Record the value of a gauge, with optional dimensions, hostname and device name.
+    def gauge(self, metric, value, dimensions=None, delegated_tenant=None, hostname=None,
+              device_name=None, timestamp=None, value_meta=None):
+        """Record the value of a gauge, with optional dimensions, hostname, value metadata and device name.
 
         :param metric: The name of the metric
         :param value: The value of the gauge
@@ -305,6 +305,7 @@ class AgentCheck(util.Dimensions):
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
         :param timestamp: (optional) The timestamp for this metric value
+        :param value_meta: Additional metadata about this value
         """
         self.aggregator.gauge(metric,
                               value,
@@ -312,9 +313,11 @@ class AgentCheck(util.Dimensions):
                               delegated_tenant,
                               hostname,
                               device_name,
-                              timestamp)
+                              timestamp,
+                              value_meta)
 
-    def increment(self, metric, value=1, dimensions=None, delegated_tenant=None, hostname=None, device_name=None):
+    def increment(self, metric, value=1, dimensions=None, delegated_tenant=None,
+                  hostname=None, device_name=None, value_meta=None):
         """Increment a counter with optional dimensions, hostname and device name.
 
         :param metric: The name of the metric
@@ -323,15 +326,18 @@ class AgentCheck(util.Dimensions):
         :param delegated_tenant: (optional) Submit metrics on behalf of this tenant ID.
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
+        :param value_meta: Additional metadata about this value
         """
         self.aggregator.increment(metric,
                                   value,
                                   dimensions,
                                   delegated_tenant,
                                   hostname,
-                                  device_name)
+                                  device_name,
+                                  value_meta)
 
-    def decrement(self, metric, value=-1, dimensions=None, delegated_tenant=None, hostname=None, device_name=None):
+    def decrement(self, metric, value=-1, dimensions=None, delegated_tenant=None,
+                  hostname=None, device_name=None, value_meta=None):
         """Decrement a counter with optional dimensions, hostname and device name.
 
         :param metric: The name of the metric
@@ -340,15 +346,18 @@ class AgentCheck(util.Dimensions):
         :param delegated_tenant: (optional) Submit metrics on behalf of this tenant ID.
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
+        :param value_meta: Additional metadata about this value
         """
         self.aggregator.decrement(metric,
                                   value,
                                   dimensions,
                                   delegated_tenant,
                                   hostname,
-                                  device_name)
+                                  device_name,
+                                  value_meta)
 
-    def rate(self, metric, value, dimensions=None, delegated_tenant=None, hostname=None, device_name=None):
+    def rate(self, metric, value, dimensions=None, delegated_tenant=None,
+             hostname=None, device_name=None, value_meta=None):
         """Submit a point for a metric that will be calculated as a rate on flush.
 
         Values will persist across each call to `check` if there is not enough
@@ -360,15 +369,18 @@ class AgentCheck(util.Dimensions):
         :param delegated_tenant: (optional) Submit metrics on behalf of this tenant ID.
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
+        :param value_meta: Additional metadata about this value
         """
         self.aggregator.rate(metric,
                              value,
                              dimensions,
                              delegated_tenant,
                              hostname,
-                             device_name)
+                             device_name,
+                             value_meta)
 
-    def histogram(self, metric, value, dimensions=None, delegated_tenant=None, hostname=None, device_name=None):
+    def histogram(self, metric, value, dimensions=None, delegated_tenant=None,
+                  hostname=None, device_name=None, value_meta=None):
         """Sample a histogram value, with optional dimensions, hostname and device name.
 
         :param metric: The name of the metric
@@ -377,15 +389,18 @@ class AgentCheck(util.Dimensions):
         :param delegated_tenant: (optional) Submit metrics on behalf of this tenant ID.
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
+        :param value_meta: Additional metadata about this value
         """
         self.aggregator.histogram(metric,
                                   value,
                                   dimensions,
                                   delegated_tenant,
                                   hostname,
-                                  device_name)
+                                  device_name,
+                                  value_meta)
 
-    def set(self, metric, value, dimensions=None, delegated_tenant=None, hostname=None, device_name=None):
+    def set(self, metric, value, dimensions=None, delegated_tenant=None,
+            hostname=None, device_name=None, value_meta=None):
         """Sample a set value, with optional dimensions, hostname and device name.
 
         :param metric: The name of the metric
@@ -394,13 +409,15 @@ class AgentCheck(util.Dimensions):
         :param delegated_tenant: (optional) Submit metrics on behalf of this tenant ID.
         :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
         :param device_name: (optional) The device name for this metric
+        :param value_meta: Additional metadata about this value
         """
         self.aggregator.set(metric,
                             value,
                             dimensions,
                             delegated_tenant,
                             hostname,
-                            device_name)
+                            device_name,
+                            value_meta)
 
     def event(self, event):
         """Save an event.
@@ -446,7 +463,7 @@ class AgentCheck(util.Dimensions):
                 print(" Name:       {0}".format(metric.name))
                 print(" Value:      {0}".format(metric.value))
                 if (metric.delegated_tenant):
-                    print(" Delegtd ID: {0}".format(metric.delegated_tenant))
+                    print(" Delegate ID: {0}".format(metric.delegated_tenant))
 
                 print(" Dimensions: ", end='')
                 line = 0
@@ -455,7 +472,19 @@ class AgentCheck(util.Dimensions):
                         print(" " * 13, end='')
                     print("{0}={1}".format(name, metric.dimensions[name]))
                     line += 1
+
+                print(" Value Meta: ", end='')
+                if metric.value_meta:
+                    line = 0
+                    for name in metric.value_meta:
+                        if line != 0:
+                            print(" " * 13, end='')
+                        print("{0}={1}".format(name, metric.value_meta[name]))
+                        line += 1
+                else:
+                    print('None')
                 print("-" * 24)
+
         return metrics
 
     def get_events(self):

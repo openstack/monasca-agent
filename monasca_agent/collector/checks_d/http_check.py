@@ -76,59 +76,47 @@ class HTTPCheck(services_checks.ServicesCheck):
                     h.add_credentials(username, password)
                 resp, content = h.request(addr, "GET", headers=headers)
 
-            except socket.timeout as e:
+            except (socket.timeout, HttpLib2Error, socket.error) as e:
                 length = int((time.time() - start) * 1000)
-                self.log.info(
-                    "%s is DOWN, error: %s. Connection failed after %s ms" % (addr, str(e), length))
-                self.gauge('http_status', 1, dimensions=dimensions)
-                return services_checks.Status.DOWN, "%s is DOWN, error: %s. Connection failed after %s ms" % (
-                    addr, str(e), length)
-
-            except HttpLib2Error as e:
-                length = int((time.time() - start) * 1000)
-                self.log.info(
-                    "%s is DOWN, error: %s. Connection failed after %s ms" % (addr, str(e), length))
-                self.gauge('http_status', 1, dimensions=dimensions)
-                return services_checks.Status.DOWN, "%s is DOWN, error: %s. Connection failed after %s ms" % (
-                    addr, str(e), length)
-
-            except socket.error as e:
-                length = int((time.time() - start) * 1000)
-                self.log.info("%s is DOWN, error: %s. Connection failed after %s ms" % (
-                    addr, repr(e), length))
-                self.gauge('http_status', 1, dimensions=dimensions)
-                return services_checks.Status.DOWN, "%s is DOWN, error: %s. Connection failed after %s ms" % (
-                    addr, str(e), length)
+                error_string = '{0} is DOWN, error: {1}. Connection failed after {2} ms'.format(addr, str(e), length)
+                self.log.info(error_string)
+                self.gauge('http_status',
+                           1,
+                           dimensions=dimensions,
+                           value_meta={'error': error_string})
+                return services_checks.Status.DOWN, error_string
 
             except httplib.ResponseNotReady as e:
                 length = int((time.time() - start) * 1000)
-                self.log.info("%s is DOWN, error: %s. Network is not routable after %s ms" % (
-                    addr, repr(e), length))
-                self.gauge('http_status', 1, dimensions=dimensions)
-                return services_checks.Status.DOWN, "%s is DOWN, error: %s. Network is not routable after %s ms" % (
-                    addr, str(e), length)
+                error_string = '{0} is DOWN, error: {1}. Network is not routable after {2} ms'.format(addr, repr(e), length)
+                self.log.info(error_string)
+                self.gauge('http_status',
+                           1,
+                           dimensions=dimensions,
+                           value_meta={'error': error_string})
+                return services_checks.Status.DOWN, error_string
 
             except Exception as e:
                 length = int((time.time() - start) * 1000)
-                self.log.error(
-                    "Unhandled exception %s. Connection failed after %s ms" % (str(e), length))
-                self.gauge('http_status', 1, dimensions=dimensions)
-                return services_checks.Status.DOWN, "%s is DOWN, error: %s. Connection failed after %s ms" % (
-                    addr, str(e), length)
+                error_string = '{0} is DOWN, error: {1}. Connection failed after {2} ms'.format(addr, str(e), length)
+                self.log.error('Unhandled exception {0}. Connection failed after {1} ms'.format(str(e), length))
+                self.gauge('http_status',
+                           1,
+                           dimensions=dimensions,
+                           value_meta={'error': error_string})
+                return services_checks.Status.DOWN, error_string
 
             if response_time:
                 # Stop the timer as early as possible
                 running_time = time.time() - start
                 self.gauge('http_response_time', running_time, dimensions=dimensions)
 
-            # TODO(dschroeder): Save/send content data when supported by API
-
             if int(resp.status) >= 400:
                 if use_keystone and int(resp.status) == 401:
                     if retry:
-                        self.log.error("%s is DOWN, unable to get a valid token to connect with" % (addr))
-                        return services_checks.Status.DOWN, "%s is DOWN, unable to get a valid token to connect with" % (
-                            addr)
+                        error_string = '{0} is DOWN, unable to get a valid token to connect with'.format(addr)
+                        self.log.error(error_string)
+                        return services_checks.Status.DOWN, error_string
                     else:
                         # Get a new token and retry
                         self.log.info("Token expired, getting new token and retrying...")
@@ -136,20 +124,28 @@ class HTTPCheck(services_checks.ServicesCheck):
                         key.refresh_token()
                         continue
                 else:
-                    self.log.info("%s is DOWN, error code: %s" % (addr, str(resp.status)))
-                    self.gauge('http_status', 1, dimensions=dimensions)
-                    return services_checks.Status.DOWN, "%s is DOWN, error code: %s" % (addr, str(resp.status))
+                    error_string = '{0} is DOWN, error code: {1}'.format(addr, str(resp.status))
+                    self.log.info(error_string)
+                    self.gauge('http_status',
+                               1,
+                               dimensions=dimensions,
+                               value_meta={'error': error_string})
+                    return services_checks.Status.DOWN, error_string
 
             if pattern is not None:
                 if re.search(pattern, content, re.DOTALL):
                     self.log.debug("Pattern match successful")
                 else:
-                    self.log.info("Pattern match failed! '%s' not in '%s'" % (pattern, content))
-                    self.gauge('http_status', 1, dimensions=dimensions)
-                    return services_checks.Status.DOWN, "Pattern match failed! '%s' not in '%s'" % (
-                        pattern, content)
+                    error_string = 'Pattern match failed! "{0}" not in "{1}"'.format(pattern, content)
+                    self.log.info(error_string)
+                    self.gauge('http_status',
+                               1,
+                               dimensions=dimensions,
+                               value_meta={'error': error_string})
+                    return services_checks.Status.DOWN, error_string
 
-            self.log.debug("%s is UP" % addr)
+            success_string = '{0} is UP'.format(addr)
+            self.log.debug(success_string)
             self.gauge('http_status', 0, dimensions=dimensions)
             done = True
-            return services_checks.Status.UP, "%s is UP" % addr
+            return services_checks.Status.UP, success_string

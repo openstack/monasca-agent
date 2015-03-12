@@ -562,7 +562,7 @@ The host alive checks return the following metric:
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
-| host_alive_status  | hostname, service, component, observer_host, target_host | Provides the status of the target host based on an ssh or ping check
+| host_alive_status  | hostname, service, component, observer_host, target_host, test_type | Provides the status of the target host based on an ssh or ping check
 
 ## Process Checks
 Process checks can be performed to verify that a set of named processes are running on the local system. The YAML file `process.yaml` contains the list of processes that are checked. The processes can be identified using a pattern match or exact match on the process name. A Python script `process.py` runs each execution cycle to check that required processes are alive. If the process is running a value of 0 is sent, otherwise a value of 1 is sent to the Monasca API.

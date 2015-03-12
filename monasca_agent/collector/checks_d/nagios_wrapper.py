@@ -82,6 +82,7 @@ class WrapNagios(ServicesCheck):
 
         metric_name = instance.get('metric_name', instance['name'])
 
+        detail = None
         try:
             proc = subprocess.Popen(instance['check_command'].split(" "),
                                     env={"PATH": extra_path},
@@ -90,16 +91,22 @@ class WrapNagios(ServicesCheck):
             output = proc.communicate()
             # The check detail is all the text before the pipe
             detail = output[0].split('|')[0]
-            # TODO(dschroeder): Save/send 'detail' when supported by the API
         except OSError:
             # Return an UNKNOWN code (3) if I have landed here
-            self.gauge(metric_name, 3, dimensions=dimensions)
-            self.log.info(instance['check_command'].split(" ")[0] + " is missing or unreadable")
+            error_string = instance['check_command'].split(" ")[0] + " is missing or unreadable"
+            self.gauge(metric_name,
+                       3,
+                       dimensions=dimensions,
+                       value_meta={'error': error_string})
+            self.log.info(error_string)
             return
 
         status_code = proc.poll()
         last_run_data[instance['name']] = time.time()
-        self.gauge(metric_name, status_code, dimensions=dimensions)
+        self.gauge(metric_name,
+                   status_code,
+                   dimensions=dimensions,
+                   value_meta={'detail': detail})
         # Return DOWN on critical, UP otherwise
         if status_code == "2":
             return Status.DOWN, "DOWN: {0}".format(detail)

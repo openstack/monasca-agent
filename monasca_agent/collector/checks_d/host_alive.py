@@ -30,28 +30,33 @@ class HostAlive(services_checks.ServicesCheck):
             if timeout is not None:
                 sock.settimeout(timeout)
         except socket.error as msg:
-            self.log.error("Error creating socket: " + str(msg[0]) + msg[1])
-            return False
+            error_message = 'Error creating socket: {0}'.format(str(msg[0]) + msg[1])
+            self.log.warn(error_message)
+            return False, error_message
 
         try:
             host_ip = socket.gethostbyname(host)
         except socket.gaierror:
-            self.log.error("Unable to resolve host", host)
-            return False
+            error_message = 'Unable to resolve host {0}'.format(host)
+            self.log.warn(error_message)
+            return False, error_message
 
         try:
             sock.connect((host_ip, port))
             banner = sock.recv(1024)
             sock.close()
         except socket.error:
-            return False
+            error_message = 'Unable to open socket to host {0}'.format(host)
+            self.log.warn(error_message)
+            return False, error_message
         if banner.startswith('SSH'):
-            return True
+            return True, None
         else:
-            return False
+            error_message = 'Unexpected response "{0}" from host {1}'.format(banner, host)
+            self.log.warn(error_message)
+            return False, error_message
 
-    @staticmethod
-    def _test_ping(host, timeout=None):
+    def _test_ping(self, host, timeout=None):
         """Attempt to ping the host.
 
         """
@@ -69,13 +74,17 @@ class HostAlive(services_checks.ServicesCheck):
         try:
             ping = subprocess.check_output(ping_command.split(" "), stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError:
-            return False
+            error_message = 'ping command "{0}" failed to execute on operating system'.format(ping_command)
+            self.log.warn(error_message)
+            return False, error_message
 
         # Look at the output for a packet loss percentage
-        if ping.find('100%') > 0:
-            return False
+        if (ping.find('100%') > 0) or (ping.find('100.0%') > 0):
+            error_message = 'ping command "{0}" failed. {1} is not available.'.format(ping_command, host)
+            self.log.warn(error_message)
+            return False, error_message
         else:
-            return True
+            return True, None
 
     def _create_status_event(self, status, msg, instance):
         """Does nothing: status events are not yet supported by Mon API.
@@ -97,20 +106,28 @@ class HostAlive(services_checks.ServicesCheck):
 
         success = False
 
-        if instance['alive_test'] == 'ssh':
-            success = self._test_ssh(instance['host_name'],
-                                     self.init_config.get('ssh_port'),
-                                     self.init_config.get('ssh_timeout'))
-        elif instance['alive_test'] == 'ping':
-            success = self._test_ping(instance['host_name'],
-                                      self.init_config.get('ping_timeout'))
+        test_type = instance['alive_test']
+        if test_type == 'ssh':
+            success, error_message = self._test_ssh(instance['host_name'],
+                                                    self.init_config.get('ssh_port'),
+                                                    self.init_config.get('ssh_timeout'))
+        elif test_type == 'ping':
+            success, error_message = self._test_ping(instance['host_name'],
+                                                     self.init_config.get('ping_timeout'))
         else:
-            self.log.info("Unrecognized alive_test " + instance['alive_test'])
+            error_message = 'Unrecognized alive_test: {0}'.format(test_type)
 
+        dimensions.update({'test_type': test_type})
         if success is True:
-            self.gauge('host_alive_status', 0, dimensions=dimensions)
+            self.gauge('host_alive_status',
+                       0,
+                       dimensions=dimensions)
             return services_checks.Status.UP, "UP"
         else:
-            self.gauge('host_alive_status', 1, dimensions=dimensions)
-            self.log.error("Host down: " + instance['host_name'])
+            self.gauge('host_alive_status',
+                       1,
+                       dimensions=dimensions,
+                       value_meta={'error': error_message})
+            self.log.error('Host alive check for {0} failed.  Error was {1}'.format(instance['host_name'],
+                                                                                    error_message))
             return services_checks.Status.DOWN, "DOWN"
