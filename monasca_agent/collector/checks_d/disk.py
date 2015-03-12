@@ -30,7 +30,9 @@ class Disk(checks.AgentCheck):
             device_blacklist_re = None
             send_io_stats = True
 
-        partitions = psutil.disk_partitions()
+        partitions = psutil.disk_partitions(all=True)
+        if send_io_stats:
+            disk_stats = psutil.disk_io_counters(perdisk=True)
         disk_count = 0
         for partition in partitions:
             if partition.fstype not in fs_types_to_ignore \
@@ -56,16 +58,18 @@ class Disk(checks.AgentCheck):
                     log.debug('Collected {0} disk usage metrics for partition {1}'.format(disk_count, partition.mountpoint))
                     disk_count = 0
                     if send_io_stats:
-                        disk_stats = psutil.disk_io_counters(perdisk=True)
-                        stats = disk_stats[device_name]
-                        self.rate("io.read_req_sec", float(stats.read_count), device_name=device_name, dimensions=dimensions)
-                        self.rate("io.write_req_sec", float(stats.write_count), device_name=device_name, dimensions=dimensions)
-                        self.rate("io.read_kbytes_sec", float(stats.read_bytes / 1024), device_name=device_name, dimensions=dimensions)
-                        self.rate("io.write_kbytes_sec", float(stats.write_bytes / 1024), device_name=device_name, dimensions=dimensions)
-                        self.rate("io.read_time_sec", float(stats.read_time / 1000), device_name=device_name, dimensions=dimensions)
-                        self.rate("io.write_time_sec", float(stats.write_time / 1000), device_name=device_name, dimensions=dimensions)
+                        try:
+                            stats = disk_stats[device_name]
+                            self.rate("io.read_req_sec", round(float(stats.read_count), 2), device_name=device_name, dimensions=dimensions)
+                            self.rate("io.write_req_sec", round(float(stats.write_count), 2), device_name=device_name, dimensions=dimensions)
+                            self.rate("io.read_kbytes_sec", round(float(stats.read_bytes / 1024), 2), device_name=device_name, dimensions=dimensions)
+                            self.rate("io.write_kbytes_sec", round(float(stats.write_bytes / 1024), 2), device_name=device_name, dimensions=dimensions)
+                            self.rate("io.read_time_sec", round(float(stats.read_time / 1000), 2), device_name=device_name, dimensions=dimensions)
+                            self.rate("io.write_time_sec", round(float(stats.write_time / 1000), 2), device_name=device_name, dimensions=dimensions)
 
-                        log.debug('Collected 6 disk I/O metrics for partition {0}'.format(partition.mountpoint))
+                            log.debug('Collected 6 disk I/O metrics for partition {0}'.format(partition.mountpoint))
+                        except KeyError:
+                            log.debug('No Disk I/O metrics available for {0}...Skipping'.format(device_name))
 
     def _get_re_exclusions(self, instance):
         """Parse device blacklist regular expression"""

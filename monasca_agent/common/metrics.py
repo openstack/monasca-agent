@@ -15,7 +15,7 @@ class Measurement(object):
         self.name = name
         self.timestamp = timestamp
         self.value = value
-        self.dimensions = dimensions
+        self.dimensions = dimensions.copy()
         self.delegated_tenant = delegated_tenant
 
 
@@ -50,7 +50,7 @@ class Gauge(Metric):
         self.formatter = formatter
         self.name = name
         self.value = None
-        self.dimensions = dimensions
+        self.dimensions = dimensions.copy()
         self.delegated_tenant = delegated_tenant
         self.hostname = hostname
         self.device_name = device_name
@@ -87,7 +87,7 @@ class Counter(Metric):
         self.formatter = formatter
         self.name = name
         self.value = 0
-        self.dimensions = dimensions
+        self.dimensions = dimensions.copy()
         self.delegated_tenant = delegated_tenant
         self.hostname = hostname
         self.device_name = device_name
@@ -122,7 +122,7 @@ class Histogram(Metric):
         self.count = 0
         self.samples = []
         self.percentiles = [0.95]
-        self.dimensions = dimensions
+        self.dimensions = dimensions.copy()
         self.delegated_tenant = delegated_tenant
         self.hostname = hostname
         self.device_name = device_name
@@ -189,7 +189,7 @@ class Set(Metric):
                  hostname, device_name, delegated_tenant=None):
         self.formatter = formatter
         self.name = name
-        self.dimensions = dimensions
+        self.dimensions = dimensions.copy()
         self.delegated_tenant = delegated_tenant
         self.hostname = hostname
         self.device_name = device_name
@@ -224,7 +224,7 @@ class Rate(Metric):
                  hostname, device_name, delegated_tenant=None):
         self.formatter = formatter
         self.name = name
-        self.dimensions = dimensions
+        self.dimensions = dimensions.copy()
         self.delegated_tenant = delegated_tenant
         self.hostname = hostname
         self.device_name = device_name
