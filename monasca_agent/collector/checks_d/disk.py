@@ -17,29 +17,36 @@ class Disk(checks.AgentCheck):
 
         """
         dimensions = self._set_dimensions(None, instance)
+        rollup_dimensions = dimensions.copy()
 
         if instance is not None:
             use_mount = instance.get("use_mount", True)
             send_io_stats = instance.get("send_io_stats", True)
+            send_rollup_stats =  instance.get("send_rollup_stats", False)
             # If we filter devices, get the list.
             device_blacklist_re = self._get_re_exclusions(instance)
             fs_types_to_ignore = self._get_fs_exclusions(instance)
         else:
             use_mount = True
-            fs_types_to_ignore = []
-            device_blacklist_re = None
             send_io_stats = True
+            send_rollup_stats =  False
+            device_blacklist_re = None
+            fs_types_to_ignore = []
 
         partitions = psutil.disk_partitions(all=True)
         if send_io_stats:
             disk_stats = psutil.disk_io_counters(perdisk=True)
         disk_count = 0
+        total_capacity = 0
+        total_used = 0
         for partition in partitions:
             if partition.fstype not in fs_types_to_ignore \
                 or (device_blacklist_re \
                 and not device_blacklist_re.match(partition.device)):
                     device_name = self._get_device_name(partition.device)
                     disk_usage = psutil.disk_usage(partition.mountpoint)
+                    total_capacity += disk_usage.total
+                    total_used += disk_usage.used
                     st = os.statvfs(partition.mountpoint)
                     if use_mount:
                         dimensions.update({'mount_point': partition.mountpoint})
@@ -70,6 +77,16 @@ class Disk(checks.AgentCheck):
                             log.debug('Collected 6 disk I/O metrics for partition {0}'.format(partition.mountpoint))
                         except KeyError:
                             log.debug('No Disk I/O metrics available for {0}...Skipping'.format(device_name))
+
+        if send_rollup_stats:
+            self.gauge("disk.total_space_mb",
+                        total_capacity/1048576,
+                        dimensions=rollup_dimensions)
+            self.gauge("disk.total_used_space_mb",
+                        total_used/1048576,
+                        dimensions=rollup_dimensions)
+            log.debug('Collected 2 rolled-up disk usage metrics')
+
 
     def _get_re_exclusions(self, instance):
         """Parse device blacklist regular expression"""
