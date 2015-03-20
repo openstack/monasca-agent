@@ -16,4 +16,4 @@ instances:
       # device_blacklist_re: .*\/dev\/mapper\/lxc-box.*
 
       # For disk metrics it is also possible to ignore entire filesystem types
-      ignore_filesystem_types: tmpfs,devtmpfs
+      ignore_filesystem_types: cgroup,configfs,debugfs,devpts,devtmpfs,fusectl,hugetlbfs,proc,pstore,rpc_pipefs,securityfs,sysfs,tmpfs,udevfs
