@@ -87,6 +87,9 @@ def main(argv=None):
                         action="store_true")
     parser.add_argument('--user', help="User name to run monasca-agent as", default='monasca-agent')
     parser.add_argument('-s', '--service', help="Service this node is associated with, added as a dimension.")
+    parser.add_argument('--system_only',
+                        help="If set only system metrics (cpu, disk, load, memory, network) will be configured.",
+                        action="store_true", default=False)
     parser.add_argument('--amplifier', help="Integer for the number of additional measurements to create. " +
                                             "Additional measurements contain the 'amplifier' dimension. " +
                                             "Useful for load testing; not for production use.", default=0, required=False)
@@ -160,7 +163,12 @@ def main(argv=None):
 
     # Run through detection and config building for the plugins
     plugin_config = agent_config.Plugins()
-    for detect_class in DETECTION_PLUGINS:
+    if args.system_only:
+        from detection.plugins.system import System
+        plugins = [System]
+    else:
+        plugins = DETECTION_PLUGINS
+    for detect_class in plugins:
         detect = detect_class(args.template_dir, args.overwrite)
         if detect.available:
             log.info('Configuring {0}'.format(detect.name))

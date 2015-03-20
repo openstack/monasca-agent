@@ -68,8 +68,8 @@ class RabbitMQ(monasca_setup.detection.Plugin):
                             if "nodes=" in row:
                                 rabbit_nodes =row.split("=")[1].strip()
             except IOError:
-                log.warn("\tI/O error reading {:s}".format(rabbit_conf))
-                log.warn("\tWill try to setup RabbitMQ plugin using default credentials guest:guest")
+                log.warn("\tI/O error reading {:s} only basic process watching enabled".format(rabbit_conf))
+                return config
 
             url = rabbitmq_api_url + '/aliveness-test/%2F'
             password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
@@ -86,7 +86,7 @@ class RabbitMQ(monasca_setup.detection.Plugin):
                 response = request.read()
                 request.close()
                 if '{"status":"ok"}' in response:
-                    config['rabbitmq'] = {'init_config': None,'instances':
+                    config['rabbitmq'] = {'init_config': None, 'instances':
                                           [{'rabbitmq_api_url': rabbitmq_api_url,
                                             'rabbitmq_user': rabbit_user,
                                             'rabbitmq_pass': rabbit_pass,
