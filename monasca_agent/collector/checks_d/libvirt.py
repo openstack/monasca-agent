@@ -22,6 +22,7 @@ import yaml
 
 from calendar import timegm
 from datetime import datetime
+from distutils.version import LooseVersion
 from monasca_agent.collector.virt import inspector
 from monasca_agent.collector.checks import AgentCheck
 
@@ -52,7 +53,12 @@ class LibvirtCheck(AgentCheck):
     def _update_instance_cache(self):
         """Collect instance_id, project_id, and AZ for all instance UUIDs
         """
-        from novaclient.v3 import client
+        # novaclient module versions were renamed in version 2.22
+        try:
+            from novaclient.v2 import client
+        except ImportError:
+            from novaclient.v1_1 import client
+
         id_cache = {}
         # Get a list of all instances from the Nova API
         nova_client = client.Client(self.init_config.get('admin_user'),
