@@ -4,6 +4,8 @@ import ConfigParser
 import monasca_setup.detection
 import monasca_setup.agent_config
 
+from distutils.version import LooseVersion
+
 log = logging.getLogger(__name__)
 
 # Location of nova.conf from which to read credentials
@@ -35,9 +37,19 @@ class Libvirt(monasca_setup.detection.Plugin):
             nova_cfg = ConfigParser.SafeConfigParser()
             nova_cfg.read(nova_conf)
             # Which configuration options are needed for the plugin YAML?
-            cfg_needed = ['admin_user', 'admin_password',
-                          'admin_tenant_name']
+            # Use a dict so that they can be renamed later if necessary
+            cfg_needed = {'admin_user': 'admin_user',
+                          'admin_password': 'admin_password',
+                          'admin_tenant_name': 'admin_tenant_name'}
             cfg_section = 'keystone_authtoken'
+
+            # Handle Devstack's slightly different nova.conf names
+            if (nova_cfg.has_option(cfg_section, 'username')
+               and nova_cfg.has_option(cfg_section, 'password')
+               and nova_cfg.has_option(cfg_section, 'project_name')):
+                cfg_needed = {'admin_user': 'username',
+                              'admin_password': 'password',
+                              'admin_tenant_name': 'project_name'}
 
             # Start with plugin-specific configuration parameters
             init_config = {'cache_dir': cache_dir,
@@ -45,12 +57,13 @@ class Libvirt(monasca_setup.detection.Plugin):
                            'vm_probation': vm_probation}
 
             for option in cfg_needed:
-                init_config[option] = nova_cfg.get(cfg_section, option)
+                init_config[option] = nova_cfg.get(cfg_section, cfg_needed[option])
 
-            # Create an identity server URI
-            init_config['identity_uri'] = "{0}://{1}:{2}/v2.0".format(nova_cfg.get(cfg_section, 'auth_protocol'),
-                                                                      nova_cfg.get(cfg_section, 'auth_host'),
-                                                                      nova_cfg.get(cfg_section, 'auth_port'))
+            # Create an identity URI (again, slightly different for Devstack)
+            if nova_cfg.has_option(cfg_section, 'auth_url'):
+                init_config['identity_uri'] = "{0}/v2.0".format(nova_cfg.get(cfg_section, 'auth_url'))
+            else:
+                init_config['identity_uri'] = "{0}/v2.0".format(nova_cfg.get(cfg_section, 'identity_uri'))
 
             config['libvirt'] = {'init_config': init_config,
                                  'instances': [{}]}
@@ -61,7 +74,12 @@ class Libvirt(monasca_setup.detection.Plugin):
         try:
             import time
             import yaml
-            import novaclient.v3.client
+            import novaclient
+            # novaclient module versions were renamed in version 2.22
+            if novaclient.__version__ < LooseVersion("2.22"):
+                import novaclient.v1_1.client
+            else:
+                import novaclient.v2.client
             import monasca_agent.collector.virt.inspector
         except ImportError:
             log.warn("\tDependencies not satisfied; plugin not configured.")
