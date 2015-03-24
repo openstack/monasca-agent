@@ -176,7 +176,7 @@ All parameters require a '--' before the parameter such as '--verbose'
 | password | This is a required parameter that specifies the password needed to login to Keystone to get a token | mypassword |
 | project_name | This is a required parameter that specifies the name of the Keystone project name to store the metrics under | myproject |
 | keystone_url | This is a required parameter that specifies the url of the keystone api for retrieving tokens | http://192.168.1.5:35357/v3 |
-| service | This is a required parameter that specifies the name of the service associated with this particular node | nova, cinder, myservice |
+| service | This is an optional parameter that specifies the name of the service associated with this particular node | nova, cinder, myservice |
 | monasca_url | This is a required parameter that specifies the url of the monasca api for retrieving tokens | http://192.168.1.4:8080/v2.0 |
 | config_dir | This is an optional parameter that specifies the directory where the agent configuration files will be stored. | /etc/monasca/agent |
 | log_dir | This is an optional parameter that specifies the directory where the agent log files will be stored. | /var/log/monasca/agent |
@@ -185,6 +185,7 @@ All parameters require a '--' before the parameter such as '--verbose'
 | headless | This is an optional parameter that specifies whether monasca-setup should run in a non-interactive mode | |
 | skip_enable | This is an optional parameter. By default the service is enabled, which requires the script run as root. Set this parameter to skip that step. | |
 | verbose | This is an optional parameter that specifies whether the monasca-setup script will print additional information for debugging purposes | |
+| system_only | This optional parameter if set true will cause only the basic system checks to be configured all other detection will be skipped. Basic system checks include cpu, disk, load, memory, network. ||
 | overwrite | This is an optional parameter to overwrite the plugin configuration.  Use this if you don't want to keep the original configuration.  If this parameter is not specified, the configuration will be appended to the existing configuration, possibly creating duplicate checks.  **NOTE:** The agent config file, agent.yaml, will always be overwritten, even if this parameter is not specified |  |
 | amplifier | For load testing purposes, this value will multiply the number of metrics submitted in each payload.  Set to 1 for one additional set of metrics, 2 for two additional sets, etc.  Additional sets of metrics are identified by the 'amplifier' dimension.  Set to 0 for typical production use. | 0 |
 
