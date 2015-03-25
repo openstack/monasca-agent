@@ -104,8 +104,9 @@ def main(argv=None):
     # Detect os
     detected_os = platform.system()
     if detected_os == 'Linux':
-        linux_flavor = platform.linux_distribution()[0]
-        if 'Ubuntu' or 'debian' in linux_flavor:
+        supported_linux_flavors = ['Ubuntu', 'debian']
+        this_linux_flavor = platform.linux_distribution()[0]
+        if this_linux_flavor in supported_linux_flavors:
             for package in ['coreutils']:
                 # Check for required dependencies for system checks
                 try:
