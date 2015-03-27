@@ -99,8 +99,8 @@ class WrapNagios(ServicesCheck):
                        3,
                        dimensions=dimensions,
                        value_meta={'error': error_string})
-            self.log.info(error_string)
-            return
+            self.log.error(error_string)
+            return Status.DOWN, "DOWN: {0}".format(error_string)
 
         status_code = proc.poll()
         last_run_data[instance['name']] = time.time()
