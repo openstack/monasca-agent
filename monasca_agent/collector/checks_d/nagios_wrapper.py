@@ -80,6 +80,8 @@ class WrapNagios(ServicesCheck):
         if self._do_skip_check(instance, last_run_data) is True:
             return
 
+        metric_name = instance.get('metric_name', instance['name'])
+
         try:
             proc = subprocess.Popen(instance['check_command'].split(" "),
                                     env={"PATH": extra_path},
@@ -91,13 +93,13 @@ class WrapNagios(ServicesCheck):
             # TODO(dschroeder): Save/send 'detail' when supported by the API
         except OSError:
             # Return an UNKNOWN code (3) if I have landed here
-            self.gauge(instance['name'], 3, dimensions=dimensions)
+            self.gauge(metric_name, 3, dimensions=dimensions)
             self.log.info(instance['check_command'].split(" ")[0] + " is missing or unreadable")
             return
 
         status_code = proc.poll()
         last_run_data[instance['name']] = time.time()
-        self.gauge(instance['name'], status_code, dimensions=dimensions)
+        self.gauge(metric_name, status_code, dimensions=dimensions)
         # Return DOWN on critical, UP otherwise
         if status_code == "2":
             return Status.DOWN, "DOWN: {0}".format(detail)
