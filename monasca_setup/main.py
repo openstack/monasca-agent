@@ -69,7 +69,7 @@ def main(argv=None):
     parser.add_argument('--project_id', help="Keystone project id  for keystone authentication", required=False, default='')
     parser.add_argument('--ca_file', help="Sets the path to the ca certs file if using certificates. " +
                                           "Required only if insecure is set to False", required=False, default='')
-    parser.add_argument('--check_frequency', help="How often to run metric collection in seconds", type=int, default=15)
+    parser.add_argument('--check_frequency', help="How often to run metric collection in seconds", type=int, default=60)
     parser.add_argument('--config_dir', help="Configuration directory", default='/etc/monasca/agent')
     parser.add_argument('--dimensions', help="Additional dimensions to set for all metrics. A comma seperated list " +
                                              "of name/value pairs, 'name:value,name2:value2'")
