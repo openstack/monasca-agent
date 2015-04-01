@@ -3,3 +3,7 @@ init_config:
 instances:
     # Cpu check only supports one configured instance
     - name: cpu_stats
+      # Send additional cpu rollup system metrics (Default = False)
+      # These metrics include the following metrics aggregated across all cpus:
+      # cpu.total_logical_cores
+      #send_rollup_stats: True
