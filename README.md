@@ -407,7 +407,7 @@ This section documents the system metrics that are sent by the Agent.  This sect
 | net.in_packets_dropped_sec  | device | Number of inbound network packets dropped per second
 | net.out_packets_dropped_sec  | device | Number of inbound network packets dropped per second
 | monasca.thread_count  | service=monitoring component=monasca-agent | Number of threads that the collector is consuming for this collection run
-| monasca.emit_time_sec  | service=monitoring component=monasca-agent | Amount of time that the collector took for sending the collected metrics to the Forwarder for this collection run
+| monasca.emit_time_sec  | service=monitoring component=monasca-agent | Amount of time that the forwarder took to send metrics to the Monasca API.
 | monasca.collection_time_sec  | service=monitoring component=monasca-agent | Amount of time that the collector took for this collection run
 
 # Plugin Checks
