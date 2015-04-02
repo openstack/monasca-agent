@@ -2,6 +2,39 @@ import os
 
 import monasca_setup.detection
 
+DIAG_COMMAND = '/usr/local/bin/diagnostics'
+CHECKER_COMMAND = '/usr/local/bin/swift-checker'
+
+diag_attributes = ['check_mounts', 'disk_monitoring', 'file_ownership',
+                   'network_interface', 'ping_hosts', 'drive_audit']
+
+checker_attributes = ['diskusage', 'healthcheck', 'replication']
+
+
+def get_instances(command, attributes):
+    """
+    Fetch instances per command type and attribute
+    """
+    instances = []
+    for attribute in attributes:
+        cmd = dict()
+        cmd['name'] = '{0}.{1}'.format('swift', attribute)
+        cmd['check_command'] = '{0} --{1}'.format(command, attribute)
+        cmd['check_interval'] = 60
+        cmd['dimensions'] = {'service': 'swift'}
+        instances.append(cmd)
+    return instances
+
+
+def get_config_instances():
+    """
+    Fetch all instances per command type
+    """
+    config_instances = []
+    config_instances.extend(get_instances(DIAG_COMMAND, diag_attributes))
+    config_instances.extend(get_instances(CHECKER_COMMAND, checker_attributes))
+    return config_instances
+
 
 class Swift(monasca_setup.detection.ServicePlugin):
 
@@ -30,25 +63,10 @@ class Swift(monasca_setup.detection.ServicePlugin):
     def build_config(self):
         config = super(Swift, self).build_config()
 
-        # This is a bit of an abuse of the nagios_wrapper but the commands will return failed error code properly
-        swift_health = "/bin/sh -c '" + \
-                       "/usr/local/bin/diagnostics --check_mounts && " + \
-                       "/usr/local/bin/diagnostics --disk_monitoring && " + \
-                       "/usr/local/bin/diagnostics --file_ownership && " + \
-                       "/usr/local/bin/diagnostics --network_interface && " + \
-                       "/usr/local/bin/diagnostics --ping_hosts && " + \
-                       "/usr/local/bin/diagnostics --swift_services && " + \
-                       "/usr/local/bin/swift-checker --diskusage && " + \
-                       "/usr/local/bin/swift-checker --healthcheck && " + \
-                       "/usr/local/bin/swift-checker --replication'"
-
-        if os.path.exists('/usr/local/bin/diagnostics') and os.path.exists('/usr/local/bin/swift-checker'):
+        if os.path.exists(DIAG_COMMAND) and \
+                os.path.exists(CHECKER_COMMAND):
             config['nagios_wrapper'] = {'init_config': None,
-                                        'instances': [
-                                            {'name': 'Swift.health',
-                                             'check_command': swift_health,
-                                             'check_interval': 60,
-                                             'dimensions': {'service': 'swift'}}
-                                        ]}
+                                        'instances': get_config_instances(),
+                                        }
 
         return config
