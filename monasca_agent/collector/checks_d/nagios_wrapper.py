@@ -54,6 +54,7 @@ class WrapNagios(ServicesCheck):
             dimensions.update({'target_host': socket.getfqdn()})
 
         extra_path = self.init_config.get('check_path')
+        env = {"PATH": extra_path} if extra_path else None
 
         last_run_path = self.init_config.get('temp_file_path')
         # Use a default last_run_file if no temp_file is specified in the YAML
@@ -85,7 +86,7 @@ class WrapNagios(ServicesCheck):
         detail = None
         try:
             proc = subprocess.Popen(instance['check_command'].split(" "),
-                                    env={"PATH": extra_path},
+                                    env=env,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
             output = proc.communicate()
