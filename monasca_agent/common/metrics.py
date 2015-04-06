@@ -106,7 +106,10 @@ class Counter(Metric):
             self.value_meta = None
 
     def sample(self, value, sample_rate, timestamp=None):
-        self.value += value * int(1 / sample_rate)
+        try:
+          self.value += value * int(1 / sample_rate)
+        except TypeError:
+          log.error("metric {} value {} sample_rate {}".format(self.name, value, sample_rate))
 
     def flush(self, timestamp):
         if self.value is not None:
