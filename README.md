@@ -1047,6 +1047,7 @@ init_config:
     admin_tenant_name: service
     admin_user: nova
     identity_uri: 'http://192.168.10.5:35357/v2.0'
+    region_name: 'region1'
     cache_dir: /dev/shm
     nova_refresh: 14400
     vm_probation: 300
