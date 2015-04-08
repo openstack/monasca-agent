@@ -74,14 +74,14 @@ class Gauge(Metric):
             value = self.value
             self.value = None
             return [self.formatter(metric=self.name,
-                                  timestamp=self.timestamp or timestamp,
-                                  value=value,
-                                  dimensions=self.dimensions,
-                                  delegated_tenant=self.delegated_tenant,
-                                  hostname=self.hostname,
-                                  device_name=self.device_name,
-                                  metric_type=MetricTypes.GAUGE,
-                                  value_meta=self.value_meta)]
+                                   timestamp=self.timestamp or timestamp,
+                                   value=value,
+                                   dimensions=self.dimensions,
+                                   delegated_tenant=self.delegated_tenant,
+                                   hostname=self.hostname,
+                                   device_name=self.device_name,
+                                   metric_type=MetricTypes.GAUGE,
+                                   value_meta=self.value_meta)]
         else:
             return []
 
@@ -111,7 +111,7 @@ class Counter(Metric):
     def flush(self, timestamp):
         if self.value is not None:
             value = self.value
-            self.value = None
+            self.value = 0
             return [self.formatter(metric=self.name,
                                    value=value,
                                    timestamp=timestamp,
@@ -216,7 +216,6 @@ class Set(Metric):
             self.value_meta = value_meta.copy()
         else:
             self.value_meta = None
-
 
     def sample(self, value, sample_rate, timestamp=None):
         self.values.add(value)
