@@ -1,9 +1,6 @@
 #
 # Copyright 2012 Red Hat, Inc
 #
-# Author: Eoghan Glynn <eglynn@redhat.com>
-#         Doug Hellmann <doug.hellmann@dreamhost.com>
-#
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
 # a copy of the License at
@@ -19,7 +16,7 @@
 
 import collections
 
-from oslo.config import cfg
+from oslo_config import cfg
 from stevedore import driver
 
 OPTS = [
@@ -57,6 +54,14 @@ CPUUtilStats = collections.namedtuple('CPUUtilStats', ['util'])
 # usage: Amount of memory used
 #
 MemoryUsageStats = collections.namedtuple('MemoryUsageStats', ['usage'])
+
+
+# Named tuple representing Resident Memory usage statistics.
+#
+# resident: Amount of resident memory
+#
+MemoryResidentStats = collections.namedtuple('MemoryResidentStats',
+                                             ['resident'])
 
 
 # Named tuple representing vNICs.
@@ -124,6 +129,32 @@ DiskRateStats = collections.namedtuple('DiskRateStats',
                                         'write_bytes_rate',
                                         'write_requests_rate'])
 
+# Named tuple representing disk latency statistics.
+#
+# disk_latency: average disk latency
+#
+DiskLatencyStats = collections.namedtuple('DiskLatencyStats',
+                                          ['disk_latency'])
+
+# Named tuple representing disk iops statistics.
+#
+# iops: number of iops per second
+#
+DiskIOPSStats = collections.namedtuple('DiskIOPSStats',
+                                       ['iops_count'])
+
+
+# Named tuple representing disk Information.
+#
+# capacity: capacity of the disk
+# allocation: allocation of the disk
+# physical: usage of the disk
+
+DiskInfo = collections.namedtuple('DiskInfo',
+                                  ['capacity',
+                                   'allocation',
+                                   'physical'])
+
 
 # Exception types
 #
@@ -136,18 +167,22 @@ class InstanceNotFoundException(InspectorException):
     pass
 
 
+class InstanceShutOffException(InspectorException):
+    pass
+
+
+class NoDataException(InspectorException):
+    pass
+
+
 # Main virt inspector abstraction layering over the hypervisor API.
 #
 class Inspector(object):
 
-    def inspect_instances(self):
-        """List the instances on the current host."""
-        raise NotImplementedError()
-
-    def inspect_cpus(self, instance_name):
+    def inspect_cpus(self, instance):
         """Inspect the CPU statistics for an instance.
 
-        :param instance_name: the name of the target instance
+        :param instance: the target instance
         :return: the number of CPUs and cumulative CPU time
         """
         raise NotImplementedError()
@@ -162,10 +197,10 @@ class Inspector(object):
         """
         raise NotImplementedError()
 
-    def inspect_vnics(self, instance_name):
+    def inspect_vnics(self, instance):
         """Inspect the vNIC statistics for an instance.
 
-        :param instance_name: the name of the target instance
+        :param instance: the target instance
         :return: for each vNIC, the number of bytes & packets
                  received and transmitted
         """
@@ -182,10 +217,10 @@ class Inspector(object):
         """
         raise NotImplementedError()
 
-    def inspect_disks(self, instance_name):
+    def inspect_disks(self, instance):
         """Inspect the disk statistics for an instance.
 
-        :param instance_name: the name of the target instance
+        :param instance: the target instance
         :return: for each disk, the number of bytes & operations
                  read and written, and the error count
         """
@@ -211,6 +246,30 @@ class Inspector(object):
                  read and written per second, with the error count
         """
         raise NotImplementedError()
+
+    def inspect_disk_latency(self, instance):
+        """Inspect the disk statistics as rates for an instance.
+
+        :param instance: the target instance
+        :return: for each disk, the average disk latency
+        """
+        raise NotImplementedError
+
+    def inspect_disk_iops(self, instance):
+        """Inspect the disk statistics as rates for an instance.
+
+        :param instance: the target instance
+        :return: for each disk, the number of iops per second
+        """
+        raise NotImplementedError
+
+    def inspect_disk_info(self, instance):
+        """Inspect the disk information for an instance.
+
+        :param instance: the target instance
+        :return: for each disk , capacity , alloaction and usage
+        """
+        raise NotImplementedError
 
 
 def get_hypervisor_inspector():

@@ -1,8 +1,5 @@
 # Copyright 2013 Cloudbase Solutions Srl
 #
-# Author: Claudiu Belu <cbelu@cloudbasesolutions.com>
-#         Alessandro Pilotti <apilotti@cloudbasesolutions.com>
-#
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
 # a copy of the License at
@@ -16,10 +13,16 @@
 # under the License.
 """Implementation of Inspector abstraction for Hyper-V"""
 
-from oslo.utils import units
+from oslo_config import cfg
+from oslo_utils import units
 
 from monasca_agent.collector.virt.hyperv import utilsv2
 from monasca_agent.collector.virt import inspector as virt_inspector
+
+
+def instance_name(instance):
+    """Shortcut to get instance name."""
+    return getattr(instance, 'OS-EXT-SRV-ATTR:instance_name', None)
 
 
 class HyperVInspector(virt_inspector.Inspector):
@@ -28,13 +31,8 @@ class HyperVInspector(virt_inspector.Inspector):
         super(HyperVInspector, self).__init__()
         self._utils = utilsv2.UtilsV2()
 
-    def inspect_instances(self):
-        for element_name, name in self._utils.get_all_vms():
-            yield virt_inspector.Instance(
-                name=element_name,
-                UUID=name)
-
-    def inspect_cpus(self, instance_name):
+    def inspect_cpus(self, instance):
+        instance_name = get_instance_name(instance)
         (cpu_clock_used,
          cpu_count, uptime) = self._utils.get_cpu_metrics(instance_name)
         host_cpu_clock, host_cpu_count = self._utils.get_host_cpu_info()
@@ -46,7 +44,13 @@ class HyperVInspector(virt_inspector.Inspector):
 
         return virt_inspector.CPUStats(number=cpu_count, time=cpu_time)
 
-    def inspect_vnics(self, instance_name):
+    def inspect_memory_usage(self, instance, duration=None):
+        instance_name = get_instance_name(instance)
+        usage = self._utils.get_memory_metrics(instance_name)
+        return virt_inspector.MemoryUsageStats(usage=usage)
+
+    def inspect_vnics(self, instance):
+        instance_name = get_instance_name(instance)
         for vnic_metrics in self._utils.get_vnic_metrics(instance_name):
             interface = virt_inspector.Interface(
                 name=vnic_metrics["element_name"],
@@ -62,13 +66,10 @@ class HyperVInspector(virt_inspector.Inspector):
 
             yield (interface, stats)
 
-    def inspect_disks(self, instance_name):
+    def inspect_disks(self, instance):
+        instance_name = get_instance_name(instance)
         for disk_metrics in self._utils.get_disk_metrics(instance_name):
-            device = dict([(i, disk_metrics[i])
-                          for i in ['instance_id', 'host_resource']
-                          if i in disk_metrics])
-
-            disk = virt_inspector.Disk(device=device)
+            disk = virt_inspector.Disk(device=disk_metrics['instance_id'])
             stats = virt_inspector.DiskStats(
                 read_requests=0,
                 # Return bytes
@@ -76,5 +77,24 @@ class HyperVInspector(virt_inspector.Inspector):
                 write_requests=0,
                 write_bytes=disk_metrics['write_mb'] * units.Mi,
                 errors=0)
+
+            yield (disk, stats)
+
+    def inspect_disk_latency(self, instance):
+        instance_name = get_instance_name(instance)
+        for disk_metrics in self._utils.get_disk_latency_metrics(
+                instance_name):
+            disk = virt_inspector.Disk(device=disk_metrics['instance_id'])
+            stats = virt_inspector.DiskLatencyStats(
+                disk_latency=disk_metrics['disk_latency'])
+
+            yield (disk, stats)
+
+    def inspect_disk_iops(self, instance):
+        instance_name = get_instance_name(instance)
+        for disk_metrics in self._utils.get_disk_iops_count(instance_name):
+            disk = virt_inspector.Disk(device=disk_metrics['instance_id'])
+            stats = virt_inspector.DiskIOPSStats(
+                iops_count=disk_metrics['iops_count'])
 
             yield (disk, stats)

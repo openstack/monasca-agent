@@ -1,7 +1,5 @@
 # Copyright 2014 Intel
 #
-# Author: Ren Qiaowei <qiaowei.ren@intel.com>
-#
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
 # a copy of the License at
@@ -16,27 +14,27 @@
 """Implementation of Inspector abstraction for XenAPI."""
 
 from eventlet import timeout
-from oslo.config import cfg
-from oslo.utils import units
+from oslo_config import cfg
+from oslo_utils import units
 try:
     import XenAPI as api
 except ImportError:
     api = None
 
-from ceilometer.compute.pollsters import util
 from monasca_agent.collector.virt import inspector as virt_inspector
 
 opt_group = cfg.OptGroup(name='xenapi',
                          title='Options for XenAPI')
 
-xenapi_opts = [
+OPTS = [
     cfg.StrOpt('connection_url',
-               help='URL for connection to XenServer/Xen Cloud Platform'),
+               help='URL for connection to XenServer/Xen Cloud Platform.'),
     cfg.StrOpt('connection_username',
                default='root',
-               help='Username for connection to XenServer/Xen Cloud Platform'),
+               help='Username for connection to XenServer/Xen Cloud '
+                    'Platform.'),
     cfg.StrOpt('connection_password',
-               help='Password for connection to XenServer/Xen Cloud Platform',
+               help='Password for connection to XenServer/Xen Cloud Platform.',
                secret=True),
     cfg.IntOpt('login_timeout',
                default=10,
@@ -45,7 +43,12 @@ xenapi_opts = [
 
 CONF = cfg.CONF
 CONF.register_group(opt_group)
-CONF.register_opts(xenapi_opts, group=opt_group)
+CONF.register_opts(OPTS, group=opt_group)
+
+
+def get_instance_name(instance):
+    """Shortcut to get instance name."""
+    return getattr(instance, 'OS-EXT-SRV-ATTR:instance_name', None)
 
 
 class XenapiException(virt_inspector.InspectorException):
@@ -88,15 +91,6 @@ class XenapiInspector(virt_inspector.Inspector):
     def _call_xenapi(self, method, *args):
         return self.session.xenapi_request(method, args)
 
-    def _list_vms(self):
-        host_ref = self._get_host_ref()
-        vms = self._call_xenapi("VM.get_all_records_where",
-                                'field "is_control_domain"="false" and '
-                                'field "is_a_template"="false" and '
-                                'field "resident_on"="%s"' % host_ref)
-        for vm_ref in vms.keys():
-            yield vm_ref, vms[vm_ref]
-
     def _lookup_by_name(self, instance_name):
         vm_refs = self._call_xenapi("VM.get_by_name_label", instance_name)
         n = len(vm_refs)
@@ -109,16 +103,8 @@ class XenapiInspector(virt_inspector.Inspector):
         else:
             return vm_refs[0]
 
-    def inspect_instances(self):
-        for vm_ref, vm_rec in self._list_vms():
-            name = vm_rec['name_label']
-            other_config = vm_rec['other_config']
-            uuid = other_config.get('nova_uuid')
-            if uuid:
-                yield virt_inspector.Instance(name, uuid)
-
     def inspect_cpu_util(self, instance, duration=None):
-        instance_name = util.instance_name(instance)
+        instance_name = get_instance_name(instance)
         vm_ref = self._lookup_by_name(instance_name)
         metrics_ref = self._call_xenapi("VM.get_metrics", vm_ref)
         metrics_rec = self._call_xenapi("VM_metrics.get_record",
@@ -136,7 +122,7 @@ class XenapiInspector(virt_inspector.Inspector):
         return virt_inspector.CPUUtilStats(util=utils)
 
     def inspect_memory_usage(self, instance, duration=None):
-        instance_name = util.instance_name(instance)
+        instance_name = get_instance_name(instance)
         vm_ref = self._lookup_by_name(instance_name)
         metrics_ref = self._call_xenapi("VM.get_metrics", vm_ref)
         metrics_rec = self._call_xenapi("VM_metrics.get_record",
@@ -146,7 +132,7 @@ class XenapiInspector(virt_inspector.Inspector):
         return virt_inspector.MemoryUsageStats(usage=memory)
 
     def inspect_vnic_rates(self, instance, duration=None):
-        instance_name = util.instance_name(instance)
+        instance_name = get_instance_name(instance)
         vm_ref = self._lookup_by_name(instance_name)
         vif_refs = self._call_xenapi("VM.get_VIFs", vm_ref)
         if vif_refs:
@@ -168,7 +154,7 @@ class XenapiInspector(virt_inspector.Inspector):
                 yield (interface, stats)
 
     def inspect_disk_rates(self, instance, duration=None):
-        instance_name = util.instance_name(instance)
+        instance_name = get_instance_name(instance)
         vm_ref = self._lookup_by_name(instance_name)
         vbd_refs = self._call_xenapi("VM.get_VBDs", vm_ref)
         if vbd_refs:

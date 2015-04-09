@@ -147,61 +147,62 @@ class LibvirtCheck(AgentCheck):
         dims_base = self._set_dimensions({'service': 'compute', 'component': 'vm'}, instance)
 
         insp = inspector.get_hypervisor_inspector()
-        for inst in insp.inspect_instances():
+        for inst in insp._get_connection().listAllDomains():
             # Verify that this instance exists in the cache.  Add if necessary.
-            if inst.name not in instance_cache:
+            inst_name = inst.name()
+            if inst_name not in instance_cache:
                 instance_cache = self._update_instance_cache()
-            if inst.name not in metric_cache:
-                metric_cache[inst.name] = {}
+            if inst_name not in metric_cache:
+                metric_cache[inst_name] = {}
 
             # Skip instances created within the probation period
-            vm_probation_remaining = self._test_vm_probation(instance_cache.get(inst.name)['created'])
+            vm_probation_remaining = self._test_vm_probation(instance_cache.get(inst_name)['created'])
             if (vm_probation_remaining >= 0):
-                self.log.info("Libvirt: {0} in probation for another {1} seconds".format(instance_cache.get(inst.name)['hostname'],
+                self.log.info("Libvirt: {0} in probation for another {1} seconds".format(instance_cache.get(inst_name)['hostname'],
                                                                                          vm_probation_remaining))
                 continue
 
             # Build customer dimensions
             dims_customer = dims_base.copy()
-            dims_customer['resource_id'] = instance_cache.get(inst.name)['instance_uuid']
-            dims_customer['zone'] = instance_cache.get(inst.name)['zone']
+            dims_customer['resource_id'] = instance_cache.get(inst_name)['instance_uuid']
+            dims_customer['zone'] = instance_cache.get(inst_name)['zone']
             # Add dimensions that would be helpful for operations
             dims_operations = dims_customer.copy()
-            dims_operations['tenant_id'] = instance_cache.get(inst.name)['tenant_id']
+            dims_operations['tenant_id'] = instance_cache.get(inst_name)['tenant_id']
             dims_operations['cloud_tier'] = 'overcloud'
 
             # CPU utilization percentage
             sample_time = float("{:9f}".format(time.time()))
-            if 'cpu.time' in metric_cache[inst.name]:
+            if 'cpu.time' in metric_cache[inst_name]:
                 # I have a prior value, so calculate the rate & push the metric
-                cpu_diff = insp.inspect_cpus(inst.name).time - metric_cache[inst.name]['cpu.time']['value']
-                time_diff = sample_time - float(metric_cache[inst.name]['cpu.time']['timestamp'])
+                cpu_diff = insp.inspect_cpus(inst).time - metric_cache[inst_name]['cpu.time']['value']
+                time_diff = sample_time - float(metric_cache[inst_name]['cpu.time']['timestamp'])
                 # Convert time_diff to nanoseconds, and calculate percentage
                 rate = (cpu_diff / (time_diff * 1000000000)) * 100
 
                 self.gauge('cpu.utilization_perc', int(round(rate, 0)),
                            dimensions=dims_customer,
-                           delegated_tenant=instance_cache.get(inst.name)['tenant_id'],
-                           hostname=instance_cache.get(inst.name)['hostname'])
+                           delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                           hostname=instance_cache.get(inst_name)['hostname'])
                 self.gauge('vm.cpu.utilization_perc', int(round(rate, 0)),
                            dimensions=dims_operations)
 
-            metric_cache[inst.name]['cpu.time'] = {'timestamp': sample_time,
-                                                   'value': insp.inspect_cpus(inst.name).time}
+            metric_cache[inst_name]['cpu.time'] = {'timestamp': sample_time,
+                                                   'value': insp.inspect_cpus(inst).time}
 
             # Disk utilization
-            for disk in insp.inspect_disks(inst.name):
+            for disk in insp.inspect_disks(inst):
                 sample_time = time.time()
                 disk_dimensions = {'device': disk[0].device}
                 for metric in disk[1]._fields:
                     metric_name = "io.{0}".format(metric)
-                    if metric_name not in metric_cache[inst.name]:
-                        metric_cache[inst.name][metric_name] = {}
+                    if metric_name not in metric_cache[inst_name]:
+                        metric_cache[inst_name][metric_name] = {}
 
                     value = int(disk[1].__getattribute__(metric))
-                    if disk[0].device in metric_cache[inst.name][metric_name]:
-                        time_diff = sample_time - metric_cache[inst.name][metric_name][disk[0].device]['timestamp']
-                        val_diff = value - metric_cache[inst.name][metric_name][disk[0].device]['value']
+                    if disk[0].device in metric_cache[inst_name][metric_name]:
+                        time_diff = sample_time - metric_cache[inst_name][metric_name][disk[0].device]['timestamp']
+                        val_diff = value - metric_cache[inst_name][metric_name][disk[0].device]['value']
                         # Change the metric name to a rate, ie. "io.read_requests"
                         # gets converted to "io.read_ops_sec"
                         rate_name = "{0}_sec".format(metric_name.replace('requests', 'ops'))
@@ -209,31 +210,31 @@ class LibvirtCheck(AgentCheck):
                         this_dimensions = disk_dimensions.copy()
                         this_dimensions.update(dims_customer)
                         self.gauge(rate_name, val_diff, dimensions=this_dimensions,
-                                   delegated_tenant=instance_cache.get(inst.name)['tenant_id'],
-                                   hostname=instance_cache.get(inst.name)['hostname'])
+                                   delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                                   hostname=instance_cache.get(inst_name)['hostname'])
                         # Operations (metric name prefixed with "vm."
                         this_dimensions = disk_dimensions.copy()
                         this_dimensions.update(dims_operations)
                         self.gauge("vm.{0}".format(rate_name), val_diff,
                                    dimensions=this_dimensions)
                     # Save this metric to the cache
-                    metric_cache[inst.name][metric_name][disk[0].device] = {
+                    metric_cache[inst_name][metric_name][disk[0].device] = {
                         'timestamp': sample_time,
                         'value': value}
 
             # Network utilization
-            for vnic in insp.inspect_vnics(inst.name):
+            for vnic in insp.inspect_vnics(inst):
                 sample_time = time.time()
                 vnic_dimensions = {'device': vnic[0].name}
                 for metric in vnic[1]._fields:
                     metric_name = "net.{0}".format(metric)
-                    if metric_name not in metric_cache[inst.name]:
-                        metric_cache[inst.name][metric_name] = {}
+                    if metric_name not in metric_cache[inst_name]:
+                        metric_cache[inst_name][metric_name] = {}
 
                     value = int(vnic[1].__getattribute__(metric))
-                    if vnic[0].name in metric_cache[inst.name][metric_name]:
-                        time_diff = sample_time - metric_cache[inst.name][metric_name][vnic[0].name]['timestamp']
-                        val_diff = value - metric_cache[inst.name][metric_name][vnic[0].name]['value']
+                    if vnic[0].name in metric_cache[inst_name][metric_name]:
+                        time_diff = sample_time - metric_cache[inst_name][metric_name][vnic[0].name]['timestamp']
+                        val_diff = value - metric_cache[inst_name][metric_name][vnic[0].name]['value']
                         # Change the metric name to a rate, ie. "net.rx_bytes"
                         # gets converted to "net.rx_bytes_sec"
                         rate_name = "{0}_sec".format(metric_name)
@@ -245,15 +246,15 @@ class LibvirtCheck(AgentCheck):
                         this_dimensions.update(dims_customer)
                         self.gauge(rate_name, val_diff,
                                    dimensions=this_dimensions,
-                                   delegated_tenant=instance_cache.get(inst.name)['tenant_id'],
-                                   hostname=instance_cache.get(inst.name)['hostname'])
+                                   delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                                   hostname=instance_cache.get(inst_name)['hostname'])
                         # Operations (metric name prefixed with "vm."
                         this_dimensions = vnic_dimensions.copy()
                         this_dimensions.update(dims_operations)
                         self.gauge("vm.{0}".format(rate_name), val_diff,
                                    dimensions=this_dimensions)
                     # Save this metric to the cache
-                    metric_cache[inst.name][metric_name][vnic[0].name] = {
+                    metric_cache[inst_name][metric_name][vnic[0].name] = {
                         'timestamp': sample_time,
                         'value': value}
 

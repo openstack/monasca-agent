@@ -1,8 +1,5 @@
 # Copyright 2013 Cloudbase Solutions Srl
 #
-# Author: Claudiu Belu <cbelu@cloudbasesolutions.com>
-#         Alessandro Pilotti <apilotti@cloudbasesolutions.com>
-#
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
 # a copy of the License at
@@ -37,6 +34,7 @@ class UtilsV2(object):
     _VIRTUAL_SYSTEM_TYPE_REALIZED = 'Microsoft:Hyper-V:System:Realized'
 
     _PROC_SETTING = 'Msvm_ProcessorSettingData'
+    _MEMORY_SETTING = "Msvm_MemorySettingData"
     _SYNTH_ETH_PORT = 'Msvm_SyntheticEthernetPortSettingData'
     _ETH_PORT_ALLOC = 'Msvm_EthernetPortAllocationSettingData'
     _PORT_ACL_SET_DATA = 'Msvm_EthernetSwitchPortAclSettingData'
@@ -46,11 +44,14 @@ class UtilsV2(object):
     _BASE_METRICS_VALUE = 'Msvm_BaseMetricValue'
 
     _CPU_METRIC_NAME = 'Aggregated Average CPU Utilization'
+    _MEMORY_METRIC_NAME = 'Aggregated Average Memory Utilization'
     _NET_IN_METRIC_NAME = 'Filtered Incoming Network Traffic'
     _NET_OUT_METRIC_NAME = 'Filtered Outgoing Network Traffic'
     # Disk metrics are supported from Hyper-V 2012 R2
     _DISK_RD_METRIC_NAME = 'Disk Data Read'
     _DISK_WR_METRIC_NAME = 'Disk Data Written'
+    _DISK_LATENCY_METRIC_NAME = 'Average Disk Latency'
+    _DISK_IOPS_METRIC_NAME = 'Average Normalized Disk Throughput'
 
     def __init__(self, host='.'):
         if sys.platform == 'win32':
@@ -89,6 +90,15 @@ class UtilsV2(object):
         return (cpu_used,
                 int(cpu_sd.VirtualQuantity),
                 long(vm.OnTimeInMilliseconds))
+
+    def get_memory_metrics(self, vm_name):
+        vm = self._lookup_vm(vm_name)
+        memory_def = self._get_metric_def(self._MEMORY_METRIC_NAME)
+        metric_memory = self._get_metrics(vm, memory_def)
+        memory_usage = 0
+        if metric_memory:
+            memory_usage = long(metric_memory[0].MetricValue)
+        return memory_usage
 
     def get_vnic_metrics(self, vm_name):
         vm = self._lookup_vm(vm_name)
@@ -136,7 +146,37 @@ class UtilsV2(object):
                 'host_resource': host_resource
             }
 
-    def _sum_metric_values(self, metrics):
+    def get_disk_latency_metrics(self, vm_name):
+        vm = self._lookup_vm(vm_name)
+        metric_latency_def = self._get_metric_def(
+            self._DISK_LATENCY_METRIC_NAME)
+
+        disks = self._get_vm_resources(vm, self._STORAGE_ALLOC)
+        for disk in disks:
+            metric_values = self._get_metric_values(
+                disk, [metric_latency_def])
+
+            yield {
+                'disk_latency': metric_values[0],
+                'instance_id': disk.InstanceID,
+            }
+
+    def get_disk_iops_count(self, vm_name):
+        vm = self._lookup_vm(vm_name)
+        metric_def_iops = self._get_metric_def(self._DISK_IOPS_METRIC_NAME)
+        disks = self._get_vm_resources(vm, self._STORAGE_ALLOC)
+
+        for disk in disks:
+            metric_values = self._get_metric_values(
+                disk, [metric_def_iops])
+
+            yield {
+                'iops_count': metric_values[0],
+                'instance_id': disk.InstanceID,
+            }
+
+    @staticmethod
+    def _sum_metric_values(metrics):
         tot_metric_val = 0
         for metric in metrics:
             tot_metric_val += long(metric.MetricValue)
@@ -153,7 +193,8 @@ class UtilsV2(object):
                 metric_values.append(0)
         return metric_values
 
-    def _get_metric_value_instances(self, elements, result_class):
+    @staticmethod
+    def _get_metric_value_instances(elements, result_class):
         instances = []
         for el in elements:
             associators = el.associators(wmi_result_class=result_class)
@@ -172,9 +213,9 @@ class UtilsV2(object):
         n = len(vms)
         if n == 0:
             raise inspector.InstanceNotFoundException(
-                _('VM %s not found on Hyper-V') % vm_name)
+                'VM %s not found on Hyper-V' % vm_name)
         elif n > 1:
-            raise HyperVException(_('Duplicate VM name found: %s') % vm_name)
+            raise HyperVException('Duplicate VM name found: %s' % vm_name)
         else:
             return vms[0]
 
@@ -183,7 +224,8 @@ class UtilsV2(object):
             element.associators(
                 wmi_association_class=self._METRICS_ME), metric_def)
 
-    def _filter_metrics(self, all_metrics, metric_def):
+    @staticmethod
+    def _filter_metrics(all_metrics, metric_def):
         return [v for v in all_metrics if
                 v.MetricDefinitionId == metric_def.Id]
 
