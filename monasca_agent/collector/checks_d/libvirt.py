@@ -76,7 +76,10 @@ class LibvirtCheck(AgentCheck):
                                    'hostname': instance.name,
                                    'zone': inst_az,
                                    'created': instance.created,
-                                   'tenant_id': instance.tenant_id}
+                                   'tenant_id': instance.tenant_id,
+                                   'vcpus': nova_client.flavors.get(instance.flavor['id']).vcpus,
+                                   'ram': nova_client.flavors.get(instance.flavor['id']).ram,
+                                   'disk': nova_client.flavors.get(instance.flavor['id']).disk}
         id_cache['last_update'] = int(time.time())
 
         # Write the updated cache
@@ -146,6 +149,14 @@ class LibvirtCheck(AgentCheck):
         # Build dimensions for both the customer and for operations
         dims_base = self._set_dimensions({'service': 'compute', 'component': 'vm'}, instance)
 
+        # Define aggregate gauges, gauge name to metric name
+        agg_gauges = {'vcpus': 'nova.vm.cpu.total_allocated',
+                      'ram': 'nova.vm.mem.total_allocated_mb',
+                      'disk': 'nova.vm.disk.total_allocated_gb'}
+        agg_values = {}
+        for gauge in agg_gauges.keys():
+            agg_values[gauge] = 0
+
         insp = inspector.get_hypervisor_inspector()
         for inst in insp._get_connection().listAllDomains():
             # Verify that this instance exists in the cache.  Add if necessary.
@@ -170,6 +181,11 @@ class LibvirtCheck(AgentCheck):
             dims_operations = dims_customer.copy()
             dims_operations['tenant_id'] = instance_cache.get(inst_name)['tenant_id']
             dims_operations['cloud_tier'] = 'overcloud'
+
+            # Accumulate aggregate data
+            for gauge in agg_gauges:
+                if gauge in instance_cache.get(inst_name):
+                    agg_values[gauge] += instance_cache.get(inst_name)[gauge]
 
             # CPU utilization percentage
             sample_time = float("{:9f}".format(time.time()))
@@ -260,3 +276,7 @@ class LibvirtCheck(AgentCheck):
 
         # Save these metrics for the next collector invocation
         self._update_metric_cache(metric_cache)
+
+        # Publish aggregate metrics
+        for gauge in agg_gauges:
+            self.gauge(agg_gauges[gauge], agg_values[gauge], dimensions=dims_base)
