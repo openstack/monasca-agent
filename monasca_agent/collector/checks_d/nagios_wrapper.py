@@ -104,10 +104,12 @@ class WrapNagios(ServicesCheck):
 
         status_code = proc.poll()
         last_run_data[instance['name']] = time.time()
-        self.gauge(metric_name,
-                   status_code,
-                   dimensions=dimensions,
-                   value_meta={'detail': detail})
+        if detail:
+            self.gauge(metric_name, status_code,
+                       dimensions=dimensions,
+                       value_meta={'detail': detail})
+        else:
+            self.gauge(metric_name, status_code, dimensions=dimensions)
         # Return DOWN on critical, UP otherwise
         if status_code == "2":
             return Status.DOWN, "DOWN: {0}".format(detail)
