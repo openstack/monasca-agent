@@ -24,7 +24,8 @@ AGENT_PID_PATH="/var/tmp/monasca-agent.pid"
 SUPERVISOR_PIDFILE="/var/tmp/monasca-agent-supervisord.pid"
 SUPERVISOR_FILE="{config_dir}/supervisor.conf"
 SUPERVISOR_SOCK="/var/tmp/monasca-agent-supervisor.sock"
-SUPERVISORD=$(which supervisord)
+SUPERVISORD="{prefix}/bin/supervisord"
+SUPERVISORCTL="{prefix}/bin/supervisorctl"
 
 # This script is considered a configuration file and will not be
 # removed by dpkg unless the --purge option it set. Therefore we
@@ -42,7 +43,7 @@ check_status() {{
         # same as the number of programs specified in the supervisor config
         # file:
 
-        supervisor_processes=$(supervisorctl -c $SUPERVISOR_FILE status)
+        supervisor_processes=$($SUPERVISORCTL -c $SUPERVISOR_FILE status)
         supervisor_processes=$(echo "$supervisor_processes" |
                                        grep -v pup |
                                        grep $NAME |
