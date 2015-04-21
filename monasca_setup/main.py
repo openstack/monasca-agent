@@ -5,7 +5,6 @@
 import argparse
 import logging
 import os
-import platform
 import pwd
 import socket
 import subprocess
@@ -14,13 +13,8 @@ import yaml
 
 import agent_config
 from detection.plugins import DETECTION_PLUGINS
-import service.sysv as sysv
+from service.detection import detect_init
 
-from detection.utils import check_output
-
-# List of all detection plugins to run
-# Map OS to service type
-OS_SERVICE_MAP = {'Linux': sysv.SysV}
 
 log = logging.getLogger(__name__)
 
@@ -101,41 +95,8 @@ def main(argv=None):
     else:
         logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
-    # Detect os
-    detected_os = platform.system()
-    if detected_os == 'Linux':
-        supported_linux_flavors = ['Ubuntu', 'debian']
-        this_linux_flavor = platform.linux_distribution()[0]
-        if this_linux_flavor in supported_linux_flavors:
-            for package in ['coreutils']:
-                # Check for required dependencies for system checks
-                try:
-                    output = check_output('dpkg -s {0}'.format(package),
-                                          stderr=subprocess.STDOUT,
-                                          shell=True)
-                except subprocess.CalledProcessError:
-                    log.warn("*** {0} package is not installed! ***".format(package) +
-                             "\nNOTE: If you do not install the {0} ".format(package) +
-                             "package, you will not receive all of the standard " +
-                             "operating system type metrics!")
-        else:
-            pass
-    elif detected_os == 'Darwin':
-        print("Mac OS is not currently supported by the Monasca Agent")
-        sys.exit()
-    elif detected_os == 'Windows':
-        print("Windows is not currently supported by the Monasca Agent")
-        sys.exit()
-    else:
-        print("{0} is not currently supported by the Monasca Agent".format(detected_os))
-
-    # Service enable, includes setup of users/config directories so must be
-    # done before configuration
-    agent_service = OS_SERVICE_MAP[detected_os](PREFIX_DIR,
-                                                args.config_dir,
-                                                args.log_dir,
-                                                args.template_dir,
-                                                username=args.user)
+    # Detect and if possibly enable the agent service
+    agent_service = detect_init(PREFIX_DIR, args.config_dir, args.log_dir, args.template_dir, username=args.user)
     if not args.skip_enable:
         agent_service.enable()
 
@@ -152,7 +113,7 @@ def main(argv=None):
     args.dimensions = dict((name, value) for (name, value) in dimensions.iteritems())
     write_template(os.path.join(args.template_dir, 'agent.yaml.template'),
                    os.path.join(args.config_dir, 'agent.yaml'),
-                   {'args': args, 'hostname': socket.getfqdn() },
+                   {'args': args, 'hostname': socket.getfqdn()},
                    gid,
                    is_yaml=True)
 

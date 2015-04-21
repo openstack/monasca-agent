@@ -1,0 +1,12 @@
+[Unit]
+Description=Monasca Agent
+
+[Service]
+Type=simple
+User={monasca_user}
+Group={monasca_user}
+Restart=on-failure
+ExecStart={prefix}/bin/supervisord -c {config_dir}/supervisor.conf -n
+
+[Install]
+WantedBy=multi-user.target
