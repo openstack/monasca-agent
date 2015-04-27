@@ -1,0 +1,11 @@
+site_name: monasca-agent
+repo_url: https://github.com/stackforge/monasca-agent
+docs_dir: docs
+copyright: Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
+
+pages:
+- [index.md, Home]
+- [Agent.md, Agent]
+- [Customizations.md, Customizations]
+- [MonascaMetrics.md, Monasca Metrics]
+- [Plugins.md, Plugins]
