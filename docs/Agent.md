@@ -17,7 +17,7 @@
 
 # Architecture
 The Monasca Agent is the component of the [Monasca](https://wiki.openstack.org/wiki/Monasca) monitoring system that collects metrics from the system it is running on and sends them to the Monasca API.
- 
+
 A metric is identified by a name and dimensions.  The fields required in a metric are name, timestamp, and value.  A metric can also have 0..n dimensions.  Some standard dimensions are sent with all metrics that are sent by the agent.
 
 <img src="https://github.com/stackforge/monasca-agent/raw/master/docs/monasca-agent_arch.png" alt="Monasca Agent Diagram">
@@ -71,7 +71,7 @@ The agent configuration files are located in /etc/monasca/agent.
 
 The plugin configuration files are located in /etc/monasca/agent/conf.d.
 
-To run monasca-setup:
+monasca-setup is located in `[installed prefix dir]/bin/monasca-setup` and can be run as follows:
 
 ```
 sudo monasca-setup --username KEYSTONE_USERNAME --password KEYSTONE_PASSWORD --project_name KEYSTONE_PROJECT_NAME --keystone_url http://URL_OF_KEYSTONE_API:35357/v3
@@ -83,13 +83,13 @@ All parameters require a '--' before the parameter such as '--verbose'. Run `mon
 | ----------- | ------------ | ----------- |
 | username | This is a required parameter that specifies the username needed to login to Keystone to get a token | myuser |
 | password | This is a required parameter that specifies the password needed to login to Keystone to get a token | mypassword |
-| project_name | This is a required parameter that specifies the name of the Keystone project name to store the metrics under | myproject |
+| project_name | Specifies the name of the Keystone project name to store the metrics under, defaults to users default project. | myproject |
 | project_domain_id | Project domain id for keystone authentication | |
 | project_domain_name | Project domain name for keystone authentication | |
 | project_id | Keystone project id  for keystone authentication | |
 | check_frequency | How often to run metric collection in seconds | 60 |
-| keystone_url | This is a required parameter that specifies the url of the keystone api for retrieving tokens | http://192.168.1.5:35357/v3 |
-| dimensions | A comma seperated list of key:value pairs to include as dimensions in all submitted metrics| region:a,az:1 |
+| keystone_url | This is a required parameter that specifies the url of the keystone api for retrieving tokens. It must be a v3 endpoint. | http://192.168.1.5:35357/v3 |
+| dimensions | A comma separated list of key:value pairs to include as dimensions in all submitted metrics| region:a,az:1 |
 | service | This is an optional parameter that specifies the name of the service associated with this particular node | nova, cinder, myservice |
 | monasca_url | This is a optional parameter that specifies the url of the monasca api for retrieving tokens. By default this is obtained from the registered service in keystone. | http://192.168.1.4:8080/v2.0 |
 | skip_enable | This is an optional parameter. By default the service is enabled, which requires the script run as root. Set this parameter to skip that step. | |
@@ -164,7 +164,7 @@ If you did not run monasca-setup and/or there are additional plugins you would l
 
 If a detection plugin exists for monasca-setup you can run monasca-setup with the --detection_plugins flage, ie `monasca-setup --detection-plugins kafka`.
 
-To manully configure a plugin follow the steps below:
+To manually configure a plugin follow the steps below:
 
 Agent plugins are activated by placing a valid configuration file in the /etc/monasca/agent/conf.d/ directory. Configuration files are in YAML format, with the file extension .yaml. You may find example configuration files in /usr/local/share/monasca/agent/conf.d/
 
@@ -215,7 +215,7 @@ A plugin config is specified something like this:
              newDim: test
 
 # Running
-The monasca-setup command will create an appropriate startup script for the agent and so the agent can be run by using the standard daemon control tool for your operating system. If you have configured manually the startup script templates can be found in the 
+The monasca-setup command will create an appropriate startup script for the agent and so the agent can be run by using the standard daemon control tool for your operating system. If you have configured manually the startup script templates can be found in the code under the packaging directory.
 
 
 # License

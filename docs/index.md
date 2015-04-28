@@ -1,22 +1,8 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
-
-- [Monasca Agent Documentation](#monasca-agent-documentation)
-- [Working with document updates](#working-with-document-updates)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
 # Monasca Agent Documentation
 
-For full documentation visit [wiki.openstack.org/wiki/Monasca](https://wiki.openstack.org/wiki/Monasca)
+Please refer to the [project readme](https://github.com/stackforge/monasca-agent) for Agent documentation.
 
-For project launchpad visit [launchpad.net/monasca](https://launchpad.net/monasca)
-
-Github [github.com/stackforge/monasca-agent/blob/master/docs/](https://github.com/stackforge/monasca-agent/blob/master/docs/)
-
-ReadTheDocs [monasca-agent.readthedocs.org/en/latest/](http://monasca-agent.readthedocs.org/en/latest/)
-
+For full Monasca documentation visit [wiki.openstack.org/wiki/Monasca](https://wiki.openstack.org/wiki/Monasca)
 
 # Working with document updates
 

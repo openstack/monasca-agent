@@ -50,7 +50,7 @@ The following sections describe how one customizes the Monasca Agent by:
 
 ### Configuring Built-In Check Plugins
 
-The built-in Python check plugin scripts are installed as part of the monasca-agent package, and are available in `[installed base dir]/monasca_agent/collector/checks_d`. A sample `yaml` configuration file for each of these plugins is available in `[prefix_dir]/share/monasca/agent/conf.d`, where the stem name of the `yaml` file matches the stem name of the corresponding Python check script.
+The built-in Python check plugin scripts are installed as part of the monasca-agent package, and are available in `[installed base dir]/monasca_agent/collector/checks_d`. A sample `yaml` configuration file for each of these plugins is available in `[installed prefix dir]/share/monasca/agent/conf.d`, where the stem name of the `yaml` file matches the stem name of the corresponding Python check script.
 
 Config files for the plugin scripts can be added directly to the standard plugin configuration directory, `/etc/monasca/agent/conf.d` or added by a `monasca-setup` plugin script that auto-detects that the checks are required and then generates and adds the appropriate config file to enable them.
 
@@ -83,7 +83,7 @@ See [Creating a Custom Detection Plugin](#creating-a-custom-detection-plugin) fo
 
 ### Disabling Built-In Check Plugins
 
-`monasca-setup` is run to detect local or remote manageable entities and generate `yaml` configuration files to enable the required check plugins. The setup script runs Python detection plugins to accomplish this. By default it will run all of the available detection plugins. To avoid running detection plugins first create the primary configuration by running monasca-setup with the '--system-only' argument. You can then run with the `--detection_plugins` argument followed by a space seperated list of plugins you would like to run.
+`monasca-setup` is run to detect local or remote manageable entities and generate `yaml` configuration files to enable the required check plugins. The setup script runs Python detection plugins to accomplish this. By default it will run all of the available detection plugins. To avoid running detection plugins first create the primary configuration by running monasca-setup with the '--system-only' argument. You can then run with the `--detection_plugins` argument followed by a space separated list of plugins you would like to run.
 
 ## Customization Best Practices
 
@@ -95,13 +95,12 @@ Be aware of these best practices before defining new metrics and adding custom p
 
 Here are some best practices concerning appropriate use of metrics:
 
-- Be aware of [naming conventions](#https://github.com/stackforge/monasca-agent/blob/master/docs/MonascaMetrics)  with metrics.
+- Be aware of [naming conventions](#https://github.com/stackforge/monasca-agent/blob/master/docs/MonascaMetrics.md) with metrics.
 - Considerations affecting system performance
   - Before installing and configuring a custom check plugin, be certain that you have identified consumers who will actually make use of the metric.
   - Before defining a new metric, make sure that a metric that is essentially the same hasn't already been defined. If it has, use that definition. Re-use is good!
   - Only include metric dimensions that are required by the consumers of the metric. Don't include extra dimensions simply because someone may someday be interested in them.
   - Follow the common and openstack naming conventions, as appropriate, when defining metrics.
-  - Include only the necessary dimensions in your metric definitions. Measurement data stored in the database stays there for some value of "forever".
   - Include value_meta data only when necessary, e.g. when the metric value returned with a measurement can only be understood in the context of the text included in the value_meta. In your plugins, be as economical as possible with the text returned as value_meta. Like other measurement data, value_meta is stored in the database "forever".
 
 ### Custom Plugin Best Practices

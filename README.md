@@ -34,5 +34,9 @@ Agent [github.com/stackforge/monasca-agent/blob/master/docs/Agent.md](https://gi
 
 Agent Customizations [github.com/stackforge/monasca-agent/docs/Customizations.md](https://github.com/stackforge/monasca-agent/blob/master/docs/Customizations.md)
 
+Monasca Metrics [github.com/stackforge/monasca-agent/docs/MonascaMetrics.md](https://github.com/stackforge/monasca-agent/blob/master/docs/MonascaMetrics.md)
+
+Agent Plugin details [github.com/stackforge/monasca-agent/docs/Plugins.md](https://github.com/stackforge/monasca-agent/blob/master/docs/Plugins.md)
+
 # License
 Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
