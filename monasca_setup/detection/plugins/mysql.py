@@ -67,7 +67,7 @@ class MySQL(monasca_setup.detection.Plugin):
                             if "[client]" in row:
                                 client_section = True
                     config['mysql'] = {'init_config': None, 'instances':
-                                       [{'server': 'localhost', 'port': 3306,
+                                       [{'name': 'localhost', 'server': 'localhost', 'port': 3306,
                                          'user': my_user, 'pass': my_pass}]}
                 except IOError:
                     log.error("\tI/O error reading {:s}".format(mysql_conf))
@@ -82,7 +82,7 @@ class MySQL(monasca_setup.detection.Plugin):
                 else:
                     log.info("\tConfiguring plugin to connect with user root.")
                     config['mysql'] = {'init_config': None, 'instances':
-                                       [{'server': 'localhost', 'user': 'root',
+                                       [{'name': 'localhost', 'server': 'localhost', 'user': 'root',
                                          'port': 3306}]}
 
         if 'mysql' not in config:

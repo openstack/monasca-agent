@@ -33,7 +33,7 @@ class Ntp(monasca_setup.detection.Plugin):
                 ntp_server = match.group(1)
         else:
             ntp_server = 'pool.ntp.org'
-        config['ntp'] = {'init_config': None, 'instances': [{'host': ntp_server}]}
+        config['ntp'] = {'init_config': None, 'instances': [{'name': ntp_server, 'host': ntp_server}]}
 
         return config
 

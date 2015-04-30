@@ -51,7 +51,8 @@ class Kafka(Plugin):
 
             log.info("\tInstalling kafka_consumer plugin.")
             self.config['kafka_consumer'] = {'init_config': None,
-                                             'instances': [{'kafka_connect_str': kafka_connect_str,
+                                             'instances': [{'name': kafka_connect_str,
+                                                            'kafka_connect_str': kafka_connect_str,
                                                             'full_output': True,
                                                             'consumer_groups': dict(consumers)}]}
         except Exception:
