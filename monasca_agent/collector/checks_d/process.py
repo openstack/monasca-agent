@@ -44,7 +44,8 @@ class ProcessCheck(checks.AgentCheck):
                         if proc.name() == string:
                             found = True
                     except psutil.NoSuchProcess:
-                        self.log.warning('Process disappeared while scanning')
+                        self.log.warning('Process %s disappeared while scanning'
+                                         % string)
                         pass
                     except psutil.AccessDenied as e:
                         self.log.error('Access denied to %s process' % string)
@@ -57,7 +58,8 @@ class ProcessCheck(checks.AgentCheck):
                         if string in ' '.join(cmdline):
                             found = True
                     except psutil.NoSuchProcess:
-                        self.warning('Process disappeared while scanning')
+                        self.warning('Process %s disappeared while scanning'
+                                     % string)
                         pass
                     except psutil.AccessDenied as e:
                         self.log.error('Access denied to %s process'
