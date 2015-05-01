@@ -1,10 +1,7 @@
 import logging
 import os
 import pkg_resources
-import re
 import six
-import string
-import cStringIO as cstringio
 import yaml
 
 try:
@@ -44,7 +41,7 @@ class Config(object):
                                  'dimensions': None,
                                  'listen_port': None,
                                  'version': self.get_version(),
-                                 'additional_checksd': os.path.join(os.path.dirname(self._configFile), '/checks_d/'),
+                                 'additional_checksd': '/usr/lib/monasca/agent/custom_checks.d',
                                  'limit_memory_consumption': None,
                                  'skip_ssl_validation': False,
                                  'watchdog': True,

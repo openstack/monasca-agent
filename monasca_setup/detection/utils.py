@@ -1,10 +1,19 @@
 """ Util functions to assist in detection.
 """
+import glob
+import imp
+import inspect
+import logging
+import os
 import psutil
 import subprocess
 
 from monasca_setup import agent_config
+from plugin import Plugin
 from subprocess import Popen, PIPE, CalledProcessError
+
+log = logging.getLogger(__name__)
+
 
 # check_output was introduced in python 2.7, function added
 # to accommodate python 2.6
@@ -23,6 +32,38 @@ except AttributeError:
                 cmd = popenargs[0]
             raise CalledProcessError(retcode, cmd)
         return output
+
+
+def find_plugins(custom_path):
+    """ Find and import all detection plugins. It will look in detection/plugins dir of the code as well as custom_path
+
+    :param custom_path: An additional path to search for detection plugins
+    :return: A list of imported detection plugin classes.
+    """
+
+    # This was adapted from what monasca_agent.common.util.load_check_directory
+    plugin_paths = glob.glob(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'plugins', '*.py'))
+    plugin_paths.extend(glob.glob(os.path.join(custom_path, '*.py')))
+
+    plugins = []
+
+    for plugin_path in plugin_paths:
+        if os.path.basename(plugin_path) == '__init__.py':
+            continue
+        try:
+            plugin = imp.load_source(os.path.splitext(os.path.basename(plugin_path))[0], plugin_path)
+        except Exception:
+            log.exception('Unable to import detection plugin {0}'.format(plugin_path))
+
+        # Verify this is a subclass of Plugin
+        classes = inspect.getmembers(plugin, inspect.isclass)
+        for _, clsmember in classes:
+            if Plugin == clsmember:
+                continue
+            if issubclass(clsmember, Plugin):
+                plugins.append(clsmember)
+
+    return plugins
 
 
 def find_process_cmdline(search_string):
