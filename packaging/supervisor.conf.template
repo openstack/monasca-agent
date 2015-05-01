@@ -24,6 +24,7 @@ stderr_logfile=NONE
 priority=999
 startsecs=2
 user=monasca-agent
+autorestart=true
 
 [program:forwarder]
 command={prefix}/bin/monasca-forwarder
@@ -32,6 +33,7 @@ stderr_logfile=NONE
 startsecs=3
 priority=998
 user=monasca-agent
+autorestart=true
 
 [program:statsd]
 command={prefix}/bin/monasca-statsd
@@ -40,6 +42,7 @@ stderr_logfile=NONE
 startsecs=3
 priority=998
 user=monasca-agent
+autorestart=true
 
 [group:monasca-agent]
 programs=forwarder,collector,statsd
