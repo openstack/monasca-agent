@@ -42,3 +42,13 @@ def deep_merge(adict, other):
                 adict[key] += value
         else:
             adict[key] = value
+
+
+def merge_by_name(first, second):
+    """Merge a list of dictionaries replacing any dictionaries with the same 'name' value rather than merging.
+        The precedence goes to first.
+    """
+    first_names = [i['name'] for i in first if 'name' in i]
+    for item in second:
+        if 'name' not in item or item['name'] not in first_names:
+            first.append(item)

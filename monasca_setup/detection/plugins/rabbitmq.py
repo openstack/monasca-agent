@@ -87,7 +87,8 @@ class RabbitMQ(monasca_setup.detection.Plugin):
                 request.close()
                 if '{"status":"ok"}' in response:
                     config['rabbitmq'] = {'init_config': None, 'instances':
-                                          [{'rabbitmq_api_url': rabbitmq_api_url,
+                                          [{'name': rabbitmq_api_url,
+                                            'rabbitmq_api_url': rabbitmq_api_url,
                                             'rabbitmq_user': rabbit_user,
                                             'rabbitmq_pass': rabbit_pass,
                                             'queues': [x.strip() for x in rabbit_queues.split(',')],

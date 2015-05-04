@@ -94,11 +94,11 @@ class Apache(monasca_setup.detection.Plugin):
                 response = request.read()
                 request.close()
                 if 'Total Accesses:' in response:
-                    instance_vars = {'apache_status_url': apache_url}
+                    instance_vars = {'name': apache_url, 'apache_status_url': apache_url}
                     if apache_user and apache_pass:
                         instance_vars.update({'apache_user': apache_user,
                                               'apache_password': apache_pass})
-                    config['apache'] = {'init_config': None,'instances': [instance_vars]}
+                    config['apache'] = {'init_config': None, 'instances': [instance_vars]}
                     log.info("\tSuccessfully setup Apache plugin.")
                 else:
                     log.warn('Unable to access the Apache server-status URL;' + error_msg)

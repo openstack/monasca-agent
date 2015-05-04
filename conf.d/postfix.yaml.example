@@ -8,7 +8,8 @@
 init_config:
 
 instances:
-    - directory: /var/spool/postfix
+    - name: /var/spool/postfix
+      directory: /var/spool/postfix
       queues:
           - incoming
           - active

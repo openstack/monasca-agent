@@ -164,6 +164,7 @@ def main(argv=None):
         # todo add option to install dependencies
 
     # Write out the plugin config
+    changes = False
     for key, value in plugin_config.iteritems():
         # todo if overwrite is set I should either warn or just delete any config files not in the new config
         config_path = os.path.join(args.config_dir, 'conf.d', key + '.yaml')
@@ -172,15 +173,23 @@ def main(argv=None):
             with open(config_path, 'r') as config_file:
                 old_config = yaml.load(config_file.read())
             if old_config is not None:
-                agent_config.deep_merge(old_config, value)
-                value = old_config
+                agent_config.merge_by_name(value['instances'], old_config['instances'])
+                if value == old_config:  # Don't write config if no change
+                    continue
         with open(config_path, 'w') as config_file:
+            changes = True
             os.chmod(config_path, 0640)
             os.chown(config_path, 0, gid)
             config_file.write(yaml.safe_dump(value,
                                              encoding='utf-8',
                                              allow_unicode=True,
                                              default_flow_style=False))
+
+    # Don't restart if only doing detection plugins and no changes found
+    if args.detection_plugins is not None and not changes:
+        plugin_names = [p.__name__ for p in plugins]
+        log.info('No changes found for plugins {0}, skipping restart of Monasca Agent'.format(plugin_names))
+        return 0
 
     # Now that the config is built, start the service
     try:

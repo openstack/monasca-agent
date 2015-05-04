@@ -2,7 +2,8 @@ init_config:
 
 instances:
     # Network check only supports one configured instance
-    - excluded_interfaces:
+    - name: network_stats
+      excluded_interfaces:
         - lo
         - lo0
       # Optionally completely ignore any network interface
