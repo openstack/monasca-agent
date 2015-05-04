@@ -18,6 +18,7 @@
       - [AgentCheck Interface](#agentcheck-interface)
       - [ServicesCheck interface](#servicescheck-interface)
       - [Submitting Metrics](#submitting-metrics)
+      - [Example Check Plugin](#example-check-plugin)
       - [Check Plugin Configuration](#check-plugin-configuration)
         - [init_config](#init_config)
         - [instances](#instances)
@@ -26,6 +27,7 @@
       - [Plugins Object](#plugins-object)
       - [Plugin Interface](#plugin-interface)
       - [Plugin Utilities](#plugin-utilities)
+      - [Example Detection Plugin](#example-detection-plugin)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -162,6 +164,22 @@ As part of the parent class, you're given a logger at self.log. The log handler 
 
 Of course, when writing your plugin you should ensure that your code raises meaningful exceptions when unanticipated errors occur.
 
+#### Example Check Plugin
+/usr/lib/monasca/agent/custom_checks.d/example.py
+
+```
+import time
+import monasca_agent.collector.checks as checks
+
+
+class Example(checks.AgentCheck):
+
+    def check(self, instance):
+        """Example stats """
+        dimensions = self._set_dimensions(None, instance)
+        self.gauge('example.time', time.time(), dimensions)
+```
+
 #### Check Plugin Configuration
 Each plugin has a corresponding `yaml` configuration file with the same stem name as the plugin script file.
 
@@ -173,9 +191,11 @@ init_config:
     key2: value2
 
 instances:
-    - username: john_smith
+    - name: john_smith
+      username: john_smith
       password: 123456
-    - username: jane_smith
+    - name: jane_smith
+      username: jane_smith
       password: 789012
 ```
 
@@ -184,6 +204,8 @@ In the init_config section you can specify an arbitrary number of global name:va
 
 ##### instances
 The instances section is a list of instances that this check will be run against. Your actual check() method is run once per instance. The name:value pairs for each instance specify details about the instance that are necessary for the check.
+
+It is best practice to include a name for each instance as the monasca-setup program uses this to avoid duplicating instances.
 
 ##### Plugin Documentation
 Your plugin should include an example `yaml` configuration file to be placed in `/etc/monasca/agent/conf.d` which has the name of the plugin YAML file plus the extension '.example', so the example configuration file for the process plugin would be at `/etc/monasca/agent/conf.d/process.yaml.example. This file should include a set of example init_config and instances clauses that demonstrate how the plugin can be configured.
@@ -206,3 +228,27 @@ All detection plugins inherit either from the Plugin class found in `monasca_set
 #### Plugin Utilities
 
 Useful detection plugin utilities can be found in `monasca_setup/detection/utils.py`. Utilities include functions to find local processes by commandline or name, or who's listening on a particular port, or functions to watch processes or service APIs.
+
+#### Example Detection Plugin
+/usr/lib/monasca/agent/custom_detect.d/example.py
+```
+import monasca_setup.agent_config
+import monasca_setup.detection
+
+
+class Example(monasca_setup.detection.Plugin):
+    """Configures example check plugin."""
+    def _detect(self):
+        """Run detection, set self.available True if the service is detected."""
+        self.available = True
+
+    def build_config(self):
+        """Build the config as a Plugins object and return.  """
+        config = monasca_setup.agent_config.Plugins()
+        config['example'] = {'init_config': None,
+                             'instances': [{'dimensions':{'example_key':'example_value'}}]}
+        return config
+
+    def dependencies_installed(self):
+        return True
+```

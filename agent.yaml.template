@@ -71,9 +71,6 @@ Main:
   # Change port the Agent is listening to
   # listen_port: 17123
 
-  # Additional directory to look for checks
-  # additional_checksd: /etc/monasca/agent/checks.d/
-
   # Allow non-local traffic to this Agent
   # This is required when using this Agent as a proxy for other Agents
   # that might not have an internet connection

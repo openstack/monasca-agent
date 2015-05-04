@@ -12,12 +12,13 @@ import sys
 import yaml
 
 import agent_config
-from detection.plugins import DETECTION_PLUGINS
+from detection.utils import find_plugins
 from service.detection import detect_init
 
 
 log = logging.getLogger(__name__)
 
+CUSTOM_PLUGIN_PATH = '/usr/lib/monasca/agent/custom_detect.d'
 # dirname is called twice to get the dir 1 above the location of the script
 PREFIX_DIR = os.path.dirname(os.path.dirname(os.path.realpath(sys.argv[0])))
 
@@ -137,22 +138,23 @@ def main(argv=None):
 
     # Run through detection and config building for the plugins
     plugin_config = agent_config.Plugins()
+    detected_plugins = find_plugins(CUSTOM_PLUGIN_PATH)
     if args.system_only:
         from detection.plugins.system import System
         plugins = [System]
     elif args.detection_plugins is not None:
         lower_plugins = [p.lower() for p in args.detection_plugins]
         plugins = []
-        for plugin in DETECTION_PLUGINS:
+        for plugin in detected_plugins:
             if plugin.__name__.lower() in lower_plugins:
                 plugins.append(plugin)
 
         if len(plugins) != len(args.detection_plugins):
-            plugin_names = [p.__name__ for p in DETECTION_PLUGINS]
+            plugin_names = [p.__name__ for p in detected_plugins]
             log.warn("Not all plugins found, discovered plugins {0}\nAvailable plugins{1}".format(plugins,
                                                                                                   plugin_names))
     else:
-        plugins = DETECTION_PLUGINS
+        plugins = detected_plugins
 
     for detect_class in plugins:
         detect = detect_class(args.template_dir, args.overwrite)
@@ -174,6 +176,12 @@ def main(argv=None):
                 old_config = yaml.load(config_file.read())
             if old_config is not None:
                 agent_config.merge_by_name(value['instances'], old_config['instances'])
+                # Sort before compare, if instances have no name the sort will fail making order changes significant
+                try:
+                    value['instances'].sort(key=lambda k: k['name'])
+                    old_config['instances'].sort(key=lambda k: k['name'])
+                except Exception:
+                    pass
                 if value == old_config:  # Don't write config if no change
                     continue
         with open(config_path, 'w') as config_file:
