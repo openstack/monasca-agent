@@ -1,0 +1,50 @@
+init_config:
+    # Specify the path to the mk_livestatus socket
+    socket_path: /var/lib/icinga/rw/live
+
+instances:
+    # List the service and/or host checks to query.
+    # Service checks:
+    #   name            Monasca metric name to use      Required
+    #   check_type      "service"                       Required
+    #   display_name    Name of Nagios check            Required
+    #   host_name       Nagios' reported host_name      Optional
+    #   dimensions      key:value pairs                 Optional
+    #
+    # Host checks:
+    #   name            Monasca metric name to use      Required
+    #   check_type      "host"                          Required
+    #   host_name       Nagios' reported host_name      Optional
+    #   dimensions      key:value pairs                 Optional
+    #
+    # If 'host_name' is not specified, metrics for all hosts will be reported.
+
+    # One service on one host
+    - name:           nagios.check_http_status
+      check_type:     service
+      display_name:   HTTP
+      host_name:      web01.example.net
+
+    # One service on all hosts
+    - name:           nagios.process_count_status
+      check_type:     service
+      display_name:   Total Processes
+
+    # One service on all hosts with extra dimensions
+    - name:           nagios.check_http_status
+      check_type:     service
+      display_name:   HTTP
+      dimensions:     { 'group': 'webservers' }
+
+    # All services on all hosts
+    # These will be assigned metric names automatically, based on display_name
+    - check_type:     service
+
+    # One host
+    - name:           nagios.host_status
+      check_type:     host
+      host_name:      web01.example.net
+
+    # All hosts
+    - name:           nagios.host_status
+      check_type:     host

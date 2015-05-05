@@ -1,0 +1,25 @@
+init_config:
+    # Specify the path to the mk_livestatus socket
+    mk_agent_path: /usr/bin/check_mk_agent
+
+    custom:
+      # Customize automatic metric names and dimensions for the following items.
+      # - mk_item: This is the name (2nd field) returned by check_mk_agent
+      #   discard: Exclude the metric from Monasca, True or False (the default)
+      #   dimensions: Extra dimensions to include, in {'name': 'value'} format.
+      #   metric_name_base: This represents the leftmost part of the metric name
+      #                     to use.  Status and any performance metrics are
+      #                     appended following a dot, so ".status" and
+      #                     ".response_time" would be examples
+
+#      - mk_item: sirius-api
+#        discard: false
+#        dimensions: {'component': 'sirius'}
+#        metric_name_base: check_mk.sirius_api
+#      - mk_item: eon-api
+#        discard: true
+
+instances:
+    # Leave empty (- {})
+    # check_mk_local to automatically process all configured 'local' checks.
+    - {}

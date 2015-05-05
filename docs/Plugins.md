@@ -13,6 +13,9 @@
       - [dimensions](#dimensions)
       - [Plugin Documentation](#plugin-documentation)
   - [Nagios Checks](#nagios-checks)
+      - [Nagios Wrapper](#nagios-wrapper)
+      - [Check_MK_Agent Local](#check_mk_agent-local)
+      - [MK Livestatus](#mk-livestatus)
   - [Host Alive Checks](#host-alive-checks)
   - [Process Checks](#process-checks)
   - [Http Endpoint Checks](#http-endpoint-checks)
@@ -257,6 +260,7 @@ The instances section can also contain optional dimensions. These dimensions wil
 Your plugin should include an example YAML configuration file to be placed in /etc/monasca/agent/conf.d/ which has the name of the plugin YAML file plus the extension '.example', so the example configuration file for the process plugin would be at /usr/local/share/monasca/agent/conf.d/process.yaml.example. This file should include a set of example init_config and instances clauses that demonstrate how the plugin can be configured.
 
 ## Nagios Checks
+### Nagios Wrapper
 The Agent can run Nagios plugins. A YAML file (nagios_wrapper.yaml) contains the list of Nagios checks to run, including the check name, command name with parameters, and desired interval between iterations. A Python script (nagios_wrapper.py) runs each command in turn, captures the resulting exit code (0 through 3, corresponding to OK, warning, critical and unknown), and sends that information to the Forwarder, which then sends the Monitoring API. Currently, the Agent can only  send the exit code from a Nagios plugin. Any accompanying text is not sent.
 
  default dimensions:
@@ -298,6 +302,122 @@ instances:
 
 * check_interval (optional) If unspecified, the checks will be run at the regular collector interval, which is 60 seconds by default. You may not want to run some checks that frequently, especially if they are resource-intensive, so check_interval lets you force a delay, in seconds, between iterations of that particular check.  The state for these are stored in temp_file_path with file names like nagios_wrapper_19fe42bc7cfdc37a2d88684013e66c7b.pck where the hash is an md5sum of the service_name (to accommodate odd characters that the filesystem may not like).
 
+### Check_MK_Agent Local
+The [Check_MK](http://mathias-kettner.com/check_mk.html) [Agent](http://mathias-kettner.com/checkmk_linuxagent.html) can be extended through a series of [local checks](http://mathias-kettner.com/checkmk_localchecks.html).  This plugin parses the `<<<local>>>` output of `check_mk_agent` and converts them into Monasca metrics.  It is installed by `monasca-setup` automatically when the `check_mk_agent` script is found to be installed on the system.
+
+The default configuration is to submit metrics from all local checks returned by `check_mk_agent`.  One metric will be submitted for the status code, and one additional metric for each performance measurement included in the result.  The basic format of `check_mk_agent` local check output is:
+```
+<status> <item name> <performance data> <check output>
+```
+So if the output line is:
+```
+0 glance_registry response_time=0.004 glance_registry: status UP http://0.0.0.0:9191
+```
+the `check_mk_local` plugin for the Monasca Agent will return these metrics:
+```
+ Timestamp:  1430848955
+ Name:       check_mk.glance_registry.status
+ Value:      0
+ Dimensions: hostname=devstack
+             service=monitoring
+ Value Meta: detail=glance_registry: status UP http://0.0.0.0:9191
+```
+and
+```
+ Timestamp:  1430852467
+ Name:       check_mk.glance_registry.response_time
+ Value:      0.006
+ Dimensions: hostname=devstack
+             service=monitoring
+ Value Meta: None
+```
+The name of the metric starts with `check_mk.`, includes the check_mk item name, and is followed by either `status` for the Nagios status code (0, 1, 2, or 3), or the name of the performance metric.  The free-form output from the check is included in the meta field of the check status.
+
+You may override these defaults in the configuration, which by default is `/etc/monasca/agent/conf.d/check_mk_local.yaml`.
+```
+init_config:
+    mk_agent_path: /usr/bin/check_mk_agent
+
+    custom:
+      - mk_item: sirius-api
+        discard: false
+        dimensions: {'component': 'sirius'}
+        metric_name_base: check_mk.sirius_api
+      - mk_item: eon-api
+        discard: true
+
+instances:
+    - {}
+```
+The `custom` section of `init_config` is optional and may be blank or removed entirely.  In this section, you may add custom rules to Monasca metrics based on the check_mk item name.
+  * *mk_item* -  This is the name (2nd field) returned by check_mk_agent
+  * *discard* -  Exclude the metric from Monasca, True or False (if *discard* is not specified, the default is False)
+  * *dimensions* - Extra dimensions to include, in `{'name': 'value'}` format.
+  * *metric_name_base* - This represents the leftmost part of the metric name to use.  Status and any performance metrics are appended following a dot, so ".status" and ".response_time" would be examples.
+
+Because `check_mk_agent` can only return all local metrics at once, the `check_mk_local` plugin requires no instances to be defined in the configuration.  It runs `check_mk_agent` once and processes all the results.  This way, new `check_mk` local scripts can be added without having to modify the plugin configuration.
+
+### MK Livestatus
+[MK Livestatus](http://mathias-kettner.com/checkmk_livestatus.html) is a Nagios Event Broker, allowing access to Nagios host and service data through a socket query.  The Monasca Agent `mk_livestatus` plugin is a way to access Nagios data and commit it to Monasca.  Possible use cases of this plugin include:
+  * A way to evaluate Monasca with identical metrics to Nagios, providing an apples-to-apples comparison
+  * A gentle migration from Nagios to Monasca, where both monitoring processes can exist simultaneously during Nagios decommissioning
+  * A turnkey solution for rapidly converting an existing Nagios installation to Monasca, where the Nagios infrastructure can remain indefinitely
+
+The `mk_livestatus` plugin will be installed during `monasca-setup` if a Nagios/Icinga configuration is found, the MK Livestatus broker_module is installed, and the livestatus socket can be accessed.  The `monasca-agent` user will need read access to the socket file in order to function, and a message to this effect will be included in `monasca-setup` output if the socket exists but `monasca-agent` cannot read it.
+
+The configuration file (`/etc/monasca/agent/conf.d/mk_livestatus.yaml` by default) allows for a level of customization of both host and service checks.
+  * Service checks
+    * *name* - (Required) Monasca metric name to assign
+    * *check_type* - (Required) "service" (as opposed to "host" below)
+    * *display_name* - (Required) Name of the check as seen in Nagios
+    * *host_name* - (Optional) Limit Monasca metrics of this check to the specified host name (as seen in Nagios).
+    * *dimensions* - (Optional) Extra Monasca dimensions to include, in `{'key': 'value'}` format
+  * Host checks
+    * *name* - (Required) Monasca metric name to assign
+    * *check_type* - (Required) "host" (as opposed to "service" above)
+    * *host_name* - (Optional) Limit Monasca metrics of this check to the specified host name (as seen in Nagios).
+    * *dimensions* - (Optional) Extra Monasca dimensions to include, in `{'key': 'value'}` format
+
+If *host_name* is not specified, metrics for all hosts will be reported.
+ 
+This configuration example shows several ways to specify instances:
+```
+init_config:
+    # Specify the path to the mk_livestatus socket
+    socket_path: /var/lib/icinga/rw/live
+
+instances:
+
+    # One service on one host
+    - name:           nagios.check_http_status
+      check_type:     service
+      display_name:   HTTP
+      host_name:      web01.example.net
+
+    # One service on all hosts
+    - name:           nagios.process_count_status
+      check_type:     service
+      display_name:   Total Processes
+
+    # One service on all hosts with extra dimensions
+    - name:           nagios.check_http_status
+      check_type:     service
+      display_name:   HTTP
+      dimensions:     { 'group': 'webservers' }
+
+    # All services on all hosts
+    # These will be assigned metric names automatically, based on display_name
+    - check_type:     service
+
+    # One host
+    - name:           nagios.host_status
+      check_type:     host
+      host_name:      web01.example.net
+
+    # All hosts
+    - name:           nagios.host_status
+      check_type:     host
+```
 
 ## Host Alive Checks
 An extension to the Agent can provide basic "aliveness" checks of other systems, verifying that the remote host (or device) is online. This check currently provides two methods of determining connectivity:
