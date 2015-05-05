@@ -103,7 +103,6 @@ def main(argv=None):
 
     # Detect and if possibly enable the agent service
     agent_service = detect_init(PREFIX_DIR, args.config_dir, args.log_dir, args.template_dir, username=args.user)
-    gid = pwd.getpwnam(args.user).pw_gid
 
     if args.detection_plugins is None:  # Skip base setup if running specific detection plugins
         # Verify required options
@@ -114,6 +113,7 @@ def main(argv=None):
         if not args.skip_enable:
             agent_service.enable()
 
+        gid = pwd.getpwnam(args.user).pw_gid
         # Write the main agent.yaml - Note this is always overwritten
         log.info('Configuring base Agent settings.')
         dimensions = {}
@@ -167,6 +167,8 @@ def main(argv=None):
 
     # Write out the plugin config
     changes = False
+    # The gid is created on service activation which we assume has happened before this step or before running with -d
+    gid = pwd.getpwnam(args.user).pw_gid
     for key, value in plugin_config.iteritems():
         # todo if overwrite is set I should either warn or just delete any config files not in the new config
         config_path = os.path.join(args.config_dir, 'conf.d', key + '.yaml')
