@@ -3,7 +3,7 @@ set -e
 
 if [ "$1" = purge ]; then
     update-rc.d monasca-agent remove
-    deluser monasca-agent
+    deluser mon-agent
 fi
 
 exit 0

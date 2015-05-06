@@ -18,7 +18,7 @@ class LinuxInit(service.Service):
     def enable(self):
         """ Does user/group directory creation.
         """
-        # Create monasca-agent user/group if needed
+        # Create user/group if needed
         try:
             user = pwd.getpwnam(self.username)
         except KeyError:
@@ -108,7 +108,7 @@ class Systemd(LinuxInit):
 
 class SysV(LinuxInit):
 
-    def __init__(self, prefix_dir, config_dir, log_dir, template_dir, name='monasca-agent', username='monasca-agent'):
+    def __init__(self, prefix_dir, config_dir, log_dir, template_dir, username, name='monasca-agent'):
         """Setup this service with the given init template.
 
         """
@@ -125,7 +125,8 @@ class SysV(LinuxInit):
         # Write the init script and enable.
         with open(self.init_template, 'r') as template:
             with open(self.init_script, 'w') as conf:
-                conf.write(template.read().format(prefix=self.prefix_dir, config_dir=self.config_dir))
+                conf.write(template.read().format(prefix=self.prefix_dir, monasca_user=self.username,
+                                                  config_dir=self.config_dir))
         os.chown(self.init_script, 0, 0)
         os.chmod(self.init_script, 0755)
 

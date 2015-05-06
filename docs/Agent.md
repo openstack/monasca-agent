@@ -34,7 +34,7 @@ The Agent is composed of the following components:
 
 | Component Name | Process Name | Description |
 | -------------- | ------------ | ----------- |
-| Supervisor | supervisord | Runs as root, launches all other processes as the "monasca-agent" user.  This process manages the lifecycle of the Collector, Forwarder and Statsd Daemon.  It allows Start, Stop and Restart of all the agent processes together. |
+| Supervisor | supervisord | Runs as root, launches all other processes as the user configured to run monasca-agent.  This process manages the lifecycle of the Collector, Forwarder and Statsd Daemon.  It allows Start, Stop and Restart of all the agent processes together. |
 | Collector | monasca-collector | Gathers system & application metrics on a configurable interval and sends them to the Forwarder process. The collector runs various plugins for collection of different plugins.| 
 | Forwarder | monasca-forwarder | Gathers data from the collector and statsd and submits it to Monasca API over SSL (tcp/17123) | 
 | Statsd Daemon | monasca-statsd | Statsd engine capable of handling dimensions associated with metrics submitted by a client that supports them. Also supports metrics from the standard statsd client. (udp/8125) | 

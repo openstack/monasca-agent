@@ -10,8 +10,8 @@ class PostfixCheck(AgentCheck):
     WARNING: the user that monasca-agent runs as must have sudo access for the 'find' command
              sudo access is not required when running monasca-agent as root (not recommended)
 
-    example /etc/sudoers entry:
-             monasca-agent ALL=(ALL) NOPASSWD:/usr/bin/find
+    example /etc/sudoers entry (assumes monasca-agent runs as user mon-agent):
+             mon-agent ALL=(ALL) NOPASSWD:/usr/bin/find
 
     YAML config options:
         "directory" - the value of 'postconf -h queue_directory'

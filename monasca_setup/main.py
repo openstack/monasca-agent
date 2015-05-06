@@ -88,7 +88,7 @@ def main(argv=None):
     parser.add_argument('--skip_enable', help="By default the service is enabled, " +
                                               "which requires the script run as root. Set this to skip that step.",
                         action="store_true")
-    parser.add_argument('--user', help="User name to run monasca-agent as", default='monasca-agent')
+    parser.add_argument('--user', help="User name to run monasca-agent as", default='mon-agent')
     parser.add_argument('-s', '--service', help="Service this node is associated with, added as a dimension.")
     parser.add_argument('--amplifier', help="Integer for the number of additional measurements to create. " +
                                             "Additional measurements contain the 'amplifier' dimension. " +
@@ -133,7 +133,7 @@ def main(argv=None):
         # Write the supervisor.conf
         write_template(os.path.join(args.template_dir, 'supervisor.conf.template'),
                        os.path.join(args.config_dir, 'supervisor.conf'),
-                       {'prefix': PREFIX_DIR, 'log_dir': args.log_dir},
+                       {'prefix': PREFIX_DIR, 'log_dir': args.log_dir, 'monasca_user': args.user},
                        gid)
 
     # Run through detection and config building for the plugins

@@ -4,12 +4,13 @@ set -e
 
 case "$1" in
     configure)
+        AGENT_USER=mon-agent 
         update-rc.d monasca-agent defaults
-        adduser --system monasca-agent --disabled-login --shell /bin/sh --no-create-home --quiet
+        adduser --system ${AGENT_USER} --disabled-login --shell /bin/sh --no-create-home --quiet
         usermod -d /usr/share/monasca/agent monasca-agent
         chown root:root /etc/init.d/monasca-agent
-        chown -R monasca-agent:root /etc/monasca/agent
-        chown -R monasca-agent:root /var/log/monasca/agent
+        chown -R ${AGENT_USER}:root /etc/monasca/agent
+        chown -R ${AGENT_USER}:root /var/log/monasca/agent
         chown -R root:root /usr/share/monasca/agent
         chown -h root:root /usr/bin/monasca-statsd
         chown -h root:root /usr/bin/monasca-collector
