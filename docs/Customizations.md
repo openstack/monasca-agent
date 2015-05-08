@@ -246,7 +246,7 @@ class Example(monasca_setup.detection.Plugin):
         """Build the config as a Plugins object and return.  """
         config = monasca_setup.agent_config.Plugins()
         config['example'] = {'init_config': None,
-                             'instances': [{'dimensions':{'example_key':'example_value'}}]}
+                             'instances': [{'name': 'example', 'dimensions':{'example_key':'example_value'}}]}
         return config
 
     def dependencies_installed(self):
