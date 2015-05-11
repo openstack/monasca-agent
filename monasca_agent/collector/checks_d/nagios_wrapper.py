@@ -101,9 +101,13 @@ class WrapNagios(ServicesCheck):
                        value_meta={'error': error_string})
             self.log.error(error_string)
             return Status.DOWN, "DOWN: {0}".format(error_string)
+        finally:
+            # Save last-run data
+            last_run_data[instance['name']] = time.time()
+            with open(last_run_file, "w") as file_w:
+                pickle.dump(last_run_data, file_w)
 
         status_code = proc.poll()
-        last_run_data[instance['name']] = time.time()
         if detail:
             self.gauge(metric_name, status_code,
                        dimensions=dimensions,
@@ -114,8 +118,3 @@ class WrapNagios(ServicesCheck):
         if status_code == "2":
             return Status.DOWN, "DOWN: {0}".format(detail)
         return Status.UP, "UP: {0}".format(detail)
-
-        # Save last-run data
-        file_w = open(last_run_file, "w")
-        pickle.dump(last_run_data, file_w)
-        file_w.close()
