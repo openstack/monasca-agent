@@ -172,7 +172,7 @@ class Histogram(Metric):
             ('count', self.count, MetricTypes.RATE)
         ]
 
-        metrics.append([self.formatter(hostname=self.hostname,
+        metrics.extend(self.formatter(hostname=self.hostname,
                                        device_name=self.device_name,
                                        dimensions=self.dimensions,
                                        delegated_tenant=self.delegated_tenant,
@@ -181,7 +181,7 @@ class Histogram(Metric):
                                        timestamp=timestamp,
                                        metric_type=metric_type,
                                        value_meta=self.value_meta
-                                       ) for suffix, value, metric_type in metric_aggrs])
+                                       ) for suffix, value, metric_type in metric_aggrs)
 
         for p in self.percentiles:
             val = self.samples[int(round(p * length - 1))]
