@@ -28,6 +28,7 @@ class HTTPCheck(services_checks.ServicesCheck):
         timeout = int(instance.get('timeout', 10))
         headers = instance.get('headers', {})
         use_keystone = instance.get('use_keystone', False)
+        keystone_config = instance.get('keystone_config', None)
         url = instance.get('url', None)
         response_time = instance.get('collect_response_time', False)
         pattern = instance.get('match_pattern', None)
@@ -35,7 +36,7 @@ class HTTPCheck(services_checks.ServicesCheck):
             raise Exception("Bad configuration. You must specify a url")
         ssl = instance.get('disable_ssl_validation', True)
 
-        return url, username, password, timeout, headers, response_time, ssl, pattern, use_keystone
+        return url, username, password, timeout, headers, response_time, ssl, pattern, use_keystone, keystone_config
 
     def _create_status_event(self, status, msg, instance):
         """Does nothing: status events are not yet supported by Mon API.
@@ -44,7 +45,7 @@ class HTTPCheck(services_checks.ServicesCheck):
         return
 
     def _check(self, instance):
-        addr, username, password, timeout, headers, response_time, disable_ssl_validation, pattern, use_keystone = self._load_conf(
+        addr, username, password, timeout, headers, response_time, disable_ssl_validation, pattern, use_keystone, keystone_config = self._load_conf(
             instance)
         config = cfg.Config()
         api_config = config.get_config('Api')
@@ -57,7 +58,10 @@ class HTTPCheck(services_checks.ServicesCheck):
         retry = False
         while not done or retry:
             if use_keystone:
-                key = keystone.Keystone(api_config)
+                if keystone_config:
+                    key = keystone.Keystone(keystone_config)
+                else:
+                    key = keystone.Keystone(api_config)
                 token = key.get_token()
                 if token:
                     headers["X-Auth-Token"] = token

@@ -10,6 +10,19 @@ instances:
 #        username: user
 #        password: pass
 
+         # If your service uses keystone for authentication, you can optionally
+         # specify the information to collect a token to be used in the check.
+         # This information should follow the same guidelines presented in
+         # agent.yaml.template
+         # https://github.com/stackforge/monasca-agent/blob/master/agent.yaml.template
+         # If use_keystone=True and keystone_config is not specified, the keystone information
+         # from the agent config will be used.
+#        use_keystone=True
+#        keystone_config:
+#            keystone_url: http://endpoint.com/v3/
+#            username: user
+#            password: password
+
          # The (optional) match_pattern parameter will instruct the check
          # to match the HTTP response body against a regular-expression-
          # compatible pattern.  If the pattern matches the check will
