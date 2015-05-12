@@ -69,6 +69,8 @@ def main(argv=None):
     parser.add_argument('-d', '--detection_plugins', nargs='*',
                         help="Skip base config and service setup and only configure the this space separated list. " +
                              "This assumes the base config has already run.")
+    parser.add_argument('-a', '--detection_args', help="A string of arguments that will be passed to detection " +
+                                                       "plugins. Only certain detection plugins use arguments.")
     parser.add_argument('--check_frequency', help="How often to run metric collection in seconds", type=int, default=60)
     parser.add_argument('--dimensions', help="Additional dimensions to set for all metrics. A comma seperated list " +
                                              "of name/value pairs, 'name:value,name2:value2'")
@@ -157,7 +159,7 @@ def main(argv=None):
         plugins = detected_plugins
 
     for detect_class in plugins:
-        detect = detect_class(args.template_dir, args.overwrite)
+        detect = detect_class(args.template_dir, args.overwrite, args.detection_args)
         if detect.available:
             log.info('Configuring {0}'.format(detect.name))
             new_config = detect.build_config()

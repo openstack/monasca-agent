@@ -20,8 +20,8 @@ class Kafka(Plugin):
             -
     """
 
-    def __init__(self, template_dir, overwrite=True, alarms=None, port=9092):
-        Plugin.__init__(self, template_dir, overwrite, alarms)
+    def __init__(self, template_dir, overwrite=True, args=None, port=9092):
+        Plugin.__init__(self, template_dir, overwrite, args)
         self.port = port
         self.zk_url = self._find_zookeeper_url()
         self.config = agent_config.Plugins()

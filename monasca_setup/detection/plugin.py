@@ -2,6 +2,10 @@
 
     Detection classes should be platform independent
 """
+import sys
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class Plugin(object):
@@ -11,12 +15,19 @@ class Plugin(object):
     """
     # todo these should include dependency detection
 
-    def __init__(self, template_dir, overwrite=True, alarms=None):
+    def __init__(self, template_dir, overwrite=True, args=None):
         self.available = False
         self.template_dir = template_dir
         self.dependencies = ()
         self.overwrite = overwrite
-        self.alarms = alarms
+        self.args = None
+        if args is not None:
+            try:
+                # Turn 'hostname=host type=ping' to dictionary {'hostname': 'host', 'type': 'ping'}
+                self.args = dict([a.split('=') for a in args.split()])
+            except Exception:
+                log.exception('Error parsing detection arguments')
+                sys.exit(1)
         self._detect()
 
     def _detect(self):
