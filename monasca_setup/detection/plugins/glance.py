@@ -5,7 +5,7 @@ class Glance(monasca_setup.detection.ServicePlugin):
 
     """Detect Glance daemons and setup configuration to monitor them."""
 
-    def __init__(self, template_dir, overwrite=True):
+    def __init__(self, template_dir, overwrite=True, args=None):
         service_params = {
             'template_dir': template_dir,
             'overwrite': overwrite,
