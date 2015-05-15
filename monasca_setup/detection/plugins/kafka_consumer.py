@@ -1,6 +1,6 @@
 import logging
 import re
-from subprocess import CalledProcessError
+from subprocess import CalledProcessError, STDOUT
 
 from monasca_setup.detection import Plugin, find_process_cmdline, watch_process
 from monasca_setup.detection.utils import find_addr_listening_on_port
@@ -93,13 +93,17 @@ class Kafka(Plugin):
         """
         zk_shell = ['/opt/kafka/bin/zookeeper-shell.sh', self.zk_url, 'ls', path]
         try:
-            output = check_output(zk_shell)
+            output = check_output(zk_shell, stderr=STDOUT)
         except CalledProcessError:
             log.error('Error running the zookeeper shell to list path %s' % path)
             raise
 
         # The last line is like '[item1, item2, item3]'
-        return [entry.strip() for entry in output.splitlines()[-1].strip('[]').split(',')]
+        last_line = output.splitlines()[-1]
+        if last_line.find('Node does not exist') != -1:
+            return []
+        else:
+            return [entry.strip() for entry in last_line.strip('[]').split(',')]
 
     def build_config(self):
         """Build the config as a Plugins object and return.
