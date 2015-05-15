@@ -1,6 +1,8 @@
 import collections
 import copy
 import logging
+import time
+import random
 
 import monascaclient.client
 import monasca_agent.common.keystone as keystone
@@ -8,14 +10,16 @@ import monasca_agent.common.keystone as keystone
 log = logging.getLogger(__name__)
 
 
-class MonAPI(object):
+class MonascaAPI(object):
 
-    """Sends measurements to MonAPI
+    """Sends measurements to MonascaAPI
         Any errors should raise an exception so the transaction calling
         this is not committed
     """
 
-    LOG_INTERVAL = 10
+    LOG_INTERVAL = 10  # messages
+    MIN_BACKOFF = 10   # seconds
+    MAX_BACKOFF = 60   # seconds
 
     def __init__(self, config):
         """
@@ -27,6 +31,7 @@ class MonAPI(object):
         self.keystone = keystone.Keystone(config)
         self.mon_client = None
         self._failure_reason = None
+        self._resume_time = None
         self.max_buffer_size = int(config['max_buffer_size'])
         self.backlog_send_rate = int(config['backlog_send_rate'])
         self.message_queue = collections.deque(maxlen=self.max_buffer_size)
@@ -127,19 +132,30 @@ class MonAPI(object):
         return None
 
     def _send_message(self, **kwargs):
+        if self._resume_time:
+            if time.time() > self._resume_time:
+                self._resume_time = None
+                log.debug("Getting new token...")
+                # Get a new keystone client and token
+                if self.keystone.refresh_token():
+                    self.mon_client.replace_token(self.keystone.get_token())
+            else:
+                # Return without posting so the monasca client doesn't keep requesting new tokens
+                return False
         try:
             self.mon_client.metrics.create(**kwargs)
             return True
-        except monascaclient.exc.HTTPException as he:
-            if he.code == 401:
-                log.info("Invalid token detected. Getting a new token...")
-                self._failure_reason = 'Invalid token detected. Getting a new token from Keystone'
-                # Get a new keystone client and token
-                self.mon_client.replace_token(self.keystone.refresh_token())
+        except monascaclient.exc.HTTPException as ex:
+            if ex.code == 401:
+                # monasca client should already have retried once with a new token before returning this exception
+                self._failure_reason = 'Invalid token detected. Waiting to get new token from Keystone'
+                wait_time = random.randint(MonascaAPI.MIN_BACKOFF, MonascaAPI.MAX_BACKOFF + 1)
+                self._resume_time = time.time() + wait_time
+                log.error("Invalid token detected. Waiting %d seconds before getting new token.", wait_time)
             else:
                 log.debug("Error sending message to monasca-api. Error is {0}."
-                          .format(str(he.message)))
-                self._failure_reason = 'Error sending message to the Monasca API: {0}'.format(str(he.message))
+                          .format(str(ex.message)))
+                self._failure_reason = 'Error sending message to the Monasca API: {0}'.format(str(ex.message))
         except Exception as ex:
             log.debug("Error sending message to Monasca API. Error is {0}."
                       .format(str(ex.message)))
@@ -150,8 +166,8 @@ class MonAPI(object):
     def _queue_message(self, msg, reason):
         self.message_queue.append(msg)
         queue_size = len(self.message_queue)
-        if queue_size is 1 or queue_size % MonAPI.LOG_INTERVAL == 0:
+        if queue_size is 1 or queue_size % MonascaAPI.LOG_INTERVAL == 0:
             log.warn("{0}. Queuing the messages to send later...".format(reason))
             log.info("Current agent queue size: {0} of {1}.".format(len(self.message_queue),
                                                                     self.max_buffer_size))
-            log.info("A message will be logged for every {0} messages queued.".format(MonAPI.LOG_INTERVAL))
+            log.info("A message will be logged for every {0} messages queued.".format(MonascaAPI.LOG_INTERVAL))
