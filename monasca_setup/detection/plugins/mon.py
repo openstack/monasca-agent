@@ -5,6 +5,7 @@
 """
 
 import logging
+import yaml
 
 import monasca_setup.agent_config
 import monasca_setup.detection
@@ -20,15 +21,25 @@ class MonAPI(monasca_setup.detection.Plugin):
         monasca_api = monasca_setup.detection.find_process_cmdline('monasca-api')
         if monasca_api is not None:
             # monasca-api can show up in urls and be an arg to this setup program, check port also
+            # Find the right port from the config, this is specific to the Java version
+            try:
+                with open('/etc/monasca/api-config.yml', 'r') as config:
+                    self.api_config = yaml.load(config.read())
+            except Exception:
+                log.exception('Failed parsing /etc/monasca/api-config.yml')
+                self.available = False
+                return
+            api_port = self.api_config['server']['applicationConnectors'][0]['port']
             for conn in monasca_api.connections('inet'):
-                if conn.laddr[1] == 8080:
+                if conn.laddr[1] == api_port:
                     self.available = True
                     return
 
     def build_config(self):
         """Build the config as a Plugins object and return."""
         log.info("\tEnabling the Monasca api healthcheck")
-        return dropwizard_health_check('monitoring', 'api', 'http://localhost:8081/healthcheck')
+        admin_port = self.api_config['server']['adminConnectors'][0]['port']
+        return dropwizard_health_check('monitoring', 'api', 'http://localhost:{0}/healthcheck'.format(admin_port))
 
         # todo
         # log.info("\tEnabling the mon api metric collection")
