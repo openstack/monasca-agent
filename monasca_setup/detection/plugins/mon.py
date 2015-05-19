@@ -8,38 +8,13 @@ import logging
 
 import monasca_setup.agent_config
 import monasca_setup.detection
+from monasca_setup.detection import find_process_cmdline, watch_process
 
 log = logging.getLogger(__name__)
 
 
-class MonPersister(monasca_setup.detection.Plugin):
-    """Detect mon_persister and setup monitoring.
-    """
-
-    def _detect(self):
-        """Run detection, set self.available True if the service is detected.
-        """
-        if monasca_setup.detection.find_process_cmdline('mon-persister') is not None:
-            self.available = True
-
-    def build_config(self):
-        """Build the config as a Plugins object and return.
-        """
-        log.info("\tEnabling the mon persister healthcheck")
-        return dropwizard_health_check('mon-persister', 'http://localhost:8091/healthcheck')
-
-        # todo
-        # log.info("\tEnabling the mon persister metric collection")
-        # http://localhost:8091/metrics
-
-    def dependencies_installed(self):
-        return True
-
-
 class MonAPI(monasca_setup.detection.Plugin):
-    """Detect mon_api and setup monitoring.
-    """
-
+    """Detect mon_api and setup monitoring."""
     def _detect(self):
         """Run detection, set self.available True if the service is detected."""
         monasca_api = monasca_setup.detection.find_process_cmdline('monasca-api')
@@ -51,10 +26,9 @@ class MonAPI(monasca_setup.detection.Plugin):
                     return
 
     def build_config(self):
-        """Build the config as a Plugins object and return.
-        """
-        log.info("\tEnabling the mon api healthcheck")
-        return dropwizard_health_check('mon-api', 'http://localhost:8081/healthcheck')
+        """Build the config as a Plugins object and return."""
+        log.info("\tEnabling the Monasca api healthcheck")
+        return dropwizard_health_check('monitoring', 'api', 'http://localhost:8081/healthcheck')
 
         # todo
         # log.info("\tEnabling the mon api metric collection")
@@ -64,38 +38,69 @@ class MonAPI(monasca_setup.detection.Plugin):
         return True
 
 
-class MonThresh(monasca_setup.detection.Plugin):
-
-    """Detect the running mon-thresh and monitor.
-
-    """
-
+class MonNotification(monasca_setup.detection.Plugin):
+    """Detect the Monsaca notification engine and setup some simple checks."""
     def _detect(self):
-        """Run detection, set self.available True if the service is detected.
-
-        """
-        if monasca_setup.detection.find_process_cmdline('mon-thresh') is not None:
+        """Run detection, set self.available True if the service is detected."""
+        if find_process_cmdline('monasca-notification') is not None:
             self.available = True
 
     def build_config(self):
-        """Build the config as a Plugins object and return.
-
-        """
-        log.info("\tWatching the mon-thresh process.")
-        return monasca_setup.detection.watch_process(['mon-thresh'])
+        """Build the config as a Plugins object and return."""
+        log.info("\tEnabling the Monasca Notification healthcheck")
+        return watch_process(['monasca-notification'], 'monitoring', 'notification', exact_match=False)
 
     def dependencies_installed(self):
         return True
 
 
-def dropwizard_health_check(name, url):
-    """Setup a dropwizard heathcheck to be watched by the http_check plugin.
+class MonPersister(monasca_setup.detection.Plugin):
+    """Detect mon_persister and setup monitoring."""
+    def _detect(self):
+        """Run detection, set self.available True if the service is detected."""
+        if find_process_cmdline('monasca-persister') is not None:
+            self.available = True
 
-    """
+    def build_config(self):
+        """Build the config as a Plugins object and return."""
+        log.info("\tEnabling the Monasca persister healthcheck")
+        return dropwizard_health_check('monitoring', 'persister', 'http://localhost:8091/healthcheck')
+
+        # todo
+        # log.info("\tEnabling the mon persister metric collection")
+        # http://localhost:8091/metrics
+
+    def dependencies_installed(self):
+        return True
+
+
+class MonThresh(monasca_setup.detection.Plugin):
+    """Detect the running mon-thresh and monitor."""
+    def _detect(self):
+        """Run detection, set self.available True if the service is detected."""
+        if find_process_cmdline('backtype.storm.daemon') is not None:
+            self.available = True
+
+    def build_config(self):
+        """Build the config as a Plugins object and return."""
+        log.info("\tWatching the mon-thresh process.")
+        config = monasca_setup.agent_config.Plugins()
+        for process in ['backtype.storm.daemon.nimbus', 'backtype.storm.daemon.supervisor', 'backtype.storm.daemon.worker']:
+            if find_process_cmdline(process) is not None:
+                config.merge(watch_process([process], 'monitoring', 'storm', exact_match=False))
+        return config
+
+    def dependencies_installed(self):
+        return True
+
+
+def dropwizard_health_check(service, component, url):
+    """Setup a dropwizard heathcheck to be watched by the http_check plugin."""
     config = monasca_setup.agent_config.Plugins()
     config['http_check'] = {'init_config': None,
-                            'instances': [{'name': name,
+                            'instances': [{'name': "{0}-{1} healthcheck".format(service, component),
                                            'url': url,
                                            'timeout': 1,
-                                           'include_content': False}]}
+                                           'include_content': False,
+                                           'dimensions': {'service': service, 'component': component}}]}
     return config
