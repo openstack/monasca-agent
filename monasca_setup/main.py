@@ -168,8 +168,7 @@ def main(argv=None):
             log.warn('Failed detection of plugin {0}.'.format(detect.name) +
                      "\n\tPossible causes: Service not found or missing arguments.")
 
-
-        # todo add option to install dependencies
+    # todo add option to install dependencies
 
     # Write out the plugin config
     changes = False

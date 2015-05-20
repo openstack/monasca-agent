@@ -14,6 +14,8 @@ instances:
 #    - name: ssh to host1
 #      host_name:     host1.domain.net
 #      alive_test:    ssh
+#      dimensions:
+#         dim1: value1
 
 #    - name: ping host2
 #      host_name:     host2.domain.net

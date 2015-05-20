@@ -85,7 +85,7 @@ See [Creating a Custom Detection Plugin](#creating-a-custom-detection-plugin) fo
 
 ### Disabling Built-In Check Plugins
 
-`monasca-setup` is run to detect local or remote manageable entities and generate `yaml` configuration files to enable the required check plugins. The setup script runs Python detection plugins to accomplish this. By default it will run all of the available detection plugins. To avoid running detection plugins first create the primary configuration by running monasca-setup with the '--system-only' argument. You can then run with the `--detection_plugins` argument followed by a space separated list of plugins you would like to run.
+`monasca-setup` is run to detect local or remote manageable entities and generate `yaml` configuration files to enable the required check plugins. The setup script runs Python detection plugins to accomplish this. By default it will run all of the available detection plugins. To avoid running detection plugins first create the primary configuration by running monasca-setup with the '--system_only' argument. You can then run with the `--detection_plugins` argument followed by a space separated list of plugins you would like to run.
 
 ## Customization Best Practices
 

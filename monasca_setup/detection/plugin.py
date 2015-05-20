@@ -9,11 +9,7 @@ log = logging.getLogger(__name__)
 
 
 class Plugin(object):
-
-    """Abstract class implemented by the monasca-agent plugin detection classes.
-
-    """
-    # todo these should include dependency detection
+    """Abstract class implemented by the monasca-agent plugin detection classes. """
 
     def __init__(self, template_dir, overwrite=True, args=None):
         self.available = False

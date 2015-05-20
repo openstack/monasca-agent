@@ -6,7 +6,7 @@ import monasca_setup.detection
 log = logging.getLogger(__name__)
 
 
-class HttpCheck(monasca_setup.detection.Plugin):
+class HttpCheck(monasca_setup.detection.ArgsPlugin):
     """ Setup an http_check according to the passed in args.
         Despite being a detection plugin this plugin does no detection and will be a noop without arguments.
         Expects space seperated arguments, the required argument is url. Optional parameters include:
@@ -16,10 +16,7 @@ class HttpCheck(monasca_setup.detection.Plugin):
     def _detect(self):
         """Run detection, set self.available True if the service is detected.
         """
-        if self.args is not None and 'url' in self.args:
-            self.available = True
-        else:
-            self.available = False
+        self.available = self._check_required_args(['url'])
 
     def build_config(self):
         """Build the config as a Plugins object and return.
@@ -27,9 +24,9 @@ class HttpCheck(monasca_setup.detection.Plugin):
         config = monasca_setup.agent_config.Plugins()
         log.info("\tEnabling the http_check plugin for {url}".format(**self.args))
 
-        # nearly any specified arg will get passed to the config but some I overwrite and args that are a dictionary
-        # themselves are not likely parsed correctly
-        instance = self.args.copy()
+        # No support for setting headers at this time
+        instance = self._build_instance(['url', 'timeout', 'username', 'password', 'match_pattern',
+                                         'disable_ssl_validation'])
         instance['name'] = self.args['url']
         instance['collect_response_time'] = True
 
@@ -37,5 +34,3 @@ class HttpCheck(monasca_setup.detection.Plugin):
 
         return config
 
-    def dependencies_installed(self):
-        return True
