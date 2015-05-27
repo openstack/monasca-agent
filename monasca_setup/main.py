@@ -80,9 +80,10 @@ def main(argv=None):
                         default=False)
     parser.add_argument('--config_dir', help="Configuration directory", default='/etc/monasca/agent')
     parser.add_argument('--log_dir', help="monasca-agent log directory", default='/var/log/monasca/agent')
-    parser.add_argument('--log_level', help="monasca-agent logging level (ERROR, WARNING, INFO, DEBUG)", required=False, default='INFO')
-    parser.add_argument(
-        '--template_dir', help="Alternative template directory", default=os.path.join(PREFIX_DIR, 'share/monasca/agent'))
+    parser.add_argument('--log_level', help="monasca-agent logging level (ERROR, WARNING, INFO, DEBUG)", required=False,
+                        default='WARN')
+    parser.add_argument( '--template_dir', help="Alternative template directory",
+                         default=os.path.join(PREFIX_DIR, 'share/monasca/agent'))
     parser.add_argument('--overwrite',
                         help="Overwrite existing plugin configuration. " +
                              "The default is to merge. agent.yaml is always overwritten.",
