@@ -57,6 +57,8 @@ class MySQL(monasca_setup.detection.Plugin):
                 try:
                     with open(mysql_conf, "r") as confFile:
                         for row in confFile:
+                            # If there are any spaces in confFile, remove them
+                            row = row.replace(" ", "")
                             if client_section:
                                 if "[" in row:
                                     break
