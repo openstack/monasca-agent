@@ -1,0 +1,5 @@
+init_config:
+
+instances:
+    # Run swift checks once for this definition
+    - name: swift_stats
