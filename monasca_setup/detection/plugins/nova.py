@@ -21,4 +21,11 @@ class Nova(monasca_setup.detection.ServicePlugin):
             'search_pattern': '.*version=2.*'
         }
 
+        # Skip the http_check if disable_http_check is set
+        if args is not None:
+            args_dict = dict([a.split('=') for a in args.split()])
+            if args_dict.get('disable_http_check', default=False):
+                service_params['service_api_url'] = None
+                service_params['self.search_pattern'] = None
+
         super(Nova, self).__init__(service_params)
