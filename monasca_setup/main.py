@@ -67,7 +67,7 @@ def main(argv=None):
                                               "metrics (cpu, disk, load, memory, network).",
                         action="store_true", default=False)
     parser.add_argument('-d', '--detection_plugins', nargs='*',
-                        help="Skip base config and service setup and only configure the this space separated list. " +
+                        help="Skip base config and service setup and only configure this space separated list. " +
                              "This assumes the base config has already run.")
     parser.add_argument('-a', '--detection_args', help="A string of arguments that will be passed to detection " +
                                                        "plugins. Only certain detection plugins use arguments.")

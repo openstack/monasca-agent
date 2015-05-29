@@ -237,7 +237,7 @@ import monasca_setup.detection
 
 
 class Example(monasca_setup.detection.Plugin):
-    """Configures example check plugin."""
+    """Configures example detection plugin."""
     def _detect(self):
         """Run detection, set self.available True if the service is detected."""
         self.available = True

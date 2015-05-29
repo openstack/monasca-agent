@@ -170,7 +170,7 @@ The following plugins are delivered via setup as part of the standard plugin che
 
 ## Dot File Configuration
 
-Dot files provide an added level of configuration to to component plugins
+Dot files provide an added level of configuration to the component plugins
 
 > **apache**
 ```
