@@ -92,7 +92,7 @@ class LibvirtInspector(virt_inspector.Inspector):
                    "<name=%(name)s, id=%(id)s>: "
                    "[Error Code %(error_code)s] "
                    "%(ex)s") % {'name': instance_name,
-                                'id': instance.ID,
+                                'id': instance.ID(),
                                 'error_code': error_code,
                                 'ex': ex}
             raise virt_inspector.InstanceNotFoundException(msg)
@@ -111,7 +111,7 @@ class LibvirtInspector(virt_inspector.Inspector):
             msg = ('Failed to inspect data of instance '
                    '<name=%(name)s, id=%(id)s>, '
                    'domain state is SHUTOFF.') % {
-                'name': instance_name, 'id': instance.id}
+                'name': instance_name, 'id': instance.ID()}
             raise virt_inspector.InstanceShutOffException(msg)
 
         return domain
