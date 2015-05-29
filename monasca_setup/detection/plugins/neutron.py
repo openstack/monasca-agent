@@ -21,3 +21,12 @@ class Neutron(monasca_setup.detection.ServicePlugin):
         }
 
         super(Neutron, self).__init__(service_params)
+
+    def build_config(self):
+        """Build the config as a Plugins object and return."""
+        # Skip the http check if neutron-server is not on this box
+        if 'neutron-server' not in self.found_processes:
+            self.service_api_url = None
+            self.search_pattern = None
+
+        return monasca_setup.detection.ServicePlugin.build_config(self)
