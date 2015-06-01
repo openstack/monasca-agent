@@ -34,7 +34,7 @@ class Network(checks.AgentCheck):
         nics = psutil.net_io_counters(pernic=True)
         count = 0
         for nic_name in nics.keys():
-            if nic_name not in excluded_ifaces or exclude_iface_re and not exclude_iface_re.match(nic_name):
+            if self._is_nic_monitored(nic_name, excluded_ifaces, exclude_iface_re):
                 nic = nics[nic_name]
                 self.rate('net.in_bytes_sec', nic.bytes_recv, device_name=nic_name, dimensions=dimensions)
                 self.rate('net.out_bytes_sec', nic.bytes_sent, device_name=nic_name, dimensions=dimensions)
@@ -46,3 +46,10 @@ class Network(checks.AgentCheck):
                 self.rate('net.out_packets_dropped_sec', nic.dropout, device_name=nic_name, dimensions=dimensions)
 
                 log.debug('Collected 8 network metrics for device {0}'.format(nic_name))
+
+    def _is_nic_monitored(self, nic_name, excluded_ifaces, exclude_iface_re):
+        if nic_name in excluded_ifaces:
+            return False
+        if exclude_iface_re and exclude_iface_re.match(nic_name):
+            return False
+        return True
