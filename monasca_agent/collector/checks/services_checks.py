@@ -7,7 +7,7 @@ import monasca_agent.collector.checks
 import monasca_agent.collector.checks.libs.thread_pool
 
 
-TIMEOUT = 180
+DEFAULT_TIMEOUT = 180
 DEFAULT_SIZE_POOL = 6
 MAX_LOOP_ITERATIONS = 1000
 FAILURE = "FAILURE"
@@ -58,6 +58,7 @@ class ServicesCheck(monasca_agent.collector.checks.AgentCheck):
         self.log.info("Starting Thread Pool")
         default_size = min(self.instance_count(), DEFAULT_SIZE_POOL)
         self.pool_size = int(self.init_config.get('threads_count', default_size))
+        self.timeout = int(self.agent_config.get('timeout', DEFAULT_TIMEOUT))
 
         self.pool = monasca_agent.collector.checks.libs.thread_pool.Pool(self.pool_size)
 
@@ -97,14 +98,17 @@ class ServicesCheck(monasca_agent.collector.checks.AgentCheck):
             self.jobs_status[name] = time.time()
             self.pool.apply_async(self._process, args=(instance,))
         else:
-            self.log.error("Instance: %s skipped because it's already running." % name)
+            self.log.info("Instance: %s skipped because it's already running." % name)
 
     def _process(self, instance):
         name = instance.get('name', None)
 
         try:
-            status, msg = self._check(instance)
-
+            return_value = self._check(instance)
+            if not return_value:
+                del self.jobs_status[name]
+                return
+            status, msg = return_value
             result = (status, msg, name, instance)
             # We put the results in the result queue
             self.resultsq.put(result)
@@ -173,6 +177,6 @@ class ServicesCheck(monasca_agent.collector.checks.AgentCheck):
         now = time.time()
         for name in self.jobs_status.keys():
             start_time = self.jobs_status[name]
-            if now - start_time > TIMEOUT:
+            if now - start_time > self.timeout:
                 self.log.critical("Restarting Pool. One check is stuck.")
                 self.restart_pool()
