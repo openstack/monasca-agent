@@ -33,7 +33,7 @@ import monasca_agent.common.config as cfg
 import monasca_agent.common.check_status as check_status
 import monasca_agent.common.metrics as metrics
 import monasca_agent.common.util as util
-import monasca_agent.forwarder.api.mon as mon
+import monasca_agent.forwarder.api.monasca_api as mon
 import monasca_agent.forwarder.transaction as transaction
 
 log = logging.getLogger('forwarder')
@@ -105,7 +105,7 @@ class Forwarder(tornado.web.Application):
         self.flush_interval = (int(agent_config.get('check_freq'))/2) * 1000
         self._metrics = {}
         transaction.MetricTransaction.set_application(self)
-        transaction.MetricTransaction.set_endpoints(mon.MonAPI(agent_config))
+        transaction.MetricTransaction.set_endpoints(mon.MonascaAPI(agent_config))
         self._tr_manager = transaction.TransactionManager(MAX_WAIT_FOR_REPLAY,
                                                           MAX_QUEUE_SIZE,
                                                           THROTTLING_DELAY,
