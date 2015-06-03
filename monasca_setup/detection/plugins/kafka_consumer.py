@@ -32,31 +32,28 @@ class Kafka(Plugin):
             self.available = True
 
     def _detect_consumers(self):
-        """ Using zookeeper and a kafka connection find the consumers, associated topics and partitions.
-        """
+        """Using zookeeper and a kafka connection find the consumers and associated topics. """
         try:
             # The kafka api provides no way to discover existing consumer groups so a query to
             # zookeeper must be made. This is unfortunately fragile as kafka is moving away from
             # zookeeper. Tested with kafka 0.8.1.1
-            from kafka.client import KafkaClient
             kafka_connect_str = self._find_kafka_connection()
-            kafka = KafkaClient(kafka_connect_str)
 
             # {'consumer_group_name': { 'topic1': [ 0, 1, 2] # partitions }}
             consumers = {}
             # Find consumers and topics
             for consumer in self._ls_zookeeper('/consumers'):
-                consumers[consumer] = dict((topic, kafka.topic_partitions[topic])
-                                       for topic in self._ls_zookeeper('/consumers/%s/offsets' % consumer))
+                consumers[consumer] = dict((topic, [])
+                                           for topic in self._ls_zookeeper('/consumers/%s/offsets' % consumer))
 
             log.info("\tInstalling kafka_consumer plugin.")
             self.config['kafka_consumer'] = {'init_config': None,
                                              'instances': [{'name': kafka_connect_str,
                                                             'kafka_connect_str': kafka_connect_str,
-                                                            'full_output': True,
+                                                            'per_partition': False,
                                                             'consumer_groups': dict(consumers)}]}
         except Exception:
-            log.error('Error Detecting Kafka consumers/topics/partitions')
+            log.error('Error Detecting Kafka consumers/topics')
 
     def _find_kafka_connection(self):
         listen_ip = find_addr_listening_on_port(self.port)
