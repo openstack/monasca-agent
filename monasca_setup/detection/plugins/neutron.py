@@ -15,7 +15,8 @@ class Neutron(monasca_setup.detection.ServicePlugin):
             'process_names': ['neutron-server', 'neutron-openvswitch-agent',
                               'neutron-rootwrap', 'neutron-dhcp-agent',
                               'neutron-vpn-agent', 'neutron-metadata-agent',
-                              'neutron-metering-agent', 'neutron-ns-metadata-proxy'],
+                              'neutron-metering-agent', 'neutron-l3-agent',
+                              'neutron-ns-metadata-proxy'],
             'service_api_url': 'http://localhost:9696',
             'search_pattern': '.*v2.0.*'
         }
