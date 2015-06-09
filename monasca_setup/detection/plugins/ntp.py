@@ -24,9 +24,9 @@ class Ntp(monasca_setup.detection.Plugin):
         config = monasca_setup.agent_config.Plugins()
         log.info("\tEnabling the ntp plugin")
         if os.path.exists('/etc/ntp.conf'):
-            server = re.compile('server (.*)')
             with open('/etc/ntp.conf', 'r') as ntp_config:
-                match = server.search(ntp_config.read())
+                ntp_conf = ntp_config.read()
+            match = re.search('^server (.*?)( #|$)', ntp_conf, re.MULTILINE)
             if match is None:
                 ntp_server = 'pool.ntp.org'
             else:

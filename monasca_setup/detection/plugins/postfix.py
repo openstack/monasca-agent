@@ -23,8 +23,9 @@ class Postfix(monasca_setup.detection.Plugin):
                 log.info("Postfix found but the required sudo access is not configured.\n\t" +
                          "Refer to plugin documentation for more detail")
                 return False
-
-        self.available = True
+            self.available = True
+        else:
+            self.available = False
 
     def build_config(self):
         """Build the config as a Plugins object and return.
