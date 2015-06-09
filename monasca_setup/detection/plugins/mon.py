@@ -39,11 +39,34 @@ class MonAPI(monasca_setup.detection.Plugin):
         """Build the config as a Plugins object and return."""
         log.info("\tEnabling the Monasca api healthcheck")
         admin_port = self.api_config['server']['adminConnectors'][0]['port']
-        return dropwizard_health_check('monitoring', 'api', 'http://localhost:{0}/healthcheck'.format(admin_port))
+        config = monasca_setup.agent_config.Plugins()
+        config.merge(dropwizard_health_check('monitoring', 'api', 'http://localhost:8081/healthcheck'))
 
-        # todo
-        # log.info("\tEnabling the mon api metric collection")
-        # http://localhost:8081/metrics
+        log.info("\tEnabling the Monasca api metrics")
+        whitelist = [
+            {
+                "name": "jvm.memory.total.max",
+                "path": "gauges/jvm.memory.total.max/value",
+                "type": "gauge"},
+            {
+                "name": "jvm.memory.total.used",
+                "path": "gauges/jvm.memory.total.used/value",
+                "type": "gauge"},
+            {
+                "name": "metrics.published",
+                "path": "meters/monasca.api.app.MetricService.metrics.published/count",
+                "type": "rate"},
+            {
+                "name": "raw-sql.time.avg",
+                "path": "timers/org.skife.jdbi.v2.DBI.raw-sql/mean",
+                "type": "gauge"},
+            {
+                "name": "raw-sql.time.max",
+                "path": "timers/org.skife.jdbi.v2.DBI.raw-sql/max",
+                "type": "gauge"},
+        ]
+        config.merge(dropwizard_metrics('monitoring', 'api', 'http://localhost:8081/metrics', whitelist))
+        return config
 
     def dependencies_installed(self):
         return True
@@ -75,11 +98,46 @@ class MonPersister(monasca_setup.detection.Plugin):
     def build_config(self):
         """Build the config as a Plugins object and return."""
         log.info("\tEnabling the Monasca persister healthcheck")
-        return dropwizard_health_check('monitoring', 'persister', 'http://localhost:8091/healthcheck')
+        config = monasca_setup.agent_config.Plugins()
+        config.merge(dropwizard_health_check('monitoring', 'persister', 'http://localhost:8091/healthcheck'))
 
-        # todo
-        # log.info("\tEnabling the mon persister metric collection")
-        # http://localhost:8091/metrics
+        log.info("\tEnabling the Monasca persister metrics")
+        whitelist = [
+            {
+                "name": "jvm.memory.total.max",
+                "path": "gauges/jvm.memory.total.max/value",
+                "type": "gauge"},
+            {
+                "name": "jvm.memory.total.used",
+                "path": "gauges/jvm.memory.total.used/value",
+                "type": "gauge"},
+            {
+                "name": "alarm-state-transitions-added-to-batch-counter[0]",
+                "path": "counters/monasca.persister.pipeline.event.AlarmStateTransitionHandler[alarm-state-transition-0].alarm-state-transitions-added-to-batch-counter/count",
+                "type": "rate"},
+            {
+                "name": "alarm-state-transitions-added-to-batch-counter[1]",
+                "path": "counters/monasca.persister.pipeline.event.AlarmStateTransitionHandler[alarm-state-transition-1].alarm-state-transitions-added-to-batch-counter/count",
+                "type": "rate"},
+            {
+                "name": "metrics-added-to-batch-counter[0]",
+                "path": "counters/monasca.persister.pipeline.event.MetricHandler[metric-0].metrics-added-to-batch-counter/count",
+                "type": "rate"},
+            {
+                "name": "metrics-added-to-batch-counter[1]",
+                "path": "counters/monasca.persister.pipeline.event.MetricHandler[metric-1].metrics-added-to-batch-counter/count",
+                "type": "rate"},
+            {
+                "name": "metrics-added-to-batch-counter[2]",
+                "path": "counters/monasca.persister.pipeline.event.MetricHandler[metric-2].metrics-added-to-batch-counter/count",
+                "type": "rate"},
+            {
+                "name": "metrics-added-to-batch-counter[3]",
+                "path": "counters/monasca.persister.pipeline.event.MetricHandler[metric-3].metrics-added-to-batch-counter/count",
+                "type": "rate"}
+        ]
+        config.merge(dropwizard_metrics('monitoring', 'persister', 'http://localhost:8091/metrics', whitelist))
+        return config
 
     def dependencies_installed(self):
         return True
@@ -114,4 +172,16 @@ def dropwizard_health_check(service, component, url):
                                            'timeout': 1,
                                            'include_content': False,
                                            'dimensions': {'service': service, 'component': component}}]}
+    return config
+
+
+def dropwizard_metrics(service, component, url, whitelist):
+    """Setup a dropwizard metrics check"""
+    config = monasca_setup.agent_config.Plugins()
+    config['http_metrics'] = {'init_config': None,
+                              'instances': [{'name': "{0}-{1} metrics".format(service, component),
+                                             'url': url,
+                                             'timeout': 1,
+                                             'dimensions': {'service': service, 'component': component},
+                                             'whitelist': whitelist}]}
     return config
