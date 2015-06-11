@@ -18,6 +18,7 @@ import yaml
 import monasca_agent.common.aggregator as aggregator
 import monasca_agent.common.check_status as check_status
 import monasca_agent.common.exceptions as exceptions
+import monasca_agent.common.metrics as metrics_pkg
 import monasca_agent.common.util as util
 
 
@@ -280,9 +281,10 @@ class AgentCheck(util.Dimensions):
         self.hostname = util.get_hostname()
         self.log = logging.getLogger('%s.%s' % (__name__, name))
 
-        self.aggregator = aggregator.MetricsAggregator(self.hostname,
-                                                       recent_point_threshold=agent_config.get('recent_point_threshold',
-                                                                                               None))
+        threshold = agent_config.get('recent_point_threshold', None)
+        self.aggregator = (
+            aggregator.MetricsAggregator(self.hostname,
+                                         recent_point_threshold=threshold))
 
         self.events = []
         self.instances = instances or []
@@ -307,14 +309,15 @@ class AgentCheck(util.Dimensions):
         :param timestamp: (optional) The timestamp for this metric value
         :param value_meta: Additional metadata about this value
         """
-        self.aggregator.gauge(metric,
-                              value,
-                              dimensions,
-                              delegated_tenant,
-                              hostname,
-                              device_name,
-                              timestamp,
-                              value_meta)
+        self.aggregator.submit_metric(metric,
+                                      value,
+                                      metrics_pkg.Gauge,
+                                      dimensions,
+                                      delegated_tenant,
+                                      hostname,
+                                      device_name,
+                                      value_meta,
+                                      timestamp)
 
     def increment(self, metric, value=1, dimensions=None, delegated_tenant=None,
                   hostname=None, device_name=None, value_meta=None):
@@ -328,15 +331,16 @@ class AgentCheck(util.Dimensions):
         :param device_name: (optional) The device name for this metric
         :param value_meta: Additional metadata about this value
         """
-        self.aggregator.increment(metric,
-                                  value,
-                                  dimensions,
-                                  delegated_tenant,
-                                  hostname,
-                                  device_name,
-                                  value_meta)
+        self.aggregator.submit_metric(metric,
+                                      value,
+                                      metrics_pkg.Counter,
+                                      dimensions,
+                                      delegated_tenant,
+                                      hostname,
+                                      device_name,
+                                      value_meta)
 
-    def decrement(self, metric, value=-1, dimensions=None, delegated_tenant=None,
+    def decrement(self, metric, value=1, dimensions=None, delegated_tenant=None,
                   hostname=None, device_name=None, value_meta=None):
         """Decrement a counter with optional dimensions, hostname and device name.
 
@@ -348,13 +352,15 @@ class AgentCheck(util.Dimensions):
         :param device_name: (optional) The device name for this metric
         :param value_meta: Additional metadata about this value
         """
-        self.aggregator.decrement(metric,
-                                  value,
-                                  dimensions,
-                                  delegated_tenant,
-                                  hostname,
-                                  device_name,
-                                  value_meta)
+        value *= -1
+        self.aggregator.submit_metric(metric,
+                                      value,
+                                      metrics_pkg.Counter,
+                                      dimensions,
+                                      delegated_tenant,
+                                      hostname,
+                                      device_name,
+                                      value_meta)
 
     def rate(self, metric, value, dimensions=None, delegated_tenant=None,
              hostname=None, device_name=None, value_meta=None):
@@ -371,13 +377,14 @@ class AgentCheck(util.Dimensions):
         :param device_name: (optional) The device name for this metric
         :param value_meta: Additional metadata about this value
         """
-        self.aggregator.rate(metric,
-                             value,
-                             dimensions,
-                             delegated_tenant,
-                             hostname,
-                             device_name,
-                             value_meta)
+        self.aggregator.submit_metric(metric,
+                                      value,
+                                      metrics_pkg.Rate,
+                                      dimensions,
+                                      delegated_tenant,
+                                      hostname,
+                                      device_name,
+                                      value_meta)
 
     def histogram(self, metric, value, dimensions=None, delegated_tenant=None,
                   hostname=None, device_name=None, value_meta=None):
@@ -391,13 +398,14 @@ class AgentCheck(util.Dimensions):
         :param device_name: (optional) The device name for this metric
         :param value_meta: Additional metadata about this value
         """
-        self.aggregator.histogram(metric,
-                                  value,
-                                  dimensions,
-                                  delegated_tenant,
-                                  hostname,
-                                  device_name,
-                                  value_meta)
+        self.aggregator.submit_metric(metric,
+                                      value,
+                                      metrics_pkg.Histogram,
+                                      dimensions,
+                                      delegated_tenant,
+                                      hostname,
+                                      device_name,
+                                      value_meta)
 
     def set(self, metric, value, dimensions=None, delegated_tenant=None,
             hostname=None, device_name=None, value_meta=None):
@@ -411,13 +419,14 @@ class AgentCheck(util.Dimensions):
         :param device_name: (optional) The device name for this metric
         :param value_meta: Additional metadata about this value
         """
-        self.aggregator.set(metric,
-                            value,
-                            dimensions,
-                            delegated_tenant,
-                            hostname,
-                            device_name,
-                            value_meta)
+        self.aggregator.submit_metric(metric,
+                                      value,
+                                      metrics_pkg.Set,
+                                      dimensions,
+                                      delegated_tenant,
+                                      hostname,
+                                      device_name,
+                                      value_meta)
 
     def event(self, event):
         """Save an event.

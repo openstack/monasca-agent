@@ -35,19 +35,6 @@ class MetricsAggregator(object):
         self.num_discarded_old_points = 0
 
         self.metrics = {}
-        self.metric_type_to_class = {
-            'g': metrics_pkg.Gauge,
-            'c': metrics_pkg.Counter,
-            'h': metrics_pkg.Histogram,
-            'ms': metrics_pkg.Histogram,
-            's': metrics_pkg.Set,
-            'r': metrics_pkg.Rate,
-        }
-
-    def decrement(self, name, value=-1, dimensions=None, delegated_tenant=None,
-                  hostname=None, device_name=None, value_meta=None):
-        self.submit_metric(name, value, 'c', dimensions, delegated_tenant,
-                           hostname, device_name, value_meta)
 
     def event(
             self,
@@ -139,37 +126,12 @@ class MetricsAggregator(object):
                                        delegated_tenant=delegated_tenant,
                                        value_meta=value_meta)
 
-    def gauge(self, name, value, dimensions=None, delegated_tenant=None,
-              hostname=None, device_name=None, timestamp=None, value_meta=None):
-        self.submit_metric(name, value, 'g', dimensions, delegated_tenant,
-                           hostname, device_name, value_meta, timestamp)
-
-    def histogram(self, name, value, dimensions=None, delegated_tenant=None,
-                  hostname=None, device_name=None, value_meta=None):
-        self.submit_metric(name, value, 'h', dimensions, delegated_tenant,
-                           hostname, device_name, value_meta)
-
-    def increment(self, name, value=1, dimensions=None, delegated_tenant=None,
-                  hostname=None, device_name=None, value_meta=None):
-        self.submit_metric(name, value, 'c', dimensions, delegated_tenant,
-                           hostname, device_name, value_meta)
-
     def packets_per_second(self, interval):
         if interval == 0:
             return 0
         return round(float(self.count) / interval, 2)
 
-    def rate(self, name, value, dimensions=None, delegated_tenant=None,
-             hostname=None, device_name=None, value_meta=None):
-        self.submit_metric(name, value, 'r', dimensions, delegated_tenant,
-                           hostname, device_name, value_meta)
-
-    def set(self, name, value, dimensions=None, delegated_tenant=None,
-            hostname=None, device_name=None, value_meta=None):
-        self.submit_metric(name, value, 's', dimensions, delegated_tenant,
-                           hostname, device_name, value_meta)
-
-    def submit_metric(self, name, value, mtype, dimensions=None,
+    def submit_metric(self, name, value, metric_class, dimensions=None,
                       delegated_tenant=None, hostname=None, device_name=None,
                       value_meta=None, timestamp=None, sample_rate=1):
 
@@ -182,7 +144,6 @@ class MetricsAggregator(object):
                    hostname, device_name)
 
         if context not in self.metrics:
-            metric_class = self.metric_type_to_class[mtype]
             self.metrics[context] = metric_class(self.formatter,
                                                  name,
                                                  dimensions,
