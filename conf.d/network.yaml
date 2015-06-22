@@ -3,9 +3,9 @@ init_config:
 instances:
     # Network check only supports one configured instance
     - name: network_stats
-      excluded_interfaces:
-        - lo
-        - lo0
+      #excluded_interfaces:
+      #  - lo
+      #  - lo0
       # Optionally completely ignore any network interface
       # matching the given regex:
-      #excluded_interface_re: my-network-interface
+      excluded_interface_re: lo.*|vnet.*|tun.*|ovs.*|br.*
