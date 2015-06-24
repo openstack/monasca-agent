@@ -114,7 +114,7 @@ class MetricsAggregator(object):
             (metric, timestamp, value, {"dimensions": {"name1": "value1", "name2": "value2"}, ...})
             dimensions should be a dictionary
         """
-        if hostname:
+        if 'hostname' not in dimensions and hostname:
             dimensions.update({'hostname': hostname})
         if device_name:
             dimensions.update({'device': device_name})
