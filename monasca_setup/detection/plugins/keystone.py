@@ -14,7 +14,7 @@ class Keystone(monasca_setup.detection.ServicePlugin):
             'service_name': 'identity-service',
             'process_names': ['keystone-'],
             'service_api_url': 'http://localhost:35357/v3',
-            'search_pattern': '.*v3.0.*'
+            'search_pattern': '.*v3\..*'
         }
 
         super(Keystone, self).__init__(service_params)
