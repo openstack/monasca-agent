@@ -19,6 +19,7 @@
   - [Host Alive Checks](#host-alive-checks)
   - [Process Checks](#process-checks)
   - [Http Endpoint Checks](#http-endpoint-checks)
+  - [Http Metrics](#http-metrics)
   - [MySQL Checks](#mysql-checks)
   - [ZooKeeper Checks](#zookeeper-checks)
   - [Kafka Checks](#kafka-checks)
@@ -523,7 +524,7 @@ The process checks return the following metrics:
 
 
 ## Http Endpoint Checks
-This section describes the http endpoint check that can be performed by the Agent. Http endpoint checks are checks that perform simple up/down checks on services, such as HTTP/REST APIs. An agent, given a list of URLs can dispatch an http request and report to the API success/failure as a metric.
+This section describes the http endpoint check that can be performed by the Agent. Http endpoint checks are checks that perform simple up/down checks on services, such as HTTP/REST APIs. An agent, given a list of URLs, can dispatch an http request and report to the API success/failure as a metric.
 
  default dimensions:
     url: endpoint
@@ -556,6 +557,31 @@ The http_status checks return the following metrics:
 | http_status  | url, detail | The status of the http endpoint call (0 = success, 1 = failure)
 | http_response_time  | url | The response time of the http endpoint call
 
+
+## Http Metrics
+This section describes the http metrics check that can be performed by the agent. Http metrics checks are checks that retrieve metrics from any url returning a json formatted response. An agent, given a list of URLs, can dispatch an http request and parse the desired metrics from the json response.
+
+ default dimensions:
+    url: endpoint
+
+ default value_meta
+    error: error_message
+
+Similar to other checks, the configuration is done in YAML (http_metrics.yaml), and consists of two keys: init_config and instances.  The former is not used by http_metrics, while the later contains one or more URLs to check, plus optional parameters like a timeout, username/password, whether or not to also record the response time, and a whitelist of metrics to collect. The whitelist should consist of a name, path, and type for each metric to be collected. The name is what the metric will be called when it is reported. The path is a string of keys separated by '/' where the metric value resides in the json response. The type is how you want the metric to be recorded (gauge, counter, histogram, rate, set). A gauge will store and report the value it find with no modifications. A counter will increment itself by the value it finds. A histogram will store values and return the calculated max, median, average, count, and percentiles. A rate will return the difference between the last two recorded samples divided by the interval between those samples in seconds. A set will record samples and return the number of unique values in the set.
+If the endpoint being checked requires authentication, there are two options. First, a username and password supplied in the instance options will be used by the check for authentication. Alternately, the check can retrieve a keystone token for authentication. Specific keystone information can be provided for each check, otherwise the information from the agent config will be used.
+
+```
+init_config:
+
+instances:
+       url: http://192.168.0.254/metrics
+       timeout: 1
+       collect_response_time: true
+       whitelist:
+              name: jvm.memory.total.max,
+              path: gauges/jvm.memory.total.max/value
+              type: gauge
+```
     
 ## MySQL Checks
 This section describes the mySQL check that can be performed by the Agent.  The mySQL check requires a configuration file called mysql.yaml to be available in the agent conf.d configuration directory.
