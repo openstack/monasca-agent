@@ -978,6 +978,8 @@ In order to fetch data on hosted compute instances, the Libvirt plugin needs to 
 
 The Libvirt plugin uses a cache directory to persist data, which is `/dev/shm` by default.  On non-Linux systems (BSD, Mac OSX), `/dev/shm` may not exist, so `cache_dir` would need to be changed accordingly, either in `monasca_setup/detection/plugins/libvirt.py` prior to running `monasca-setup`, or `/etc/monasca/agent/conf.d/libvirt.yaml` afterwards.
 
+If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Submission can be setup. See this [documentation](https://github.com/stackforge/monasca-agent/blob/master/docs/MonascaMetrics.md#cross-tenant-metric-submission) for details.
+
 `nova_refresh` specifies the number of seconds between calls to the Nova API to refresh the instance cache.  This is helpful for updating VM hostname and pruning deleted instances from the cache.  By default, it is set to 14,400 seconds (four hours).  Set to 0 to refresh every time the Collector runs, or to None to disable regular refreshes entirely (though the instance cache will still be refreshed if a new instance is detected).
 
 `vm_probation` specifies a period of time (in seconds) in which to suspend metrics from a newly-created VM.  This is to prevent quickly-obsolete metrics in an environment with a high amount of instance churn (VMs created and destroyed in rapid succession).  The default probation length is 300 seconds (five minutes).  Setting to 0 disables VM probation, and metrics will be recorded as soon as possible after a VM is created.
@@ -1036,6 +1038,35 @@ instance-00000004:
   net.tx_bytes:
     vnet1: {timestamp: 1413327252, value: 2260}
 ```
+### Metrics
+
+| Name                 | Description                            | Associated Dimensions  |
+| -------------------- | -------------------------------------- | ---------------------- |
+| cpu.utilization_perc | Overall CPU utilization (percentage)   |                        |
+| io.read_ops_sec      | Disk I/O read operations per second    | 'device' (ie, 'hdd')   |
+| io.write_ops_sec     | Disk I/O write operations per second   | 'device' (ie, 'hdd')   |
+| io.read_bytes_sec    | Disk I/O read bytes per second         | 'device' (ie, 'hdd')   |
+| io.write_bytes_sec   | Disk I/O write bytes per second        | 'device' (ie, 'hdd')   |
+| io.errors_sec        | Disk I/O errors per second             | 'device' (ie, 'hdd')   |
+| net.in_packets_sec   | Network received packets per second    | 'device' (ie, 'vnet0') |
+| net.out_packets_sec  | Network transmitted packets per second | 'device' (ie, 'vnet0') |
+| net.in_bytes_sec     | Network received bytes per second      | 'device' (ie, 'vnet0') |
+| net.out_bytes_sec    | Network transmitted bytes per second   | 'device' (ie, 'vnet0') |
+
+Since separate metrics are sent to the VM's owner as well as Operations, all metric names designed for Operations are prefixed with "vm." to easily distinguish between VM metrics and compute host's metrics.
+
+### Dimensions
+All metrics include `resource_id` and `zone` (availability zone) dimensions.  Because there is a separate set of metrics for the two target audiences (VM customers and Operations), other dimensions may differ.
+
+| Dimension Name | Customer Value            | Operations Value        |
+| -------------- | ------------------------- | ----------------------- |
+| hostname       | name of VM as provisioned | hypervisor's hostname   |
+| zone           | availability zone         | availability zone       |
+| resource_id    | resource ID of VM         | resource ID of VM       |
+| service        | "compute"                 | "compute"               |
+| component      | "vm"                      | "vm"                    |
+| device         | name of net or disk dev   | name of net or disk dev |
+| tenant_id      | (N/A)                     | owner of VM             |
 
 
 # License
