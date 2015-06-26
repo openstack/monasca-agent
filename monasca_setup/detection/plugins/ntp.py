@@ -33,6 +33,9 @@ class Ntp(monasca_setup.detection.Plugin):
                 ntp_server = match.group(1)
         else:
             ntp_server = 'pool.ntp.org'
+        if re.match('^127', ntp_server):
+            log.warn("NTP Server points to localhost no value in collecting NTP metrics. Skipping configuration.")
+            return None
         config['ntp'] = {'init_config': None, 'instances': [{'name': ntp_server, 'host': ntp_server}]}
 
         return config
