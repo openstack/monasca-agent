@@ -164,7 +164,8 @@ def main(argv=None):
         if detect.available:
             log.info('Configuring {0}'.format(detect.name))
             new_config = detect.build_config()
-            plugin_config.merge(new_config)
+            if new_config is not None:
+                plugin_config.merge(new_config)
         elif args.detection_plugins is not None:  # Give a warning on failed detection when a plugin is called out
             log.warn('Failed detection of plugin {0}.'.format(detect.name) +
                      "\n\tPossible causes: Service not found or missing arguments.")
