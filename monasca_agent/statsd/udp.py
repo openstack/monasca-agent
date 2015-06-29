@@ -3,10 +3,21 @@ import logging
 import select
 import socket
 
+import monasca_agent.common.metrics as metrics_pkg
+
 log = logging.getLogger(__name__)
 
 
 UDP_SOCKET_TIMEOUT = 5
+
+metric_class = {
+    'g': metrics_pkg.Gauge,
+    'c': metrics_pkg.Counter,
+    'h': metrics_pkg.Histogram,
+    'ms': metrics_pkg.Histogram,
+    's': metrics_pkg.Set,
+    'r': metrics_pkg.Rate,
+}
 
 
 class Server(object):
@@ -148,7 +159,7 @@ class Server(object):
                 name, value, mtype, dimensions, sample_rate = self._parse_metric_packet(packet)
 
                 self.aggregator.submit_metric(
-                    name, value, mtype, dimensions=dimensions, sample_rate=sample_rate)
+                    name, value, metric_class[mtype], dimensions=dimensions, sample_rate=sample_rate)
 
     def start(self):
         """ Run the server. """
