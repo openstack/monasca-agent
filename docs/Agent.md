@@ -7,9 +7,10 @@
 - [Configuring](#configuring)
   - [monasca-setup (Recommended)](#monasca-setup-recommended)
     - [Explanation of primary monasca-setup command-line parameters:](#explanation-of-primary-monasca-setup-command-line-parameters)
-    - [Manual Configuration of the Agent](#manual-configuration-of-the-agent)
-    - [Dimension Precedence](#dimension-precedence)
-    - [Manual Configuration of Plugins](#manual-configuration-of-plugins)
+    - [Providing Arguments to Detection plugins](#providing-arguments-to-detection-plugins)
+  - [Manual Configuration of the Agent](#manual-configuration-of-the-agent)
+  - [Dimension Precedence](#dimension-precedence)
+  - [Manual Configuration of Plugins](#manual-configuration-of-plugins)
 - [Running](#running)
 - [License](#license)
 
@@ -76,6 +77,9 @@ monasca-setup is located in `[installed prefix dir]/bin/monasca-setup` and can b
 ```
 sudo monasca-setup --username KEYSTONE_USERNAME --password KEYSTONE_PASSWORD --project_name KEYSTONE_PROJECT_NAME --keystone_url http://URL_OF_KEYSTONE_API:35357/v3
 ```
+It is also possible to skip most detection plugins in monasca-setup with the `--system_only` flag. You can then come back later and run individual detection plugins without additional arguments,
+for example `monasca-setup -d mysql`. This allows a base install to setup the agent and required credentials then later easily add additional services and monitoring.
+
 ### Explanation of primary monasca-setup command-line parameters:
 All parameters require a '--' before the parameter such as '--verbose'. Run `monasca-setup --help` for a full listing of options.
 
@@ -100,7 +104,13 @@ All parameters require a '--' before the parameter such as '--verbose'. Run `mon
 | detection_plugins | Skip base config and service setup and only configure provided space separated list of plugins. This assumes the base config has already run.| kafka ntp|
 | detection_args | Some detection plugins can be passed arguments. This is a string that will be passed to the detection plugins. | "hostname=ping.me" |
 
-### Manual Configuration of the Agent
+### Providing Arguments to Detection plugins
+When running individual detection plugins you can specify arguments that augment the configuration created. In some instances the arguments just provide additional
+information for the detection plugin, for example `monasca-setup -d nova -a disable_http_check=true. In others detection is skipped entirely and the arguments provide
+the configuration details. For the argument based plugins monasca-setup is used not for detection but as a tool to merge various configurations details without having to parse the configuration.
+For example, `monasca-setup -d httpcheck -a 'url=http://ip:port/ dimensions=service:my_service'`. Both the httpcheck and hostalive check are argument based plugins.
+
+## Manual Configuration of the Agent
 
 This is not the recommended way to configure the agent but if you are having trouble running the monasca-setup program, you can manually configure the agent using the steps below:
 
@@ -139,7 +149,7 @@ Once the configuration file has been updated and saved, monasca-agent must be re
 
     sudo service monasca-agent restart
 
-### Dimension Precedence
+## Dimension Precedence
 If a dimension is specified in /etc/monasca/agent/agent.yaml with the same name (e.g. service)
 ```
 Main:
@@ -160,7 +170,7 @@ Your final dimension value from agent.yaml would prevail
 service: monitoring
 ```
 
-### Manual Configuration of Plugins
+## Manual Configuration of Plugins
 If you did not run monasca-setup and/or there are additional plugins you would like to activate there are two options.
 
 If a detection plugin exists for monasca-setup you can run monasca-setup with the --detection_plugins flage, ie `monasca-setup --detection-plugins kafka`.

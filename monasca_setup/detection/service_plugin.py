@@ -12,13 +12,15 @@ log = logging.getLogger(__name__)
 
 
 class ServicePlugin(Plugin):
+    """Base class implemented by the monasca-agent plugin detection classes for OpenStack Services.
+        Detection plugins inheriting from this class can easily setup up processes to be watched and
+        a http endpoint to be checked.
 
-    """Base class implemented by the monasca-agent plugin detection classes
-
-       for OpenStack Services
+        The http check can be skipped by specifying the argument 'disable_http_check'
     """
 
     def __init__(self, kwargs):
+        self.args = kwargs['args']
         self.service_name = kwargs['service_name']
         self.process_names = kwargs['process_names']
         self.service_api_url = kwargs['service_api_url']
@@ -47,6 +49,13 @@ class ServicePlugin(Plugin):
             # Watch the service processes
             log.info("\tMonitoring the {0} {1} process.".format(process, self.service_name))
             config.merge(watch_process([process], self.service_name, process, exact_match=False))
+
+        # Skip the http_check if disable_http_check is set
+        if self.args is not None:
+            args_dict = dict([a.split('=') for a in self.args.split()])
+            if args_dict.get('disable_http_check', default=False):
+                self.service_api_url = None
+                self.search_pattern = None
 
         if self.service_api_url and self.search_pattern:
             # Setup an active http_status check on the API

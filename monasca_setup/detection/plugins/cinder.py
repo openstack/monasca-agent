@@ -7,6 +7,7 @@ class Cinder(monasca_setup.detection.ServicePlugin):
 
     def __init__(self, template_dir, overwrite=True, args=None):
         service_params = {
+            'args': args,
             'template_dir': template_dir,
             'overwrite': overwrite,
             'service_name': 'block-storage',
