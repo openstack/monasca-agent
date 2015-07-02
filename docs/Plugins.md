@@ -13,9 +13,9 @@
       - [dimensions](#dimensions)
       - [Plugin Documentation](#plugin-documentation)
   - [Nagios Checks](#nagios-checks)
-      - [Nagios Wrapper](#nagios-wrapper)
-      - [Check_MK_Agent Local](#check_mk_agent-local)
-      - [MK Livestatus](#mk-livestatus)
+    - [Nagios Wrapper](#nagios-wrapper)
+    - [Check_MK_Agent Local](#check_mk_agent-local)
+    - [MK Livestatus](#mk-livestatus)
   - [Host Alive Checks](#host-alive-checks)
   - [Process Checks](#process-checks)
   - [Http Endpoint Checks](#http-endpoint-checks)
@@ -52,6 +52,12 @@
     - [Configuration](#configuration)
     - [Instance Cache](#instance-cache)
     - [Metrics Cache](#metrics-cache)
+    - [Metrics](#metrics)
+    - [Dimensions](#dimensions)
+  - [Crash Dump Monitoring](#crash-dump-monitoring)
+    - [Overview](#overview-1)
+    - [Metrics](#metrics-1)
+    - [Configuration](#configuration-1)
 - [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -125,6 +131,7 @@ The following plugins are delivered via setup as part of the standard plugin che
 | couch | | |
 | couchbase | | |
 | cpu | | |
+| crash | | |
 | directory | | |
 | disk | | |
 | docker | | |
@@ -209,6 +216,7 @@ The following plugin groups are detected by setup with the default command line 
 | Apache | |
 | Ceilometer | |
 | Cinder | |
+| Crash | |
 | Glance | |
 | Kafka | |
 | Keystone | |
@@ -1068,6 +1076,31 @@ All metrics include `resource_id` and `zone` (availability zone) dimensions.  Be
 | device         | name of net or disk dev   | name of net or disk dev |
 | tenant_id      | (N/A)                     | owner of VM             |
 
+## Crash Dump Monitoring
+
+### Overview
+The crash plugin provides metrics for crash dumps present on the system. Currently, it only returns the number of crash dumps found plus the date-/timestamp of the most recent crash in a `value_meta` dictionary.
+
+### Metrics
+Only one metric is provided at the moment with a `hostname` dimension.
+
+| Name             | Description                 | value_meta                       |
+|------------------|-----------------------------|----------------------------------|
+| crash.dump_count | Number of crash dumps found | {'latest': u'<date-/timestamp>'} |
+
+### Configuration
+The `monasca-setup` program will configure the Crash plugin if a crash kernel is loaded. The default directory where the plugin will look for crash dumps is /var/crash.
+
+Sample config:
+
+```
+init_config:
+  crash_dir: /var/crash
+
+instances:
+  - name: crash_stats
+
+```
 
 # License
 Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
