@@ -20,7 +20,7 @@ class ServicePlugin(Plugin):
     """
 
     def __init__(self, kwargs):
-        self.args = kwargs['args']
+        self.args = kwargs.get('args')
         self.service_name = kwargs['service_name']
         self.process_names = kwargs['process_names']
         self.service_api_url = kwargs['service_api_url']
