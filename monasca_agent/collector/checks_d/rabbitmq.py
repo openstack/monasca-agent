@@ -194,9 +194,10 @@ class RabbitMQ(checks.AgentCheck):
 
         # No queues/node are specified. We will process every queue/node if it's under the limit
         else:
-            if len(data) > ALERT_THRESHOLD * max_detailed:
-                # Post a message on the dogweb stream to warn
-                self.alert(base_url, max_detailed, len(data), object_type)
+# Monasca does not support events at this time.
+#            if len(data) > ALERT_THRESHOLD * max_detailed:
+#                # Post a message on the dogweb stream to warn
+#                self.alert(base_url, max_detailed, len(data), object_type)
 
             if len(data) > max_detailed:
                 # Display a warning in the info page
