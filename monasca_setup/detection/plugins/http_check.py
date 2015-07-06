@@ -1,3 +1,4 @@
+import ast
 import logging
 
 import monasca_setup.agent_config
@@ -25,12 +26,20 @@ class HttpCheck(monasca_setup.detection.ArgsPlugin):
         log.info("\tEnabling the http_check plugin for {url}".format(**self.args))
 
         # No support for setting headers at this time
-        instance = self._build_instance(['url', 'timeout', 'username', 'password', 'match_pattern',
-                                         'disable_ssl_validation'])
-        instance['name'] = self.args['url']
-        instance['collect_response_time'] = True
+        instance = self._build_instance(['url', 'timeout', 'username', 'password',
+                                         'match_pattern', 'disable_ssl_validation',
+                                         'name', 'use_keystone', 'collect_response_time'])
+
+        # Normalize any boolean parameters
+        for param in ['use_keystone', 'collect_response_time']:
+            if param in self.args:
+                instance[param] = ast.literal_eval(self.args[param].capitalize())
+        # Set some defaults
+        if 'collect_response_time' not in instance:
+            instance['collect_response_time'] = True
+        if 'name' not in instance:
+            instance['name'] = self.args['url']
 
         config['http_check'] = {'init_config': None, 'instances': [instance]}
 
         return config
-
