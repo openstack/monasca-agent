@@ -16,6 +16,10 @@ Api:
   # Keystone API URL: URL for the Keystone server to use
   # Example: https://region-a.geo-1.identity.hpcloudsvc.com:35357/v3/
   keystone_url: {args.keystone_url}
+  # Domain id to be used to resolve username
+  user_domain_id: {args.user_domain_id}
+  # Domain name to be used to resolve username
+  user_domain_name: {args.user_domain_name}
   # Project name to be used by this agent
   project_name: {args.project_name}
   # Project domain id to be used by this agent
