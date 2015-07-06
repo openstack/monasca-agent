@@ -56,6 +56,8 @@ def main(argv=None):
         '-u', '--username', help="Username used for keystone authentication. Required for basic configuration.")
     parser.add_argument(
         '-p', '--password', help="Password used for keystone authentication. Required for basic configuration.")
+    parser.add_argument('--user_domain_id', help="User domain id for keystone authentication", default='')
+    parser.add_argument('--user_domain_name', help="User domain name for keystone authentication", default='')
     parser.add_argument('--keystone_url', help="Keystone url. Required for basic configuration.")
     parser.add_argument('--project_name', help="Project name for keystone authentication", default='')
     parser.add_argument('--project_domain_id', help="Project domain id for keystone authentication", default='')
