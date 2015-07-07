@@ -30,14 +30,19 @@ class Keystone(object):
         cacert = self.config.get('ca_file', None)
         project_id = self.config.get('project_id', None)
         project_name = self.config.get('project_name', None)
-        project_domain_name = self.config.get('domain_name', None)
-        project_domain_id = self.config.get('domain_id', None)
+        project_domain_name = self.config.get('project_domain_name', None)
+        project_domain_id = self.config.get('project_domain_id', None)
 
         kc_args = {'auth_url': auth_url,
                    'username': username,
                    'password': password}
 
-        if insecure:
+	if domain_id:
+            kc_args.update({'user_domain_id': domain_id})
+	elif domain_name:
+            kc_args.update({'user_domain_name': domain_name})
+       
+	 if insecure:
             kc_args.update({'insecure': insecure})
         else:
             if cacert:
@@ -50,13 +55,6 @@ class Keystone(object):
                 kc_args.update({'domain_name': project_domain_name})
             if project_domain_id:
                 kc_args.update({'domain_id': project_domain_id})
-	elif domain_id:
-                kc_args.update({'user_domain_id': domain_id})
-	elif domain_name:
-                kc_args.update({'user_domain_name': domain_name})
-
-        # TO BE REMOVED BY JOACHIM
-        log.info("Creating the Keystone Client for {0}".format(repr(kc_args))) 
 
         return ksclient.KSClient(**kc_args)
 
