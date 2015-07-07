@@ -87,6 +87,8 @@ All parameters require a '--' before the parameter such as '--verbose'. Run `mon
 | ----------- | ------------ | ----------- |
 | username | This is a required parameter that specifies the username needed to login to Keystone to get a token | myuser |
 | password | This is a required parameter that specifies the password needed to login to Keystone to get a token | mypassword |
+| user_domain_id | User domain id for username scoping | dcff2e7ede243eb7b3c2c1d57cfc46d1 |
+| user_domain_name | User domain name for username scoping | MyDomain |
 | project_name | Specifies the name of the Keystone project name to store the metrics under, defaults to users default project. | myproject |
 | project_domain_id | Project domain id for keystone authentication | |
 | project_domain_name | Project domain name for keystone authentication | |
