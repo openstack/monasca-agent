@@ -1,4 +1,6 @@
 import logging
+import psutil
+from urlparse import urlparse
 
 from plugin import Plugin
 
@@ -23,7 +25,7 @@ class ServicePlugin(Plugin):
         self.args = kwargs.get('args')
         self.service_name = kwargs['service_name']
         self.process_names = kwargs['process_names']
-        self.service_api_url = kwargs['service_api_url']
+        self.service_api_url = kwargs.get('service_api_url')
         self.search_pattern = kwargs['search_pattern']
 
         super(ServicePlugin, self).__init__(kwargs['template_dir'], kwargs['overwrite'])
@@ -58,10 +60,28 @@ class ServicePlugin(Plugin):
                 self.search_pattern = None
 
         if self.service_api_url and self.search_pattern:
-            # Setup an active http_status check on the API
-            log.info("\tConfiguring an http_check for the {0} API.".format(self.service_name))
-            config.merge(service_api_check(self.service_name + '-api', self.service_api_url,
+            # Check if there is something listening on the host/port
+            parsed = urlparse(self.service_api_url)
+            host, port = parsed.netloc.split(':')
+            listening = []
+            for connection in psutil.net_connections():
+               if connection.status == psutil.CONN_LISTEN and connection.laddr[1] == int(port):
+                   listening.append(connection.laddr[0])
+
+            if len(listening) > 0:
+                # If not listening on localhost or ips then use another local ip
+                if host == 'localhost' and len(set(['0.0.0.0', '::', '::1']) & set(listening)) == 0:
+                    api_url = listening[0] + ':' + port
+                else:
+                    api_url = self.service_api_url
+
+                # Setup an active http_status check on the API
+                log.info("\tConfiguring an http_check for the {0} API.".format(self.service_name))
+                config.merge(service_api_check(self.service_name + '-api', api_url,
                                            self.search_pattern, self.service_name))
+            else:
+                log.info("\tNo process found listening on {0} ".format(port) +
+                         "skipping setup of http_check for the {0} API." .format(self.service_name))
 
         return config
 
