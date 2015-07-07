@@ -161,6 +161,9 @@ class LibvirtCheck(AgentCheck):
         for inst in insp._get_connection().listAllDomains():
             # Verify that this instance exists in the cache.  Add if necessary.
             inst_name = inst.name()
+            if inst.isActive() == 0:
+                self.log.info("{0} is not active -- skipping.".format(inst_name))
+                continue
             if inst_name not in instance_cache:
                 instance_cache = self._update_instance_cache()
             if inst_name not in metric_cache:
