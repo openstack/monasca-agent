@@ -42,7 +42,7 @@ class Keystone(object):
 	elif user_domain_name:
             kc_args.update({'user_domain_name': user_domain_name})
        
-	 if insecure:
+        if insecure:
             kc_args.update({'insecure': insecure})
         else:
             if cacert:
