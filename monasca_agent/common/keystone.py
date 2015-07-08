@@ -24,6 +24,8 @@ class Keystone(object):
         auth_url = self.config.get('keystone_url', None)
         username = self.config.get('username', None)
         password = self.config.get('password', None)
+	user_domain_id = self.config.get('user_domain_id', None)
+	user_domain_name = self.config.get('user_domain_name', None)
         insecure = self.config.get('insecure', False)
         cacert = self.config.get('ca_file', None)
         project_id = self.config.get('project_id', None)
@@ -35,6 +37,11 @@ class Keystone(object):
                    'username': username,
                    'password': password}
 
+	if user_domain_id:
+            kc_args.update({'user_domain_id': user_domain_id})
+	elif user_domain_name:
+            kc_args.update({'user_domain_name': user_domain_name})
+       
         if insecure:
             kc_args.update({'insecure': insecure})
         else:
