@@ -17,6 +17,7 @@
 
 import os
 import stat
+import subprocess
 import time
 import yaml
 
@@ -80,6 +81,12 @@ class LibvirtCheck(AgentCheck):
                                    'vcpus': nova_client.flavors.get(instance.flavor['id']).vcpus,
                                    'ram': nova_client.flavors.get(instance.flavor['id']).ram,
                                    'disk': nova_client.flavors.get(instance.flavor['id']).disk}
+            # Try to add private_ip to id_cache[inst_name].  This may fail on ERROR'ed VMs.
+            try:
+                id_cache[inst_name]['private_ip'] = instance.addresses['private'][0]['addr']
+            except KeyError:
+                pass
+
         id_cache['last_update'] = int(time.time())
 
         # Write the updated cache
@@ -161,8 +168,15 @@ class LibvirtCheck(AgentCheck):
         for inst in insp._get_connection().listAllDomains():
             # Verify that this instance exists in the cache.  Add if necessary.
             inst_name = inst.name()
+            # Skip instances that are inactive
             if inst.isActive() == 0:
-                self.log.info("{0} is not active -- skipping.".format(inst_name))
+                detail = 'Instance is not active'
+                self.gauge('host_alive_status', 2, dimensions=dims_customer,
+                           delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                           hostname=instance_cache.get(inst_name)['hostname'],
+                           value_meta={'detail': detail})
+                self.gauge('vm.host_alive_status', 2, dimensions=dims_operations,
+                           value_meta={'detail': detail})
                 continue
             if inst_name not in instance_cache:
                 instance_cache = self._update_instance_cache()
@@ -183,7 +197,30 @@ class LibvirtCheck(AgentCheck):
             # Add dimensions that would be helpful for operations
             dims_operations = dims_customer.copy()
             dims_operations['tenant_id'] = instance_cache.get(inst_name)['tenant_id']
-            dims_operations['cloud_tier'] = 'overcloud'
+
+            # Test instance's general responsiveness (ping check) if so configured
+            if self.init_config.get('ping_check') and 'private_ip' in instance_cache.get(inst_name):
+                detail = 'Ping check OK'
+                ping_cmd = self.init_config.get('ping_check').split()
+                ping_cmd.append(instance_cache.get(inst_name)['private_ip'])
+                with open(os.devnull, "w") as fnull:
+                    try:
+                        res = subprocess.call(ping_cmd,
+                                              stdout=fnull,
+                                              stderr=fnull)
+                        if res > 0:
+                            detail = 'Host failed ping check'
+                        self.gauge('host_alive_status', res, dimensions=dims_customer,
+                                   delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                                   hostname=instance_cache.get(inst_name)['hostname'],
+                                   value_meta={'detail': detail})
+                        self.gauge('vm.host_alive_status', res, dimensions=dims_operations,
+                                   value_meta={'detail': detail})
+                        # Do not attempt to process any more metrics for offline hosts
+                        if res > 0:
+                            continue
+                    except OSError as e:
+                        self.log.warn("OS error running '{0}' returned {1}".format(ping_cmd, e))
 
             # Accumulate aggregate data
             for gauge in agg_gauges:
@@ -209,7 +246,7 @@ class LibvirtCheck(AgentCheck):
             metric_cache[inst_name]['cpu.time'] = {'timestamp': sample_time,
                                                    'value': insp.inspect_cpus(inst).time}
 
-            # Disk utilization
+            # Disk activity
             for disk in insp.inspect_disks(inst):
                 sample_time = time.time()
                 disk_dimensions = {'device': disk[0].device}
@@ -241,7 +278,13 @@ class LibvirtCheck(AgentCheck):
                         'timestamp': sample_time,
                         'value': value}
 
-            # Network utilization
+            # Disk utilization
+            # TODO(dschroeder)
+
+            # Memory utilizaion
+            # TODO(dschroeder)
+
+            # Network activity
             for vnic in insp.inspect_vnics(inst):
                 sample_time = time.time()
                 vnic_dimensions = {'device': vnic[0].name}

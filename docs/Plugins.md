@@ -52,8 +52,9 @@
     - [Configuration](#configuration)
     - [Instance Cache](#instance-cache)
     - [Metrics Cache](#metrics-cache)
-    - [Metrics](#metrics)
-    - [Dimensions](#dimensions)
+    - [Per-Instance Metrics](#per-instance-metrics)
+    - [VM Dimensions](#vm-dimensions)
+    - [Aggregate Metrics](#aggregate-metrics)
   - [Crash Dump Monitoring](#crash-dump-monitoring)
     - [Overview](#overview-1)
     - [Metrics](#metrics-1)
@@ -992,6 +993,8 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 
 `vm_probation` specifies a period of time (in seconds) in which to suspend metrics from a newly-created VM.  This is to prevent quickly-obsolete metrics in an environment with a high amount of instance churn (VMs created and destroyed in rapid succession).  The default probation length is 300 seconds (five minutes).  Setting to 0 disables VM probation, and metrics will be recorded as soon as possible after a VM is created.
 
+`ping_check` includes the command line (sans the IP address) used to perform a ping check against instances.  Set to False (or omit altogether) to disable ping checks.  This is automatically populated during `monasca-setup` from a list of possible `ping` command lines.  Generally, `fping` is preferred over `ping` because it can return a failure with sub-second resolution, but if `fping` does not exist on the system, `ping` will be used instead.  If ping_check is disabled, the `host_alive_status` metric will not be published unless that VM is inactive.  This is because the host status is inconclusive without a ping check.
+
 Example config:
 ```
 init_config:
@@ -1003,6 +1006,7 @@ init_config:
     cache_dir: /dev/shm
     nova_refresh: 14400
     vm_probation: 300
+    ping_check: /usr/bin/fping -n -c1 -t250 -q
 instances:
     - {}
 ```
@@ -1015,13 +1019,13 @@ The instance cache (`/dev/shm/libvirt_instances.yaml` by default) contains data 
 
 Example cache:
 ```
-instance-00000003: {created: '2014-10-14T17:30:03Z', hostname: vm01.testboy.net,
-  instance_uuid: 54272a41-cf12-4243-b6f4-6e0c5ecbd777, tenant_id: 09afcd6d22bf4de0aea02de6e0724d41,
-  zone: nova}
-instance-00000005: {created: '2014-10-15T18:39:44Z', hostname: vm02.testboy.net,
-  instance_uuid: aa04fa03-93c5-4a70-be01-3ddd9a529710, tenant_id: 09afcd6d22bf4de0aea02de6e0724d41,
-  zone: nova}
-last_update: 1413398407
+instance-00000003: {created: '2015-06-26T23:25:06Z', disk: 1, hostname: vm03.testboy.net,
+  instance_uuid: 821994dd-bd88-41ae-89e0-6034cc4f4b67, private_ip: 172.31.1.4, ram: 512,
+  tenant_id: 121cc3c1d9014c6c89daae90b57213ff, vcpus: 1, zone: nova}
+instance-00000004: {created: '2015-06-26T23:29:21Z', disk: 1, hostname: vm04.testboy.net,
+  instance_uuid: 6fb6e51c-b9b0-4933-9b70-48acfd82e1f3, private_ip: 172.31.1.5, ram: 512,
+  tenant_id: 121cc3c1d9014c6c89daae90b57213ff, vcpus: 1, zone: nova}
+last_update: 1436281527
 ```
 
 ### Metrics Cache
@@ -1046,11 +1050,12 @@ instance-00000004:
   net.tx_bytes:
     vnet1: {timestamp: 1413327252, value: 2260}
 ```
-### Metrics
+### Per-Instance Metrics
 
 | Name                 | Description                            | Associated Dimensions  |
 | -------------------- | -------------------------------------- | ---------------------- |
 | cpu.utilization_perc | Overall CPU utilization (percentage)   |                        |
+| host_alive_status    | Returns status: 0=OK, 1=fails ping check, 2=inactive  |         |
 | io.read_ops_sec      | Disk I/O read operations per second    | 'device' (ie, 'hdd')   |
 | io.write_ops_sec     | Disk I/O write operations per second   | 'device' (ie, 'hdd')   |
 | io.read_bytes_sec    | Disk I/O read bytes per second         | 'device' (ie, 'hdd')   |
@@ -1063,7 +1068,7 @@ instance-00000004:
 
 Since separate metrics are sent to the VM's owner as well as Operations, all metric names designed for Operations are prefixed with "vm." to easily distinguish between VM metrics and compute host's metrics.
 
-### Dimensions
+### VM Dimensions
 All metrics include `resource_id` and `zone` (availability zone) dimensions.  Because there is a separate set of metrics for the two target audiences (VM customers and Operations), other dimensions may differ.
 
 | Dimension Name | Customer Value            | Operations Value        |
@@ -1075,6 +1080,18 @@ All metrics include `resource_id` and `zone` (availability zone) dimensions.  Be
 | component      | "vm"                      | "vm"                    |
 | device         | name of net or disk dev   | name of net or disk dev |
 | tenant_id      | (N/A)                     | owner of VM             |
+
+### Aggregate Metrics
+
+In addition to per-instance metrics, the Libvirt plugin will publish aggregate metrics across all instances.
+
+| Name                            | Description                                        |
+| ------------------------------- | -------------------------------------------------- |
+| nova.vm.cpu.total_allocated     | Total CPUs allocated across all VMs                |
+| nova.vm.disk.total_allocated_gb | Total gigabytes of disk space allocated to all VMs |
+| nova.vm.mem.total_allocated_mb  | Total megabytes of memory allocated to all VMs     |
+
+Aggregate dimensions include hostname and component from the Operations Value column above.
 
 ## Crash Dump Monitoring
 
