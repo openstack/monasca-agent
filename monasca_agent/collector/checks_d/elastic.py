@@ -59,36 +59,47 @@ class ElasticSearch(AgentCheck):
         "elasticsearch.thread_pool.bulk.active": ("gauge", "thread_pool.bulk.active"),
         "elasticsearch.thread_pool.bulk.threads": ("gauge", "thread_pool.bulk.threads"),
         "elasticsearch.thread_pool.bulk.queue": ("gauge", "thread_pool.bulk.queue"),
+        "elasticsearch.thread_pool.bulk.rejected": ("gauge", "thread_pool.bulk.rejected"),
         "elasticsearch.thread_pool.flush.active": ("gauge", "thread_pool.flush.active"),
         "elasticsearch.thread_pool.flush.threads": ("gauge", "thread_pool.flush.threads"),
         "elasticsearch.thread_pool.flush.queue": ("gauge", "thread_pool.flush.queue"),
+        "elasticsearch.thread_pool.flush.rejected": ("gauge", "thread_pool.flush.rejected"),
         "elasticsearch.thread_pool.generic.active": ("gauge", "thread_pool.generic.active"),
         "elasticsearch.thread_pool.generic.threads": ("gauge", "thread_pool.generic.threads"),
         "elasticsearch.thread_pool.generic.queue": ("gauge", "thread_pool.generic.queue"),
+        "elasticsearch.thread_pool.generic.rejected": ("gauge", "thread_pool.generic.rejected"),
         "elasticsearch.thread_pool.get.active": ("gauge", "thread_pool.get.active"),
         "elasticsearch.thread_pool.get.threads": ("gauge", "thread_pool.get.threads"),
         "elasticsearch.thread_pool.get.queue": ("gauge", "thread_pool.get.queue"),
+        "elasticsearch.thread_pool.get.rejected": ("gauge", "thread_pool.get.rejected"),
         "elasticsearch.thread_pool.index.active": ("gauge", "thread_pool.index.active"),
         "elasticsearch.thread_pool.index.threads": ("gauge", "thread_pool.index.threads"),
         "elasticsearch.thread_pool.index.queue": ("gauge", "thread_pool.index.queue"),
+        "elasticsearch.thread_pool.index.rejected": ("gauge", "thread_pool.index.rejected"),
         "elasticsearch.thread_pool.management.active": ("gauge", "thread_pool.management.active"),
         "elasticsearch.thread_pool.management.threads": ("gauge", "thread_pool.management.threads"),
         "elasticsearch.thread_pool.management.queue": ("gauge", "thread_pool.management.queue"),
+        "elasticsearch.thread_pool.management.rejected": ("gauge", "thread_pool.management.rejected"),
         "elasticsearch.thread_pool.merge.active": ("gauge", "thread_pool.merge.active"),
         "elasticsearch.thread_pool.merge.threads": ("gauge", "thread_pool.merge.threads"),
         "elasticsearch.thread_pool.merge.queue": ("gauge", "thread_pool.merge.queue"),
+        "elasticsearch.thread_pool.merge.rejected": ("gauge", "thread_pool.merge.rejected"),
         "elasticsearch.thread_pool.percolate.active": ("gauge", "thread_pool.percolate.active"),
         "elasticsearch.thread_pool.percolate.threads": ("gauge", "thread_pool.percolate.threads"),
         "elasticsearch.thread_pool.percolate.queue": ("gauge", "thread_pool.percolate.queue"),
+        "elasticsearch.thread_pool.percolate.rejected": ("gauge", "thread_pool.percolate.rejected"),
         "elasticsearch.thread_pool.refresh.active": ("gauge", "thread_pool.refresh.active"),
         "elasticsearch.thread_pool.refresh.threads": ("gauge", "thread_pool.refresh.threads"),
         "elasticsearch.thread_pool.refresh.queue": ("gauge", "thread_pool.refresh.queue"),
+        "elasticsearch.thread_pool.refresh.rejected": ("gauge", "thread_pool.refresh.rejected"),
         "elasticsearch.thread_pool.search.active": ("gauge", "thread_pool.search.active"),
         "elasticsearch.thread_pool.search.threads": ("gauge", "thread_pool.search.threads"),
         "elasticsearch.thread_pool.search.queue": ("gauge", "thread_pool.search.queue"),
+        "elasticsearch.thread_pool.search.rejected": ("gauge", "thread_pool.search.rejected"),
         "elasticsearch.thread_pool.snapshot.active": ("gauge", "thread_pool.snapshot.active"),
         "elasticsearch.thread_pool.snapshot.threads": ("gauge", "thread_pool.snapshot.threads"),
         "elasticsearch.thread_pool.snapshot.queue": ("gauge", "thread_pool.snapshot.queue"),
+        "elasticsearch.thread_pool.snapshot.rejected": ("gauge", "thread_pool.snapshot.rejected"),
         "elasticsearch.http.current_open": ("gauge", "http.current_open"),
         "elasticsearch.http.total_opened": ("gauge", "http.total_opened"),
         "jvm.gc.concurrent_mark_sweep.count": ("gauge", "jvm.gc.collectors.ConcurrentMarkSweep.collection_count"),
@@ -181,13 +192,13 @@ class ElasticSearch(AgentCheck):
             self.NODES_URL = "/_nodes?network=true"
 
             additional_metrics = {
-                "elasticsearch.search.fetch.open_contexts": (
-                    "gauge", "indices.search.open_contexts"), "elasticsearch.cache.filter.evictions": (
-                    "gauge", "indices.filter_cache.evictions"), "elasticsearch.cache.filter.size": (
-                    "gauge", "indices.filter_cache.memory_size_in_bytes"), "elasticsearch.id_cache.size": (
-                    "gauge", "indices.id_cache.memory_size_in_bytes"), "elasticsearch.fielddata.size": (
-                        "gauge", "indices.fielddata.memory_size_in_bytes"), "elasticsearch.fielddata.evictions": (
-                            "gauge", "indices.fielddata.evictions")}
+                "elasticsearch.search.fetch.open_contexts": ("gauge", "indices.search.open_contexts"),
+                "elasticsearch.cache.filter.evictions": ("gauge", "indices.filter_cache.evictions"),
+                "elasticsearch.cache.filter.size": ("gauge", "indices.filter_cache.memory_size_in_bytes"),
+                "elasticsearch.id_cache.size": ("gauge", "indices.id_cache.memory_size_in_bytes"),
+                "elasticsearch.fielddata.size": ("gauge", "indices.fielddata.memory_size_in_bytes"),
+                "elasticsearch.fielddata.evictions": ("gauge", "indices.fielddata.evictions")
+            }
 
         else:
             # ES version 0.90.9 and below
@@ -195,20 +206,22 @@ class ElasticSearch(AgentCheck):
             self.STATS_URL = "/_cluster/nodes/stats?all=true"
             self.NODES_URL = "/_cluster/nodes?network=true"
 
+
             additional_metrics = {
-                "elasticsearch.cache.field.evictions": (
-                    "gauge", "indices.cache.field_evictions"), "elasticsearch.cache.field.size": (
-                    "gauge", "indices.cache.field_size_in_bytes"), "elasticsearch.cache.filter.count": (
-                    "gauge", "indices.cache.filter_count"), "elasticsearch.cache.filter.evictions": (
-                    "gauge", "indices.cache.filter_evictions"), "elasticsearch.cache.filter.size": (
-                        "gauge", "indices.cache.filter_size_in_bytes"), "elasticsearch.thread_pool.cache.active": (
-                            "gauge", "thread_pool.cache.active"), "elasticsearch.thread_pool.cache.threads": (
-                                "gauge", "thread_pool.cache.threads"), "elasticsearch.thread_pool.cache.queue": (
-                                    "gauge", "thread_pool.cache.queue"), "jvm.gc.collection_count": (
-                                        "gauge", "jvm.gc.collection_count"), "jvm.gc.collection_time": (
-                                            "gauge", "jvm.gc.collection_time_in_millis", lambda v: float(v) / 1000), "jvm.gc.copy.count": (
-                                                "gauge", "jvm.gc.collectors.Copy.collection_count"), "jvm.gc.copy.collection_time": (
-                                                    "gauge", "jvm.gc.collectors.Copy.collection_time_in_millis", lambda v: float(v) / 1000)}
+                "elasticsearch.cache.field.evictions": ("gauge", "indices.cache.field_evictions"),
+                "elasticsearch.cache.field.size": ("gauge", "indices.cache.field_size_in_bytes"),
+                "elasticsearch.cache.filter.count": ("gauge", "indices.cache.filter_count"),
+                "elasticsearch.cache.filter.evictions": ("gauge", "indices.cache.filter_evictions"),
+                "elasticsearch.cache.filter.size": ("gauge", "indices.cache.filter_size_in_bytes"),
+                "elasticsearch.thread_pool.cache.active": ("gauge", "thread_pool.cache.active"),
+                "elasticsearch.thread_pool.cache.threads": ("gauge", "thread_pool.cache.threads"),
+                "elasticsearch.thread_pool.cache.queue": ("gauge", "thread_pool.cache.queue"),
+                "elasticsearch.thread_pool.cache.rejected": ("gauge", "thread_pool.cache.rejected"),
+                "jvm.gc.collection_count": ("gauge", "jvm.gc.collection_count"),
+                "jvm.gc.collection_time": ("gauge", "jvm.gc.collection_time_in_millis", lambda v: float(v) / 1000),
+                "jvm.gc.copy.count": ("gauge", "jvm.gc.collectors.Copy.collection_count"),
+                "jvm.gc.copy.collection_time": ("gauge", "jvm.gc.collectors.Copy.collection_time_in_millis", lambda v: float(v) / 1000)
+            }
 
         self.METRICS.update(additional_metrics)
 
