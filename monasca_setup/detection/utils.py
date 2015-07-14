@@ -70,9 +70,12 @@ def find_process_cmdline(search_string):
     """Simple function to search running process for one with cmdline containing.
     """
     for process in psutil.process_iter():
-        for arg in process.cmdline():
-            if arg.find(search_string) != -1:
-                return process
+        try:
+            for arg in process.cmdline():
+                if arg.find(search_string) != -1:
+                    return process
+        except psutil.NoSuchProcess:
+            continue
 
     return None
 
@@ -81,8 +84,11 @@ def find_process_name(pname):
     """Simple function to search running process for one with pname.
     """
     for process in psutil.process_iter():
-        if pname == process.name():
-            return process
+        try:
+            if pname == process.name():
+                return process
+        except psutil.NoSuchProcess:
+            continue
 
     return None
 
