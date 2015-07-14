@@ -98,6 +98,7 @@ All parameters require a '--' before the parameter such as '--verbose'. Run `mon
 | monasca_url | This is a optional parameter that specifies the url of the monasca api for retrieving tokens. By default this is obtained from the registered service in keystone. | http://192.168.1.4:8080/v2.0 |
 | skip_enable | This is an optional parameter. By default the service is enabled, which requires the script run as root. Set this parameter to skip that step. | |
 | verbose | This is an optional parameter that specifies whether the monasca-setup script will print additional information for debugging purposes | |
+| dry_run | If specified no config changes will be made but what changes will happen will be reported. | |
 | service | Service this node is associated with, added as a dimension. | |
 | system_only | This optional parameter if set true will cause only the basic system checks to be configured all other detection will be skipped. Basic system checks include cpu, disk, load, memory, network. | |
 | overwrite | This is an optional parameter to overwrite the plugin configuration.  Use this if you don't want to keep the original configuration.  If this parameter is not specified, the configuration will be appended to the existing configuration, possibly creating duplicate checks.  **NOTE:** The agent config file, agent.yaml, will always be overwritten, even if this parameter is not specified |  |
