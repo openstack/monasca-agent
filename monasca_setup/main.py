@@ -84,7 +84,7 @@ def main(argv=None):
     parser.add_argument('--log_dir', help="monasca-agent log directory", default='/var/log/monasca/agent')
     parser.add_argument('--log_level', help="monasca-agent logging level (ERROR, WARNING, INFO, DEBUG)", required=False,
                         default='WARN')
-    parser.add_argument( '--template_dir', help="Alternative template directory",
+    parser.add_argument('--template_dir', help="Alternative template directory",
                          default=os.path.join(PREFIX_DIR, 'share/monasca/agent'))
     parser.add_argument('--overwrite',
                         help="Overwrite existing plugin configuration. " +
@@ -99,12 +99,16 @@ def main(argv=None):
                                             "Additional measurements contain the 'amplifier' dimension. " +
                                             "Useful for load testing; not for production use.", default=0)
     parser.add_argument('-v', '--verbose', help="Verbose Output", action="store_true")
+    parser.add_argument('--dry_run', help="Make no changes just report on changes", action="store_true")
     args = parser.parse_args()
 
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
     else:
         logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+
+    if args.dry_run:
+        log.info("Running in dry run mode, no changes will be made only reported")
 
     # Detect and if possibly enable the agent service
     agent_service = detect_init(PREFIX_DIR, args.config_dir, args.log_dir, args.template_dir, username=args.user)
@@ -171,6 +175,7 @@ def main(argv=None):
         elif args.detection_plugins is not None:  # Give a warning on failed detection when a plugin is called out
             log.warn('Failed detection of plugin {0}.'.format(detect.name) +
                      "\n\tPossible causes: Service not found or missing arguments.")
+            return 1  # Others could still run but I want to make sure there is a non-zero exit code
 
     # todo add option to install dependencies
 
@@ -195,19 +200,25 @@ def main(argv=None):
                     pass
                 if value == old_config:  # Don't write config if no change
                     continue
-        with open(config_path, 'w') as config_file:
-            changes = True
-            os.chmod(config_path, 0640)
-            os.chown(config_path, 0, gid)
-            config_file.write(yaml.safe_dump(value,
-                                             encoding='utf-8',
-                                             allow_unicode=True,
-                                             default_flow_style=False))
+        changes = True
+        if args.dry_run:
+            log.info("Changes would be made to the config file at {0}".format(config_path))
+        else:
+            with open(config_path, 'w') as config_file:
+                os.chmod(config_path, 0640)
+                os.chown(config_path, 0, gid)
+                config_file.write(yaml.safe_dump(value,
+                                                 encoding='utf-8',
+                                                 allow_unicode=True,
+                                                 default_flow_style=False))
 
     # Don't restart if only doing detection plugins and no changes found
     if args.detection_plugins is not None and not changes:
         plugin_names = [p.__name__ for p in plugins]
         log.info('No changes found for plugins {0}, skipping restart of Monasca Agent'.format(plugin_names))
+        return 0
+    elif args.dry_run:
+        log.info('Running in dry mode, skipping changes and restart of Monasca Agent')
         return 0
 
     # Now that the config is built, start the service
