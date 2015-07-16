@@ -1,5 +1,6 @@
 import logging
-import os.path
+import os
+import subprocess
 import ConfigParser
 import monasca_setup.detection
 import monasca_setup.agent_config
@@ -16,6 +17,12 @@ cache_dir = "/dev/shm"
 nova_refresh = 60 * 60 * 4  # Four hours
 # Probation period before metrics are gathered for a VM (in seconds)
 vm_probation = 60 * 5  # Five minutes
+# List 'ping' commands (paths and parameters) in order of preference.
+# The plugin will use the first fuctional command. 127.0.0.1 will be appended.
+ping_options = [["/usr/bin/fping", "-n", "-c1", "-t250", "-q"],
+                ["/sbin/fping", "-n", "-c1", "-t250", "-q"],
+                ["/bin/ping", "-n", "-c1", "-w1", "-q"]]
+agent_user = 'monasca-agent'
 
 
 class Libvirt(monasca_setup.detection.Plugin):
@@ -64,6 +71,28 @@ class Libvirt(monasca_setup.detection.Plugin):
                 init_config['identity_uri'] = "{0}/v2.0".format(nova_cfg.get(cfg_section, 'auth_url'))
             else:
                 init_config['identity_uri'] = "{0}/v2.0".format(nova_cfg.get(cfg_section, 'identity_uri'))
+
+            # Verify functionality of the ping command to enable ping checks
+            for ping_cmd in ping_options:
+                if os.path.isfile(ping_cmd[0]):
+                    with open(os.devnull, "w") as fnull:
+                        # Build a test command that uses sudo and hits localhost
+                        ping_local_cmd = ["sudo", "-u", agent_user]
+                        ping_local_cmd.extend(ping_cmd)
+                        ping_local_cmd.append("127.0.0.1")
+                        try:
+                            res = subprocess.call(ping_local_cmd,
+                                                  stdout=fnull,
+                                                  stderr=fnull)
+                        except subprocess.CalledProcessError:
+                            pass
+                        if res == 0:
+                            log.info("\tEnabling ping checks using {0}".format(ping_cmd[0]))
+                            init_config['ping_check'] = " ".join(ping_cmd)
+                            break
+            if 'ping_check' not in init_config:
+                log.info("\tUnable to find suitable ping command, disabling ping checks.")
+                init_config['ping_check'] = 'False'
 
             config['libvirt'] = {'init_config': init_config,
                                  'instances': [{}]}

@@ -11,6 +11,8 @@ init_config:
     nova_refresh: 14400
     # How long before gathering data on newly-provisioned instances? (seconds)
     vm_probation: 300
+    # Command line to ping VMs, set to False (or simply remove) to disable
+    ping_check: /bin/ping -n -c1 -w1 -q
 instances:
     # Instances are automatically detected through queries to the Nova API,
     # and therefore do not need to be listed here, so this remains empty.
