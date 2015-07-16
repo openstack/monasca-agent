@@ -38,6 +38,17 @@ class Plugin(object):
         """
         raise NotImplementedError
 
+    def build_config_with_name(self):
+        """ Builds the config and then adds a field 'built_by' to each instance in the config.
+            built_by is set to the plugin name
+        :return: An agent_config.Plugins object
+        """
+        conf = self.build_config()
+        for plugin_type in conf.itervalues():
+            for inst in plugin_type['instances']:
+                inst['built_by'] = self.__class__.__name__
+        return conf
+
     def dependencies_installed(self):
         """Return True if dependencies are installed.
 

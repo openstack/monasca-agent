@@ -3,18 +3,18 @@
 """
 
 import argparse
+from glob import glob
 import logging
 import os
 import pwd
 import socket
 import subprocess
 import sys
-import yaml
 
 import agent_config
-from detection.utils import find_plugins
+import monasca_setup.utils as utils
+from monasca_setup.utils import write_template
 from service.detection import detect_init
-
 
 log = logging.getLogger(__name__)
 
@@ -23,35 +23,132 @@ CUSTOM_PLUGIN_PATH = '/usr/lib/monasca/agent/custom_detect.d'
 PREFIX_DIR = os.path.dirname(os.path.dirname(os.path.realpath(sys.argv[0])))
 
 
-def write_template(template_path, out_path, variables, group, is_yaml=False):
-    """ Write a file using a simple python string template.
-        Assumes 640 for the permissions and root:group for ownership.
-    :param template_path: Location of the Template to use
-    :param out_path: Location of the file to write
-    :param variables: dictionary with key/value pairs to use in writing the template
-    :return: None
-    """
-    if not os.path.exists(template_path):
-        print("Error no template found at {0}".format(template_path))
-        sys.exit(1)
-    with open(template_path, 'r') as template:
-        contents = template.read().format(**variables)
-        with open(out_path, 'w') as conf:
-            if is_yaml:
-                conf.write(yaml.safe_dump(yaml.safe_load(contents),
-                                          encoding='utf-8',
-                                          allow_unicode=True,
-                                          default_flow_style=False))
-            else:
-                conf.write(contents)
-    os.chown(out_path, 0, group)
-    os.chmod(out_path, 0640)
-
-
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Configure and setup the agent. In a full run it will detect running' +
                                                  ' daemons then configure and start the agent.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    args = parse_arguments(parser)
+
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
+    else:
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+
+    if args.dry_run:
+        log.info("Running in dry run mode, no changes will be made only reported")
+
+    # Detect and if possibly enable the agent service
+    agent_service = detect_init(PREFIX_DIR, args.config_dir, args.log_dir, args.template_dir, username=args.user)
+
+    if args.detection_plugins is None:  # Skip base setup if running specific detection plugins
+        if not args.skip_enable:
+            agent_service.enable()
+
+        # Verify required options
+        if args.username is None or args.password is None or args.keystone_url is None:
+            log.error('Username, password and keystone_url are required when running full configuration.')
+            parser.print_help()
+            sys.exit(1)
+        base_configuration(args)
+
+    # Collect the set of detection plugins to run
+    detected_plugins = utils.discover_plugins(CUSTOM_PLUGIN_PATH)
+    if args.system_only:
+        from detection.plugins.system import System
+        plugins = [System]
+    elif args.detection_plugins is not None:
+        plugins = utils.select_plugins(args.detection_plugins, detected_plugins)
+    else:
+        plugins = detected_plugins
+    plugin_names = [p.__name__ for p in plugins]
+
+    if args.remove:  # Remove entries for each plugin from the various plugin config files
+        changes = remove_config(args, plugin_names)
+    else:
+        # Run detection for all the plugins, halting on any failures if plugins were specified in the arguments
+        detected_config = plugin_detection(plugins, args.template_dir, args.detection_args,
+                                           skip_failed=(args.detection_plugins is None))
+        if detected_config is None:
+            return 1  # Indicates detection problem, skip remaining steps and give non-zero exit code
+
+        changes = modify_config(args, detected_config)
+
+    # Don't restart if only doing detection plugins and no changes found
+    if args.detection_plugins is not None and not changes:
+        log.info('No changes found for plugins {0}, skipping restart of Monasca Agent'.format(plugin_names))
+        return 0
+    elif args.dry_run:
+        log.info('Running in dry mode, skipping changes and restart of Monasca Agent')
+        return 0
+
+    # Now that the config is built, start the service
+    try:
+        agent_service.start(restart=True)
+    except subprocess.CalledProcessError:
+        log.error('The service did not startup correctly see %s' % args.log_dir)
+
+
+def base_configuration(args):
+    """ Write out the primary Agent configuration and setup the service.
+    :param args: Arguments from the command line
+    :return: None
+    """
+    gid = pwd.getpwnam(args.user).pw_gid
+    # Write the main agent.yaml - Note this is always overwritten
+    log.info('Configuring base Agent settings.')
+    dimensions = {}
+    # Join service in with the dimensions
+    if args.service:
+        dimensions.update({'service': args.service})
+    if args.dimensions:
+        dimensions.update(dict(item.strip().split(":") for item in args.dimensions.split(",")))
+
+    args.dimensions = dict((name, value) for (name, value) in dimensions.iteritems())
+    write_template(os.path.join(args.template_dir, 'agent.yaml.template'),
+                   os.path.join(args.config_dir, 'agent.yaml'),
+                   {'args': args, 'hostname': socket.getfqdn()},
+                   gid,
+                   is_yaml=True)
+
+    # Write the supervisor.conf
+    write_template(os.path.join(args.template_dir, 'supervisor.conf.template'),
+                   os.path.join(args.config_dir, 'supervisor.conf'),
+                   {'prefix': PREFIX_DIR, 'log_dir': args.log_dir, 'monasca_user': args.user},
+                   gid)
+
+
+def modify_config(args, detected_config):
+    changes = False
+    # Compare existing and detected config for each check plugin and write out the plugin config if changes
+    for key, value in detected_config.iteritems():
+        if args.overwrite:
+            changes = True
+            if args.dry_run:
+                continue
+            else:
+                agent_config.save_plugin_config(args.config_dir, key, args.user, value)
+        else:
+            old_config = agent_config.read_plugin_config_from_disk(args.config_dir, key)
+            # merge old and new config, new has precedence
+            if old_config is not None:
+                agent_config.merge_by_name(value['instances'], old_config['instances'])
+                # Sort before compare, if instances have no name the sort will fail making order changes significant
+                try:
+                    value['instances'].sort(key=lambda k: k['name'])
+                    old_config['instances'].sort(key=lambda k: k['name'])
+                except Exception:
+                    pass
+                if value == old_config:  # Don't write config if no change
+                    continue
+            changes = True
+            if args.dry_run:
+                log.info("Changes would be made to the config file for the {0} check plugin".format(key))
+            else:
+                agent_config.save_plugin_config(args.config_dir, key, args.user, value)
+    return changes
+
+
+def parse_arguments(parser):
     parser.add_argument(
         '-u', '--username', help="Username used for keystone authentication. Required for basic configuration.")
     parser.add_argument(
@@ -85,11 +182,13 @@ def main(argv=None):
     parser.add_argument('--log_level', help="monasca-agent logging level (ERROR, WARNING, INFO, DEBUG)", required=False,
                         default='WARN')
     parser.add_argument('--template_dir', help="Alternative template directory",
-                         default=os.path.join(PREFIX_DIR, 'share/monasca/agent'))
+                        default=os.path.join(PREFIX_DIR, 'share/monasca/agent'))
     parser.add_argument('--overwrite',
                         help="Overwrite existing plugin configuration. " +
                              "The default is to merge. agent.yaml is always overwritten.",
                         action="store_true")
+    parser.add_argument('-r', '--remove', help="Rather than add the detected configuration remove it.",
+                        action="store_true", default=False)
     parser.add_argument('--skip_enable', help="By default the service is enabled, " +
                                               "which requires the script run as root. Set this to skip that step.",
                         action="store_true")
@@ -100,133 +199,66 @@ def main(argv=None):
                                             "Useful for load testing; not for production use.", default=0)
     parser.add_argument('-v', '--verbose', help="Verbose Output", action="store_true")
     parser.add_argument('--dry_run', help="Make no changes just report on changes", action="store_true")
-    args = parser.parse_args()
+    return parser.parse_args()
 
-    if args.verbose:
-        logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
-    else:
-        logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
-    if args.dry_run:
-        log.info("Running in dry run mode, no changes will be made only reported")
-
-    # Detect and if possibly enable the agent service
-    agent_service = detect_init(PREFIX_DIR, args.config_dir, args.log_dir, args.template_dir, username=args.user)
-
-    if args.detection_plugins is None:  # Skip base setup if running specific detection plugins
-        # Verify required options
-        if args.username is None or args.password is None or args.keystone_url is None:
-            log.error('Username, password and keystone_url are required when running full configuration.')
-            parser.print_help()
-            sys.exit(1)
-        if not args.skip_enable:
-            agent_service.enable()
-
-        gid = pwd.getpwnam(args.user).pw_gid
-        # Write the main agent.yaml - Note this is always overwritten
-        log.info('Configuring base Agent settings.')
-        dimensions = {}
-        # Join service in with the dimensions
-        if args.service:
-            dimensions.update({'service': args.service})
-        if args.dimensions:
-            dimensions.update(dict(item.strip().split(":") for item in args.dimensions.split(",")))
-
-        args.dimensions = dict((name, value) for (name, value) in dimensions.iteritems())
-        write_template(os.path.join(args.template_dir, 'agent.yaml.template'),
-                       os.path.join(args.config_dir, 'agent.yaml'),
-                       {'args': args, 'hostname': socket.getfqdn()},
-                       gid,
-                       is_yaml=True)
-
-        # Write the supervisor.conf
-        write_template(os.path.join(args.template_dir, 'supervisor.conf.template'),
-                       os.path.join(args.config_dir, 'supervisor.conf'),
-                       {'prefix': PREFIX_DIR, 'log_dir': args.log_dir, 'monasca_user': args.user},
-                       gid)
-
-    # Run through detection and config building for the plugins
+def plugin_detection(plugins, template_dir, detection_args, skip_failed=True):
+    """ Runs the detection step for each plugin in the list and returns the complete detected agent config.
+    :param plugins: A list of detection plugin classes
+    :param template_dir: Location of plugin configuration templates
+    :param detection_args: Arguments passed to each detection plugin
+    :param skip_failed: When False any detection failure causes the run to halt and return None
+    :return: An agent_config instance representing the total configuration from all detection plugins run.
+    """
     plugin_config = agent_config.Plugins()
-    detected_plugins = find_plugins(CUSTOM_PLUGIN_PATH)
-    if args.system_only:
-        from detection.plugins.system import System
-        plugins = [System]
-    elif args.detection_plugins is not None:
-        lower_plugins = [p.lower() for p in args.detection_plugins]
-        plugins = []
-        for plugin in detected_plugins:
-            if plugin.__name__.lower() in lower_plugins:
-                plugins.append(plugin)
-
-        if len(plugins) != len(args.detection_plugins):
-            plugin_names = [p.__name__ for p in detected_plugins]
-            log.warn("Not all plugins found, discovered plugins {0}\nAvailable plugins{1}".format(plugins,
-                                                                                                  plugin_names))
-    else:
-        plugins = detected_plugins
-
     for detect_class in plugins:
-        detect = detect_class(args.template_dir, args.overwrite, args.detection_args)
+        # todo add option to install dependencies
+        detect = detect_class(template_dir, False, detection_args)
         if detect.available:
             log.info('Configuring {0}'.format(detect.name))
-            new_config = detect.build_config()
+            new_config = detect.build_config_with_name()
             if new_config is not None:
                 plugin_config.merge(new_config)
-        elif args.detection_plugins is not None:  # Give a warning on failed detection when a plugin is called out
+        elif not skip_failed:
             log.warn('Failed detection of plugin {0}.'.format(detect.name) +
                      "\n\tPossible causes: Service not found or missing arguments.")
-            return 1  # Others could still run but I want to make sure there is a non-zero exit code
+            return None
 
-    # todo add option to install dependencies
+    return plugin_config
 
-    # Write out the plugin config
+
+def remove_config(args, plugin_names):
+    """ Parse all configuration removing any configuration built by plugins in plugin_names
+        Note there is no concept of overwrite for removal.
+    :param args: specified arguments
+    :param plugin_names: A list of the plugin names to remove from the config
+    :return: True if changes, false otherwise
+    """
     changes = False
-    # The gid is created on service activation which we assume has happened before this step or before running with -d
-    gid = pwd.getpwnam(args.user).pw_gid
-    for key, value in plugin_config.iteritems():
-        # todo if overwrite is set I should either warn or just delete any config files not in the new config
-        config_path = os.path.join(args.config_dir, 'conf.d', key + '.yaml')
-        # merge old and new config, new has precedence
-        if (not args.overwrite) and os.path.exists(config_path):
-            with open(config_path, 'r') as config_file:
-                old_config = yaml.load(config_file.read())
-            if old_config is not None:
-                agent_config.merge_by_name(value['instances'], old_config['instances'])
-                # Sort before compare, if instances have no name the sort will fail making order changes significant
-                try:
-                    value['instances'].sort(key=lambda k: k['name'])
-                    old_config['instances'].sort(key=lambda k: k['name'])
-                except Exception:
-                    pass
-                if value == old_config:  # Don't write config if no change
-                    continue
-        changes = True
-        if args.dry_run:
-            log.info("Changes would be made to the config file at {0}".format(config_path))
-        else:
-            with open(config_path, 'w') as config_file:
-                os.chmod(config_path, 0640)
-                os.chown(config_path, 0, gid)
-                config_file.write(yaml.safe_dump(value,
-                                                 encoding='utf-8',
-                                                 allow_unicode=True,
-                                                 default_flow_style=False))
-
-    # Don't restart if only doing detection plugins and no changes found
-    if args.detection_plugins is not None and not changes:
-        plugin_names = [p.__name__ for p in plugins]
-        log.info('No changes found for plugins {0}, skipping restart of Monasca Agent'.format(plugin_names))
-        return 0
-    elif args.dry_run:
-        log.info('Running in dry mode, skipping changes and restart of Monasca Agent')
-        return 0
-
-    # Now that the config is built, start the service
-    try:
-        agent_service.start(restart=True)
-    except subprocess.CalledProcessError:
-        log.error('The service did not startup correctly see %s' % args.log_dir)
-
-
+    existing_config_files = glob(os.path.join(args.config_dir, 'conf.d', '*.yaml'))
+    for file_path in existing_config_files:
+        deletes = False
+        plugin_name = os.path.splitext(os.path.basename(file_path))[0]
+        config = agent_config.read_plugin_config_from_disk(args.config_dir, plugin_name)
+        new_instances = []  # To avoid odd issues from iterating over a list you delete from build a new instead
+        for i in range(len(config['instances'])):
+            inst = config['instances'][i]
+            if 'built_by' in inst and inst['built_by'] in plugin_names:
+                changes = True
+                deletes = True
+                continue
+            new_instances.append(inst)
+        config['instances'] = new_instances
+        if deletes:
+            if args.dry_run:
+                log.info("Changes would be made to the config file {0}".format(file_path))
+            else:
+                if len(config['instances']) == 0:
+                    log.info("Removing configuration file {0} it is no longer needed.".format(file_path))
+                    os.remove(file_path)
+                else:
+                    log.info("Saving changes to configuration file {0}.".format(file_path))
+                    agent_config.save_plugin_config(args.config_dir, plugin_name, args.user, config)
+    return changes
 if __name__ == "__main__":
     sys.exit(main())
