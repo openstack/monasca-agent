@@ -168,6 +168,24 @@ class LibvirtCheck(AgentCheck):
         for inst in insp._get_connection().listAllDomains():
             # Verify that this instance exists in the cache.  Add if necessary.
             inst_name = inst.name()
+
+            # Build customer dimensions
+            try:
+                dims_customer = dims_base.copy()
+                dims_customer['resource_id'] = instance_cache.get(inst_name)['instance_uuid']
+                dims_customer['zone'] = instance_cache.get(inst_name)['zone']
+                # Add dimensions that would be helpful for operations
+                dims_operations = dims_customer.copy()
+                dims_operations['tenant_id'] = instance_cache.get(inst_name)['tenant_id']
+                # Remove customer 'hostname' dimension, this will be replaced by the VM name
+                del(dims_customer['hostname'])
+            except TypeError:
+                # Nova can potentially get into a state where it can't see an
+                # instance, but libvirt can.  This would cause TypeErrors as
+                # incomplete data is cached for this instance.  Log and skip.
+                self.log.error("{0} is not known to nova after instance cache update -- skipping this ghost VM.".format(inst_name))
+                continue
+
             # Skip instances that are inactive
             if inst.isActive() == 0:
                 detail = 'Instance is not active'
@@ -189,14 +207,6 @@ class LibvirtCheck(AgentCheck):
                 self.log.info("Libvirt: {0} in probation for another {1} seconds".format(instance_cache.get(inst_name)['hostname'],
                                                                                          vm_probation_remaining))
                 continue
-
-            # Build customer dimensions
-            dims_customer = dims_base.copy()
-            dims_customer['resource_id'] = instance_cache.get(inst_name)['instance_uuid']
-            dims_customer['zone'] = instance_cache.get(inst_name)['zone']
-            # Add dimensions that would be helpful for operations
-            dims_operations = dims_customer.copy()
-            dims_operations['tenant_id'] = instance_cache.get(inst_name)['tenant_id']
 
             # Test instance's general responsiveness (ping check) if so configured
             if self.init_config.get('ping_check') and 'private_ip' in instance_cache.get(inst_name):
