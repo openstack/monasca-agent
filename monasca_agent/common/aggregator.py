@@ -1,6 +1,7 @@
 """ Aggregation classes used by the collector and statsd to batch messages sent to the forwarder.
 """
 import logging
+import re
 from time import time
 
 import monasca_agent.common.metrics as metrics_pkg
@@ -15,6 +16,21 @@ log = logging.getLogger(__name__)
 # does not support submitting values for the past, and all values get
 # submitted for the timestamp passed into the flush() function.
 RECENT_POINT_THRESHOLD_DEFAULT = 3600
+
+invalid_chars = "<>={}(),'\"\\\\;&"
+restricted_chars = re.compile('[' + invalid_chars + ']')
+
+
+class InvalidMetricName(Exception):
+    pass
+
+
+class InvalidDimensionKey(Exception):
+    pass
+
+
+class InvalidDimensionValue(Exception):
+    pass
 
 
 class MetricsAggregator(object):
@@ -134,6 +150,28 @@ class MetricsAggregator(object):
     def submit_metric(self, name, value, metric_class, dimensions=None,
                       delegated_tenant=None, hostname=None, device_name=None,
                       value_meta=None, timestamp=None, sample_rate=1):
+        if dimensions:
+            for k, v in dimensions.iteritems():
+                if len(k) > 255:
+                    log.error("invalid length for dimension key {}: {} -> {}".format(k, name, dimensions))
+                    raise InvalidDimensionKey
+                if restricted_chars.search(k):
+                    log.error("invalid characters in dimension key {}: {} -> {}".format(k, name, dimensions))
+                    raise InvalidDimensionKey
+
+                if len(v) > 255:
+                    log.error("invalid length for dimension value {}: {} -> {}".format(v, name, dimensions))
+                    raise InvalidDimensionValue
+                if restricted_chars.search(v):
+                    log.error("invalid characters in dimension value {}: {} -> {}".format(v, name, dimensions))
+                    raise InvalidDimensionValue
+
+        if len(name) > 255:
+            log.error("invalid length for metric name: {} -> {}".format(name, dimensions))
+            raise InvalidMetricName
+        if restricted_chars.search(name):
+            log.error("invalid characters in metric name: {} -> {}".format(name, dimensions))
+            raise InvalidMetricName
 
         if value_meta:
             meta = tuple(value_meta.items())
