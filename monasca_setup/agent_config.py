@@ -1,6 +1,9 @@
 """Classes to aid in configuration of the agent."""
 
 import collections
+import os
+import pwd
+import yaml
 
 
 class Plugins(collections.defaultdict):
@@ -52,3 +55,38 @@ def merge_by_name(first, second):
     for item in second:
         if 'name' not in item or item['name'] not in first_names:
             first.append(item)
+
+
+def read_plugin_config_from_disk(config_dir, plugin_name):
+    """ Reads from the Agent on disk configuration the config for a specific plugin
+    :param config_dir: Monasca Agent configuration directory
+    :param plugin_name: The name of the check plugin
+    :return: Dictionary of parsed yaml content
+    """
+    config_path = os.path.join(config_dir, 'conf.d', plugin_name + '.yaml')
+    config = None
+    if os.path.exists(config_path):
+        with open(config_path, 'r') as config_file:
+            config = yaml.load(config_file.read())
+    return config
+
+
+def save_plugin_config(config_dir, plugin_name, user, conf):
+    """ Writes configuration for plugin_name to disk in the config_dir
+    :param config_dir: Monasca Agent configuration directory
+    :param plugin_name: The name of the check plugin
+    :param user: The username Monasca-agent will run as
+    :param conf: The value of the configuration to write to disk
+    :return: None
+    """
+    config_path = os.path.join(config_dir, 'conf.d', plugin_name + '.yaml')
+
+    with open(config_path, 'w') as config_file:
+        # The gid is created on service activation which we assume has happened
+        config_file.write(yaml.safe_dump(conf,
+                                         encoding='utf-8',
+                                         allow_unicode=True,
+                                         default_flow_style=False))
+    gid = pwd.getpwnam(user).pw_gid
+    os.chmod(config_path, 0640)
+    os.chown(config_path, 0, gid)
