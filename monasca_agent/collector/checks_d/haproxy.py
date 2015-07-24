@@ -53,6 +53,7 @@ class HAProxy(AgentCheck):
         url = instance.get('url')
         username = instance.get('username')
         password = instance.get('password')
+        collect_service_stats_only = instance.get('collect_service_stats_only', True)
         collect_aggregates_only = instance.get('collect_aggregates_only', True)
         collect_status_metrics = instance.get('collect_status_metrics', False)
 
@@ -62,7 +63,7 @@ class HAProxy(AgentCheck):
 
         process_events = instance.get('status_check', self.init_config.get('status_check', False))
 
-        self._process_data(data, collect_aggregates_only, process_events,
+        self._process_data(data, collect_service_stats_only, collect_aggregates_only, process_events,
                            url=url, collect_status_metrics=collect_status_metrics)
 
     def _fetch_data(self, url, username, password):
@@ -86,7 +87,7 @@ class HAProxy(AgentCheck):
         # Split the data by line
         return response.split('\n')
 
-    def _process_data(self, data, collect_aggregates_only, process_events,
+    def _process_data(self, data, collect_service_stats_only, collect_aggregates_only, process_events,
                       url=None, collect_status_metrics=False):
         """Main data-processing loop. For each piece of useful data, we'll
 
@@ -118,6 +119,9 @@ class HAProxy(AgentCheck):
                     except Exception:
                         pass
                     data_dict[fields[i]] = val
+
+            if collect_service_stats_only and data_dict['pxname'] != 'stats':
+                continue
 
             # The percentage of used sessions based on 'scur' and 'slim'
             if 'slim' in data_dict and 'scur' in data_dict:

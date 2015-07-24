@@ -58,7 +58,7 @@ class HAProxy(monasca_setup.detection.Plugin):
                 log.warn('Unable to parse haproxy config for stats url, skipping HAProxy check plugin configuration')
             else:
                 log.info('Enabling the HAProxy check plugin')
-                instance_config = {'name': url, 'url': url, 'status_check': False, 'collect_aggregates_only': True,
+                instance_config = {'name': url, 'url': url, 'status_check': False, 'collect_service_stats_only': True,
                                    'collect_status_metrics': False}
                 if user is not None:
                     instance_config['username'] = user
