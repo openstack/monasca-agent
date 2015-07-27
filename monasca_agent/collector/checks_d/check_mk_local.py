@@ -32,29 +32,6 @@ class CheckMK(AgentCheck):
     def __init__(self, name, init_config, agent_config, instances=None):
         AgentCheck.__init__(self, name, init_config, agent_config, instances)
 
-    def _process_line(self, line):
-        """Process a line under the <<<local>>> section, submitting metrics
-           for the status code as well as performance data.
-           The format is space-delimited for the first three fields:
-           <exit code> <item name> <performance data> <check output>
-        """
-        check_data = line.split(' ')
-
-        dimensions = self._set_dimensions(None, instance)
-        value_meta = {'detail': ' '.join(check_data[3:])}
-
-        # Build a reasonable metric name for this line
-        metric_name = "check_mk.{0}".format(check_data[1].lower())
-
-        # Send 'status' metric
-        self.gauge("{0}.status".format(metric_name), check_data[0],
-                   dimensions, value_meta=value_meta)
-
-        # Send performance measurements as separate metrics
-        for perf in check_data[2].split('|'):
-            measurement = perf.split('=')
-            self.gauge("{0}.{1}".format(metric_name, measurement[0]),
-                       measurement[1], dimensions)
 
     def check(self, instance):
         """Run check_mk_agent and process the '<<<local>>>' results.
