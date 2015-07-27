@@ -3,7 +3,6 @@ gearman
 httplib2
 ntplib
 pymongo
-pylint
 psutil>=2.2.1,<3.1.0
 python-memcached
 PyYAML
