@@ -704,9 +704,9 @@ The Kafka checks return the following metrics:
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
-| kafka.broker_offset | topic, service, component, partition, hostname | |
-| kafka.consumer_offset | topic, service, component, partition, consumer_group, hostname | |
-| kafka.consumer_lag | topic, service, component, partition, consumer_group, hostname | |
+| kafka.broker_offset | topic, service, component, partition, hostname | broker offset |
+| kafka.consumer_offset | topic, service, component, partition, consumer_group, hostname | consumer offset |
+| kafka.consumer_lag | topic, service, component, partition, consumer_group, hostname | consumer offset lag from broker offset |
 
 
 ## RabbitMQ Checks
