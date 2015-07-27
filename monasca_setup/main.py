@@ -89,7 +89,7 @@ def main(argv=None):
 
 
 def base_configuration(args):
-    """ Write out the primary Agent configuration and setup the service.
+    """Write out the primary Agent configuration and setup the service.
     :param args: Arguments from the command line
     :return: None
     """
@@ -203,7 +203,7 @@ def parse_arguments(parser):
 
 
 def plugin_detection(plugins, template_dir, detection_args, skip_failed=True):
-    """ Runs the detection step for each plugin in the list and returns the complete detected agent config.
+    """Runs the detection step for each plugin in the list and returns the complete detected agent config.
     :param plugins: A list of detection plugin classes
     :param template_dir: Location of plugin configuration templates
     :param detection_args: Arguments passed to each detection plugin
@@ -228,8 +228,8 @@ def plugin_detection(plugins, template_dir, detection_args, skip_failed=True):
 
 
 def remove_config(args, plugin_names):
-    """ Parse all configuration removing any configuration built by plugins in plugin_names
-        Note there is no concept of overwrite for removal.
+    """Parse all configuration removing any configuration built by plugins in plugin_names
+       Note there is no concept of overwrite for removal.
     :param args: specified arguments
     :param plugin_names: A list of the plugin names to remove from the config
     :return: True if changes, false otherwise

@@ -194,10 +194,10 @@ class RabbitMQ(checks.AgentCheck):
 
         # No queues/node are specified. We will process every queue/node if it's under the limit
         else:
-# Monasca does not support events at this time.
-#            if len(data) > ALERT_THRESHOLD * max_detailed:
-#                # Post a message on the dogweb stream to warn
-#                self.alert(base_url, max_detailed, len(data), object_type)
+            # Monasca does not support events at this time.
+            # if len(data) > ALERT_THRESHOLD * max_detailed:
+            #   # Post a message on the dogweb stream to warn
+            #   self.alert(base_url, max_detailed, len(data), object_type)
 
             if len(data) > max_detailed:
                 # Display a warning in the info page
@@ -226,7 +226,7 @@ class RabbitMQ(checks.AgentCheck):
                 root = root.get(path, {})
 
             value = root.get(keys[-1], None)
-            if value == None:
+            if value is None:
                 value = 0.0
             try:
                 self.log.debug("Collected data for %s: metric name: %s: value: %f dimensions: %s" % (object_type, metric_name, float(value), str(dimensions)))

@@ -31,6 +31,7 @@ NTP_OFFSET_THRESHOLD = 600
 
 log = logging.getLogger(__name__)
 
+
 class Stylizer(object):
 
     STYLES = {
@@ -58,7 +59,7 @@ class Stylizer(object):
 
     @classmethod
     def stylize(cls, text, *styles):
-        """ stylize the text. """
+        """stylize the text. """
         if not cls.ENABLED:
             return text
         # don't bother about escaping, not that complicated.
@@ -102,9 +103,7 @@ def get_ntp_info():
 
 
 class AgentStatus(object):
-
-    """
-    A small class used to load and save status messages to the filesystem.
+    """A small class used to load and save status messages to the filesystem.
     """
 
     NAME = None
@@ -496,8 +495,6 @@ class CollectorStatus(AgentStatus):
             if es.has_error():
                 check_status['error'] = es.error
             status_info['emitter'].append(check_status)
-
-        osname = config.get_os()
 
         paths = util.Paths()
         try:

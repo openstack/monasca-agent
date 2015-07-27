@@ -1,9 +1,9 @@
 from fnmatch import fnmatch
-from os import stat
-from os import walk
 from os.path import abspath
 from os.path import exists
 from os.path import join
+from os import stat
+from os import walk
 import time
 
 from monasca_agent.collector.checks import AgentCheck

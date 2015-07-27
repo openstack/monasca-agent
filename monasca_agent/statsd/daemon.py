@@ -27,7 +27,7 @@ log = logging.getLogger('statsd')
 
 
 class MonascaStatsd(object):
-    """ This class is the monasca_statsd daemon. """
+    """This class is the monasca_statsd daemon. """
 
     def __init__(self, config_path):
         config = cfg.Config()
@@ -86,7 +86,7 @@ class MonascaStatsd(object):
 
 
 def main():
-    """ The main entry point for the unix version of monasca_statsd. """
+    """The main entry point for the unix version of monasca_statsd. """
     parser = argparse.ArgumentParser(description='Monasca statsd - statsd server supporting metric dimensions')
     parser.add_argument('--config', '-c',
                         help="Location for an alternate config rather than using the default config location.")

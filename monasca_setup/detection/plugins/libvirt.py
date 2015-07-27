@@ -1,9 +1,10 @@
+import ConfigParser
 import logging
 import os
 import subprocess
-import ConfigParser
-import monasca_setup.detection
+
 import monasca_setup.agent_config
+import monasca_setup.detection
 
 from distutils.version import LooseVersion
 
@@ -101,9 +102,9 @@ class Libvirt(monasca_setup.detection.Plugin):
 
     def dependencies_installed(self):
         try:
+            import novaclient
             import time
             import yaml
-            import novaclient
             # novaclient module versions were renamed in version 2.22
             if novaclient.__version__ < LooseVersion("2.22"):
                 import novaclient.v1_1.client

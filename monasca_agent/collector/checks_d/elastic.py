@@ -206,7 +206,6 @@ class ElasticSearch(AgentCheck):
             self.STATS_URL = "/_cluster/nodes/stats?all=true"
             self.NODES_URL = "/_cluster/nodes?network=true"
 
-
             additional_metrics = {
                 "elasticsearch.cache.field.evictions": ("gauge", "indices.cache.field_evictions"),
                 "elasticsearch.cache.field.size": ("gauge", "indices.cache.field_size_in_bytes"),

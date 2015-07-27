@@ -1,11 +1,16 @@
 import logging
 import re
-from subprocess import CalledProcessError, STDOUT
+from subprocess import CalledProcessError
+from subprocess import STDOUT
 
-from monasca_setup.detection import Plugin, find_process_cmdline, watch_process
-from monasca_setup.detection.utils import find_addr_listening_on_port
-from monasca_setup.detection.utils import check_output
 from monasca_setup import agent_config
+
+from monasca_setup.detection import find_process_cmdline
+from monasca_setup.detection import Plugin
+from monasca_setup.detection import watch_process
+
+from monasca_setup.detection.utils import check_output
+from monasca_setup.detection.utils import find_addr_listening_on_port
 
 log = logging.getLogger(__name__)
 
@@ -67,8 +72,8 @@ class Kafka(Plugin):
 
     @staticmethod
     def _find_zookeeper_url():
-        """ Pull the zookeeper url the kafka config.
-        :return: Zookeeper url
+        """Pull the zookeeper url the kafka config.
+           :return: Zookeeper url
         """
         zk_connect = re.compile('zookeeper.connect=(.*)')
         try:
@@ -84,9 +89,9 @@ class Kafka(Plugin):
         return match.group(1).split(',')[0]  # Only use the first zk url
 
     def _ls_zookeeper(self, path):
-        """ Do a ls on the given zookeeper path.
-            I am using the local command line kafka rather than kazoo because it doesn't make sense to
-            have kazoo as a dependency only for detection.
+        """Do a ls on the given zookeeper path.
+           I am using the local command line kafka rather than kazoo because it doesn't make sense to
+           have kazoo as a dependency only for detection.
         """
         zk_shell = ['/opt/kafka/bin/zookeeper-shell.sh', self.zk_url, 'ls', path]
         try:

@@ -1,27 +1,30 @@
 # set up logging before importing any other components
+from collector import modules
 from config import initialize_logging
 from monasca_agent.pup import pup
-from collector import modules
 from monasca_agent.statsd import daemon
 
 initialize_logging('collector')
 
-import win32serviceutil
-import win32service
-import win32event
-import sys
 import logging
-import time
 import multiprocessing
+import sys
+import time
+import win32event
+import win32service
+import win32serviceutil
 
-from optparse import Values
 from collector.checks.collector import Collector
-from emitter import http_emitter
-from ddagent import Application
-from win32.common import handle_exe_click
 from collector.jmxfetch import JMXFetch
+from ddagent import Application
+from emitter import http_emitter
+from optparse import Values
+from win32.common import handle_exe_click
 
-from monasca_agent.common.config import get_config, load_check_directory, set_win32_cert_path
+from monasca_agent.common.config import get_config
+from monasca_agent.common.config import load_check_directory
+from monasca_agent.common.config import set_win32_cert_path
+from monasca_agent.statsd.daemon import MonascaStatsd
 
 log = logging.getLogger(__name__)
 RESTART_INTERVAL = 24 * 60 * 60  # Defaults to 1 day

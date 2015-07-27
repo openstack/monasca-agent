@@ -8,10 +8,10 @@ log = logging.getLogger(__name__)
 
 
 class HttpCheck(monasca_setup.detection.ArgsPlugin):
-    """ Setup an http_check according to the passed in args.
-        Despite being a detection plugin this plugin does no detection and will be a noop without arguments.
-        Expects space seperated arguments, the required argument is url. Optional parameters include:
-        disable_ssl_validation and match_pattern.
+    """Setup an http_check according to the passed in args.
+       Despite being a detection plugin this plugin does no detection and will be a noop without arguments.
+       Expects space seperated arguments, the required argument is url. Optional parameters include:
+       disable_ssl_validation and match_pattern.
     """
 
     def _detect(self):

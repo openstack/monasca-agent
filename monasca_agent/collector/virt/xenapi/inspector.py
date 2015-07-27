@@ -57,23 +57,23 @@ class XenapiException(virt_inspector.InspectorException):
 
 def get_api_session():
     if not api:
-        raise ImportError(_('XenAPI not installed'))
+        raise ImportError('XenAPI not installed')
 
     url = CONF.xenapi.connection_url
     username = CONF.xenapi.connection_username
     password = CONF.xenapi.connection_password
     if not url or password is None:
-        raise XenapiException(_('Must specify connection_url, and '
-                                'connection_password to use'))
+        raise XenapiException('Must specify connection_url, and '
+                              'connection_password to use')
 
-    exception = api.Failure(_("Unable to log in to XenAPI "
-                              "(is the Dom0 disk full?)"))
+    exception = api.Failure("Unable to log in to XenAPI "
+                            "(is the Dom0 disk full?)")
     try:
         session = api.Session(url)
         with timeout.Timeout(CONF.xenapi.login_timeout, exception):
             session.login_with_password(username, password)
     except api.Failure as e:
-        msg = _("Could not connect to XenAPI: %s") % e.details[0]
+        msg = "Could not connect to XenAPI: %s" % e.details[0]
         raise XenapiException(msg)
     return session
 
@@ -96,10 +96,10 @@ class XenapiInspector(virt_inspector.Inspector):
         n = len(vm_refs)
         if n == 0:
             raise virt_inspector.InstanceNotFoundException(
-                _('VM %s not found in XenServer') % instance_name)
+                'VM %s not found in XenServer' % instance_name)
         elif n > 1:
             raise XenapiException(
-                _('Multiple VM %s found in XenServer') % instance_name)
+                'Multiple VM %s found in XenServer' % instance_name)
         else:
             return vm_refs[0]
 
@@ -112,7 +112,7 @@ class XenapiInspector(virt_inspector.Inspector):
         vcpus_number = metrics_rec['VCPUs_number']
         vcpus_utils = metrics_rec['VCPUs_utilisation']
         if len(vcpus_utils) == 0:
-            msg = _("Could not get VM %s CPU Utilization") % instance_name
+            msg = "Could not get VM %s CPU Utilization" % instance_name
             raise XenapiException(msg)
 
         utils = 0.0

@@ -143,7 +143,7 @@ class Check(util.Dimensions):
                     [(timestamp, value, hostname, device_name)]
         else:
             raise exceptions.CheckException("%s must be either gauge or counter, skipping sample at %s" %
-                                                                 (metric, time.ctime(timestamp)))
+                                            (metric, time.ctime(timestamp)))
 
         if self.is_gauge(metric):
             # store[metric][dimensions] = (ts, val) - only 1 value allowed
@@ -636,32 +636,3 @@ class AgentCheck(util.Dimensions):
             return val
         else:
             return cast(val)
-
-
-def run_check(name, path=None):
-    import tests.common
-
-    # Read the config file
-    config = Config()
-    confd_path = path or os.path.join(config.get_confd_path(),
-                                      '{0}.yaml'.format(name))
-
-    try:
-        f = open(confd_path)
-    except IOError:
-        raise Exception('Unable to open configuration at %s' % confd_path)
-
-    config_str = f.read()
-    f.close()
-
-    # Run the check
-    check, instances = tests.common.get_check(name, config_str)
-    if not instances:
-        raise Exception('YAML configuration returned no instances.')
-    for instance in instances:
-        check.check(instance)
-        if check.has_events():
-            print("Events:\n")
-            pprint.pprint(check.get_events(), indent=4)
-        print("Metrics:\n")
-        pprint.pprint(check.get_metrics(), indent=4)

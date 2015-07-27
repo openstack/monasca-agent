@@ -1,5 +1,5 @@
-import psutil
 import logging
+import psutil
 
 import monasca_agent.collector.checks as checks
 
@@ -18,9 +18,9 @@ class Cpu(checks.AgentCheck):
         dimensions = self._set_dimensions(None, instance)
 
         if instance is not None:
-            send_rollup_stats =  instance.get("send_rollup_stats", False)
+            send_rollup_stats = instance.get("send_rollup_stats", False)
         else:
-            send_rollup_stats =  False
+            send_rollup_stats = False
 
         cpu_stats = psutil.cpu_times_percent(percpu=False)
         num_of_metrics = self._format_results(cpu_stats.user + cpu_stats.nice,
@@ -33,7 +33,6 @@ class Cpu(checks.AgentCheck):
             self.gauge('cpu.total_logical_cores', psutil.cpu_count(logical=True), dimensions)
             num_of_metrics += 1
         log.debug('Collected {0} cpu metrics'.format(num_of_metrics))
-
 
     def _format_results(self, us, sy, wa, idle, st, dimensions):
         data = {'cpu.user_perc': us,

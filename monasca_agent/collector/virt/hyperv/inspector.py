@@ -20,7 +20,7 @@ from monasca_agent.collector.virt.hyperv import utilsv2
 from monasca_agent.collector.virt import inspector as virt_inspector
 
 
-def instance_name(instance):
+def get_instance_name(instance):
     """Shortcut to get instance name."""
     return getattr(instance, 'OS-EXT-SRV-ATTR:instance_name', None)
 

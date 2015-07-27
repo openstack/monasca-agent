@@ -38,8 +38,8 @@ class MySQL(monasca_setup.detection.Plugin):
         # Attempt login, requires either an empty root password from localhost
         # or relying on a configured /root/.my.cnf
         if self.dependencies_installed():  # ensures MySQLdb is available
-            import MySQLdb
             import _mysql_exceptions
+            import MySQLdb
             try:
                 MySQLdb.connect(read_default_file=mysql_conf)
             except _mysql_exceptions.MySQLError:

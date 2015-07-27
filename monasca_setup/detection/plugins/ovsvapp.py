@@ -13,7 +13,7 @@ class Ovsvapp(monasca_setup.detection.ServicePlugin):
             'template_dir': template_dir,
             'overwrite': overwrite,
             'service_name': 'OVSvApp-ServiceVM',
-            'process_names': ['neutron-ovsvapp-agent', 'ovsdb-server','ovs-vswitchd'],
+            'process_names': ['neutron-ovsvapp-agent', 'ovsdb-server', 'ovs-vswitchd'],
             'service_api_url': '',
             'search_pattern': ''
         }

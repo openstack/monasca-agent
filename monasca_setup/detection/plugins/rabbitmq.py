@@ -41,7 +41,7 @@ class RabbitMQ(monasca_setup.detection.Plugin):
             self.available = True
 
     def _get_config(self):
-        """ Set the configuration to be used for connecting to rabbitmq
+        """Set the configuration to be used for connecting to rabbitmq
         :return:
         """
         # Set defaults and read config or use arguments
@@ -63,7 +63,7 @@ class RabbitMQ(monasca_setup.detection.Plugin):
             self.exchanges = self.args.get('exchanges')
 
     def _login_test(self):
-        """ Attempt to log into the rabbitmq admin api to verify credentials.
+        """Attempt to log into the rabbitmq admin api to verify credentials.
         :return: bool status of the test
         """
         url = self.api_url + '/aliveness-test/%2F'
@@ -84,7 +84,7 @@ class RabbitMQ(monasca_setup.detection.Plugin):
             return False
 
     def _read_config(self, config_file):
-        """ Read the configuration setting member variables as appropriate.
+        """Read the configuration setting member variables as appropriate.
         :param config_file: The filename of the configuration to read and parse
         """
         # Read the rabbitmq config file to extract the needed variables.

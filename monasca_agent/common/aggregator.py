@@ -34,10 +34,7 @@ class InvalidDimensionValue(Exception):
 
 
 class MetricsAggregator(object):
-
-    """
-    A metric aggregator class.
-    """
+    """A metric aggregator class."""
 
     def __init__(self, hostname, recent_point_threshold=None):
         self.events = []
@@ -63,10 +60,8 @@ class MetricsAggregator(object):
             priority=None,
             dimensions=None,
             hostname=None):
-        event = {
-            'msg_title': title,
-            'msg_text': text,
-            }
+        event = {'msg_title': title,
+                 'msg_text': text}
         if date_happened is not None:
             event['timestamp'] = date_happened
         else:
@@ -97,7 +92,7 @@ class MetricsAggregator(object):
         for context, metric in self.metrics.items():
             try:
                 metrics.extend(metric.flush(timestamp))
-            except Exception as e:
+            except Exception:
                 log.exception('Error flushing {0} metrics.'.format(metric.name))
 
         # Log a warning regarding metrics with old timestamps being submitted
@@ -126,9 +121,9 @@ class MetricsAggregator(object):
     @staticmethod
     def formatter(metric, value, timestamp, dimensions, hostname, delegated_tenant=None,
                   device_name=None, metric_type=None, value_meta=None):
-        """ Formats metrics, put them into a Measurement class
-            (metric, timestamp, value, {"dimensions": {"name1": "value1", "name2": "value2"}, ...})
-            dimensions should be a dictionary
+        """Formats metrics, put them into a Measurement class
+           (metric, timestamp, value, {"dimensions": {"name1": "value1", "name2": "value2"}, ...})
+           dimensions should be a dictionary
         """
         if 'hostname' not in dimensions and hostname:
             dimensions.update({'hostname': hostname})

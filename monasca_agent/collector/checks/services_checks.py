@@ -170,6 +170,7 @@ class ServicesCheck(monasca_agent.collector.checks.AgentCheck):
 
     def _check(self, instance):
         """This function should be implemented by inherited classes.
+
         """
         raise NotImplementedError
 

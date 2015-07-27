@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 
 def discover_plugins(custom_path):
-    """ Find and import all detection plugins. It will look in detection/plugins dir of the code as well as custom_path
+    """Find and import all detection plugins. It will look in detection/plugins dir of the code as well as custom_path
 
     :param custom_path: An additional path to search for detection plugins
     :return: A list of imported detection plugin classes.
@@ -44,10 +44,9 @@ def discover_plugins(custom_path):
 
 
 def select_plugins(plugin_names, plugin_list):
-    """
-    :param plugin_names: A list of names
-    :param plugin_list: A list of detection plugins classes
-    :return: Returns a list of plugins from plugin_list that match plugin_names
+    """:param plugin_names: A list of names
+       :param plugin_list: A list of detection plugins classes
+       :return: Returns a list of plugins from plugin_list that match plugin_names
     """
     lower_plugins = [p.lower() for p in plugin_names]
     plugins = []
@@ -64,8 +63,8 @@ def select_plugins(plugin_names, plugin_list):
 
 
 def write_template(template_path, out_path, variables, group, is_yaml=False):
-    """ Write a file using a simple python string template.
-        Assumes 640 for the permissions and root:group for ownership.
+    """Write a file using a simple python string template.
+       Assumes 640 for the permissions and root:group for ownership.
     :param template_path: Location of the Template to use
     :param out_path: Location of the file to write
     :param variables: dictionary with key/value pairs to use in writing the template
@@ -85,4 +84,4 @@ def write_template(template_path, out_path, variables, group, is_yaml=False):
             else:
                 conf.write(contents)
     os.chown(out_path, 0, group)
-    os.chmod(out_path, 0640)
+    os.chmod(out_path, 0o640)

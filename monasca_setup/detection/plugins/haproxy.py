@@ -64,7 +64,7 @@ class HAProxy(monasca_setup.detection.Plugin):
                     instance_config['username'] = user
                 if password is not None:
                     instance_config['password'] = password
-                config['haproxy'] = {'init_config': None, 'instances': [ instance_config ]}
+                config['haproxy'] = {'init_config': None, 'instances': [instance_config]}
 
         return config
 

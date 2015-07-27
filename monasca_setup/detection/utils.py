@@ -2,7 +2,9 @@
 """
 import logging
 import subprocess
-from subprocess import Popen, PIPE, CalledProcessError
+from subprocess import CalledProcessError
+from subprocess import PIPE
+from subprocess import Popen
 
 import psutil
 

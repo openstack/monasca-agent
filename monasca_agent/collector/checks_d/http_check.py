@@ -12,8 +12,9 @@ from httplib2 import httplib
 from httplib2 import HttpLib2Error
 
 import monasca_agent.collector.checks.services_checks as services_checks
-import monasca_agent.common.keystone as keystone
 import monasca_agent.common.config as cfg
+import monasca_agent.common.keystone as keystone
+
 
 class HTTPCheck(services_checks.ServicesCheck):
 

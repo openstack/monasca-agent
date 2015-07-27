@@ -84,7 +84,7 @@ class IIS(AgentCheck):
             if iis_site.Name == '_Total':
                 dimensions.pop('site', None)
             else:
-                dimensions.update({'site': iis_site.Name})                
+                dimensions.update({'site': iis_site.Name})
 
             for metric, mtype, wmi_val in self.METRICS:
                 if not hasattr(iis_site, wmi_val):

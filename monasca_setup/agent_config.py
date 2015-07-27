@@ -58,7 +58,7 @@ def merge_by_name(first, second):
 
 
 def read_plugin_config_from_disk(config_dir, plugin_name):
-    """ Reads from the Agent on disk configuration the config for a specific plugin
+    """Reads from the Agent on disk configuration the config for a specific plugin
     :param config_dir: Monasca Agent configuration directory
     :param plugin_name: The name of the check plugin
     :return: Dictionary of parsed yaml content
@@ -72,7 +72,7 @@ def read_plugin_config_from_disk(config_dir, plugin_name):
 
 
 def save_plugin_config(config_dir, plugin_name, user, conf):
-    """ Writes configuration for plugin_name to disk in the config_dir
+    """Writes configuration for plugin_name to disk in the config_dir
     :param config_dir: Monasca Agent configuration directory
     :param plugin_name: The name of the check plugin
     :param user: The username Monasca-agent will run as
@@ -88,5 +88,5 @@ def save_plugin_config(config_dir, plugin_name, user, conf):
                                          allow_unicode=True,
                                          default_flow_style=False))
     gid = pwd.getpwnam(user).pw_gid
-    os.chmod(config_path, 0640)
+    os.chmod(config_path, 0o640)
     os.chown(config_path, 0, gid)

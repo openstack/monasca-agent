@@ -1,4 +1,5 @@
 import logging
+import six
 
 from monascaclient import ksclient
 
@@ -10,7 +11,7 @@ log = logging.getLogger(__name__)
 class Keystone(object):
     # Make this a singleton class so we don't get the token every time
     # the class is created
-    __metaclass__ = singleton.Singleton
+    six.add_metaclass(singleton.Singleton)
 
     def __init__(self, config):
         self.config = config

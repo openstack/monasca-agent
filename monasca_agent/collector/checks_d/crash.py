@@ -16,8 +16,7 @@ class Crash(checks.AgentCheck):
         log.debug('crash dir: %s', self.crash_dir)
 
     def check(self, instance):
-        """
-        Capture crash dump statistics
+        """Capture crash dump statistics
         """
         dimensions = self._set_dimensions(None, instance)
         dump_count = 0

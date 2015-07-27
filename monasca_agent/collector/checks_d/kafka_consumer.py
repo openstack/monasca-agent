@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 
 
 class KafkaConnection(object):
-    """ A simple context manager for kafka connections """
+    """A simple context manager for kafka connections """
 
     def __init__(self, connect_str):
         self.connect_str = connect_str
@@ -31,13 +31,13 @@ class KafkaConnection(object):
 
 
 class KafkaCheck(checks.AgentCheck):
-    """ Checks the configured kafka instance reporting the consumption lag
-        for each partition per topic in each consumer group. If full_output
-        is set also reports broker offsets and the current consumer offset.
-        Works on Kafka version >= 0.8.1.1
+    """Checks the configured kafka instance reporting the consumption lag
+       for each partition per topic in each consumer group. If full_output
+       is set also reports broker offsets and the current consumer offset.
+       Works on Kafka version >= 0.8.1.1
     """
     def _validate_consumer_groups(self, val):
-        """ Private config validation/marshalling functions
+        """Private config validation/marshalling functions
         """
         try:
             consumer_group, topic_partitions = val.items()[0]

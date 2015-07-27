@@ -279,5 +279,5 @@ def get_hypervisor_inspector():
                                    cfg.CONF.hypervisor_inspector,
                                    invoke_on_load=True)
         return mgr.driver
-    except ImportError as e:
+    except ImportError:
         return Inspector()

@@ -90,7 +90,7 @@ class VsphereInspector(virt_inspector.Inspector):
         vm_moid = self._ops.get_vm_moid(instance.id)
         if vm_moid is None:
             raise virt_inspector.InstanceNotFoundException(
-                _('VM %s not found in VMware Vsphere') % instance.id)
+                'VM %s not found in VMware Vsphere' % instance.id)
         cpu_util_counter_id = self._ops.get_perf_counter_id(
             VC_AVERAGE_CPU_CONSUMED_CNTR)
         cpu_util = self._ops.query_vm_aggregate_stats(
@@ -107,7 +107,7 @@ class VsphereInspector(virt_inspector.Inspector):
         vm_moid = self._ops.get_vm_moid(instance.id)
         if not vm_moid:
             raise virt_inspector.InstanceNotFoundException(
-                _('VM %s not found in VMware Vsphere') % instance.id)
+                'VM %s not found in VMware Vsphere' % instance.id)
 
         vnic_stats = {}
         vnic_ids = set()
@@ -139,7 +139,7 @@ class VsphereInspector(virt_inspector.Inspector):
         vm_moid = self._ops.get_vm_moid(instance.id)
         if vm_moid is None:
             raise virt_inspector.InstanceNotFoundException(
-                _('VM %s not found in VMware Vsphere') % instance.id)
+                'VM %s not found in VMware Vsphere' % instance.id)
         mem_counter_id = self._ops.get_perf_counter_id(
             VC_AVERAGE_MEMORY_CONSUMED_CNTR)
         memory = self._ops.query_vm_aggregate_stats(
@@ -152,7 +152,7 @@ class VsphereInspector(virt_inspector.Inspector):
         vm_moid = self._ops.get_vm_moid(instance.id)
         if not vm_moid:
             raise virt_inspector.InstanceNotFoundException(
-                _('VM %s not found in VMware Vsphere') % instance.id)
+                'VM %s not found in VMware Vsphere' % instance.id)
 
         disk_stats = {}
         disk_ids = set()

@@ -8,14 +8,12 @@ log = logging.getLogger(__name__)
 
 
 class Crash(Plugin):
-    """
-    Detect if kdump is installed and enabled and setup configuration to
-    monitor for crash dumps.
+    """Detect if kdump is installed and enabled and setup configuration to
+       monitor for crash dumps.
     """
 
     def _detect(self):
-        """
-        Run detection, set self.available True if a crash kernel is loaded.
+        """Run detection, set self.available True if a crash kernel is loaded.
         """
         loaded = '/sys/kernel/kexec_crash_loaded'
         if os.path.isfile(loaded):
@@ -24,8 +22,7 @@ class Crash(Plugin):
                     self.available = True
 
     def build_config(self):
-        """
-        Build the config as a Plugin object and return it.
+        """Build the config as a Plugin object and return it.
         """
         log.info('\tEnabling the Monasca crash dump healthcheck')
         config = agent_config.Plugins()

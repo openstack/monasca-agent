@@ -74,8 +74,7 @@ class PoolWorker(threading.Thread):
 
 class Pool(object):
 
-    """
-    The Pool class represents a pool of worker threads.
+    """The Pool class represents a pool of worker threads.
 
     It has methods which allows tasks to be offloaded to the
     worker processes in a few different ways.
