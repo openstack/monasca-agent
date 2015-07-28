@@ -100,7 +100,7 @@ class HostAlive(services_checks.ServicesCheck):
         if not instance['host_name']:
             raise ValueError('Target hostname not specified!')
 
-        dimensions = self._set_dimensions({'target_host': instance['host_name'],
+        dimensions = self._set_dimensions({'hostname': instance['host_name'],
                                            'observer_host': socket.getfqdn()},
                                           instance)
 

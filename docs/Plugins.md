@@ -434,7 +434,7 @@ An extension to the Agent can provide basic "aliveness" checks of other systems,
 
  default dimensions:
     observer_host: fqdn
-    target_host: fqdn | supplied
+    hostname: fqdn | supplied
     test_type: ping | ssh | Unrecognized alive_test
     
  default value_meta
@@ -463,10 +463,10 @@ ls -l `which ping` -rwsr-xr-x 1 root root 35712 Nov 8 2011 /bin/ping
 ```
 init_config:
     ssh_port: 22
- 
+
     # ssh_timeout is a floating-point number of seconds
     ssh_timeout: 0.5
- 
+
     # ping_timeout is an integer number of seconds
     ping_timeout: 1
 ```
@@ -479,22 +479,24 @@ The instances section contains the hostname/IP to check, and the type of check t
   - name: ssh to somehost
     host_name: somehost.somedomain.net
     alive_test: ssh
- 
+
   - name: ping gateway
     host_name: gateway.somedomain.net
     alive_test: ping
- 
+
   - name: ssh to 192.168.0.221
     host_name: 192.168.0.221
     alive_test: ssh
-```        
+```
 
-The host alive checks return the following metric:
+The host alive checks return the following Dimensions:
 
-| Metric Name | Dimensions | Semantics |
-| ----------- | ---------- | --------- |
-| host_alive_status  | hostname, service, component, observer_host, target_host, test_type | Provides the status of the target host based on an ssh or ping check
+| Dimensions| Value|
+| observer_host| fqdn |
+| hostname | supplied hostname being checked |
+| test_type| ping or ssh |
 
+Also in the case of an error the value_meta contains an error message.
 
 ## Process Checks
 Process checks can be performed to verify that a set of named processes are running on the local system. The YAML file `process.yaml` contains the list of processes that are checked. The processes can be identified using a pattern match or exact match on the process name. A Python script `process.py` runs each execution cycle to check that required processes are alive. If the process is running a value of 0 is sent, otherwise a value of 1 is sent to the Monasca API.
