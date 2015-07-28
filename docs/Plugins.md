@@ -648,6 +648,7 @@ The mySQL checks return the following metrics:
 
 ## ZooKeeper Checks
 This section describes the Zookeeper check that can be performed by the Agent.  The Zookeeper check requires a configuration file called zk.yaml to be available in the agent conf.d configuration directory.
+The Zookeeper check parses the result of zookeeper's `stat` admin command.
 
 Sample config:
 
@@ -664,16 +665,16 @@ The Zookeeper checks return the following metrics:
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
-| zookeeper.max_latency_sec | hostname, mode, service=zookeeper | |
-| zookeeper.min_latency_sec | hostname, mode, service=zookeeper | |
-| zookeeper.avg_latency_sec | hostname, mode, service=zookeeper | |
-| zookeeper.out_bytes | hostname, mode, service=zookeeper | |
-| zookeeper.outstanding_bytes | hostname, mode, service=zookeeper | |
-| zookeeper.in_bytes | hostname, mode, service=zookeeper | |
-| zookeeper.connections_count | hostname, mode, service=zookeeper | |
-| zookeeper.node_count | hostname, mode, service=zookeeper | |
-| zookeeper.zxid_count | hostname, mode, service=zookeeper | |
-| zookeeper.zxid_epoch | hostname, mode, service=zookeeper | |
+| zookeeper.max_latency_sec | hostname, mode, service=zookeeper | Maximum latency in second |
+| zookeeper.min_latency_sec | hostname, mode, service=zookeeper | Minimum latency in second |
+| zookeeper.avg_latency_sec | hostname, mode, service=zookeeper | Average latency in second |
+| zookeeper.out_bytes | hostname, mode, service=zookeeper | Sent bytes |
+| zookeeper.outstanding_bytes | hostname, mode, service=zookeeper | Outstanding bytes |
+| zookeeper.in_bytes | hostname, mode, service=zookeeper | Received bytes |
+| zookeeper.connections_count | hostname, mode, service=zookeeper | Number of connections |
+| zookeeper.node_count | hostname, mode, service=zookeeper | Number of nodes |
+| zookeeper.zxid_count | hostname, mode, service=zookeeper | Count number |
+| zookeeper.zxid_epoch | hostname, mode, service=zookeeper | Epoch number |
 
 
 ## Kafka Checks
