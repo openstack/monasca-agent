@@ -22,13 +22,12 @@ class ServicePlugin(Plugin):
     """
 
     def __init__(self, kwargs):
-        self.args = kwargs.get('args')
         self.service_name = kwargs['service_name']
         self.process_names = kwargs['process_names']
         self.service_api_url = kwargs.get('service_api_url')
         self.search_pattern = kwargs['search_pattern']
 
-        super(ServicePlugin, self).__init__(kwargs['template_dir'], kwargs['overwrite'])
+        super(ServicePlugin, self).__init__(kwargs['template_dir'], kwargs['overwrite'], kwargs.get('args'))
 
     def _detect(self):
         """Run detection.
@@ -53,11 +52,9 @@ class ServicePlugin(Plugin):
             config.merge(watch_process([process], self.service_name, process, exact_match=False))
 
         # Skip the http_check if disable_http_check is set
-        if self.args is not None:
-            args_dict = dict([a.split('=') for a in self.args.split()])
-            if args_dict.get('disable_http_check', default=False):
-                self.service_api_url = None
-                self.search_pattern = None
+        if self.args is not None and self.args.get('disable_http_check', False):
+            self.service_api_url = None
+            self.search_pattern = None
 
         if self.service_api_url and self.search_pattern:
             # Check if there is something listening on the host/port
