@@ -16,14 +16,17 @@ class Plugin(object):
         self.template_dir = template_dir
         self.dependencies = ()
         self.overwrite = overwrite
-        self.args = None
-        if args is not None:
+        if args is not None and isinstance(args, str):
             try:
                 # Turn 'hostname=host type=ping' to dictionary {'hostname': 'host', 'type': 'ping'}
                 self.args = dict([a.split('=') for a in args.split()])
             except Exception:
                 log.exception('Error parsing detection arguments')
                 sys.exit(1)
+        elif isinstance(args, dict):
+            self.args = args
+        else:
+            self.args = None
         self._detect()
 
     def _detect(self):
