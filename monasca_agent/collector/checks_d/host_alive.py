@@ -8,6 +8,7 @@ import subprocess
 import sys
 
 import monasca_agent.collector.checks.services_checks as services_checks
+import monasca_agent.common.util as util
 
 
 class HostAlive(services_checks.ServicesCheck):
@@ -101,7 +102,7 @@ class HostAlive(services_checks.ServicesCheck):
             raise ValueError('Target hostname not specified!')
 
         dimensions = self._set_dimensions({'hostname': instance['host_name'],
-                                           'observer_host': socket.getfqdn()},
+                                           'observer_host': util.get_hostname()},
                                           instance)
 
         success = False
