@@ -1,6 +1,6 @@
 import logging
 import psutil
-from urlparse import urlparse
+import urlparse
 
 from plugin import Plugin
 
@@ -58,7 +58,7 @@ class ServicePlugin(Plugin):
 
         if self.service_api_url and self.search_pattern:
             # Check if there is something listening on the host/port
-            parsed = urlparse(self.service_api_url)
+            parsed = urlparse.urlparse(self.service_api_url)
             host, port = parsed.netloc.split(':')
             listening = []
             for connection in psutil.net_connections():
@@ -67,8 +67,10 @@ class ServicePlugin(Plugin):
 
             if len(listening) > 0:
                 # If not listening on localhost or ips then use another local ip
-                if host == 'localhost' and len(set(['0.0.0.0', '::', '::1']) & set(listening)) == 0:
-                    api_url = listening[0] + ':' + port
+                if host == 'localhost' and len(set(['127.0.0.1', '0.0.0.0', '::', '::1']) & set(listening)) == 0:
+                    new_url = list(parsed)
+                    new_url[1] = listening[0] + ':' + port
+                    api_url = urlparse.urlunparse(new_url)
                 else:
                     api_url = self.service_api_url
 
