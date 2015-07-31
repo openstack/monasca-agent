@@ -21,10 +21,7 @@ metric_class = {
 
 
 class Server(object):
-
-    """
-    A statsd udp server.
-    """
+    """A statsd udp server."""
 
     def __init__(self, aggregator, host, port, forward_to_host=None, forward_to_port=None):
         self.host = host
@@ -162,7 +159,7 @@ class Server(object):
                     name, value, metric_class[mtype], dimensions=dimensions, sample_rate=sample_rate)
 
     def start(self):
-        """ Run the server. """
+        """Run the server."""
         # Bind to the UDP socket.
         # IPv4 only
         open_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

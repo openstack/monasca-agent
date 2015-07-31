@@ -32,7 +32,6 @@ class CheckMK(AgentCheck):
     def __init__(self, name, init_config, agent_config, instances=None):
         AgentCheck.__init__(self, name, init_config, agent_config, instances)
 
-
     def check(self, instance):
         """Run check_mk_agent and process the '<<<local>>>' results.
         """

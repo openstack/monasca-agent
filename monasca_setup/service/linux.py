@@ -13,10 +13,10 @@ log = logging.getLogger(__name__)
 
 
 class LinuxInit(service.Service):
-    """ Parent class for all Linux based init systems.
+    """Parent class for all Linux based init systems.
     """
     def enable(self):
-        """ Does user/group directory creation.
+        """Does user/group directory creation.
         """
         # Create user/group if needed
         try:
@@ -29,7 +29,7 @@ class LinuxInit(service.Service):
         # todo log dir is hardcoded
         for path in (self.log_dir, self.config_dir, '%s/conf.d' % self.config_dir):
             if not os.path.exists(path):
-                os.makedirs(path, 0755)
+                os.makedirs(path, 0o755)
                 os.chown(path, 0, user.pw_gid)
         # the log dir needs to be writable by the user
         os.chown(self.log_dir, user.pw_uid, user.pw_gid)
@@ -66,7 +66,7 @@ class Systemd(LinuxInit):
                 service_script.write(template.read().format(prefix=self.prefix_dir, monasca_user=self.username,
                                                             config_dir=self.config_dir))
         os.chown(init_path, 0, 0)
-        os.chmod(init_path, 0644)
+        os.chmod(init_path, 0o644)
 
         # Enable the service
         subprocess.check_call(['systemctl', 'daemon-reload'])
@@ -128,7 +128,7 @@ class SysV(LinuxInit):
                 conf.write(template.read().format(prefix=self.prefix_dir, monasca_user=self.username,
                                                   config_dir=self.config_dir))
         os.chown(self.init_script, 0, 0)
-        os.chmod(self.init_script, 0755)
+        os.chmod(self.init_script, 0o755)
 
         for runlevel in ['2', '3', '4', '5']:
             link_path = '/etc/rc%s.d/S10monasca-agent' % runlevel

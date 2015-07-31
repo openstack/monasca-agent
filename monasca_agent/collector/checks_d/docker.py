@@ -3,8 +3,8 @@ import json
 import os
 import re
 import socket
-import urllib2
 import urllib
+import urllib2
 from urlparse import urlsplit
 
 from monasca_agent.collector.checks import AgentCheck

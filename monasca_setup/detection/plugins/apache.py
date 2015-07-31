@@ -102,11 +102,11 @@ class Apache(monasca_setup.detection.Plugin):
                     log.info("\tSuccessfully setup Apache plugin.")
                 else:
                     log.warn('Unable to access the Apache server-status URL;' + error_msg)
-            except urllib2.URLError, e:
+            except urllib2.URLError as e:
                 log.error('\tError {0} received when accessing url {1}.'.format(e.reason, apache_url) +
                           '\n\tPlease ensure the Apache web server is running and your configuration ' +
                           'information in /root/.apache.cnf is correct.' + error_msg)
-            except urllib2.HTTPError, e:
+            except urllib2.HTTPError as e:
                 log.error('\tError code {0} received when accessing {1}'.format(e.code, apache_url) + error_msg)
         else:
             log.error('\tThe dependencies for Apache Web Server are not installed or unavailable.' + error_msg)

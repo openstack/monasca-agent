@@ -24,8 +24,8 @@ import yaml
 from calendar import timegm
 from datetime import datetime
 from distutils.version import LooseVersion
-from monasca_agent.collector.virt import inspector
 from monasca_agent.collector.checks import AgentCheck
+from monasca_agent.collector.virt import inspector
 
 
 class LibvirtCheck(AgentCheck):
@@ -93,8 +93,8 @@ class LibvirtCheck(AgentCheck):
         try:
             with open(self.instance_cache_file, 'w') as cache_yaml:
                 yaml.safe_dump(id_cache, cache_yaml)
-            if stat.S_IMODE(os.stat(self.instance_cache_file).st_mode) != 0600:
-                os.chmod(self.instance_cache_file, 0600)
+            if stat.S_IMODE(os.stat(self.instance_cache_file).st_mode) != 0o600:
+                os.chmod(self.instance_cache_file, 0o600)
         except IOError as e:
             self.log.error("Cannot write to {0}: {1}".format(self.instance_cache_file, e))
 
@@ -139,8 +139,8 @@ class LibvirtCheck(AgentCheck):
         try:
             with open(self.metric_cache_file, 'w') as cache_yaml:
                 yaml.safe_dump(metric_cache, cache_yaml)
-            if stat.S_IMODE(os.stat(self.metric_cache_file).st_mode) != 0600:
-                os.chmod(self.metric_cache_file, 0600)
+            if stat.S_IMODE(os.stat(self.metric_cache_file).st_mode) != 0o600:
+                os.chmod(self.metric_cache_file, 0o600)
         except IOError as e:
             self.log.error("Cannot write to {0}: {1}".format(self.metric_cache_file, e))
 

@@ -1,9 +1,9 @@
-import inspect
-import imp
-import itertools
 import glob
-import math
 import hashlib
+import imp
+import inspect
+import itertools
+import math
 import optparse
 import os
 import platform
@@ -23,7 +23,8 @@ log = logging.getLogger(__name__)
 
 # Tornado
 try:
-    from tornado import ioloop, version_info as tornado_version
+    from tornado import ioloop
+    from tornado import version_info as tornado_version
 except ImportError:
     # We are likely running the agent without the forwarder and tornado is not installed
     # Generate a warning
@@ -37,10 +38,7 @@ LOGGING_MAX_BYTES = 5 * 1024 * 1024
 NumericTypes = (float, int, long)
 
 import monasca_agent.common.config as configuration
-
-
-class PathNotFound(Exception):
-    pass
+from monasca_agent.common.exceptions import PathNotFound
 
 
 class Watchdog(object):
@@ -88,8 +86,7 @@ class Watchdog(object):
 
 
 class PidFile(object):
-
-    """ A small helper class for pidfiles. """
+    """A small helper class for pidfiles. """
 
     PID_DIR = '/var/run/monasca-agent'
 
@@ -147,9 +144,7 @@ class PidFile(object):
 
 
 class LaconicFilter(logging.Filter):
-
-    """
-    Filters messages, only print them once while keeping memory under control
+    """Filters messages, only print them once while keeping memory under control
     """
     LACONIC_MEM_LIMIT = 1024
 
@@ -177,8 +172,7 @@ class LaconicFilter(logging.Filter):
 
 
 class Timer(object):
-
-    """ Helper class """
+    """Helper class """
 
     def __init__(self):
         self.start()
@@ -203,9 +197,7 @@ class Timer(object):
 
 
 class Platform(object):
-
-    """
-    Return information about the given platform.
+    """Return information about the given platform.
     """
     @staticmethod
     def is_darwin(name=None):
@@ -224,7 +216,7 @@ class Platform(object):
 
     @staticmethod
     def is_bsd(name=None):
-        """ Return true if this is a BSD like operating system. """
+        """Return true if this is a BSD like operating system. """
         name = name or sys.platform
         return Platform.is_darwin(name) or Platform.is_freebsd(name)
 
@@ -235,7 +227,7 @@ class Platform(object):
 
     @staticmethod
     def is_unix(name=None):
-        """ Return true if the platform is a unix, False otherwise. """
+        """Return true if the platform is a unix, False otherwise. """
         name = name or sys.platform
         return (Platform.is_darwin()
                 or Platform.is_linux()
@@ -249,11 +241,9 @@ class Platform(object):
 
 
 class Dimensions(object):
+    """Class to update the default dimensions.
+    """
 
-    """
-    Class to update the default dimensions.
-    """
-    
     def __init__(self, agent_config):
         self.agent_config = agent_config
 
@@ -276,9 +266,7 @@ class Dimensions(object):
 
 
 class Paths(object):
-
-    """
-    Return information about system paths.
+    """Return information about system paths.
     """
     def __init__(self):
         self.osname = get_os()
@@ -316,27 +304,27 @@ class Paths(object):
         raise PathNotFound(path)
 
     def _windows_confd_path(self):
-        common_data = _windows_commondata_path()
+        common_data = self._windows_commondata_path()
         path = os.path.join(common_data, 'Datadog', 'conf.d')
         if os.path.exists(path):
             return path
         raise PathNotFound(path)
 
     def get_checksd_path(self):
-       if self.osname == 'windows':
-           return self._windows_checksd_path()
-       else:
-           return self._unix_checksd_path()
+        if self.osname == 'windows':
+            return self._windows_checksd_path()
+        else:
+            return self._unix_checksd_path()
 
     def _unix_checksd_path(self):
-         # Unix only will look up based on the current directory
-         # because checks_d will hang with the other python modules
-         cur_path = os.path.dirname(os.path.realpath(__file__))
-         checksd_path = os.path.join(cur_path, '../collector/checks_d')
+        # Unix only will look up based on the current directory
+        # because checks_d will hang with the other python modules
+        cur_path = os.path.dirname(os.path.realpath(__file__))
+        checksd_path = os.path.join(cur_path, '../collector/checks_d')
 
-         if os.path.exists(checksd_path):
-             return checksd_path
-         raise PathNotFound(checksd_path)
+        if os.path.exists(checksd_path):
+            return checksd_path
+        raise PathNotFound(checksd_path)
 
     def _windows_checksd_path(self):
         if hasattr(sys, 'frozen'):
@@ -357,7 +345,8 @@ class Paths(object):
         how-do-i-find-the-windows-common-application-data-folder-using-python
         """
         import ctypes
-        from ctypes import wintypes, windll
+        from ctypes import windll
+        from ctypes import wintypes
 
         _SHGetFolderPath = windll.shell32.SHGetFolderPathW
         _SHGetFolderPath.argtypes = [wintypes.HWND,
@@ -384,6 +373,7 @@ class Paths(object):
         import tornado.simple_httpclient
         log.info("Windows certificate path: %s" % crt_path)
         tornado.simple_httpclient._DEFAULT_CA_CERTS = crt_path
+
 
 def plural(count):
     if count == 1:
@@ -488,9 +478,8 @@ def is_valid_hostname(hostname):
 
 
 def get_hostname():
-    """
-    Get the canonical host name this agent should identify as. This is
-    the authoritative source of the host name for the agent.
+    """Get the canonical host name this agent should identify as. This is
+       the authoritative source of the host name for the agent.
 
     Tries, in order:
 
@@ -558,9 +547,11 @@ def get_parsed_args():
 
 
 def load_check_directory():
-    ''' Return the initialized checks from checks_d, and a mapping of checks that failed to
+    """Return the initialized checks from checks_d, and a mapping of checks that failed to
     initialize. Only checks that have a configuration
-    file in conf.d will be returned. '''
+    file in conf.d will be returned.
+    """
+
     from monasca_agent.collector.checks import AgentCheck
 
     config = configuration.Config()

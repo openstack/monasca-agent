@@ -1,6 +1,7 @@
 import json
 import logging
 import threading
+
 import monasca_agent.common.check_status as check_status
 import monasca_agent.common.emitter as emitter
 import monasca_agent.common.util as util
@@ -18,8 +19,7 @@ EVENT_CHUNK_SIZE = 50
 
 
 class Reporter(threading.Thread):
-    """
-    The reporter periodically sends the aggregated metrics to the
+    """The reporter periodically sends the aggregated metrics to the
     server.
     """
 

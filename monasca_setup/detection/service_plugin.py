@@ -62,8 +62,8 @@ class ServicePlugin(Plugin):
             host, port = parsed.netloc.split(':')
             listening = []
             for connection in psutil.net_connections():
-               if connection.status == psutil.CONN_LISTEN and connection.laddr[1] == int(port):
-                   listening.append(connection.laddr[0])
+                if connection.status == psutil.CONN_LISTEN and connection.laddr[1] == int(port):
+                    listening.append(connection.laddr[0])
 
             if len(listening) > 0:
                 # If not listening on localhost or ips then use another local ip
@@ -75,7 +75,7 @@ class ServicePlugin(Plugin):
                 # Setup an active http_status check on the API
                 log.info("\tConfiguring an http_check for the {0} API.".format(self.service_name))
                 config.merge(service_api_check(self.service_name + '-api', api_url,
-                                           self.search_pattern, self.service_name))
+                                               self.search_pattern, self.service_name))
             else:
                 log.info("\tNo process found listening on {0} ".format(port) +
                          "skipping setup of http_check for the {0} API." .format(self.service_name))

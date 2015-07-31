@@ -6,11 +6,11 @@
 """
 
 # Standard imports
-import socket
+import datetime
 import logging
 import signal
+import socket
 import sys
-import datetime
 
 # set up logging before importing any other components
 import monasca_agent.common.util as util
@@ -18,19 +18,19 @@ import monasca_agent.common.util as util
 util.initialize_logging('forwarder')
 
 import os
-os.umask(022)
+os.umask(0o22)
 
 # Tornado
+import tornado.escape
 import tornado.httpclient
 import tornado.httpserver
 import tornado.ioloop
-import tornado.web
-import tornado.escape
 import tornado.options
+import tornado.web
 
 # agent import
-import monasca_agent.common.config as cfg
 import monasca_agent.common.check_status as check_status
+import monasca_agent.common.config as cfg
 import monasca_agent.common.metrics as metrics
 import monasca_agent.common.util as util
 import monasca_agent.forwarder.api.monasca_api as mon
@@ -102,7 +102,7 @@ class Forwarder(tornado.web.Application):
                  use_simple_http_client=False):
         self._port = int(port)
         self._agent_config = agent_config
-        self.flush_interval = (int(agent_config.get('check_freq'))/2) * 1000
+        self.flush_interval = (int(agent_config.get('check_freq')) / 2) * 1000
         self._metrics = {}
         transaction.MetricTransaction.set_application(self)
         transaction.MetricTransaction.set_endpoints(mon.MonascaAPI(agent_config))
@@ -132,9 +132,10 @@ class Forwarder(tornado.web.Application):
 
     # todo why is the tornado logging method overridden? Perhaps ditch this.
     def log_request(self, handler):
-        """ Override the tornado logging method.
+        """Override the tornado logging method.
         If everything goes well, log level is DEBUG.
-        Otherwise it's WARNING or ERROR depending on the response code. """
+        Otherwise it's WARNING or ERROR depending on the response code.
+        """
         if handler.get_status() < 400:
             log_method = log.debug
         elif handler.get_status() < 500:

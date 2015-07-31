@@ -7,16 +7,16 @@ log = logging.getLogger(__name__)
 
 
 class HostAlive(monasca_setup.detection.ArgsPlugin):
-    """ Setup an host_alive check according to the passed in args.
-        Despite being a detection plugin, this plugin does no detection and
-        will be a NOOP without arguments.  Expects two space-separated
-        arguments, 'hostname' and 'type,' where the former is a comma-separated
-        list of hosts, and the latter can be either 'ssh' or 'ping'.
-        Examples:
+    """Setup an host_alive check according to the passed in args.
+       Despite being a detection plugin, this plugin does no detection and
+       will be a NOOP without arguments.  Expects two space-separated
+       arguments, 'hostname' and 'type,' where the former is a comma-separated
+       list of hosts, and the latter can be either 'ssh' or 'ping'.
+       Examples:
 
-        monasca-setup -d hostalive -a "hostname=remotebox type=ping"
+       monasca-setup -d hostalive -a "hostname=remotebox type=ping"
 
-        monasca-setup -d hostalive -a "hostname=remotebox,remotebox2 type=ssh"
+       monasca-setup -d hostalive -a "hostname=remotebox,remotebox2 type=ssh"
     """
 
     def _detect(self):

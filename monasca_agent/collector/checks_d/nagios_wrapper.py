@@ -11,7 +11,8 @@ import socket
 import subprocess
 import time
 
-from monasca_agent.collector.checks.services_checks import ServicesCheck, Status
+from monasca_agent.collector.checks.services_checks import ServicesCheck
+from monasca_agent.collector.checks.services_checks import Status
 
 
 class WrapNagios(ServicesCheck):

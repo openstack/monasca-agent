@@ -1,7 +1,7 @@
 import json
-import urllib2
 import re
 import sys
+import urllib2
 
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.collector.checks.utils import add_basic_auth

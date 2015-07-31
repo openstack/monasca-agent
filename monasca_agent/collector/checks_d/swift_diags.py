@@ -29,19 +29,18 @@ def run_command(command, input=None):
                                                                      stdout,
                                                                      stderr))
         return errcode, stdout, stderr
-    except Exception as e:
+    except Exception:
         log.error("Failure while executing command - {0}".format(command))
 
 
 def process_command(command):
-    """
-    Runs the command and returns json output
+    """Runs the command and returns json output
     """
     try:
         errcode, stdout, stderr = run_command(command)
         json_output = json.loads(stdout)
         return json_output
-    except Exception as e:
+    except Exception:
         log.error('Failure while processing output - {0}'.format(stdout))
 
 
@@ -50,11 +49,9 @@ class SwiftDiags(checks.AgentCheck):
         super(SwiftDiags, self).__init__(name, init_config, agent_config)
 
     def check(self, instance):
-        """
-        Get swift checks and propagate.
-        The checks are part of HP swift-diags package and checks are
-        are run only if the package exists.
-
+        """Get swift checks and propagate.
+           The checks are part of HP swift-diags package and checks are
+           are run only if the package exists.
         """
         if not (os.path.exists(DIAG_COMMAND) and
                 os.path.exists(CHECKER_COMMAND)):

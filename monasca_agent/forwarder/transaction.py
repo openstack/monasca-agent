@@ -1,9 +1,10 @@
 # stdlib
-import sys
-import time
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
 import logging
 from operator import attrgetter
+import sys
+import time
 
 # project
 import monasca_agent.common.check_status as check_status
@@ -116,9 +117,9 @@ class MetricTransaction(Transaction):
 
 
 class TransactionManager(util.Dimensions):
-
     """Holds any transaction derived object list and make sure they
-       are all commited, without exceeding parameters (throttling, memory consumption) """
+       are all commited, without exceeding parameters (throttling, memory consumption)
+    """
 
     def __init__(self, max_wait_for_replay, max_queue_size, throttling_delay, agent_config):
         super(TransactionManager, self).__init__(agent_config)

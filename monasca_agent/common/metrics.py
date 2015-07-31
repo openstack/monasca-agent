@@ -4,7 +4,8 @@ from collections import namedtuple
 import logging
 from time import time
 
-from monasca_agent.common.exceptions import Infinity, UnknownValue
+from monasca_agent.common.exceptions import Infinity
+from monasca_agent.common.exceptions import UnknownValue
 
 
 log = logging.getLogger(__name__)
@@ -30,24 +31,21 @@ class MetricTypes(object):
 
 
 class Metric(object):
-
-    """
-    A base metric class that accepts points, slices them into time intervals
-    and performs roll-ups within those intervals.
+    """A base metric class that accepts points, slices them into time intervals
+       and performs roll-ups within those intervals.
     """
 
     def sample(self, value, sample_rate, timestamp=None):
-        """ Add a point to the given metric. """
+        """Add a point to the given metric. """
         raise NotImplementedError()
 
     def flush(self, timestamp):
-        """ Flush all metrics up to the given timestamp. """
+        """Flush all metrics up to the given timestamp. """
         raise NotImplementedError()
 
 
 class Gauge(Metric):
-
-    """ A metric that tracks a value at particular points in time. """
+    """A metric that tracks a value at particular points in time. """
 
     def __init__(self, formatter, name, dimensions,
                  hostname, device_name, delegated_tenant=None,
@@ -87,8 +85,7 @@ class Gauge(Metric):
 
 
 class Counter(Metric):
-
-    """ A metric that tracks a counter value. """
+    """A metric that tracks a counter value. """
 
     def __init__(self, formatter, name, dimensions,
                  hostname, device_name, delegated_tenant=None,
@@ -107,9 +104,9 @@ class Counter(Metric):
 
     def sample(self, value, sample_rate, timestamp=None):
         try:
-          self.value += value * int(1 / sample_rate)
+            self.value += value * int(1 / sample_rate)
         except TypeError:
-          log.error("metric {} value {} sample_rate {}".format(self.name, value, sample_rate))
+            log.error("metric {} value {} sample_rate {}".format(self.name, value, sample_rate))
 
     def flush(self, timestamp):
         if self.value is not None:
@@ -129,8 +126,7 @@ class Counter(Metric):
 
 
 class Histogram(Metric):
-
-    """ A metric to track the distribution of a set of values. """
+    """A metric to track the distribution of a set of values. """
 
     def __init__(self, formatter, name, dimensions,
                  hostname, device_name, delegated_tenant=None,
@@ -173,15 +169,15 @@ class Histogram(Metric):
         ]
 
         metrics.extend(self.formatter(hostname=self.hostname,
-                                       device_name=self.device_name,
-                                       dimensions=self.dimensions,
-                                       delegated_tenant=self.delegated_tenant,
-                                       metric='%s.%s' % (self.name, suffix),
-                                       value=value,
-                                       timestamp=timestamp,
-                                       metric_type=metric_type,
-                                       value_meta=self.value_meta
-                                       ) for suffix, value, metric_type in metric_aggrs)
+                                      device_name=self.device_name,
+                                      dimensions=self.dimensions,
+                                      delegated_tenant=self.delegated_tenant,
+                                      metric='%s.%s' % (self.name, suffix),
+                                      value=value,
+                                      timestamp=timestamp,
+                                      metric_type=metric_type,
+                                      value_meta=self.value_meta
+                                      ) for suffix, value, metric_type in metric_aggrs)
 
         for p in self.percentiles:
             val = self.samples[int(round(p * length - 1))]
@@ -202,8 +198,7 @@ class Histogram(Metric):
 
 
 class Set(Metric):
-
-    """ A metric to track the number of unique elements in a set. """
+    """A metric to track the number of unique elements in a set. """
 
     def __init__(self, formatter, name, dimensions,
                  hostname, device_name, delegated_tenant=None,
@@ -224,7 +219,6 @@ class Set(Metric):
         self.values.add(value)
 
     def flush(self, timestamp):
-        metrics = []
         if not self.values:
             return []
         else:
@@ -243,8 +237,7 @@ class Set(Metric):
 
 
 class Rate(Metric):
-
-    """ Track the rate of metrics over each flush interval """
+    """Track the rate of metrics over each flush interval """
 
     def __init__(self, formatter, name, dimensions,
                  hostname, device_name, delegated_tenant=None,

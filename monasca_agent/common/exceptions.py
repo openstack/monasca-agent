@@ -12,3 +12,7 @@ class CheckException(Exception):
 
 class NaN(CheckException):
     pass
+
+
+class PathNotFound(Exception):
+    pass

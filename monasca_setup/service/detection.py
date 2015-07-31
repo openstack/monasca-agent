@@ -9,8 +9,8 @@ log = logging.getLogger(__name__)
 
 
 def detect_init(*args, **kwargs):
-    """ Detect the service manager running on this box
-        args/kwargs match those of service.Service
+    """Detect the service manager running on this box
+       args/kwargs match those of service.Service
     :return: The apropriate Service object for this system
     """
     detected_os = platform.system()
@@ -29,7 +29,7 @@ def detect_init(*args, **kwargs):
 
 
 def detect_linux_init(*args, **kwargs):
-    """ Detect which of the linux inits is running
+    """Detect which of the linux inits is running
     :return: Return a valid Linux service manager object
     """
     with open('/proc/1/comm', 'r') as init_proc:

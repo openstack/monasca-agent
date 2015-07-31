@@ -1,13 +1,13 @@
 # Core modules
 import logging
 import socket
-import system.win32 as w32
 import threading
 import time
 
 import monasca_agent.common.check_status as check_status
 import monasca_agent.common.metrics as metrics
 import monasca_agent.common.util as util
+import system.win32 as w32
 
 
 log = logging.getLogger(__name__)

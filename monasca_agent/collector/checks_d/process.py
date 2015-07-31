@@ -140,8 +140,8 @@ class ProcessCheck(checks.AgentCheck):
                     except psutil.AccessDenied:
                         got_denied = True
 
-                rss += float(mem.rss/1048576)
-                vms += float(mem.vms/1048576)
+                rss += float(mem.rss / 1048576)
+                vms += float(mem.vms / 1048576)
                 thr += p.get_num_threads()
                 cpu += p.get_cpu_percent(cpu_check_interval)
 
@@ -151,8 +151,8 @@ class ProcessCheck(checks.AgentCheck):
                         io_counters = p.get_io_counters()
                         read_count += io_counters.read_count
                         write_count += io_counters.write_count
-                        read_kbytes += float(io_counters.read_bytes/1024)
-                        write_kbytes += float(io_counters.write_bytes/1024)
+                        read_kbytes += float(io_counters.read_bytes / 1024)
+                        write_kbytes += float(io_counters.write_bytes / 1024)
                     except psutil.AccessDenied:
                         self.log.debug('monasca-agent user does not have ' +
                                        'access to I/O counters for process' +

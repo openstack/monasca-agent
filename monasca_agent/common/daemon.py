@@ -12,29 +12,28 @@
 
 # Core modules
 import atexit
+import errno
+import logging
 import os
+import signal
 import sys
 import time
-import logging
-import errno
-import signal
 
 log = logging.getLogger(__name__)
 
 
 class AgentSupervisor(object):
-
-    ''' A simple supervisor to keep a restart a child on expected auto-restarts
-    '''
+    """A simple supervisor to keep a restart a child on expected auto-restarts
+    """
     RESTART_EXIT_STATUS = 5
 
     @classmethod
     def start(cls, parent_func, child_func=None):
-        ''' `parent_func` is a function that's called every time the child
-            process dies.
-            `child_func` is a function that should be run by the forked child
-            that will auto-restart with the RESTART_EXIT_STATUS.
-        '''
+        """`parent_func` is a function that's called every time the child
+           process dies.
+           `child_func` is a function that should be run by the forked child
+           that will auto-restart with the RESTART_EXIT_STATUS.
+        """
 
         # Allow the child process to die on SIGTERM
         signal.signal(signal.SIGTERM, cls._handle_sigterm)
@@ -70,9 +69,7 @@ class AgentSupervisor(object):
 
 
 class Daemon(object):
-
-    """
-    A generic daemon class.
+    """A generic daemon class.
 
     Usage: subclass the Daemon class and override the run() method
     """
@@ -86,8 +83,7 @@ class Daemon(object):
         self.pidfile = pidfile
 
     def daemonize(self):
-        """
-        Do the UNIX double-fork magic, see Stevens' "Advanced
+        """Do the UNIX double-fork magic, see Stevens' "Advanced
         Programming in the UNIX Environment" for details (ISBN 0201563177)
         http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC16
         """
@@ -208,22 +204,19 @@ class Daemon(object):
         self.start()
 
     def run(self):
-        """
-        You should override this method when you subclass Daemon. It will be called after the process has been
-        daemonized by start() or restart().
+        """You should override this method when you subclass Daemon.
+           It will be called after the process has been daemonized by start() or restart().
         """
         raise NotImplementedError
 
     def info(self):
-        """
-        You should override this method when you subclass Daemon. It will be
-        called to provide information about the status of the process
+        """You should override this method when you subclass Daemon.
+           It will be called to provide information about the status of the process
         """
         raise NotImplementedError
 
     def status(self):
-        """
-        Get the status of the daemon. Exits with 0 if running, 1 if not.
+        """Get the status of the daemon. Exits with 0 if running, 1 if not.
         """
         pid = self.pid()
 

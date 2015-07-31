@@ -12,7 +12,7 @@ class Cinder(monasca_setup.detection.ServicePlugin):
             'overwrite': overwrite,
             'service_name': 'block-storage',
             'process_names': ['cinder-volume', 'cinder-scheduler',
-                              'cinder-api','cinder-backup'],
+                              'cinder-api', 'cinder-backup'],
             'service_api_url': 'http://localhost:8776/v2.0',
             'search_pattern': '.*version=1.*'
         }

@@ -9,7 +9,8 @@ import yaml
 
 import monasca_setup.agent_config
 import monasca_setup.detection
-from monasca_setup.detection import find_process_cmdline, watch_process
+from monasca_setup.detection import find_process_cmdline
+from monasca_setup.detection import watch_process
 
 log = logging.getLogger(__name__)
 
@@ -38,7 +39,6 @@ class MonAPI(monasca_setup.detection.Plugin):
     def build_config(self):
         """Build the config as a Plugins object and return."""
         log.info("\tEnabling the Monasca api healthcheck")
-        admin_port = self.api_config['server']['adminConnectors'][0]['port']
         config = monasca_setup.agent_config.Plugins()
         config.merge(dropwizard_health_check('monitoring', 'api', 'http://localhost:8081/healthcheck'))
 

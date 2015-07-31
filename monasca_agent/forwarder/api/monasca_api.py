@@ -1,11 +1,11 @@
 import collections
 import copy
 import logging
-import time
 import random
+import time
 
-import monascaclient.client
 import monasca_agent.common.keystone as keystone
+import monascaclient.client
 
 log = logging.getLogger(__name__)
 
@@ -22,9 +22,7 @@ class MonascaAPI(object):
     MAX_BACKOFF = 60   # seconds
 
     def __init__(self, config):
-        """
-        Initialize Mon api client connection.
-        """
+        """Initialize Mon api client connection."""
         self.config = config
         self.url = config['url']
         self.api_version = '2_0'

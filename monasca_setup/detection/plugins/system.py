@@ -2,8 +2,8 @@ import logging
 import os
 import yaml
 
-from monasca_setup.detection import Plugin
 from monasca_setup import agent_config
+from monasca_setup.detection import Plugin
 
 log = logging.getLogger(__name__)
 

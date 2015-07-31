@@ -1,7 +1,7 @@
 # stdlib
 import logging
-import re
 import psutil
+import re
 
 # project
 import monasca_agent.collector.checks as checks
@@ -32,7 +32,6 @@ class Network(checks.AgentCheck):
             exclude_iface_re = None
 
         nics = psutil.net_io_counters(pernic=True)
-        count = 0
         for nic_name in nics.keys():
             if self._is_nic_monitored(nic_name, excluded_ifaces, exclude_iface_re):
                 nic = nics[nic_name]

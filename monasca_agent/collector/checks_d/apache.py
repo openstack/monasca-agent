@@ -5,16 +5,20 @@ import urllib2
 import urlparse
 
 # project
-import monasca_agent.common.util as util
 import monasca_agent.collector.checks as checks
+import monasca_agent.collector.checks.services_checks as services_checks
 import monasca_agent.collector.checks.utils as utils
+import monasca_agent.common.util as util
 
 log = logging.getLogger(__name__)
 
+
 class Apache(checks.AgentCheck):
     """Tracks basic connection/requests/workers metrics
+
     See http://httpd.apache.org/docs/2.2/mod/mod_status.html for more details
     """
+
     GAUGES = {'IdleWorkers': 'apache.performance.idle_worker_count',
               'BusyWorkers': 'apache.performance.busy_worker_count',
               'CPULoad': 'apache.performance.cpu_load_perc',
@@ -54,9 +58,9 @@ class Apache(checks.AgentCheck):
             apache_host = socket.gethostname()
 
         dimensions = self._set_dimensions({'apache_host': apache_host,
-                                            'apache_port': apache_port,
-                                            'service': 'apache',
-                                            'component': 'apache'},
+                                           'apache_port': apache_port,
+                                           'service': 'apache',
+                                           'component': 'apache'},
                                           instance)
 
         try:
@@ -77,7 +81,7 @@ class Apache(checks.AgentCheck):
         # Loop through and extract the numerical values
         for line in response.split('\n'):
             values = line.split(': ')
-            if len(values) == 2: # match
+            if len(values) == 2:  # match
                 metric, value = values
                 try:
                     value = float(value)

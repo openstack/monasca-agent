@@ -2,8 +2,8 @@
 
     Detection classes should be platform independent
 """
-import sys
 import logging
+import sys
 
 log = logging.getLogger(__name__)
 
@@ -39,8 +39,8 @@ class Plugin(object):
         raise NotImplementedError
 
     def build_config_with_name(self):
-        """ Builds the config and then adds a field 'built_by' to each instance in the config.
-            built_by is set to the plugin name
+        """Builds the config and then adds a field 'built_by' to each instance in the config.
+           built_by is set to the plugin name
         :return: An agent_config.Plugins object
         """
         conf = self.build_config()

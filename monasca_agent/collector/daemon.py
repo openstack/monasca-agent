@@ -20,7 +20,7 @@ import monasca_agent.common.util as util
 
 # set up logging before importing any other components
 util.initialize_logging('collector')
-os.umask(022)
+os.umask(0o22)
 
 # Check we're not using an old version of Python. We need 2.4 above because
 # some modules (like subprocess) were only introduced in 2.4.
@@ -264,7 +264,6 @@ def main():
             run_check(check)
 
     elif 'configcheck' == command or 'configtest' == command:
-        osname = util.get_os()
         all_valid = True
         paths = util.Paths()
         for conf_path in glob.glob(os.path.join(paths.get_confd_path(), "*.yaml")):
@@ -316,6 +315,7 @@ def main():
                 print("Have you enabled any JMX checks ?")
 
     return 0
+
 
 def run_check(check):
 

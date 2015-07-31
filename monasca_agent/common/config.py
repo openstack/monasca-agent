@@ -9,6 +9,7 @@ try:
 except ImportError:
     from yaml import Loader
 
+from monasca_agent.common.exceptions import PathNotFound
 import monasca_agent.common.singleton as singleton
 
 DEFAULT_CONFIG_FILE = '/etc/monasca/agent/agent.yaml'
@@ -17,10 +18,11 @@ LOGGING_MAX_BYTES = 5 * 1024 * 1024
 
 log = logging.getLogger(__name__)
 
+
 class Config(object):
     # Make this a singleton class so we don't get the config every time
     # the class is created
-    __metaclass__ = singleton.Singleton
+    six.add_metaclass(singleton.Singleton)
 
     def __init__(self, configFile=None):
         if configFile is not None:
@@ -146,10 +148,10 @@ def main():
     api_config = configuration.get_config('Api')
     statsd_config = configuration.get_config('Statsd')
     logging_config = configuration.get_config('Logging')
-    print "Main Configuration: \n {0}".format(config)
-    print "\nApi Configuration: \n {0}".format(api_config)
-    print "\nStatsd Configuration: \n {0}".format(statsd_config)
-    print "\nLogging Configuration: \n {0}".format(logging_config)
+    print("Main Configuration: \n {0}".format(config))
+    print("\nApi Configuration: \n {0}".format(api_config))
+    print("\nStatsd Configuration: \n {0}".format(statsd_config))
+    print("\nLogging Configuration: \n {0}".format(logging_config))
 
 
 if __name__ == "__main__":

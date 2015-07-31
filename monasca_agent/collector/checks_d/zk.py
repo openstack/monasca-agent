@@ -116,9 +116,9 @@ class Zookeeper(AgentCheck):
         # Latency min/avg/max: -10/0/20007
         _, value = buf.readline().split(':')
         l_min, l_avg, l_max = [int(v) for v in value.strip().split('/')]
-        metrics.append(('zookeeper.min_latency_sec', float(l_min)/1000))
-        metrics.append(('zookeeper.avg_latency_sec', float(l_avg)/1000))
-        metrics.append(('zookeeper.max_latency_sec', float(l_max)/1000))
+        metrics.append(('zookeeper.min_latency_sec', float(l_min) / 1000))
+        metrics.append(('zookeeper.avg_latency_sec', float(l_avg) / 1000))
+        metrics.append(('zookeeper.max_latency_sec', float(l_max) / 1000))
 
         # Received: 101032173
         _, value = buf.readline().split(':')

@@ -37,7 +37,6 @@ class MKLivestatus(monasca_setup.detection.Plugin):
         """Search common Nagios/Icinga config file locations for mk_livestatus
            broker module socket path
         """
-        socket_path = None
         # Search likely Nagios/Icinga config file locations
         for cfg_file in nagios_cfg_files:
             if os.path.isfile(cfg_file):

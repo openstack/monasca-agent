@@ -1,7 +1,8 @@
-import psutil
 import logging
+import psutil
 import re
 import subprocess
+import sys
 
 import monasca_agent.collector.checks as checks
 import monasca_agent.common.util as util
@@ -36,7 +37,7 @@ class Load(checks.AgentCheck):
             # Get output from uptime
             try:
                 uptime = subprocess.Popen(['uptime'],
-                                          stdout=sp.PIPE,
+                                          stdout=subprocess.PIPE,
                                           close_fds=True).communicate()[0]
             except Exception:
                 log.exception('Cannot extract load using uptime')

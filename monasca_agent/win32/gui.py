@@ -3,34 +3,54 @@
 # Licensed under the terms of the CECILL License
 # Modified for Datadog
 
-import yaml
 try:
     from yaml import CLoader as Loader
 except ImportError:
     from yaml import Loader
-import sys
 import os
 import os.path as osp
+import sys
+import threading as thread
 import webbrowser
-import thread  # To manage the windows process asynchronously
+import yaml
 
-import win32serviceutil
 import win32service
+import win32serviceutil
 
 # GUI Imports
-from guidata.qt.QtCore import SIGNAL, Qt, QSize, QPoint, QTimer
-from guidata.qt.QtGui import QInputDialog, QWidget, QFont, QLabel, QGroupBox, QHBoxLayout, QSystemTrayIcon
-from guidata.qt.QtGui import QVBoxLayout, QPushButton, QSplitter, QListWidget, QMenu, QMessageBox
+from guidata.qt.QtCore import QPoint
+from guidata.qt.QtCore import QSize
+from guidata.qt.QtCore import Qt
+from guidata.qt.QtCore import QTimer
+from guidata.qt.QtCore import SIGNAL
 
-from guidata.configtools import get_icon, get_family, MONOSPACE
+from guidata.qt.QtGui import QFont
+from guidata.qt.QtGui import QGroupBox
+from guidata.qt.QtGui import QHBoxLayout
+from guidata.qt.QtGui import QInputDialog
+from guidata.qt.QtGui import QLabel
+from guidata.qt.QtGui import QListWidget
+from guidata.qt.QtGui import QMenu
+from guidata.qt.QtGui import QMessageBox
+from guidata.qt.QtGui import QPushButton
+from guidata.qt.QtGui import QSplitter
+from guidata.qt.QtGui import QSystemTrayIcon
+from guidata.qt.QtGui import QVBoxLayout
+from guidata.qt.QtGui import QWidget
+
+from guidata.configtools import get_family
+from guidata.configtools import get_icon
+from guidata.configtools import MONOSPACE
 from guidata.qthelpers import get_std_icon
 from spyderlib.widgets.sourcecode.codeeditor import CodeEditor
 
 
 # Datadog
 from common.util import get_os
-from config import (get_confd_path, get_config_path, get_config,
-                    _windows_commondata_path)
+from config import _windows_commondata_path
+from config import get_confd_path
+from config import get_config
+from config import get_config_path
 
 EXCLUDED_WINDOWS_CHECKS = [
     'cacti', 'directory', 'gearmand',

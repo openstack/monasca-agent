@@ -1,6 +1,7 @@
-import psutil
 import logging
 import os
+import psutil
+import re
 
 log = logging.getLogger(__name__)
 
@@ -22,14 +23,14 @@ class Disk(checks.AgentCheck):
         if instance is not None:
             use_mount = instance.get("use_mount", True)
             send_io_stats = instance.get("send_io_stats", True)
-            send_rollup_stats =  instance.get("send_rollup_stats", False)
+            send_rollup_stats = instance.get("send_rollup_stats", False)
             # If we filter devices, get the list.
             device_blacklist_re = self._get_re_exclusions(instance)
             fs_types_to_ignore = self._get_fs_exclusions(instance)
         else:
             use_mount = True
             send_io_stats = True
-            send_rollup_stats =  False
+            send_rollup_stats = False
             device_blacklist_re = None
             fs_types_to_ignore = []
 
@@ -41,8 +42,8 @@ class Disk(checks.AgentCheck):
         total_used = 0
         for partition in partitions:
             if partition.fstype not in fs_types_to_ignore \
-                or (device_blacklist_re \
-                and not device_blacklist_re.match(partition.device)):
+                or (device_blacklist_re
+                    and not device_blacklist_re.match(partition.device)):
                     device_name = self._get_device_name(partition.device)
                     disk_usage = psutil.disk_usage(partition.mountpoint)
                     total_capacity += disk_usage.total
@@ -80,13 +81,12 @@ class Disk(checks.AgentCheck):
 
         if send_rollup_stats:
             self.gauge("disk.total_space_mb",
-                        total_capacity/1048576,
-                        dimensions=rollup_dimensions)
+                       total_capacity / 1048576,
+                       dimensions=rollup_dimensions)
             self.gauge("disk.total_used_space_mb",
-                        total_used/1048576,
-                        dimensions=rollup_dimensions)
+                       total_used / 1048576,
+                       dimensions=rollup_dimensions)
             log.debug('Collected 2 rolled-up disk usage metrics')
-
 
     def _get_re_exclusions(self, instance):
         """Parse device blacklist regular expression"""
@@ -95,7 +95,7 @@ class Disk(checks.AgentCheck):
             filter_device_re = instance.get('device_blacklist_re', None)
             if filter_device_re:
                 filter = re.compile(filter_device_re)
-        except re.error as err:
+        except re.error:
             log.error('Error processing regular expression {0}'.format(filter_device_re))
 
         return filter
