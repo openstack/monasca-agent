@@ -175,8 +175,7 @@ class ServicesCheck(monasca_agent.collector.checks.AgentCheck):
 
     def _clean(self):
         now = time.time()
-        for name in self.jobs_status.keys():
-            start_time = self.jobs_status[name]
+        for name, start_time in self.jobs_status.items():
             if now - start_time > self.timeout:
                 self.log.critical("Restarting Pool. One check is stuck.")
                 self.restart_pool()
