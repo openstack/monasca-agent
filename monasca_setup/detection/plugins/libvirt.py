@@ -5,6 +5,7 @@ import subprocess
 
 import monasca_setup.agent_config
 import monasca_setup.detection
+from monasca_setup.detection.utils import find_process_name
 
 from distutils.version import LooseVersion
 
@@ -32,7 +33,7 @@ class Libvirt(monasca_setup.detection.Plugin):
     def _detect(self):
         """Run detection, set self.available True if the service is detected.
         """
-        if (monasca_setup.detection.find_process_name('nova-api') is not None and
+        if (find_process_name('nova-api') is not None and
            os.path.isfile(nova_conf)):
             self.available = True
 

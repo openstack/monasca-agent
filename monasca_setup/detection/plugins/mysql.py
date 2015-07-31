@@ -2,6 +2,7 @@ import logging
 
 import monasca_setup.agent_config
 import monasca_setup.detection
+from monasca_setup.detection.utils import find_process_name
 
 log = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class MySQL(monasca_setup.detection.Plugin):
         """Run detection, set self.available True if the service is detected.
 
         """
-        if monasca_setup.detection.find_process_name('mysqld') is not None:
+        if find_process_name('mysqld') is not None:
             self.available = True
 
     def build_config(self):

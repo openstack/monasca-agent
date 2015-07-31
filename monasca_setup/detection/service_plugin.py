@@ -5,9 +5,9 @@ import urlparse
 from plugin import Plugin
 
 from monasca_setup import agent_config
-from monasca_setup.detection import find_process_cmdline
-from monasca_setup.detection import service_api_check
-from monasca_setup.detection import watch_process
+from monasca_setup.detection.utils import find_process_cmdline
+from monasca_setup.detection.utils import service_api_check
+from monasca_setup.detection.utils import watch_process
 
 
 log = logging.getLogger(__name__)
