@@ -42,9 +42,9 @@ class HostAlive(monasca_setup.detection.ArgsPlugin):
                              'alive_test': self.args['type']})
             instances.append(instance)
 
-            config['host_alive'] = {'init_config': {'ping_timeout': 1,
-                                                    'ssh_timeout': 2,
-                                                    'ssh_port': 22},
-                                    'instances': [instance]}
+        config['host_alive'] = {'init_config': {'ping_timeout': 1,
+                                                'ssh_timeout': 2,
+                                                'ssh_port': 22},
+                                'instances': instances}
 
         return config
