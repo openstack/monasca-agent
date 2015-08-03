@@ -42,17 +42,17 @@ class HAProxy(monasca_setup.detection.Plugin):
                     listen_match = re.search('^listen.*stats\S*\s(.*)', line)
                     if listen_match is None:
                         continue
-                    listen_socket = listen_match.group(1).split(':')
+                    listen_socket = listen_match.group(1).split(':', 2)
                     if listen_socket[0] == '':
                         host = 'localhost'
                     else:
-                        host = listen_socket[0]
-                    port = listen_socket[1]
+                        host = listen_socket[0].strip()
+                    port = listen_socket[1].strip()
                     url = 'http://{0}:{1}'.format(host, port)
                 if url is not None and line.strip().startswith('stats auth'):
                     auth = re.search('stats auth\s(.*)', line).group(1).split(':')
-                    user = auth[0]
-                    password = auth[1]
+                    user = auth[0].strip()
+                    password = auth[1].strip()
 
             if url is None:
                 log.warn('Unable to parse haproxy config for stats url, skipping HAProxy check plugin configuration')
