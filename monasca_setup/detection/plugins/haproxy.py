@@ -42,7 +42,7 @@ class HAProxy(monasca_setup.detection.Plugin):
                     listen_match = re.search('^listen.*stats\S*\s(.*)', line)
                     if listen_match is None:
                         continue
-                    listen_socket = listen_match.group(1).split(':', 2)
+                    listen_socket = listen_match.group(1).split(':', 1)
                     if listen_socket[0] == '':
                         host = 'localhost'
                     else:
