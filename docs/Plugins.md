@@ -1067,6 +1067,13 @@ instance-00000004:
 | net.out_packets_sec  | Network transmitted packets per second | 'device' (ie, 'vnet0') |
 | net.in_bytes_sec     | Network received bytes per second      | 'device' (ie, 'vnet0') |
 | net.out_bytes_sec    | Network transmitted bytes per second   | 'device' (ie, 'vnet0') |
+| mem.free_mb          | Free memory in megabytes               |                        |
+| mem.total_mb         | Total memory in megabytes              |                        |
+| mem.used_mb          | Used memory in megabytes               |                        |
+| mem.free_perc        | Percent of memory free                 |                        |
+| mem.swap_used_mb     | Used swap space in megabytes           |                        |
+
+Memory statistics require a balloon driver on the VM.  For the Linux kernel, this is the `CONFIG_VIRTIO_BALLOON` configuration parameter, active by default in Ubuntu, and enabled by default as a kernel module in Debian, CentOS, and SUSE.
 
 Since separate metrics are sent to the VM's owner as well as Operations, all metric names designed for Operations are prefixed with "vm." to easily distinguish between VM metrics and compute host's metrics.
 
