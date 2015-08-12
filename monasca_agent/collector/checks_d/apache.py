@@ -49,7 +49,7 @@ class Apache(checks.AgentCheck):
         # Submit a service check for status page availability.
         parsed_url = urlparse.urlparse(self.url)
         apache_host = parsed_url.hostname
-        apache_port = parsed_url.port or 80
+        apache_port = str(parsed_url.port or 80)
         service_check_name = 'apache.status'
 
         # Add additional dimensions
