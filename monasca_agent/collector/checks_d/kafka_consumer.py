@@ -64,25 +64,27 @@ consumer_groups:
         topics = collections.defaultdict(set)
         for consumer_group, topic_partitions in consumer_groups.iteritems():
             for topic, partitions in topic_partitions.iteritems():
-                kafka_consumer = consumer.SimpleConsumer(kafka_conn, consumer_group, topic)
                 if len(partitions) == 0:  # Use all found partitions if none are specified.
                     try:
+                        kafka_consumer = consumer.SimpleConsumer(kafka_conn, consumer_group, topic)
                         partitions = kafka_consumer.offsets.keys()
                     except Exception:
-                        kafka_consumer.stop()
                         self.log.error('Error fetching partition list for topic {0}'.format(topic))
                         continue
+                    finally:
+                        kafka_consumer.stop()
 
                 # Remember the topic partitions encountered so that we can look up their broker offsets later
                 topics[topic].update(set(partitions))
                 consumer_offsets[(consumer_group, topic)] = {}
                 for partition in partitions:
                     try:
+                        kafka_consumer = consumer.SimpleConsumer(kafka_conn, consumer_group, topic)
                         consumer_offsets[(consumer_group, topic)][partition] = kafka_consumer.offsets[partition]
                     except KeyError:
-                        kafka_consumer.stop()
                         self.log.error('Error fetching consumer offset for {0} partition {1}'.format(topic, partition))
-                kafka_consumer.stop()
+                    finally:
+                        kafka_consumer.stop()
 
         # Query Kafka for the broker offsets, done in a separate loop so only one query is done
         # per topic/partition even if multiple consumer groups watch the same topic

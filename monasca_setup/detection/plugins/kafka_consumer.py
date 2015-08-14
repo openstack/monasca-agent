@@ -20,9 +20,13 @@ class Kafka(Plugin):
     """Detect Kafka daemons and sets up configuration to monitor them.
         This plugin configures the kafka_consumer plugin and does not configure any jmx based checks against kafka.
         Note this plugin will pull the same information from kafka on each node in the cluster it runs on.
+
+        To skip detection consumer groups and topics can be specified with plugin args, for example:
+        `monasca-setup -d kafka -a "group1=topic1 group2=topic2/topic3"`
+        All partitions are assumed for each topic and '/' is used to deliminate more than one topic per consumer group.
+
         For more information see:
             - https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol
-            -
     """
 
     def __init__(self, template_dir, overwrite=True, args=None, port=9092):
@@ -48,8 +52,9 @@ class Kafka(Plugin):
             consumers = {}
             # Find consumers and topics
             for consumer in self._ls_zookeeper('/consumers'):
-                consumers[consumer] = dict((topic, [])
-                                           for topic in self._ls_zookeeper('/consumers/%s/offsets' % consumer))
+                topics = dict((topic, []) for topic in self._ls_zookeeper('/consumers/%s/offsets' % consumer))
+                if len(topics) > 0:
+                    consumers[consumer] = topics
 
             log.info("\tInstalling kafka_consumer plugin.")
             self.config['kafka_consumer'] = {'init_config': None,
@@ -100,9 +105,9 @@ class Kafka(Plugin):
             log.error('Error running the zookeeper shell to list path %s' % path)
             raise
 
-        # The last line is like '[item1, item2, item3]'
+        # The last line is like '[item1, item2, item3]', '[]' or an error message not starting with [
         last_line = output.splitlines()[-1]
-        if last_line.find('Node does not exist') != -1:
+        if len(last_line) == 2 or last_line[0] != '[':
             return []
         else:
             return [entry.strip() for entry in last_line.strip('[]').split(',')]
@@ -115,10 +120,21 @@ class Kafka(Plugin):
         self.config.merge(watch_process(['kafka.Kafka'], exact_match=False))
         log.info("\tWatching the kafka process.")
 
-        if self.dependencies_installed() and self.zk_url is not None:
+        if not self.dependencies_installed():
+            log.warning("Dependencies not installed, skipping Kafka Consumer plugin configuration.")
+        elif self.args is not None and len(self.args) > 0:
+            kafka_connect_str = self._find_kafka_connection()
+            consumers = {}
+            for key, value in self.args.iteritems():
+                value_dict = {topic: [] for topic in value.split('/')}
+                consumers[key] = value_dict
+            self.config['kafka_consumer'] = {'init_config': None,
+                                             'instances': [{'name': kafka_connect_str,
+                                                            'kafka_connect_str': kafka_connect_str,
+                                                            'per_partition': False,
+                                                            'consumer_groups': consumers}]}
+        elif self.zk_url is not None:
             self._detect_consumers()
-        else:
-            log.warning("Dependencies not installed, skipping plugin configuration.")
         return self.config
 
     def dependencies_installed(self):
