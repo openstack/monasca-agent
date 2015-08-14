@@ -42,8 +42,8 @@ class Disk(checks.AgentCheck):
         total_used = 0
         for partition in partitions:
             if partition.fstype not in fs_types_to_ignore \
-                or (device_blacklist_re
-                    and not device_blacklist_re.match(partition.device)):
+                and (not device_blacklist_re
+                     or not device_blacklist_re.match(partition.device)):
                     device_name = self._get_device_name(partition.device)
                     disk_usage = psutil.disk_usage(partition.mountpoint)
                     total_capacity += disk_usage.total
