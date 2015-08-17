@@ -8,10 +8,10 @@ import monasca_agent.common.singleton as singleton
 log = logging.getLogger(__name__)
 
 
+# Make this a singleton class so we don't get the token every time
+# the class is created
+@six.add_metaclass(singleton.Singleton)
 class Keystone(object):
-    # Make this a singleton class so we don't get the token every time
-    # the class is created
-    six.add_metaclass(singleton.Singleton)
 
     def __init__(self, config):
         self.config = config

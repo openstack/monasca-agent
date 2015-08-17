@@ -12,3 +12,4 @@ root
 AUTHORS
 ChangeLog
 *.egg*
+.*.sw*
