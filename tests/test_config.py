@@ -60,5 +60,30 @@ class TestConfig(unittest.TestCase):
         for hostname in not_valid_hostnames:
             self.assertFalse(is_valid_hostname(hostname), hostname)
 
+    def testConfigIsSingleton(self):
+        # create a temp conf file
+        tempdir = tempfile.mkdtemp()
+        conf_file = os.path.join(tempdir, 'agent.yaml')
+        with open(conf_file, 'wb') as fd:
+            fd.write(
+                """
+                Logging:
+                  collector_log_file: /var/log/monasca/agent/collector.log
+                  forwarder_log_file: /var/log/monasca/agent/forwarder.log
+                  log_level: DEBUG
+                  statsd_log_file: /var/log/monasca/agent/statsd.log
+                Main:
+                  check_freq: 60
+                  dimensions: {}
+                  hostname: example.com
+                """
+            )
+        conf_1 = Config(configFile=conf_file)
+        conf_2 = Config(configFile=conf_file)
+        conf_3 = Config()
+        self.assertTrue(conf_1 is conf_2)
+        self.assertTrue(conf_1 is conf_3)
+
+
 if __name__ == '__main__':
     unittest.main()

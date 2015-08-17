@@ -19,10 +19,10 @@ LOGGING_MAX_BYTES = 5 * 1024 * 1024
 log = logging.getLogger(__name__)
 
 
+# Make this a singleton class so we don't get the config every time
+# the class is created
+@six.add_metaclass(singleton.Singleton)
 class Config(object):
-    # Make this a singleton class so we don't get the config every time
-    # the class is created
-    six.add_metaclass(singleton.Singleton)
 
     def __init__(self, configFile=None):
         if configFile is not None:
