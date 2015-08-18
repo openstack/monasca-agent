@@ -121,7 +121,7 @@ consumer_groups:
         if full_output:
             broker_dimensions = dimensions.copy()
             for (topic, partition), broker_offset in broker_offsets.iteritems():
-                broker_dimensions.update({'topic': topic, 'partition': partition})
+                broker_dimensions.update({'topic': topic, 'partition': str(partition)})
                 broker_offset = broker_offsets.get((topic, partition))
                 self.gauge('kafka.broker_offset', broker_offset,
                            dimensions=self._set_dimensions(broker_dimensions, instance))
@@ -134,7 +134,7 @@ consumer_groups:
                     # Get the broker offset
                     broker_offset = broker_offsets.get((topic, partition))
                     # Report the consumer offset and lag
-                    consumer_dimensions.update({'topic': topic, 'partition': partition,
+                    consumer_dimensions.update({'topic': topic, 'partition': str(partition),
                                                 'consumer_group': consumer_group})
                     if full_output:
                         self.gauge('kafka.consumer_offset', consumer_offset,
