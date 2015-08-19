@@ -1,3 +1,5 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+
 from collections import namedtuple
 from fnmatch import fnmatch
 import os

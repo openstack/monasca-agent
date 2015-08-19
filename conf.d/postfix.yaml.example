@@ -1,3 +1,5 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+
 # The user running monasca-agent must have passwordless sudo access for the find
 # command to run the postfix check.  Here's an example:
 #

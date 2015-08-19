@@ -1,3 +1,6 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+
+
 class Singleton(type):
     def __init__(cls, name, bases, dict):
         super(Singleton, cls).__init__(name, bases, dict)

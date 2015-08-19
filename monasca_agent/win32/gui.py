@@ -1,4 +1,5 @@
 # Copyright �� 2009-2010 CEA
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
 # Pierre Raybaut
 # Licensed under the terms of the CECILL License
 # Modified for Datadog

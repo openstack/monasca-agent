@@ -1,3 +1,5 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+
 from monasca_agent.collector.checks import AgentCheck
 
 # Reference: http://code.sixapart.com/svn/memcached/trunk/server/doc/protocol.txt

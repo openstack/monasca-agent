@@ -1,3 +1,4 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
 # set up logging before importing any other components
 from collector import modules
 from config import initialize_logging

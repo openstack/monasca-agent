@@ -1,3 +1,5 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.common.exceptions import CheckException
 

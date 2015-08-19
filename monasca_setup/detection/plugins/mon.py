@@ -1,3 +1,5 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+
 """Classes for monitoring the monitoring server stack.
 
     Covering mon-persister, mon-api and mon-thresh.

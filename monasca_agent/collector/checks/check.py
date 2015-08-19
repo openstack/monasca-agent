@@ -1,3 +1,4 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
 """Base class for Checks.
 
 If you are writing your own checks you should subclass the AgentCheck class.

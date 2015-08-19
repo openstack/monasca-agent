@@ -1,3 +1,5 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+
 import ntplib
 
 from monasca_agent.collector.checks import AgentCheck

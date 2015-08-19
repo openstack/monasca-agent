@@ -1,3 +1,5 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+
 from args_plugin import ArgsPlugin
 from plugin import Plugin
 from service_plugin import ServicePlugin

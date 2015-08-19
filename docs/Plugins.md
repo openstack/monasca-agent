@@ -1336,4 +1336,4 @@ Below are the list of metrics collected by this plugin from the configured clust
 ```
 
 # License
-Copyright (c) 2016 Hewlett Packard Enterprise Development Company, L.P.
+(C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP

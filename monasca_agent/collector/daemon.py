@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
 
 # Core modules
 import glob

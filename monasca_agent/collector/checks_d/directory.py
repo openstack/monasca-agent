@@ -1,3 +1,5 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+
 from fnmatch import fnmatch
 from os.path import abspath
 from os.path import exists

@@ -1,3 +1,4 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
 """ Aggregation classes used by the collector and statsd to batch messages sent to the forwarder.
 """
 import logging
