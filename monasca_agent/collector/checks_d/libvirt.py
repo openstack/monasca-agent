@@ -168,6 +168,8 @@ class LibvirtCheck(AgentCheck):
         for inst in insp._get_connection().listAllDomains():
             # Verify that this instance exists in the cache.  Add if necessary.
             inst_name = inst.name()
+            if inst_name not in instance_cache:
+                instance_cache = self._update_instance_cache()
 
             # Build customer dimensions
             try:
@@ -196,8 +198,6 @@ class LibvirtCheck(AgentCheck):
                 self.gauge('vm.host_alive_status', 2, dimensions=dims_operations,
                            value_meta={'detail': detail})
                 continue
-            if inst_name not in instance_cache:
-                instance_cache = self._update_instance_cache()
             if inst_name not in metric_cache:
                 metric_cache[inst_name] = {}
 
