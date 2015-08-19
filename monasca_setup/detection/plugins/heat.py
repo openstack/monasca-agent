@@ -11,7 +11,7 @@ class Heat(monasca_setup.detection.ServicePlugin):
             'template_dir': template_dir,
             'overwrite': overwrite,
             'service_name': 'orchestration',
-            'process_names': ['heat-api', 'heat-api-cfn',
+            'process_names': ['heat-api ', 'heat-api-cfn',
                               'heat-api-cloudwatch', 'heat-engine'],
             'service_api_url': 'http://localhost:8004',
             'search_pattern': '.*200 OK.*',
