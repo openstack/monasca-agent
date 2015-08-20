@@ -1,3 +1,4 @@
+import mock
 import unittest
 
 import monasca_agent.common.aggregator as aggregator
@@ -8,8 +9,21 @@ class TestMetricsAggregator(unittest.TestCase):
     def setUp(self):
         self.aggregator = aggregator.MetricsAggregator("Foo")
 
-    def submit_metric(self, name, value, dimensions=None, value_meta=None):
-        try:
+    def submit_metric(self, name, value,
+                      dimensions=None,
+                      value_meta=None,
+                      exception=None):
+        if exception:
+            with self.assertRaises(exception):
+                self.aggregator.submit_metric(name,
+                                              value,
+                                              metrics_pkg.Gauge,
+                                              dimensions=dimensions,
+                                              delegated_tenant=None,
+                                              hostname=None,
+                                              device_name=None,
+                                              value_meta=value_meta)
+        else:
             self.aggregator.submit_metric(name,
                                           value,
                                           metrics_pkg.Gauge,
@@ -18,8 +32,6 @@ class TestMetricsAggregator(unittest.TestCase):
                                           hostname=None,
                                           device_name=None,
                                           value_meta=value_meta)
-        except Exception:
-            pass
 
     def testValidMetric(self):
         dimensions = {'A': 'B', 'B': 'C', 'D': 'E'}
@@ -29,14 +41,11 @@ class TestMetricsAggregator(unittest.TestCase):
                            dimensions=dimensions,
                            value_meta=value_meta)
 
-        self.assertRaises(None)
-
     def testInValidMetricName(self):
         dimensions = {'A': 'B', 'B': 'C', 'D': 'E'}
         value_meta = {"This is a test": "test, test, test"}
         self.submit_metric("TooLarge" * 255,
                            5,
                            dimensions=dimensions,
-                           value_meta=value_meta)
-
-        self.assertRaises(aggregator.InvalidMetricName)
+                           value_meta=value_meta,
+                           exception=aggregator.InvalidMetricName)
