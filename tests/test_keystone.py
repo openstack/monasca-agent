@@ -1,13 +1,9 @@
-import os.path
-import tempfile
 import unittest
 
 from monasca_agent.common.keystone import Keystone
-from monasca_agent.common.util import is_valid_hostname
-from monasca_agent.common.util import PidFile
 
 
-class TestConfig(unittest.TestCase):
+class TestKeystone(unittest.TestCase):
     def testKeyStoneIsSingleton(self):
         keystone_1 = Keystone({})
         keystone_2 = Keystone({})
