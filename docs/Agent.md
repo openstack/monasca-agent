@@ -178,7 +178,7 @@ service: monitoring
 ## Manual Configuration of Plugins
 If you did not run monasca-setup and/or there are additional plugins you would like to activate there are two options.
 
-If a detection plugin exists for monasca-setup you can run monasca-setup with the --detection_plugins flage, ie `monasca-setup --detection-plugins kafka`.
+If a detection plugin exists for monasca-setup you can run monasca-setup with the --detection_plugins flag, ie `monasca-setup --detection-plugins kafka`.
 
 To manually configure a plugin follow the steps below:
 
