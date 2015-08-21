@@ -33,6 +33,10 @@ class InvalidDimensionValue(Exception):
     pass
 
 
+class InvalidValue(Exception):
+    pass
+
+
 class MetricsAggregator(object):
     """A metric aggregator class."""
 
@@ -147,26 +151,42 @@ class MetricsAggregator(object):
                       value_meta=None, timestamp=None, sample_rate=1):
         if dimensions:
             for k, v in dimensions.iteritems():
-                if len(k) > 255:
-                    log.error("invalid length for dimension key {}: {} -> {}".format(k, name, dimensions))
+                if not isinstance(k, str):
+                    log.error("invalid dimension key {0} must be a string: {1} -> {2}".format(k, name, dimensions))
                     raise InvalidDimensionKey
-                if restricted_chars.search(k):
-                    log.error("invalid characters in dimension key {}: {} -> {}".format(k, name, dimensions))
+                if len(k) > 255 or len(k) < 1:
+                    log.error("invalid length for dimension key {0}: {1} -> {2}".format(k, name, dimensions))
+                    raise InvalidDimensionKey
+                if restricted_chars.search(k) or re.match('^_', k):
+                    log.error("invalid characters in dimension key {0}: {1} -> {2}".format(k, name, dimensions))
                     raise InvalidDimensionKey
 
-                if len(v) > 255:
-                    log.error("invalid length for dimension value {}: {} -> {}".format(v, name, dimensions))
+                if not isinstance(v, str):
+                    log.error("invalid dimension value {0} for key {1} must be a string: {2} -> {3}".format(v, k, name,
+                                                                                                            dimensions))
+                    raise InvalidDimensionValue
+                if len(v) > 255 or len(v) < 1:
+                    log.error("invalid length dimension value {0} for key {1}: {2} -> {3}".format(v, k, name,
+                                                                                                  dimensions))
                     raise InvalidDimensionValue
                 if restricted_chars.search(v):
-                    log.error("invalid characters in dimension value {}: {} -> {}".format(v, name, dimensions))
+                    log.error("invalid characters in dimension value {0} for key {1}: {2} -> {3}".format(v, k, name,
+                                                                                                         dimensions))
                     raise InvalidDimensionValue
 
-        if len(name) > 255:
-            log.error("invalid length for metric name: {} -> {}".format(name, dimensions))
+        if not isinstance(name, str):
+            log.error("invalid metric name must be a string: {0} -> {1}".format(name, dimensions))
+            raise InvalidMetricName
+        if len(name) > 255 or len(name) < 1:
+            log.error("invalid length for metric name: {0} -> {1}".format(name, dimensions))
             raise InvalidMetricName
         if restricted_chars.search(name):
-            log.error("invalid characters in metric name: {} -> {}".format(name, dimensions))
+            log.error("invalid characters in metric name: {0} -> {1}".format(name, dimensions))
             raise InvalidMetricName
+
+        if not isinstance(value, (int, long, float)):
+            log.error("invalid value {0} is not of number type for metric {1}".format(value, name))
+            raise InvalidValue
 
         if value_meta:
             meta = tuple(value_meta.items())
