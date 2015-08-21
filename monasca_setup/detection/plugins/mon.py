@@ -5,11 +5,13 @@
 """
 
 import logging
+
 import yaml
 
 import monasca_setup.agent_config
 import monasca_setup.detection
 from monasca_setup.detection import find_process_cmdline
+from monasca_setup.detection import find_process_name
 from monasca_setup.detection import watch_process
 
 log = logging.getLogger(__name__)
@@ -185,3 +187,46 @@ def dropwizard_metrics(service, component, url, whitelist):
                                              'dimensions': {'service': service, 'component': component},
                                              'whitelist': whitelist}]}
     return config
+
+
+class MonVertica(monasca_setup.detection.Plugin):
+    """Detect Vertica and setup some simple checks."""
+
+    def _detect(self):
+        """Run detection, set self.available True if the service is detected.
+        """
+        if (find_process_name('vertica') is not None and find_process_name(
+                'spread') is not None):
+            self.available = True
+
+    def build_config(self):
+        """Build the config as a Plugins object and return."""
+        log.info("\tEnabling the Monasca Vertica check")
+        config = monasca_setup.agent_config.Plugins()
+        for process in ['vertica', 'spread']:
+            config.merge(watch_process([process], 'monitoring', process,
+                                       exact_match=False))
+        return config
+
+    def dependencies_installed(self):
+        return True
+
+
+class MonInfluxDB(monasca_setup.detection.Plugin):
+    """Detect InfluxDB and setup some simple checks."""
+
+    def _detect(self):
+        """Run detection, set self.available True if the service is detected.
+        """
+
+        if find_process_name('influxd') is not None:
+            self.available = True
+
+    def build_config(self):
+        """Build the config as a Plugins object and return."""
+        log.info("\tEnabling the Monasca InfluxDB check")
+        return watch_process(['influxd'], 'monitoring', 'influxd',
+                             exact_match=False)
+
+    def dependencies_installed(self):
+        return True
