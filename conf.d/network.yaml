@@ -8,4 +8,4 @@ instances:
       #  - lo0
       # Optionally completely ignore any network interface
       # matching the given regex:
-      excluded_interface_re: lo.*|vnet.*|tun.*|ovs.*|br.*
+      excluded_interface_re: lo.*|vnet.*|tun.*|ovs.*|br.*|tap.*|qbr.*|qvb.*|qvo.*
