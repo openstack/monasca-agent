@@ -9,7 +9,6 @@ import monasca_agent.common.util as util
 log = logging.getLogger(__name__)
 
 
-WATCHDOG_TIMEOUT = 120
 # Since we call flush more often than the metrics aggregation interval, we should
 #  log a bunch of flushes in a row every so often.
 FLUSH_LOGGING_PERIOD = 70
@@ -23,18 +22,13 @@ class Reporter(threading.Thread):
     server.
     """
 
-    def __init__(self, interval, aggregator, api_host, use_watchdog=False, event_chunk_size=None):
+    def __init__(self, interval, aggregator, api_host, event_chunk_size=None):
         threading.Thread.__init__(self)
         self.interval = int(interval)
         self.finished = threading.Event()
         self.aggregator = aggregator
         self.flush_count = 0
         self.log_count = 0
-
-        self.watchdog = None
-        if use_watchdog:
-            from monasca_agent.common.util import Watchdog
-            self.watchdog = Watchdog(WATCHDOG_TIMEOUT)
 
         self.api_host = api_host
         self.event_chunk_size = event_chunk_size or EVENT_CHUNK_SIZE
@@ -50,7 +44,6 @@ class Reporter(threading.Thread):
     def run(self):
 
         log.info("Reporting to %s every %ss" % (self.api_host, self.interval))
-        log.debug("Watchdog enabled: %s" % bool(self.watchdog))
 
         # Persist a start-up message.
         check_status.MonascaStatsdStatus().persist()
@@ -58,8 +51,6 @@ class Reporter(threading.Thread):
         while not self.finished.isSet():  # Use camel case isSet for 2.4 support.
             self.finished.wait(self.interval)
             self.flush()
-            if self.watchdog:
-                self.watchdog.reset()
 
         # Clean up the status messages.
         log.debug("Stopped reporter")

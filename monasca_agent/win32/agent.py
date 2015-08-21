@@ -167,7 +167,7 @@ class MonascaForwarder(multiprocessing.Process):
         else:
             port = int(port)
         app_config = get_config(parse_args=False)
-        self.forwarder = Application(port, app_config, watchdog=False)
+        self.forwarder = Application(port, app_config)
         self.forwarder.run()
 
     def stop(self):
