@@ -40,6 +40,30 @@ class TestMetricsAggregator(unittest.TestCase):
                            dimensions=dimensions,
                            value_meta=value_meta)
 
+    def testValidMetricUnicodeDimensionValue(self):
+        dimensions = {unichr(2440): 'B', 'B': 'C', 'D': 'E'}
+        value_meta = {"This is a test": "test, test, test"}
+        self.submit_metric("Foo",
+                           5,
+                           dimensions=dimensions,
+                           value_meta=value_meta)
+
+    def testValidMetricUnicodeDimensionKey(self):
+        dimensions = {'A': 'B', 'B': unichr(920), 'D': 'E'}
+        value_meta = {"This is a test": "test, test, test"}
+        self.submit_metric("Foo",
+                           5,
+                           dimensions=dimensions,
+                           value_meta=value_meta)
+
+    def testValidMetricUnicodeMetricName(self):
+        dimensions = {'A': 'B', 'B': 'C', 'D': 'E'}
+        value_meta = {"This is a test": "test, test, test"}
+        self.submit_metric(unichr(6021),
+                           5,
+                           dimensions=dimensions,
+                           value_meta=value_meta)
+
     def testInvalidMetricName(self):
         dimensions = {'A': 'B', 'B': 'C', 'D': 'E'}
         value_meta = {"This is a test": "test, test, test"}

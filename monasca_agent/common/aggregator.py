@@ -151,7 +151,7 @@ class MetricsAggregator(object):
                       value_meta=None, timestamp=None, sample_rate=1):
         if dimensions:
             for k, v in dimensions.iteritems():
-                if not isinstance(k, str):
+                if not isinstance(k, (str, unicode)):
                     log.error("invalid dimension key {0} must be a string: {1} -> {2}".format(k, name, dimensions))
                     raise InvalidDimensionKey
                 if len(k) > 255 or len(k) < 1:
@@ -161,7 +161,7 @@ class MetricsAggregator(object):
                     log.error("invalid characters in dimension key {0}: {1} -> {2}".format(k, name, dimensions))
                     raise InvalidDimensionKey
 
-                if not isinstance(v, str):
+                if not isinstance(v, (str, unicode)):
                     log.error("invalid dimension value {0} for key {1} must be a string: {2} -> {3}".format(v, k, name,
                                                                                                             dimensions))
                     raise InvalidDimensionValue
@@ -174,7 +174,7 @@ class MetricsAggregator(object):
                                                                                                          dimensions))
                     raise InvalidDimensionValue
 
-        if not isinstance(name, str):
+        if not isinstance(name, (str, unicode)):
             log.error("invalid metric name must be a string: {0} -> {1}".format(name, dimensions))
             raise InvalidMetricName
         if len(name) > 255 or len(name) < 1:
