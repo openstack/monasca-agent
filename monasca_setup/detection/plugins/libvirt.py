@@ -1,18 +1,19 @@
+import ast
 import ConfigParser
+import grp
 import logging
 import os
+import psutil
 import subprocess
 
 import monasca_setup.agent_config
-import monasca_setup.detection
+from monasca_setup.detection import Plugin
 from monasca_setup.detection.utils import find_process_name
 
 from distutils.version import LooseVersion
 
 log = logging.getLogger(__name__)
 
-# Location of nova.conf from which to read credentials
-nova_conf = "/etc/nova/nova.conf"
 # Directory to use for instance and metric caches (preferred tmpfs "/dev/shm")
 cache_dir = "/dev/shm"
 # Maximum age of instance cache before automatic refresh (in seconds)
@@ -24,18 +25,39 @@ vm_probation = 60 * 5  # Five minutes
 ping_options = [["/usr/bin/fping", "-n", "-c1", "-t250", "-q"],
                 ["/sbin/fping", "-n", "-c1", "-t250", "-q"],
                 ["/bin/ping", "-n", "-c1", "-w1", "-q"]]
-agent_user = 'monasca-agent'
 
 
-class Libvirt(monasca_setup.detection.Plugin):
+class Libvirt(Plugin):
     """Configures VM monitoring through Nova"""
 
     def _detect(self):
-        """Run detection, set self.available True if the service is detected.
+        """Set self.available True if the process and config file are detected
         """
-        if (find_process_name('nova-api') is not None and
-           os.path.isfile(nova_conf)):
+        # Detect Agent's OS username by getting the group owner of confg file
+        try:
+            gid = os.stat('/etc/monasca/agent/agent.yaml').st_gid
+            self.agent_user = grp.getgrgid(gid)[0]
+        except OSError:
+            self.agent_user = None
+        # Try to detect the location of the Nova configuration file.
+        # Walk through the list of processes, searching for 'nova-compute'
+        # process with 'nova.conf' inside one of the parameters
+        nova_conf = None
+        for proc in psutil.process_iter():
+            try:
+                cmd = proc.cmdline()
+                if len(cmd) > 2 and 'python' in cmd[0] and 'nova-compute' in cmd[1]:
+                    param = [cmd.index(y) for y in cmd if 'nova.conf' in y][0]
+                    if '=' in cmd[param]:
+                        nova_conf = cmd[param].split('=')[1]
+                    else:
+                        nova_conf = cmd[param]
+            except IOError:
+                # Process has already terminated, ignore
+                continue
+        if (nova_conf is not None and os.path.isfile(nova_conf)):
             self.available = True
+            self.nova_conf = nova_conf
 
     def build_config(self):
         """Build the config as a Plugins object and return back.
@@ -44,7 +66,8 @@ class Libvirt(monasca_setup.detection.Plugin):
 
         if self.dependencies_installed():
             nova_cfg = ConfigParser.SafeConfigParser()
-            nova_cfg.read(nova_conf)
+            log.info("\tUsing nova configuration file {0}".format(self.nova_conf))
+            nova_cfg.read(self.nova_conf)
             # Which configuration options are needed for the plugin YAML?
             # Use a dict so that they can be renamed later if necessary
             cfg_needed = {'admin_user': 'admin_user',
@@ -75,26 +98,29 @@ class Libvirt(monasca_setup.detection.Plugin):
                 init_config['identity_uri'] = "{0}/v2.0".format(nova_cfg.get(cfg_section, 'identity_uri'))
 
             # Verify functionality of the ping command to enable ping checks
-            for ping_cmd in ping_options:
-                if os.path.isfile(ping_cmd[0]):
-                    with open(os.devnull, "w") as fnull:
-                        # Build a test command that uses sudo and hits localhost
-                        ping_local_cmd = ["sudo", "-u", agent_user]
-                        ping_local_cmd.extend(ping_cmd)
-                        ping_local_cmd.append("127.0.0.1")
-                        try:
-                            res = subprocess.call(ping_local_cmd,
-                                                  stdout=fnull,
-                                                  stderr=fnull)
-                        except subprocess.CalledProcessError:
-                            pass
-                        if res == 0:
-                            log.info("\tEnabling ping checks using {0}".format(ping_cmd[0]))
-                            init_config['ping_check'] = " ".join(ping_cmd)
-                            break
-            if 'ping_check' not in init_config:
-                log.info("\tUnable to find suitable ping command, disabling ping checks.")
-                init_config['ping_check'] = 'False'
+            if self.agent_user is None:
+                log.warn("\tUnable to determine agent user.  Skipping ping checks.")
+            else:
+                for ping_cmd in ping_options:
+                    if os.path.isfile(ping_cmd[0]):
+                        with open(os.devnull, "w") as fnull:
+                            # Build a test command that uses sudo and hits localhost
+                            ping_local_cmd = ["sudo", "-u", self.agent_user]
+                            ping_local_cmd.extend(ping_cmd)
+                            ping_local_cmd.append("127.0.0.1")
+                            try:
+                                res = subprocess.call(ping_local_cmd,
+                                                      stdout=fnull,
+                                                      stderr=fnull)
+                            except subprocess.CalledProcessError:
+                                pass
+                            if res == 0:
+                                log.info("\tEnabling ping checks using {0}".format(ping_cmd[0]))
+                                init_config['ping_check'] = " ".join(ping_cmd)
+                                break
+                if 'ping_check' not in init_config:
+                    log.info("\tUnable to find suitable ping command, disabling ping checks.")
+                    init_config['ping_check'] = ast.literal_eval('False')
 
             config['libvirt'] = {'init_config': init_config,
                                  'instances': [{}]}

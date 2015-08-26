@@ -288,11 +288,23 @@ class LibvirtCheck(AgentCheck):
                         'timestamp': sample_time,
                         'value': value}
 
-            # Disk utilization
-            # TODO(dschroeder)
-
             # Memory utilizaion
-            # TODO(dschroeder)
+            # (req. balloon driver; Linux kernel param CONFIG_VIRTIO_BALLOON)
+            try:
+                mem_metrics = {'mem.free_mb': float(inst.memoryStats()['unused']) / 1024,
+                               'mem.swap_used_mb': float(inst.memoryStats()['swap_out']) / 1024,
+                               'mem.total_mb': float(inst.memoryStats()['available'] - inst.memoryStats()['unused']) / 1024,
+                               'mem.used_mb': float(inst.memoryStats()['available'] - inst.memoryStats()['unused']) / 1024,
+                               'mem.free_perc': float(inst.memoryStats()['unused']) / float(inst.memoryStats()['available']) * 100}
+                for name in mem_metrics:
+                    self.gauge(name, mem_metrics[name], dimensions=dims_customer,
+                               delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                               hostname=instance_cache.get(inst_name)['hostname'])
+                    self.gauge("vm.{0}".format(name), mem_metrics[name],
+                               dimensions=dims_operations)
+            except KeyError:
+                self.log.debug("Balloon driver not active/available on guest {0} ({1})".format(inst_name,
+                                                                                               instance_cache.get(inst_name)['hostname']))
 
             # Network activity
             for vnic in insp.inspect_vnics(inst):
