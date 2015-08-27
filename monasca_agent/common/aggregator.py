@@ -17,8 +17,9 @@ log = logging.getLogger(__name__)
 # submitted for the timestamp passed into the flush() function.
 RECENT_POINT_THRESHOLD_DEFAULT = 3600
 
-invalid_chars = "<>={}(),'\"\\\\;&"
-restricted_chars = re.compile('[' + invalid_chars + ']')
+invalid_chars = "<>={}(),\"\\\\;&"
+restricted_dimension_chars = re.compile('[' + invalid_chars + ']')
+restricted_name_chars = re.compile('[' + invalid_chars + ' ' + ']')
 
 
 class InvalidMetricName(Exception):
@@ -157,7 +158,7 @@ class MetricsAggregator(object):
                 if len(k) > 255 or len(k) < 1:
                     log.error("invalid length for dimension key {0}: {1} -> {2}".format(k, name, dimensions))
                     raise InvalidDimensionKey
-                if restricted_chars.search(k) or re.match('^_', k):
+                if restricted_dimension_chars.search(k) or re.match('^_', k):
                     log.error("invalid characters in dimension key {0}: {1} -> {2}".format(k, name, dimensions))
                     raise InvalidDimensionKey
 
@@ -169,7 +170,7 @@ class MetricsAggregator(object):
                     log.error("invalid length dimension value {0} for key {1}: {2} -> {3}".format(v, k, name,
                                                                                                   dimensions))
                     raise InvalidDimensionValue
-                if restricted_chars.search(v):
+                if restricted_dimension_chars.search(v):
                     log.error("invalid characters in dimension value {0} for key {1}: {2} -> {3}".format(v, k, name,
                                                                                                          dimensions))
                     raise InvalidDimensionValue
@@ -180,7 +181,7 @@ class MetricsAggregator(object):
         if len(name) > 255 or len(name) < 1:
             log.error("invalid length for metric name: {0} -> {1}".format(name, dimensions))
             raise InvalidMetricName
-        if restricted_chars.search(name):
+        if restricted_name_chars.search(name):
             log.error("invalid characters in metric name: {0} -> {1}".format(name, dimensions))
             raise InvalidMetricName
 
