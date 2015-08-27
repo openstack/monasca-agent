@@ -1,0 +1,53 @@
+Api:
+  # To configure Keystone correctly, a project-scoped token must be acquired.
+  # To accomplish this, the configuration must be set up with one of the
+  # following scenarios:
+  #   Set username and password and you have a default project set in keystone.
+  #   Set username, password and project id.
+  #   Set username, password, project name and (domain id or domain name).
+  #
+  # Monitoring API URL: URL for the monitoring API, if undefined it will be pulled from the keystone service catalog
+  # Example: https://region-a.geo-1.monitoring.hpcloudsvc.com:8080/v2.0
+  url: http://localhost:8080
+  # Keystone Username
+  username: test
+  # Keystone Password
+  password: password
+  # Keystone API URL: URL for the Keystone server to use
+  # Example: https://region-a.geo-1.identity.hpcloudsvc.com:35357/v3/
+  keystone_url: http://localhost:5000
+  # Project name to be used by this agent
+  project_name: test
+
+  # The following 2 options are for handling buffering and reconnection to the monasca-api
+  # If you want the messages to be sent as fast as possible, set these two options to
+  # the same number.  If you have a larger system with many agents, you may want to throttle
+  # the number of messages sent to the API by setting the backlog_send_rate to a lower number.
+
+  # Maximum number of messages to buffer when unable to communicate with the monasca-api
+  max_buffer_size: 1000
+  # Maximum number of messages to send at one time when communication with the monasca-api is restored
+  backlog_send_rate: 1000
+
+  # Publish extra metrics to the API by adding this number of 'amplifier' dimensions.
+  # For load testing purposes only; set to 0 for production use.
+
+Main:
+  # Force the hostname to whatever you want.
+  hostname: localhost
+
+Logging:
+  # ========================================================================== #
+  # Logging
+  # ========================================================================== #
+  log_level: DEBUG
+  collector_log_file: /var/log/monasca/agent/collector.log
+  forwarder_log_file: /var/log/monasca/agent/forwarder.log
+  statsd_log_file: /var/log/monasca/agent/statsd.log
+
+  # if syslog is enabled but a host and port are not set, a local domain socket
+  # connection will be attempted
+  #
+  # log_to_syslog: yes
+  # syslog_host:
+  # syslog_port:

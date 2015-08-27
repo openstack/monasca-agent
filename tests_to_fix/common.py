@@ -8,42 +8,6 @@ from monasca_agent.common.util import Paths
 from monasca_agent.common.util import get_os
 
 
-def load_check(name, config, agent_config):
-    checksd_path = Paths().get_checksd_path()
-    if checksd_path not in sys.path:
-        sys.path.append(checksd_path)
-
-    check_module = __import__(name)
-    check_class = None
-    classes = inspect.getmembers(check_module, inspect.isclass)
-    for name, clsmember in classes:
-        if clsmember == AgentCheck:
-            continue
-        if issubclass(clsmember, AgentCheck):
-            check_class = clsmember
-            if AgentCheck in clsmember.__bases__:
-                continue
-            else:
-                break
-    if check_class is None:
-        raise Exception(
-            "Unable to import check %s. Missing a class that inherits AgentCheck" % name)
-
-    init_config = config.get('init_config', None)
-    instances = config.get('instances')
-
-    # init the check class
-    try:
-        return check_class(
-            name, init_config=init_config, agent_config=agent_config, instances=instances)
-    except:
-        # Backwards compatitiblity for old checks that don't support the
-        # instances argument.
-        c = check_class(name, init_config=init_config, agent_config=agent_config)
-        c.instances = instances
-        return c
-
-
 def kill_subprocess(process_obj):
     try:
         process_obj.terminate()

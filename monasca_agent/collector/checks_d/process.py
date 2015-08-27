@@ -84,7 +84,7 @@ class ProcessCheck(checks.AgentCheck):
         # process metrics available for psutil versions 0.6.0 and later
         extended_metrics_0_6_0 = (self.is_psutil_version_later_than((0, 6, 0))
                                   and not util.Platform.is_win32())
-        # On Windows get_ext_memory_info returns different metrics
+        # On Windows ext_memory_info returns different metrics
         if extended_metrics_0_6_0:
             real = 0
             voluntary_ctx_switches = 0
@@ -116,10 +116,10 @@ class ProcessCheck(checks.AgentCheck):
             try:
                 p = psutil.Process(pid)
                 if extended_metrics_0_6_0:
-                    mem = p.get_ext_memory_info()
+                    mem = p.memory_info_ex()
                     real += float((mem.rss - mem.shared) / 1048576)
                     try:
-                        ctx_switches = p.get_num_ctx_switches()
+                        ctx_switches = p.num_ctx_switches()
                         voluntary_ctx_switches += ctx_switches.voluntary
                         involuntary_ctx_switches += ctx_switches.involuntary
                     except NotImplementedError:
@@ -127,11 +127,11 @@ class ProcessCheck(checks.AgentCheck):
                         voluntary_ctx_switches = None
                         involuntary_ctx_switches = None
                 else:
-                    mem = p.get_memory_info()
+                    mem = p.memory_info()
 
                 if extended_metrics_0_5_0_unix:
                     try:
-                        open_file_descriptors = float(p.get_num_fds())
+                        open_file_descriptors = float(p.num_fds())
                         max_open_file_descriptors = float(p.rlimit(psutil.RLIMIT_NOFILE)[1])
                         if max_open_file_descriptors > 0.0:
                             open_file_descriptors_perc = open_file_descriptors / max_open_file_descriptors * 100
@@ -142,13 +142,13 @@ class ProcessCheck(checks.AgentCheck):
 
                 rss += float(mem.rss / 1048576)
                 vms += float(mem.vms / 1048576)
-                thr += p.get_num_threads()
-                cpu += p.get_cpu_percent(cpu_check_interval)
+                thr += p.num_threads()
+                cpu += p.cpu_percent(cpu_check_interval)
 
-                # user might not have permission to call get_io_counters()
+                # user might not have permission to call io_counters()
                 if read_count is not None:
                     try:
-                        io_counters = p.get_io_counters()
+                        io_counters = p.io_counters()
                         read_count += io_counters.read_count
                         write_count += io_counters.write_count
                         read_kbytes += float(io_counters.read_bytes / 1024)
