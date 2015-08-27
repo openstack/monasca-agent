@@ -204,7 +204,7 @@ class LibvirtCheck(AgentCheck):
             # Skip instances created within the probation period
             vm_probation_remaining = self._test_vm_probation(instance_cache.get(inst_name)['created'])
             if (vm_probation_remaining >= 0):
-                self.log.info("Libvirt: {0} in probation for another {1} seconds".format(instance_cache.get(inst_name)['hostname'],
+                self.log.info("Libvirt: {0} in probation for another {1} seconds".format(instance_cache.get(inst_name)['hostname'].encode('utf8'),
                                                                                          vm_probation_remaining))
                 continue
 
