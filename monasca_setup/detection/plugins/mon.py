@@ -27,11 +27,10 @@ class MonAPI(monasca_setup.detection.Plugin):
             try:
                 with open('/etc/monasca/api-config.yml', 'r') as config:
                     self.api_config = yaml.load(config.read())
+                api_port = self.api_config['server']['applicationConnectors'][0]['port']
             except Exception:
-                log.exception('Failed parsing /etc/monasca/api-config.yml')
-                self.available = False
-                return
-            api_port = self.api_config['server']['applicationConnectors'][0]['port']
+                api_port = 8070
+                log.warn('Failed parsing /etc/monasca/api-config.yml, defaulting api port to {0}'.format(api_port))
             for conn in monasca_api.connections('inet'):
                 if conn.laddr[1] == api_port:
                     self.available = True
