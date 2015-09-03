@@ -33,10 +33,12 @@ class Keystone(object):
         project_name = self.config.get('project_name', None)
         project_domain_name = self.config.get('project_domain_name', None)
         project_domain_id = self.config.get('project_domain_id', None)
+        keystone_timeout = self.config.get('keystone_timeout', None)
 
         kc_args = {'auth_url': auth_url,
                    'username': username,
-                   'password': password}
+                   'password': password,
+                   'keystone_timeout': keystone_timeout}
 
         if user_domain_id:
             kc_args.update({'user_domain_id': user_domain_id})

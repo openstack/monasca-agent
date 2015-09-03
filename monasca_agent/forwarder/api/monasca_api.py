@@ -33,6 +33,7 @@ class MonascaAPI(object):
         self.max_buffer_size = int(config['max_buffer_size'])
         self.backlog_send_rate = int(config['backlog_send_rate'])
         self.message_queue = collections.deque(maxlen=self.max_buffer_size)
+        self.write_timeout = int(config['write_timeout'])
         # 'amplifier' is completely optional and may not exist in the config
         try:
             self.amplifier = int(config['amplifier'])
@@ -123,7 +124,7 @@ class MonascaAPI(object):
             if not self.url:
                 self.url = self.keystone.get_monasca_url()
 
-            return monascaclient.client.Client(self.api_version, self.url, **kwargs)
+            return monascaclient.client.Client(self.api_version, self.url, write_timeout=self.write_timeout, **kwargs)
 
         return None
 
@@ -149,11 +150,11 @@ class MonascaAPI(object):
                 self._resume_time = time.time() + wait_time
                 log.error("Invalid token detected. Waiting %d seconds before getting new token.", wait_time)
             else:
-                log.debug("Error sending message to monasca-api. Error is {0}."
+                log.error("Error sending message to monasca-api. Error is {0}."
                           .format(str(ex.message)))
                 self._failure_reason = 'Error sending message to the Monasca API: {0}'.format(str(ex.message))
         except Exception as ex:
-            log.debug("Error sending message to Monasca API. Error is {0}."
+            log.error("Error sending message to Monasca API. Error is {0}."
                       .format(str(ex.message)))
             self._failure_reason = 'The Monasca API is DOWN or unreachable'
 
