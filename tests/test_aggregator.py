@@ -3,6 +3,14 @@ import unittest
 import monasca_agent.common.aggregator as aggregator
 import monasca_agent.common.metrics as metrics_pkg
 
+# a few valid characters to test
+valid_name_chars = ".'_-"
+invalid_name_chars = " <>={}(),\"\\\\;&"
+
+# a few valid characters to test
+valid_dimension_chars = " .'_-"
+invalid_dimension_chars = "<>={}(),\"\\\\;&"
+
 
 class TestMetricsAggregator(unittest.TestCase):
     def setUp(self):
@@ -190,3 +198,28 @@ class TestMetricsAggregator(unittest.TestCase):
                            dimensions=dimensions,
                            value_meta=value_meta,
                            exception=aggregator.InvalidValue)
+
+    def testValidNameChars(self):
+        for c in valid_name_chars:
+            self.submit_metric('test{}counter'.format(c), 2,
+                               dimensions={"test-key": "test-value"})
+
+    def testInvalidNameChars(self):
+        for c in invalid_name_chars:
+            self.submit_metric('test{}counter'.format(c), 2,
+                               dimensions={"test-key": "test-value"},
+                               exception=aggregator.InvalidMetricName)
+
+    def testValidDimensionChars(self):
+        for c in valid_dimension_chars:
+            self.submit_metric('test-counter', 2,
+                               dimensions={"test{}key".format(c): "test{}value".format(c)})
+
+    def testInvalidDimensionChars(self):
+        for c in invalid_dimension_chars:
+            self.submit_metric('test-counter', 2,
+                               dimensions={'test{}key'.format(c): 'test-value'},
+                               exception=aggregator.InvalidDimensionKey)
+            self.submit_metric('test-counter', 2,
+                               dimensions={'test-key': 'test{}value'.format(c)},
+                               exception=aggregator.InvalidDimensionValue)
