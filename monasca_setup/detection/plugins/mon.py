@@ -34,7 +34,10 @@ class MonAPI(monasca_setup.detection.Plugin):
             for conn in monasca_api.connections('inet'):
                 if conn.laddr[1] == api_port:
                     self.available = True
+                    log.info('Monasca API discovered on port %s.', api_port)
                     return
+            log.warning('Port %s cannot be reached.', api_port)
+            self.available = True
 
     def build_config(self):
         """Build the config as a Plugins object and return."""
