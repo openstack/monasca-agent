@@ -73,14 +73,15 @@ class LibvirtCheck(AgentCheck):
         for instance in instances:
             inst_name = instance.__getattr__('OS-EXT-SRV-ATTR:instance_name')
             inst_az = instance.__getattr__('OS-EXT-AZ:availability_zone')
+            inst_flavor = nova_client.flavors.get(instance.flavor['id'])
             id_cache[inst_name] = {'instance_uuid': instance.id,
                                    'hostname': instance.name,
                                    'zone': inst_az,
                                    'created': instance.created,
                                    'tenant_id': instance.tenant_id,
-                                   'vcpus': nova_client.flavors.get(instance.flavor['id']).vcpus,
-                                   'ram': nova_client.flavors.get(instance.flavor['id']).ram,
-                                   'disk': nova_client.flavors.get(instance.flavor['id']).disk}
+                                   'vcpus': inst_flavor.vcpus,
+                                   'ram': inst_flavor.ram,
+                                   'disk': inst_flavor.disk}
             # Try to add private_ip to id_cache[inst_name].  This may fail on ERROR'ed VMs.
             try:
                 id_cache[inst_name]['private_ip'] = instance.addresses['private'][0]['addr']
