@@ -40,7 +40,7 @@ class MonAPI(monasca_setup.detection.Plugin):
         """Build the config as a Plugins object and return."""
         log.info("\tEnabling the Monasca api healthcheck")
         config = monasca_setup.agent_config.Plugins()
-        config.merge(dropwizard_health_check('monitoring', 'api', 'http://localhost:8081/healthcheck'))
+        config.merge(dropwizard_health_check('monitoring', 'monasca-api', 'http://localhost:8081/healthcheck'))
 
         log.info("\tEnabling the Monasca api metrics")
         whitelist = [
@@ -65,7 +65,7 @@ class MonAPI(monasca_setup.detection.Plugin):
                 "path": "timers/org.skife.jdbi.v2.DBI.raw-sql/max",
                 "type": "gauge"},
         ]
-        config.merge(dropwizard_metrics('monitoring', 'api', 'http://localhost:8081/metrics', whitelist))
+        config.merge(dropwizard_metrics('monitoring', 'monasca-api', 'http://localhost:8081/metrics', whitelist))
         return config
 
     def dependencies_installed(self):
@@ -82,7 +82,7 @@ class MonNotification(monasca_setup.detection.Plugin):
     def build_config(self):
         """Build the config as a Plugins object and return."""
         log.info("\tEnabling the Monasca Notification healthcheck")
-        return watch_process(['monasca-notification'], 'monitoring', 'notification', exact_match=False)
+        return watch_process(['monasca-notification'], 'monitoring', 'monasca-notification', exact_match=False)
 
     def dependencies_installed(self):
         return True
@@ -99,7 +99,7 @@ class MonPersister(monasca_setup.detection.Plugin):
         """Build the config as a Plugins object and return."""
         log.info("\tEnabling the Monasca persister healthcheck")
         config = monasca_setup.agent_config.Plugins()
-        config.merge(dropwizard_health_check('monitoring', 'persister', 'http://localhost:8091/healthcheck'))
+        config.merge(dropwizard_health_check('monitoring', 'monasca-persister', 'http://localhost:8091/healthcheck'))
 
         log.info("\tEnabling the Monasca persister metrics")
         whitelist = [
@@ -136,7 +136,7 @@ class MonPersister(monasca_setup.detection.Plugin):
                 "path": "counters/monasca.persister.pipeline.event.MetricHandler[metric-3].metrics-added-to-batch-counter/count",
                 "type": "rate"}
         ]
-        config.merge(dropwizard_metrics('monitoring', 'persister', 'http://localhost:8091/metrics', whitelist))
+        config.merge(dropwizard_metrics('monitoring', 'monasca-persister', 'http://localhost:8091/metrics', whitelist))
         return config
 
     def dependencies_installed(self):
@@ -156,7 +156,7 @@ class MonThresh(monasca_setup.detection.Plugin):
         config = monasca_setup.agent_config.Plugins()
         for process in ['backtype.storm.daemon.nimbus', 'backtype.storm.daemon.supervisor', 'backtype.storm.daemon.worker']:
             if find_process_cmdline(process) is not None:
-                config.merge(watch_process([process], 'monitoring', 'storm', exact_match=False))
+                config.merge(watch_process([process], 'monitoring', 'apache-storm', exact_match=False))
         return config
 
     def dependencies_installed(self):
