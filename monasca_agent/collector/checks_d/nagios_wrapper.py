@@ -112,7 +112,7 @@ class WrapNagios(ServicesCheck):
         if detail:
             self.gauge(metric_name, status_code,
                        dimensions=dimensions,
-                       value_meta={'detail': detail})
+                       value_meta={'detail': detail[0:2047]})
         else:
             self.gauge(metric_name, status_code, dimensions=dimensions)
         # Return DOWN on critical, UP otherwise
