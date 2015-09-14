@@ -37,9 +37,8 @@ def find_process_cmdline(search_string):
     """
     for process in psutil.process_iter():
         try:
-            for arg in process.cmdline():
-                if arg.find(search_string) != -1:
-                    return process
+            if search_string in ' '.join(process.cmdline()):
+                return process
         except psutil.NoSuchProcess:
             continue
 
