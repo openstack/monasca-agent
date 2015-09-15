@@ -4,6 +4,7 @@
 
 - [System Checks](#system-checks)
   - [System Metrics](#system-metrics)
+      - [Limiting System Metrics](#limiting-system-metrics)
 - [Standard Plugins](#standard-plugins)
   - [Dot File Configuration](#dot-file-configuration)
   - [Default Plugin Detection](#default-plugin-detection)
@@ -114,6 +115,20 @@ This section documents the system metrics that are sent by the Agent.  This sect
 | monasca.emit_time_sec  | service=monitoring component=monasca-agent | Amount of time that the forwarder took to send metrics to the Monasca API.
 | monasca.collection_time_sec  | service=monitoring component=monasca-agent | Amount of time that the collector took for this collection run
 
+### Limiting System Metrics
+It is possible to reduce the number of system metrics with certain configuration parameters.
+
+| Config Option  | Values     | Description                                                                                |
+| -------------- | ---------- | ------------------------------------------------------------------------------------------ |
+| net_bytes_only | true/false | Sends bytes/sec metrics only, disabling packets/sec, packets_dropped/sec, and errors/sec.  |
+| cpu_idle_only  | true/false | Sends idle_perc only, disabling wait/stolen/system/user metrics                            |
+| send_io_stats  | true/false | If true, sends I/O metrics for each disk device.  If false, sends only disk space metrics. |
+
+These parameters may added to `instances` in the plugin `.yaml` configuration file, or added via `monasca-setup` like this:
+```
+monasca-setup -d system -a 'cpu_idle_only=true net_bytes_only=true send_io_stats=false' --overwrite
+```
+By default, all metrics are enabled.
 
 # Standard Plugins
 Plugins are the way to extend the Monasca Agent.  Plugins add additional functionality that allow the agent to perform checks on other applications, servers or services.  This section describes the standard plugins that are delivered by default.
@@ -997,6 +1012,8 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 
 `ping_check` includes the command line (sans the IP address) used to perform a ping check against instances.  Set to False (or omit altogether) to disable ping checks.  This is automatically populated during `monasca-setup` from a list of possible `ping` command lines.  Generally, `fping` is preferred over `ping` because it can return a failure with sub-second resolution, but if `fping` does not exist on the system, `ping` will be used instead.  If ping_check is disabled, the `host_alive_status` metric will not be published unless that VM is inactive.  This is because the host status is inconclusive without a ping check.
 
+`ping_only` will suppress all per-VM metrics aside from `host_alive_status` and `vm.host_alive_status`, including all I/O, network, memory, and CPU metrics.  [Aggregate Metrics](#aggregate-metrics), however, would still be enabled if `ping_only` is true.  By default, `ping_only` is false.  If both `ping_only` and `ping_check` are set to false, the only metrics published by the Libvirt plugin would be the Aggregate Metrics.
+
 Example config:
 ```
 init_config:
@@ -1009,12 +1026,18 @@ init_config:
     nova_refresh: 14400
     vm_probation: 300
     ping_check: /usr/bin/fping -n -c1 -t250 -q
+    ping_only: false
 instances:
     - {}
 ```
 `instances` are null in `libvirt.yaml`  because the libvirt plugin detects and runs against all provisioned VM instances; specifying them in `libvirt.yaml` is unnecessary.
 
 Note: If the Nova service login credentials are changed, `monasca-setup` would need to be re-run to use the new credentials.  Alternately, `/etc/monasca/agent/conf.d/libvirt.yaml` could be modified directly.
+
+Example `monasca-setup` usage:
+```
+monasca-setup -d libvirt -a 'ping_check=false ping_only=false'
+```
 
 ### Instance Cache
 The instance cache (`/dev/shm/libvirt_instances.yaml` by default) contains data that is not available to libvirt, but queried from Nova.  To limit calls to the Nova API, the cache is only updated if a new instance is detected (libvirt sees an instance not already in the cache), or every `nova_refresh` seconds (see Configuration above).

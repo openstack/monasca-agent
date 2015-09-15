@@ -2,6 +2,7 @@
 
     Detection classes should be platform independent
 """
+import ast
 import logging
 import sys
 
@@ -57,6 +58,15 @@ class Plugin(object):
 
         """
         raise NotImplementedError
+
+    def literal_eval(self, testval):
+        """Return a literal boolean value if applicable
+
+        """
+        if 'false' in str(testval).lower() or 'true' in str(testval).lower():
+            return ast.literal_eval(str(testval).capitalize())
+        else:
+            return testval
 
     @property
     def name(self):

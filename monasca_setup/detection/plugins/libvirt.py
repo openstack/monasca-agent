@@ -1,4 +1,3 @@
-import ast
 import ConfigParser
 import grp
 import logging
@@ -120,7 +119,12 @@ class Libvirt(Plugin):
                                 break
                 if 'ping_check' not in init_config:
                     log.info("\tUnable to find suitable ping command, disabling ping checks.")
-                    init_config['ping_check'] = ast.literal_eval('False')
+                    init_config['ping_check'] = self.literal_eval('False')
+
+            # Handle monasca-setup detection arguments, which take precedence
+            if self.args:
+                for arg in self.args:
+                    init_config[arg] = self.literal_eval(self.args[arg])
 
             config['libvirt'] = {'init_config': init_config,
                                  'instances': [{}]}
