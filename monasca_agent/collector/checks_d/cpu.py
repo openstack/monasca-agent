@@ -28,13 +28,13 @@ class Cpu(checks.AgentCheck):
                                               cpu_stats.iowait,
                                               cpu_stats.idle,
                                               cpu_stats.steal,
-                                              dimensions)
+                                              dimensions, instance)
         if send_rollup_stats:
             self.gauge('cpu.total_logical_cores', psutil.cpu_count(logical=True), dimensions)
             num_of_metrics += 1
         log.debug('Collected {0} cpu metrics'.format(num_of_metrics))
 
-    def _format_results(self, us, sy, wa, idle, st, dimensions):
+    def _format_results(self, us, sy, wa, idle, st, dimensions, instance):
         data = {'cpu.user_perc': us,
                 'cpu.system_perc': sy,
                 'cpu.wait_perc': wa,
@@ -42,7 +42,7 @@ class Cpu(checks.AgentCheck):
                 'cpu.stolen_perc': st}
 
         for key in data.keys():
-            if data[key] is None:
+            if (data[key] is None or instance.get('cpu_idle_only') and 'idle_perc' not in key):
                 del data[key]
 
         [self.gauge(key, value, dimensions) for key, value in data.iteritems()]

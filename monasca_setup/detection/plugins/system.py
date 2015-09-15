@@ -31,6 +31,9 @@ class System(Plugin):
                 with open(os.path.join(self.template_dir, 'conf.d/' + metric + '.yaml'), 'r') as metric_template:
                     default_config = yaml.load(metric_template.read())
                 config[metric] = default_config
+                if self.args:
+                    for arg in self.args:
+                        config[metric]['instances'][0][arg] = self.literal_eval(self.args[arg])
                 log.info('\tConfigured {0}'.format(metric))
             except (OSError, IOError):
                 log.info('\tUnable to configure {0}'.format(metric))

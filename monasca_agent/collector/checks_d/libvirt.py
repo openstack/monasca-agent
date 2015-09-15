@@ -233,6 +233,10 @@ class LibvirtCheck(AgentCheck):
                     except OSError as e:
                         self.log.warn("OS error running '{0}' returned {1}".format(ping_cmd, e))
 
+            # Skip the remainder of the checks if ping_only is True in the config
+            if self.init_config.get('ping_only'):
+                continue
+
             # Accumulate aggregate data
             for gauge in agg_gauges:
                 if gauge in instance_cache.get(inst_name):
