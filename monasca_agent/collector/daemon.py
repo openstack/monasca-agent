@@ -30,7 +30,6 @@ if int(sys.version_info[1]) <= 3:
 
 # Constants
 PID_NAME = "monasca-agent"
-WATCHDOG_MULTIPLIER = 10
 RESTART_INTERVAL = 4 * 24 * 60 * 60  # Defaults to 4 days
 START_COMMANDS = ['start', 'restart', 'foreground']
 
@@ -92,9 +91,7 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
 
         self.collector = checks.collector.Collector(config, monasca_agent.common.emitter.http_emitter, checksd)
 
-        # Configure the watchdog.
         check_frequency = int(config['check_freq'])
-        watchdog = self._get_watchdog(check_frequency, config)
 
         # Initialize the auto-restarter
         self.restart_interval = int(config.get('restart_interval', RESTART_INTERVAL))
@@ -138,8 +135,6 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
             # Only plan for the next loop if we will continue,
             # otherwise just exit quickly.
             if self.run_forever:
-                if watchdog:
-                    watchdog.reset()
                 time.sleep(check_frequency)
 
         # Now clean-up.
@@ -152,16 +147,6 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
         # as a daemon.
         log.info("Exiting. Bye bye.")
         sys.exit(0)
-
-    @staticmethod
-    def _get_watchdog(check_freq, agentConfig):
-        watchdog = None
-        if agentConfig.get("watchdog", True):
-            watchdog = util.Watchdog(check_freq * WATCHDOG_MULTIPLIER,
-                                     max_mem_mb=agentConfig.get('limit_memory_consumption',
-                                                                None))
-            watchdog.reset()
-        return watchdog
 
     def _should_restart(self):
         if time.time() - self.agent_start > self.restart_interval:
