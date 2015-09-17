@@ -68,7 +68,8 @@ class LibvirtCheck(AgentCheck):
                                     self.init_config.get('identity_uri'),
                                     service_type="compute",
                                     region_name=self.init_config.get('region_name'))
-        instances = nova_client.servers.list(search_opts={'all_tenants': 1})
+        instances = nova_client.servers.list(search_opts={'all_tenants': 1,
+                                                          'host': self.hostname})
 
         for instance in instances:
             inst_name = instance.__getattr__('OS-EXT-SRV-ATTR:instance_name')
