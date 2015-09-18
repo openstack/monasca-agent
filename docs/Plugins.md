@@ -808,9 +808,9 @@ The Apache checks return the following metrics:
 | apache.performance.idle_worker_count | hostname, service=apache component=apache | The number of idle workers |
 | apache.performance.busy_worker_count | hostname, service=apache component=apache | The number of workers serving requests |
 | apache.performance.cpu_load_perc | hostname, service=apache component=apache | The current percentage of CPU used by each worker and in total by all workers combined |
-| apache.net.total_kbytes | hostname, service=apache component=apache | A total number of byte count |
+| apache.net.total_kbytes | hostname, service=apache component=apache | A total number of Kbyte count |
 | apache.net.hits | hostname, service=apache component=apache | A total number of accesses |
-| apache.net.kbytes_sec | hostname, service=apache component=apache | A total number of byte count per second |
+| apache.net.kbytes_sec | hostname, service=apache component=apache | A total number of Kbyte count per second |
 | apache.net.requests_sec | hostname, service=apache component=apache | A total number of accesses per second |
 
 
