@@ -85,10 +85,10 @@ This section documents the system metrics that are sent by the Agent.  This sect
 | disk.total_used_space_mb | | The total amount of used disk space aggregated across all the disks on a particular node.  **NOTE: This is an optional metric that is only sent when send_rollup_stats is set to true.** |
 | io.read_kbytes_sec | device | Kbytes/sec read by an io device
 | io.read_req_sec | device   | Number of read requests/sec to an io device
-| io.read_time_sec | device   | Amount of read time/sec to an io device
+| io.read_time_sec | device   | Amount of read time in seconds to an io device
 | io.write_kbytes_sec |device | Kbytes/sec written by an io device
 | io.write_req_sec   | device | Number of write requests/sec to an io device
-| io.write_time_sec | device   | Amount of write time/sec to an io device
+| io.write_time_sec | device   | Amount of write time in seconds to an io device
 | load.avg_1_min  | | The average system load over a 1 minute period
 | load.avg_5_min  | | The average system load over a 5 minute period
 | load.avg_15_min  | | The average system load over a 15 minute period
