@@ -22,6 +22,7 @@
   - [Http Endpoint Checks](#http-endpoint-checks)
   - [Http Metrics](#http-metrics)
   - [MySQL Checks](#mysql-checks)
+  - [Elasticsearch Checks](#elasticsearch-checks)
   - [ZooKeeper Checks](#zookeeper-checks)
   - [Kafka Checks](#kafka-checks)
   - [RabbitMQ Checks](#rabbitmq-checks)
@@ -661,6 +662,127 @@ The mySQL checks return the following metrics:
 | mysql.innodb.buffer_pool_free | hostname, mode, service=mysql | |
 | mysql.net.max_connections | hostname, mode, service=mysql | |
 | mysql.net.connections | hostname, mode, service=mysql | |
+
+
+## Elasticsearch Checks
+This section describes the Elasticsearch check that can be performed by the Agent.  The Elasticsearch check requires a configuration file called elastic.yaml to be available in the agent conf.d configuration directory.
+
+Sample config:
+
+```
+init_config: null
+instances:
+-   url: http://127.0.0.1:9200
+
+```
+ 
+The Elasticksearch checks return the following metrics:
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| elasticsearch.docs.count | url, hostname, service=monitoring | |
+| elasticsearch.docs.deleted | url, hostname, service=monitoring | |
+| elasticsearch.store.size | url, hostname, service=monitoring | |
+| elasticsearch.indexing.index.total | url, hostname, service=monitoring | |
+| elasticsearch.indexing.index.time | url, hostname, service=monitoring | |
+| elasticsearch.indexing.index.current | url, hostname, service=monitoring | |
+| elasticsearch.indexing.delete.total | url, hostname, service=monitoring | |
+| elasticsearch.indexing.delete.time | url, hostname, service=monitoring | |
+| elasticsearch.indexing.delete.current | url, hostname, service=monitoring | |
+| elasticsearch.get.total | url, hostname, service=monitoring | |
+| elasticsearch.get.time | url, hostname, service=monitoring | |
+| elasticsearch.get.current | url, hostname, service=monitoring | |
+| elasticsearch.get.exists.total | url, hostname, service=monitoring | |
+| elasticsearch.get.exists.time | url, hostname, service=monitoring | |
+| elasticsearch.get.missing.total | url, hostname, service=monitoring | |
+| elasticsearch.get.missing.time | url, hostname, service=monitoring | |
+| elasticsearch.search.query.total | url, hostname, service=monitoring | |
+| elasticsearch.search.query.time | url, hostname, service=monitoring | |
+| elasticsearch.search.query.current | url, hostname, service=monitoring | |
+| elasticsearch.search.fetch.total | url, hostname, service=monitoring | |
+| elasticsearch.search.fetch.time | url, hostname, service=monitoring | |
+| elasticsearch.search.fetch.current | url, hostname, service=monitoring | |
+| elasticsearch.merges.current | url, hostname, service=monitoring | |
+| elasticsearch.merges.current.docs | url, hostname, service=monitoring | |
+| elasticsearch.merges.current.size | url, hostname, service=monitoring | |
+| elasticsearch.merges.total | url, hostname, service=monitoring | |
+| elasticsearch.merges.total.time | url, hostname, service=monitoring | |
+| elasticsearch.merges.total.docs | url, hostname, service=monitoring | |
+| elasticsearch.merges.total.size | url, hostname, service=monitoring | |
+| elasticsearch.refresh.total | url, hostname, service=monitoring | |
+| elasticsearch.refresh.total.time | url, hostname, service=monitoring | |
+| elasticsearch.flush.total | url, hostname, service=monitoring | |
+| elasticsearch.flush.total.time | url, hostname, service=monitoring | |
+| elasticsearch.process.open_fd | url, hostname, service=monitoring | |
+| elasticsearch.transport.rx_count | url, hostname, service=monitoring | |
+| elasticsearch.transport.tx_count | url, hostname, service=monitoring | |
+| elasticsearch.transport.rx_size | url, hostname, service=monitoring | |
+| elasticsearch.transport.tx_size | url, hostname, service=monitoring | |
+| elasticsearch.transport.server_open | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.bulk.active | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.bulk.threads | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.bulk.queue | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.bulk.rejected | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.flush.active | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.flush.threads | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.flush.queue | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.flush.rejected | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.generic.active | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.generic.threads | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.generic.queue | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.generic.rejected | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.get.active | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.get.threads | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.get.queue | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.get.rejected | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.index.active | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.index.threads | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.index.queue | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.index.rejected | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.management.active | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.management.threads | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.management.queue | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.management.rejected | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.merge.active | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.merge.threads | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.merge.queue | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.merge.rejected | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.percolate.active | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.percolate.threads | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.percolate.queue | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.percolate.rejected | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.refresh.active | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.refresh.threads | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.refresh.queue | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.refresh.rejected | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.search.active | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.search.threads | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.search.queue | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.search.rejected | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.snapshot.active | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.snapshot.threads | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.snapshot.queue | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.snapshot.rejected | url, hostname, service=monitoring | |
+| elasticsearch.http.current_open | url, hostname, service=monitoring | |
+| elasticsearch.http.total_opened | url, hostname, service=monitoring | |
+| jvm.gc.concurrent_mark_sweep.count | url, hostname, service=monitoring | |
+| jvm.gc.concurrent_mark_sweep.collection_time | url, hostname, service=monitoring | |
+| jvm.gc.par_new.count | url, hostname, service=monitoring | |
+| jvm.gc.par_new.collection_time | url, hostname, service=monitoring | |
+| jvm.mem.heap_committed | url, hostname, service=monitoring | |
+| jvm.mem.heap_used | url, hostname, service=monitoring | |
+| jvm.mem.non_heap_committed | url, hostname, service=monitoring | |
+| jvm.mem.non_heap_used | url, hostname, service=monitoring | |
+| jvm.threads.count | url, hostname, service=monitoring | |
+| jvm.threads.peak_count | url, hostname, service=monitoring | |
+| elasticsearch.number_of_nodes | url, hostname, service=monitoring | |
+| elasticsearch.number_of_data_nodes | url, hostname, service=monitoring | |
+| elasticsearch.active_primary_shards | url, hostname, service=monitoring | |
+| elasticsearch.active_shards | url, hostname, service=monitoring | |
+| elasticsearch.relocating_shards | url, hostname, service=monitoring | |
+| elasticsearch.initializing_shards | url, hostname, service=monitoring | |
+| elasticsearch.unassigned_shards | url, hostname, service=monitoring | |
+| elasticsearch.cluster_status | url, hostname, service=monitoring | |
 
 
 ## ZooKeeper Checks
