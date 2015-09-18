@@ -102,9 +102,9 @@ class LibvirtCheck(AgentCheck):
         return id_cache
 
     def _load_instance_cache(self):
-        """Load the cache if instance names to IDs.
+        """Load the cache map of instance names to Nova data.
 
-           If the cache does not yet exist, return an empty one.
+           If the cache does not yet exist or is damaged, (re-)build it.
         """
         instance_cache = {}
         try:
@@ -116,12 +116,21 @@ class LibvirtCheck(AgentCheck):
                     time_diff = time.time() - instance_cache['last_update']
                     if time_diff > self.init_config.get('nova_refresh'):
                         self._update_instance_cache()
-        except IOError:
-            # The file may not exist yet, and that's OK.  Build it now.
+        except (IOError, TypeError):
+            # The file may not exist yet, or is corrupt.  Rebuild it now.
+            self.log.warning("Instance cache missing or corrupt, rebuilding.")
             instance_cache = self._update_instance_cache()
             pass
 
         return instance_cache
+
+    def _is_cache_corrupt(self, cache):
+        """Verify that the cache contains a valid dictionary
+        """
+        if cache.__class__.__name__ != 'dict':
+            self.log.warning("Corrupt metrics cache detected.  Will rebuild.")
+            return True
+        return False
 
     def _load_metric_cache(self):
         """Load the counter metrics from the previous collection iteration
@@ -130,8 +139,11 @@ class LibvirtCheck(AgentCheck):
         try:
             with open(self.metric_cache_file, 'r') as cache_yaml:
                 metric_cache = yaml.safe_load(cache_yaml)
+            if self._is_cache_corrupt(metric_cache):
+                metric_cache = {}
         except IOError:
             # The file may not exist yet.
+            metric_cache = {}
             pass
 
         return metric_cache
