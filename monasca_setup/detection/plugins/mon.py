@@ -97,6 +97,20 @@ class MonPersister(monasca_setup.detection.Plugin):
 
     def build_config(self):
         """Build the config as a Plugins object and return."""
+        """Read persister-config.yml file to find the exact numThreads."""
+        try:
+            with open('/etc/monasca/persister-config.yml', 'r') as config:
+                self.persister_config = yaml.load(config.read())
+        except Exception:
+            log.exception('Failed parsing /etc/monasca/persister-config.yml')
+            self.available = False
+            return
+
+        alarm_num_threads = self.persister_config['alarmHistoryConfiguration']['numThreads']
+        metric_num_threads = self.persister_config['metricConfiguration']['numThreads']
+
+        database_type = self.persister_config['databaseConfiguration']['databaseType']
+
         log.info("\tEnabling the Monasca persister healthcheck")
         config = monasca_setup.agent_config.Plugins()
         config.merge(dropwizard_health_check('monitoring', 'monasca-persister', 'http://localhost:8091/healthcheck'))
@@ -110,32 +124,61 @@ class MonPersister(monasca_setup.detection.Plugin):
             {
                 "name": "jvm.memory.total.used",
                 "path": "gauges/jvm.memory.total.used/value",
-                "type": "gauge"},
-            {
-                "name": "alarm-state-transitions-added-to-batch-counter[0]",
-                "path": "counters/monasca.persister.pipeline.event.AlarmStateTransitionHandler[alarm-state-transition-0].alarm-state-transitions-added-to-batch-counter/count",
-                "type": "rate"},
-            {
-                "name": "alarm-state-transitions-added-to-batch-counter[1]",
-                "path": "counters/monasca.persister.pipeline.event.AlarmStateTransitionHandler[alarm-state-transition-1].alarm-state-transitions-added-to-batch-counter/count",
-                "type": "rate"},
-            {
-                "name": "metrics-added-to-batch-counter[0]",
-                "path": "counters/monasca.persister.pipeline.event.MetricHandler[metric-0].metrics-added-to-batch-counter/count",
-                "type": "rate"},
-            {
-                "name": "metrics-added-to-batch-counter[1]",
-                "path": "counters/monasca.persister.pipeline.event.MetricHandler[metric-1].metrics-added-to-batch-counter/count",
-                "type": "rate"},
-            {
-                "name": "metrics-added-to-batch-counter[2]",
-                "path": "counters/monasca.persister.pipeline.event.MetricHandler[metric-2].metrics-added-to-batch-counter/count",
-                "type": "rate"},
-            {
-                "name": "metrics-added-to-batch-counter[3]",
-                "path": "counters/monasca.persister.pipeline.event.MetricHandler[metric-3].metrics-added-to-batch-counter/count",
-                "type": "rate"}
+                "type": "gauge"}
         ]
+
+        # Generate initial whitelist based on the database type
+        if database_type == 'influxdb':
+            pass
+        elif database_type == 'vertica':
+            whitelist.extend([
+                {
+                    "name": "monasca.persister.repository.vertica.VerticaMetricRepo.definition-cache-hit-meter",
+                    "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo.definition-cache-hit-meter/count",
+                    "type": "rate"},
+                {
+                    "name": "monasca.persister.repository.vertica.VerticaMetricRepo.definition-cache-miss-meter",
+                    "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo.definition-cache-miss-meter/count",
+                    "type": "rate"},
+                {
+                    "name": "monasca.persister.repository.vertica.VerticaMetricRepo.definition-dimension-cache-hit-meter",
+                    "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo.definition-dimension-cache-hit-meter/count",
+                    "type": "rate"},
+                {
+                    "name": "monasca.persister.repository.vertica.VerticaMetricRepo.definition-dimension-cache-miss-meter",
+                    "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo.definition-dimension-cache-miss-meter/count",
+                    "type": "rate"},
+                {
+                    "name": "monasca.persister.repository.vertica.VerticaMetricRepo.dimension-cache-hit-meter",
+                    "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo.dimension-cache-hit-meter/count",
+                    "type": "rate"},
+                {
+                    "name": "monasca.persister.repository.vertica.VerticaMetricRepo.dimension-cache-miss-meter",
+                    "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo.dimension-cache-miss-meter/count",
+                    "type": "rate"},
+                {
+                    "name": "monasca.persister.repository.vertica.VerticaMetricRepo.measurement-meter",
+                    "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo.measurement-meter/count",
+                    "type": "rate"}
+            ])
+        else:
+            log.warn('Failed finding database type in /etc/monasca/persister-config.yml')
+
+        # Dynamic Whitelist
+        for idx in range(alarm_num_threads):
+            new_thread = {"name": "alarm-state-transitions-added-to-batch-counter[{0}]".format(idx),
+                          "path": "counters/monasca.persister.pipeline.event.AlarmStateTransitionHandler[alarm-state-transition-{0}].alarm-state-transitions-added-to-batch-counter/count".format(idx),
+                          "type": "rate"
+                          }
+            whitelist.append(new_thread)
+
+        for idx in range(metric_num_threads):
+            new_thread = {"name": "metrics-added-to-batch-counter[{0}]".format(idx),
+                          "path": "counters/monasca.persister.pipeline.event.MetricHandler[metric-{0}].metrics-added-to-batch-counter/count".format(idx),
+                          "type": "rate"
+                          }
+            whitelist.append(new_thread)
+
         config.merge(dropwizard_metrics('monitoring', 'monasca-persister', 'http://localhost:8091/metrics', whitelist))
         return config
 
