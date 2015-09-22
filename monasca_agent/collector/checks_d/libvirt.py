@@ -146,6 +146,129 @@ class LibvirtCheck(AgentCheck):
         except IOError as e:
             self.log.error("Cannot write to {0}: {1}".format(self.metric_cache_file, e))
 
+    def _inspect_network(self, insp, inst, instance_cache, metric_cache, dims_customer, dims_operations):
+        """Inspect network metrics for an instance"""
+
+        inst_name = inst.name()
+        for vnic in insp.inspect_vnics(inst):
+            sample_time = time.time()
+            vnic_dimensions = {'device': vnic[0].name}
+            for metric in vnic[1]._fields:
+                metric_name = "net.{0}".format(metric)
+                if metric_name not in metric_cache[inst_name]:
+                    metric_cache[inst_name][metric_name] = {}
+
+                value = int(vnic[1].__getattribute__(metric))
+                if vnic[0].name in metric_cache[inst_name][metric_name]:
+                    val_diff = value - metric_cache[inst_name][metric_name][vnic[0].name]['value']
+                    if val_diff < 0:
+                        # Bad value, save current reading and skip
+                        self.log.warn("Ignoring negative network sample for: "
+                                      "{0} new value: {1} old value: {2}"
+                                      .format(inst_name, value,
+                                              metric_cache[inst_name][metric_name][vnic[0].name]['value']))
+                        metric_cache[inst_name][metric_name][vnic[0].name] = {
+                            'timestamp': sample_time,
+                            'value': value}
+                        continue
+                    # Change the metric name to a rate, ie. "net.rx_bytes"
+                    # gets converted to "net.rx_bytes_sec"
+                    rate_name = "{0}_sec".format(metric_name)
+                    # Rename "tx" to "out" and "rx" to "in"
+                    rate_name = rate_name.replace("tx", "out")
+                    rate_name = rate_name.replace("rx", "in")
+                    # Customer
+                    this_dimensions = vnic_dimensions.copy()
+                    this_dimensions.update(dims_customer)
+                    self.gauge(rate_name, val_diff,
+                               dimensions=this_dimensions,
+                               delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                               hostname=instance_cache.get(inst_name)['hostname'])
+                    # Operations (metric name prefixed with "vm."
+                    this_dimensions = vnic_dimensions.copy()
+                    this_dimensions.update(dims_operations)
+                    self.gauge("vm.{0}".format(rate_name), val_diff,
+                               dimensions=this_dimensions)
+                # Save this metric to the cache
+                metric_cache[inst_name][metric_name][vnic[0].name] = {
+                    'timestamp': sample_time,
+                    'value': value}
+
+    def _inspect_cpu(self, insp, inst, instance_cache, metric_cache, dims_customer, dims_operations):
+        """Inspect cpu metrics for an instance"""
+
+        inst_name = inst.name()
+        sample_time = float("{:9f}".format(time.time()))
+        if 'cpu.time' in metric_cache[inst_name]:
+            # I have a prior value, so calculate the rate & push the metric
+            cpu_diff = insp.inspect_cpus(inst).time - metric_cache[inst_name]['cpu.time']['value']
+            time_diff = sample_time - float(metric_cache[inst_name]['cpu.time']['timestamp'])
+            # Convert time_diff to nanoseconds, and calculate percentage
+            rate = (cpu_diff / (time_diff * 1000000000)) * 100
+            if rate < 0:
+                # Bad value, save current reading and skip
+                self.log.warn("Ignoring negative CPU sample for: "
+                              "{0} new cpu time: {1} old cpu time: {2}"
+                              .format(inst_name, insp.inspect_cpus(inst).time,
+                                      metric_cache[inst_name]['cpu.time']['value']))
+                metric_cache[inst_name]['cpu.time'] = {'timestamp': sample_time,
+                                                       'value': insp.inspect_cpus(inst).time}
+                return
+
+            self.gauge('cpu.utilization_perc', int(round(rate, 0)),
+                       dimensions=dims_customer,
+                       delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                       hostname=instance_cache.get(inst_name)['hostname'])
+            self.gauge('vm.cpu.utilization_perc', int(round(rate, 0)),
+                       dimensions=dims_operations)
+
+        metric_cache[inst_name]['cpu.time'] = {'timestamp': sample_time,
+                                               'value': insp.inspect_cpus(inst).time}
+
+    def _inspect_disks(self, insp, inst, instance_cache, metric_cache, dims_customer, dims_operations):
+        """Inspect disk metrics for an instance"""
+
+        inst_name = inst.name()
+        for disk in insp.inspect_disks(inst):
+            sample_time = time.time()
+            disk_dimensions = {'device': disk[0].device}
+            for metric in disk[1]._fields:
+                metric_name = "io.{0}".format(metric)
+                if metric_name not in metric_cache[inst_name]:
+                    metric_cache[inst_name][metric_name] = {}
+
+                value = int(disk[1].__getattribute__(metric))
+                if disk[0].device in metric_cache[inst_name][metric_name]:
+                    val_diff = value - metric_cache[inst_name][metric_name][disk[0].device]['value']
+                    if val_diff < 0:
+                        # Bad value, save current reading and skip
+                        self.log.warn("Ignoring negative disk sample for: "
+                                      "{0} new value: {1} old value: {2}"
+                                      .format(inst_name, value,
+                                              metric_cache[inst_name][metric_name][disk[0].device]['value']))
+                        metric_cache[inst_name][metric_name][disk[0].device] = {
+                            'timestamp': sample_time,
+                            'value': value}
+                        continue
+                    # Change the metric name to a rate, ie. "io.read_requests"
+                    # gets converted to "io.read_ops_sec"
+                    rate_name = "{0}_sec".format(metric_name.replace('requests', 'ops'))
+                    # Customer
+                    this_dimensions = disk_dimensions.copy()
+                    this_dimensions.update(dims_customer)
+                    self.gauge(rate_name, val_diff, dimensions=this_dimensions,
+                               delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                               hostname=instance_cache.get(inst_name)['hostname'])
+                    # Operations (metric name prefixed with "vm."
+                    this_dimensions = disk_dimensions.copy()
+                    this_dimensions.update(dims_operations)
+                    self.gauge("vm.{0}".format(rate_name), val_diff,
+                               dimensions=this_dimensions)
+                # Save this metric to the cache
+                metric_cache[inst_name][metric_name][disk[0].device] = {
+                    'timestamp': sample_time,
+                    'value': value}
+
     def check(self, instance):
         """Gather VM metrics for each instance"""
 
@@ -243,56 +366,9 @@ class LibvirtCheck(AgentCheck):
                 if gauge in instance_cache.get(inst_name):
                     agg_values[gauge] += instance_cache.get(inst_name)[gauge]
 
-            # CPU utilization percentage
-            sample_time = float("{:9f}".format(time.time()))
-            if 'cpu.time' in metric_cache[inst_name]:
-                # I have a prior value, so calculate the rate & push the metric
-                cpu_diff = insp.inspect_cpus(inst).time - metric_cache[inst_name]['cpu.time']['value']
-                time_diff = sample_time - float(metric_cache[inst_name]['cpu.time']['timestamp'])
-                # Convert time_diff to nanoseconds, and calculate percentage
-                rate = (cpu_diff / (time_diff * 1000000000)) * 100
-
-                self.gauge('cpu.utilization_perc', int(round(rate, 0)),
-                           dimensions=dims_customer,
-                           delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
-                           hostname=instance_cache.get(inst_name)['hostname'])
-                self.gauge('vm.cpu.utilization_perc', int(round(rate, 0)),
-                           dimensions=dims_operations)
-
-            metric_cache[inst_name]['cpu.time'] = {'timestamp': sample_time,
-                                                   'value': insp.inspect_cpus(inst).time}
-
-            # Disk activity
-            for disk in insp.inspect_disks(inst):
-                sample_time = time.time()
-                disk_dimensions = {'device': disk[0].device}
-                for metric in disk[1]._fields:
-                    metric_name = "io.{0}".format(metric)
-                    if metric_name not in metric_cache[inst_name]:
-                        metric_cache[inst_name][metric_name] = {}
-
-                    value = int(disk[1].__getattribute__(metric))
-                    if disk[0].device in metric_cache[inst_name][metric_name]:
-                        time_diff = sample_time - metric_cache[inst_name][metric_name][disk[0].device]['timestamp']
-                        val_diff = value - metric_cache[inst_name][metric_name][disk[0].device]['value']
-                        # Change the metric name to a rate, ie. "io.read_requests"
-                        # gets converted to "io.read_ops_sec"
-                        rate_name = "{0}_sec".format(metric_name.replace('requests', 'ops'))
-                        # Customer
-                        this_dimensions = disk_dimensions.copy()
-                        this_dimensions.update(dims_customer)
-                        self.gauge(rate_name, val_diff, dimensions=this_dimensions,
-                                   delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
-                                   hostname=instance_cache.get(inst_name)['hostname'])
-                        # Operations (metric name prefixed with "vm."
-                        this_dimensions = disk_dimensions.copy()
-                        this_dimensions.update(dims_operations)
-                        self.gauge("vm.{0}".format(rate_name), val_diff,
-                                   dimensions=this_dimensions)
-                    # Save this metric to the cache
-                    metric_cache[inst_name][metric_name][disk[0].device] = {
-                        'timestamp': sample_time,
-                        'value': value}
+            self._inspect_cpu(insp, inst, instance_cache, metric_cache, dims_customer, dims_operations)
+            self._inspect_disks(insp, inst, instance_cache, metric_cache, dims_customer, dims_operations)
+            self._inspect_network(insp, inst, instance_cache, metric_cache, dims_customer, dims_operations)
 
             # Memory utilizaion
             # (req. balloon driver; Linux kernel param CONFIG_VIRTIO_BALLOON)
@@ -311,42 +387,6 @@ class LibvirtCheck(AgentCheck):
             except KeyError:
                 self.log.debug("Balloon driver not active/available on guest {0} ({1})".format(inst_name,
                                                                                                instance_cache.get(inst_name)['hostname']))
-
-            # Network activity
-            for vnic in insp.inspect_vnics(inst):
-                sample_time = time.time()
-                vnic_dimensions = {'device': vnic[0].name}
-                for metric in vnic[1]._fields:
-                    metric_name = "net.{0}".format(metric)
-                    if metric_name not in metric_cache[inst_name]:
-                        metric_cache[inst_name][metric_name] = {}
-
-                    value = int(vnic[1].__getattribute__(metric))
-                    if vnic[0].name in metric_cache[inst_name][metric_name]:
-                        time_diff = sample_time - metric_cache[inst_name][metric_name][vnic[0].name]['timestamp']
-                        val_diff = value - metric_cache[inst_name][metric_name][vnic[0].name]['value']
-                        # Change the metric name to a rate, ie. "net.rx_bytes"
-                        # gets converted to "net.rx_bytes_sec"
-                        rate_name = "{0}_sec".format(metric_name)
-                        # Rename "tx" to "out" and "rx" to "in"
-                        rate_name = rate_name.replace("tx", "out")
-                        rate_name = rate_name.replace("rx", "in")
-                        # Customer
-                        this_dimensions = vnic_dimensions.copy()
-                        this_dimensions.update(dims_customer)
-                        self.gauge(rate_name, val_diff,
-                                   dimensions=this_dimensions,
-                                   delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
-                                   hostname=instance_cache.get(inst_name)['hostname'])
-                        # Operations (metric name prefixed with "vm."
-                        this_dimensions = vnic_dimensions.copy()
-                        this_dimensions.update(dims_operations)
-                        self.gauge("vm.{0}".format(rate_name), val_diff,
-                                   dimensions=this_dimensions)
-                    # Save this metric to the cache
-                    metric_cache[inst_name][metric_name][vnic[0].name] = {
-                        'timestamp': sample_time,
-                        'value': value}
 
         # Save these metrics for the next collector invocation
         self._update_metric_cache(metric_cache)
