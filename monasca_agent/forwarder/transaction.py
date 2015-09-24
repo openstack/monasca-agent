@@ -118,7 +118,7 @@ class MetricTransaction(Transaction):
 
 class TransactionManager(util.Dimensions):
     """Holds any transaction derived object list and make sure they
-       are all commited, without exceeding parameters (throttling, memory consumption)
+       are all committed, without exceeding parameters (throttling, memory consumption)
     """
 
     def __init__(self, max_wait_for_replay, max_queue_size, throttling_delay, agent_config):
@@ -129,7 +129,7 @@ class TransactionManager(util.Dimensions):
 
         self._flush_without_ioloop = False  # useful for tests
 
-        self._transactions = []  # List of all non commited transactions
+        self._transactions = []  # List of all non committed transactions
         self._total_count = 0  # Maintain size/count not to recompute it everytime
         self._total_size = 0
         self._flush_count = 0

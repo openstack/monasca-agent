@@ -62,10 +62,10 @@ The order of precedence for all dimensions is:
 | observer_hostname | The FQDN of the host that runs a check against another host. |
 | url | In the case of the http endpoint check the url of the http endpoint being checked. |
 | device | The device name |
-| service | The sevice name that owns this metric |
+| service | The service name that owns this metric |
 | component | The component name within the device that the metric comes from |
 
-One way to add additional dimensions for all metrics is by using the `--dimensions` command line option to `monasca-setup`.  This will populate /etc/monasca/agent/agent.yaml with dimensions to be included with all metrics. The syntax is a comma seperated list of name/value pairs, 'name:value,name2:value2'
+One way to add additional dimensions for all metrics is by using the `--dimensions` command line option to `monasca-setup`.  This will populate /etc/monasca/agent/agent.yaml with dimensions to be included with all metrics. The syntax is a comma separated list of name/value pairs, 'name:value,name2:value2'
 
 ```
 /etc/monasca/agent/agent.yaml

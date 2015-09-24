@@ -133,7 +133,7 @@ class Zookeeper(AgentCheck):
             _, value = buf.readline().split(':')
             metrics.append(('zookeeper.connections_count', int(value.strip())))
         else:
-            # If the zk version doesnt explicitly give the Connections val,
+            # If the zk version doesn't explicitly give the Connections val,
             # use the value we computed from the client list.
             metrics.append(('zookeeper.connections_count', connections))
 

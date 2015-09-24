@@ -69,7 +69,7 @@ DOCKER_TAGS = [
 
 class UnixHTTPConnection(httplib.HTTPConnection, object):
 
-    """Class used in conjuction with UnixSocketHandler to make urllib2
+    """Class used in conjunction with UnixSocketHandler to make urllib2
 
     compatible with Unix sockets.
     """
