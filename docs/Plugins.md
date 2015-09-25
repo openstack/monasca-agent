@@ -81,8 +81,8 @@ This section documents the system metrics that are sent by the Agent.  This sect
 | cpu.total_logical_cores  | | Total number of logical cores available for an entire node (Includes hyper threading).  **NOTE: This is an optional metric that is only sent when send_rollup_stats is set to true.** |
 | disk.inode_used_perc | device, mount_point | The percentage of inodes that are used on a device |
 | disk.space_used_perc | device, mount_point | The percentage of disk space that is being used on a device |
-| disk.total_space_mb | | The total amount of disk space aggregated across all the disks on a particular node.  **NOTE: This is an optional metric that is only sent when send_rollup_stats is set to true.** |
-| disk.total_used_space_mb | | The total amount of used disk space aggregated across all the disks on a particular node.  **NOTE: This is an optional metric that is only sent when send_rollup_stats is set to true.** |
+| disk.total_space_mb | | The total amount of disk space in Mbytes aggregated across all the disks on a particular node.  **NOTE: This is an optional metric that is only sent when send_rollup_stats is set to true.** |
+| disk.total_used_space_mb | | The total amount of used disk space in Mbytes aggregated across all the disks on a particular node.  **NOTE: This is an optional metric that is only sent when send_rollup_stats is set to true.** |
 | io.read_kbytes_sec | device | Kbytes/sec read by an io device
 | io.read_req_sec | device   | Number of read requests/sec to an io device
 | io.read_time_sec | device   | Amount of read time in seconds to an io device
@@ -92,17 +92,17 @@ This section documents the system metrics that are sent by the Agent.  This sect
 | load.avg_1_min  | | The average system load over a 1 minute period
 | load.avg_5_min  | | The average system load over a 5 minute period
 | load.avg_15_min  | | The average system load over a 15 minute period
-| mem.free_mb | | Megabytes of free memory
+| mem.free_mb | | Mbytes of free memory
 | mem.swap_free_perc | | Percentage of free swap memory that is free
-| mem.swap_free_mb | | Megabytes of free swap memory that is free
-| mem.swap_total_mb | | Megabytes of total physical swap memory
-| mem.swap_used_mb | | Megabytes of total swap memory used
-| mem.total_mb | | Total megabytes of memory
-| mem.usable_mb | | Total megabytes of usable memory
+| mem.swap_free_mb | | Mbytes of free swap memory that is free
+| mem.swap_total_mb | | Mbytes of total physical swap memory
+| mem.swap_used_mb | | Mbytes of total swap memory used
+| mem.total_mb | | Total Mbytes of memory
+| mem.usable_mb | | Total Mbytes of usable memory
 | mem.usable_perc | | Percentage of total memory that is usable
-| mem.used_buffers | | Number of buffers being used by the kernel for block io
-| mem.used_cached | | Memory used for the page cache
-| mem.used_shared  | | Memory shared between separate processes and typically used for inter-process communication
+| mem.used_buffers | | Number of buffers in Mbytes being used by the kernel for block io
+| mem.used_cached | | Mbytes of memory used for the page cache
+| mem.used_shared  | | Mbytes of memory shared between separate processes and typically used for inter-process communication
 | net.in_bytes_sec  | device | Number of network bytes received per second
 | net.out_bytes_sec  | device | Number of network bytes sent per second
 | net.in_packets_sec  | device | Number of network packets received per second
@@ -533,13 +533,13 @@ The process checks return the following metrics:
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
-| process.mem.real_mbytes  | process_name, service, component | Amount of physical memory allocated to a process minus shared libraries in megabytes
-| process.mem.rss_mbytes  | process_name, service, component | Amount of physical memory allocated to a process, including memory from shared libraries in megabytes
-| process.mem.vsz_mbytes  | process_name, service, component | Amount of all the memory a process can access, including swapped, physical, and shared in megabytes
+| process.mem.real_mbytes  | process_name, service, component | Amount of physical memory allocated to a process minus shared libraries in Mbytes
+| process.mem.rss_mbytes  | process_name, service, component | Amount of physical memory allocated to a process, including memory from shared libraries in Mbytes
+| process.mem.vsz_mbytes  | process_name, service, component | Amount of all the memory a process can access, including swapped, physical, and shared in Mbytes
 | process.io.read_count  | process_name, service, component | Number of reads by a process
 | process.io.write_count  | process_name, service, component | Number of writes by a process
-| process.io.read_kbytes  | process_name, service, component | Kilobytes read by a process
-| process.io.write_kbytes  | process_name, service, component | Kilobytes written by a process
+| process.io.read_kbytes  | process_name, service, component | Kbytes read by a process
+| process.io.write_kbytes  | process_name, service, component | Kbytes written by a process
 | process.thread_count  | process_name, service, component | Number of threads a process is using
 | process.cpu_perc  | process_name, service, component | Percentage of cpu being consumed by a process
 | process.open_file_descriptors  | process_name, service, component | Number of files being used by a process
@@ -581,7 +581,7 @@ The http_status checks return the following metrics:
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
 | http_status  | url, detail | The status of the http endpoint call (0 = success, 1 = failure)
-| http_response_time  | url | The response time of the http endpoint call
+| http_response_time  | url | The response time in seconds of the http endpoint call
 
 
 ## Http Metrics
