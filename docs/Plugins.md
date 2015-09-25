@@ -610,7 +610,7 @@ instances:
 ```
     
 ## MySQL Checks
-This section describes the mySQL check that can be performed by the Agent.  The mySQL check requires a configuration file called mysql.yaml to be available in the agent conf.d configuration directory.
+This section describes the mySQL check that can be performed by the Agent.  The mySQL check also supports MariaDB.  The mySQL check requires a configuration file called mysql.yaml to be available in the agent conf.d configuration directory.
 
 Sample config:
 
@@ -622,45 +622,46 @@ instances:
 	server: localhost
 	user: root
 ```
- 
+
+Almost metrics show the server status variables in MySQL or MariaDB.  The others are calculated by the server status variables of MySQL or MariaDB.  For details of the server status variables, please refer the documents of MySQL or MariaDB.
 The mySQL checks return the following metrics:
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
-| mysql.performance.questions | hostname, mode, service=mysql | |
-| mysql.performance.qcache_hits | hostname, mode, service=mysql | |
-| mysql.performance.open_files | hostname, mode, service=mysql | |
-| mysql.performance.created_tmp_tables | hostname, mode, service=mysql | |
-| mysql.performance.user_time | hostname, mode, service=mysql | |
-| mysql.performance.com_replace_select | hostname, mode, service=mysql | |
-| mysql.performance.kernel_time | hostname, mode, service=mysql | |
-| mysql.performance.com_insert | hostname, mode, service=mysql | |
-| mysql.performance.threads_connected | hostname, mode, service=mysql | |
-| mysql.performance.com_update_multi | hostname, mode, service=mysql | |
-| mysql.performance.table_locks_waited | hostname, mode, service=mysql | |
-| mysql.performance.com_insert_select | hostname, mode, service=mysql | |
-| mysql.performance.slow_queries | hostname, mode, service=mysql | |
-| mysql.performance.com_delete | hostname, mode, service=mysql | |
-| mysql.performance.com_select | hostname, mode, service=mysql | |
-| mysql.performance.queries | hostname, mode, service=mysql | |
-| mysql.performance.created_tmp_files | hostname, mode, service=mysql | |
-| mysql.performance.com_update | hostname, mode, service=mysql | |
-| mysql.performance.com_delete_multi | hostname, mode, service=mysql | |
-| mysql.performance.created_tmp_disk_tables | hostname, mode, service=mysql | |
-| mysql.innodb.mutex_spin_rounds | hostname, mode, service=mysql | |
-| mysql.innodb.current_row_locks | hostname, mode, service=mysql | |
-| mysql.innodb.mutex_os_waits | hostname, mode, service=mysql | |
-| mysql.innodb.buffer_pool_used | hostname, mode, service=mysql | |
-| mysql.innodb.data_writes | hostname, mode, service=mysql | |
-| mysql.innodb.data_reads | hostname, mode, service=mysql | |
-| mysql.innodb.row_lock_waits | hostname, mode, service=mysql | |
-| mysql.innodb.os_log_fsyncs | hostname, mode, service=mysql | |
-| mysql.innodb.buffer_pool_total | hostname, mode, service=mysql | |
-| mysql.innodb.row_lock_time | hostname, mode, service=mysql | |
-| mysql.innodb.mutex_spin_waits | hostname, mode, service=mysql | |
-| mysql.innodb.buffer_pool_free | hostname, mode, service=mysql | |
-| mysql.net.max_connections | hostname, mode, service=mysql | |
-| mysql.net.connections | hostname, mode, service=mysql | |
+| mysql.performance.questions | hostname, mode, service=mysql | Corresponding to "Question" of the server status variable. |
+| mysql.performance.qcache_hits | hostname, mode, service=mysql | Corresponding to "Qcache_hits" of the server status variable. |
+| mysql.performance.open_files | hostname, mode, service=mysql | Corresponding to "Open_files" of the server status variable. |
+| mysql.performance.created_tmp_tables | hostname, mode, service=mysql | Corresponding to "Created_tmp_tables" of the server status variable. |
+| mysql.performance.user_time | hostname, mode, service=mysql | The CPU user time for DB's performance, in seconds. |
+| mysql.performance.com_replace_select | hostname, mode, service=mysql | Corresponding to "Com_replace_select" of the server status variable. |
+| mysql.performance.kernel_time | hostname, mode, service=mysql | The kernel time for DB's performance, in seconds. |
+| mysql.performance.com_insert | hostname, mode, service=mysql | Corresponding to "Com_insert" of the server status variable. |
+| mysql.performance.threads_connected | hostname, mode, service=mysql | Corresponding to "Threads_connected" of the server status variable. |
+| mysql.performance.com_update_multi | hostname, mode, service=mysql | Corresponding to "Com_update_multi" of the server status variable. |
+| mysql.performance.table_locks_waited | hostname, mode, service=mysql | Corresponding to "Table_locks_waited" of the server status variable. |
+| mysql.performance.com_insert_select | hostname, mode, service=mysql | Corresponding to "Com_insert_select" of the server status variable. |
+| mysql.performance.slow_queries | hostname, mode, service=mysql | Corresponding to "Slow_queries" of the server status variable. |
+| mysql.performance.com_delete | hostname, mode, service=mysql | Corresponding to "Com_delete" of the server status variable. |
+| mysql.performance.com_select | hostname, mode, service=mysql | Corresponding to "Com_select" of the server status variable. |
+| mysql.performance.queries | hostname, mode, service=mysql | Corresponding to "Queries" of the server status variable. |
+| mysql.performance.created_tmp_files | hostname, mode, service=mysql | Corresponding to "Created_tmp_files" of the server status variable. |
+| mysql.performance.com_update | hostname, mode, service=mysql | Corresponding to "Com_update" of the server status variable. |
+| mysql.performance.com_delete_multi | hostname, mode, service=mysql | Corresponding to "Com_delete_multi" of the server status variable. |
+| mysql.performance.created_tmp_disk_tables | hostname, mode, service=mysql | Corresponding to "Created_tmp_disk_tables" of the server status variable. |
+| mysql.innodb.mutex_spin_rounds | hostname, mode, service=mysql | Corresponding to spinlock rounds of the server status variable. |
+| mysql.innodb.current_row_locks | hostname, mode, service=mysql | Corresponding to current row locks of the server status variable. |
+| mysql.innodb.mutex_os_waits | hostname, mode, service=mysql | Corresponding to the OS waits of the server status variable. |
+| mysql.innodb.buffer_pool_used | hostname, mode, service=mysql | The number of used pages, in bytes. This value is calculated by subtracting "Innodb_buffer_pool_pages_total" away from "Innodb_buffer_pool_pages_free" of the server status variable. |
+| mysql.innodb.data_writes | hostname, mode, service=mysql | Corresponding to "Innodb_data_writes" of the server status variable. |
+| mysql.innodb.data_reads | hostname, mode, service=mysql | Corresponding to "Innodb_data_reads" of the server status variable. |
+| mysql.innodb.row_lock_waits | hostname, mode, service=mysql | Corresponding to "Innodb_row_lock_waits" of the server status variable. |
+| mysql.innodb.os_log_fsyncs | hostname, mode, service=mysql | Corresponding to "Innodb_os_log_fsyncs" of the server status variable. |
+| mysql.innodb.buffer_pool_total | hostname, mode, service=mysql | The total size of buffer pool, in bytes. This value is calculated by multiplying "Innodb_buffer_pool_pages_total" and "Innodb_page_size" of the server status variable. |
+| mysql.innodb.row_lock_time | hostname, mode, service=mysql | Corresponding to "Innodb_row_lock_time" of the server status variable. |
+| mysql.innodb.mutex_spin_waits | hostname, mode, service=mysql | Corresponding to the spin waits of the server status variable. |
+| mysql.innodb.buffer_pool_free | hostname, mode, service=mysql | The number of free pages, in bytes. This value is calculated by multiplying "Innodb_buffer_pool_pages_free" and "Innodb_page_size" of the server status variable. |
+| mysql.net.max_connections | hostname, mode, service=mysql | Corresponding to "Max_used_connections" of the server status variable. |
+| mysql.net.connections | hostname, mode, service=mysql | Corresponding to "Connections" of the server status variable. |
 
 
 ## ZooKeeper Checks
