@@ -824,10 +824,10 @@ The Apache checks return the following metrics:
 | apache.performance.idle_worker_count | hostname, service=apache component=apache | The number of idle workers |
 | apache.performance.busy_worker_count | hostname, service=apache component=apache | The number of workers serving requests |
 | apache.performance.cpu_load_perc | hostname, service=apache component=apache | The current percentage of CPU used by each worker and in total by all workers combined |
-| apache.net.total_kbytes | hostname, service=apache component=apache | A total number of Kbyte count |
-| apache.net.hits | hostname, service=apache component=apache | A total number of accesses |
-| apache.net.kbytes_sec | hostname, service=apache component=apache | A total number of Kbyte count per second |
-| apache.net.requests_sec | hostname, service=apache component=apache | A total number of accesses per second |
+| apache.net.total_kbytes | hostname, service=apache component=apache | Total Kbytes |
+| apache.net.hits | hostname, service=apache component=apache | Total accesses |
+| apache.net.kbytes_sec | hostname, service=apache component=apache | Total Kbytes per second |
+| apache.net.requests_sec | hostname, service=apache component=apache | Total accesses per second |
 
 
 ## OpenStack Monitoring
@@ -1091,11 +1091,11 @@ instance-00000004:
 | net.out_packets_sec  | Network transmitted packets per second | 'device' (ie, 'vnet0') |
 | net.in_bytes_sec     | Network received bytes per second      | 'device' (ie, 'vnet0') |
 | net.out_bytes_sec    | Network transmitted bytes per second   | 'device' (ie, 'vnet0') |
-| mem.free_mb          | Free memory in megabytes               |                        |
-| mem.total_mb         | Total memory in megabytes              |                        |
-| mem.used_mb          | Used memory in megabytes               |                        |
+| mem.free_mb          | Free memory in Mbytes               |                        |
+| mem.total_mb         | Total memory in Mbytes              |                        |
+| mem.used_mb          | Used memory in Mbytes               |                        |
 | mem.free_perc        | Percent of memory free                 |                        |
-| mem.swap_used_mb     | Used swap space in megabytes           |                        |
+| mem.swap_used_mb     | Used swap space in Mbytes           |                        |
 
 Memory statistics require a balloon driver on the VM.  For the Linux kernel, this is the `CONFIG_VIRTIO_BALLOON` configuration parameter, active by default in Ubuntu, and enabled by default as a kernel module in Debian, CentOS, and SUSE.
 
@@ -1121,8 +1121,8 @@ In addition to per-instance metrics, the Libvirt plugin will publish aggregate m
 | Name                            | Description                                        |
 | ------------------------------- | -------------------------------------------------- |
 | nova.vm.cpu.total_allocated     | Total CPUs allocated across all VMs                |
-| nova.vm.disk.total_allocated_gb | Total gigabytes of disk space allocated to all VMs |
-| nova.vm.mem.total_allocated_mb  | Total megabytes of memory allocated to all VMs     |
+| nova.vm.disk.total_allocated_gb | Total Gbytes of disk space allocated to all VMs |
+| nova.vm.mem.total_allocated_mb  | Total Mbytes of memory allocated to all VMs     |
 
 Aggregate dimensions include hostname and component from the Operations Value column above.
 
