@@ -43,10 +43,10 @@ class DirectoryCheck(AgentCheck):
         directory_files = 0
         for root, dirs, files in walk(directory):
             for filename in files:
-                filename = join(root, filename)
                 # check if it passes our filter
                 if not fnmatch(filename, pattern):
                     continue
+                filename = join(root, filename)
                 try:
                     file_stat = stat(filename)
 
