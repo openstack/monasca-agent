@@ -24,7 +24,7 @@ class Keystone(object):
         """
         auth_url = self.config.get('keystone_url', None)
         username = self.config.get('username', None)
-        password = self.config.get('password', None)
+        password = str(self.config.get('password', None))
         user_domain_id = self.config.get('user_domain_id', None)
         user_domain_name = self.config.get('user_domain_name', None)
         insecure = self.config.get('insecure', False)
