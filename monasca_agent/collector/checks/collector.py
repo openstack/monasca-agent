@@ -140,7 +140,7 @@ class Collector(util.Dimensions):
         # Store the metrics and events in the payload.
         collect_duration = timer.step()
 
-        dimensions = {'component': 'monasca-agent'}
+        dimensions = {'component': 'monasca-agent', 'service': 'monitoring'}
         # Add in metrics on the collector run
         for name, value in self.collector_stats(len(metrics_list), len(events),
                                                 collect_duration).iteritems():
