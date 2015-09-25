@@ -44,7 +44,6 @@ class MonascaStatsd(object):
         self.reporter = reporter.Reporter(interval,
                                           aggregator,
                                           statsd_config['forwarder_url'],
-                                          True,
                                           statsd_config.get('event_chunk_size'))
 
         # Start the server on an IPv4 stack
