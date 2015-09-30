@@ -171,7 +171,7 @@ def parse_arguments(parser):
     parser.add_argument('-a', '--detection_args', help="A string of arguments that will be passed to detection " +
                                                        "plugins. Only certain detection plugins use arguments.")
     parser.add_argument('--check_frequency', help="How often to run metric collection in seconds", type=int, default=30)
-    parser.add_argument('--dimensions', help="Additional dimensions to set for all metrics. A comma seperated list " +
+    parser.add_argument('--dimensions', help="Additional dimensions to set for all metrics. A comma separated list " +
                                              "of name/value pairs, 'name:value,name2:value2'")
     parser.add_argument('--ca_file', help="Sets the path to the ca certs file if using certificates. " +
                                           "Required only if insecure is set to False", default='')

@@ -46,7 +46,6 @@ class Config(object):
                                  'additional_checksd': '/usr/lib/monasca/agent/custom_checks.d',
                                  'limit_memory_consumption': None,
                                  'skip_ssl_validation': False,
-                                 'watchdog': True,
                                  'autorestart': False,
                                  'non_local_traffic': False},
                         'Api': {'is_enabled': False,

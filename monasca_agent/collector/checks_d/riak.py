@@ -101,7 +101,7 @@ class Riak(AgentCheck):
         self.event({
             'timestamp': int(time.time()),
             'event_type': 'riak_check',
-            'msg_title': 'Invalid reponse code for riak check',
+            'msg_title': 'Invalid response code for riak check',
             'msg_text': '%s returned a status of %s' % (url, r.status_code),
             'aggregation_key': aggregation_key
         })

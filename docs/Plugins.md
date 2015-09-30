@@ -4,6 +4,7 @@
 
 - [System Checks](#system-checks)
   - [System Metrics](#system-metrics)
+      - [Limiting System Metrics](#limiting-system-metrics)
 - [Standard Plugins](#standard-plugins)
   - [Dot File Configuration](#dot-file-configuration)
   - [Default Plugin Detection](#default-plugin-detection)
@@ -80,28 +81,28 @@ This section documents the system metrics that are sent by the Agent.  This sect
 | cpu.total_logical_cores  | | Total number of logical cores available for an entire node (Includes hyper threading).  **NOTE: This is an optional metric that is only sent when send_rollup_stats is set to true.** |
 | disk.inode_used_perc | device, mount_point | The percentage of inodes that are used on a device |
 | disk.space_used_perc | device, mount_point | The percentage of disk space that is being used on a device |
-| disk.total_space_mb | | The total amount of disk space aggregated across all the disks on a particular node.  **NOTE: This is an optional metric that is only sent when send_rollup_stats is set to true.** |
-| disk.total_used_space_mb | | The total amount of used disk space aggregated across all the disks on a particular node.  **NOTE: This is an optional metric that is only sent when send_rollup_stats is set to true.** |
+| disk.total_space_mb | | The total amount of disk space in Mbytes aggregated across all the disks on a particular node.  **NOTE: This is an optional metric that is only sent when send_rollup_stats is set to true.** |
+| disk.total_used_space_mb | | The total amount of used disk space in Mbytes aggregated across all the disks on a particular node.  **NOTE: This is an optional metric that is only sent when send_rollup_stats is set to true.** |
 | io.read_kbytes_sec | device | Kbytes/sec read by an io device
 | io.read_req_sec | device   | Number of read requests/sec to an io device
-| io.read_time_sec | device   | Amount of read time/sec to an io device
+| io.read_time_sec | device   | Amount of read time in seconds to an io device
 | io.write_kbytes_sec |device | Kbytes/sec written by an io device
 | io.write_req_sec   | device | Number of write requests/sec to an io device
-| io.write_time_sec | device   | Amount of write time/sec to an io device
+| io.write_time_sec | device   | Amount of write time in seconds to an io device
 | load.avg_1_min  | | The average system load over a 1 minute period
 | load.avg_5_min  | | The average system load over a 5 minute period
 | load.avg_15_min  | | The average system load over a 15 minute period
-| mem.free_mb | | Megabytes of free memory
+| mem.free_mb | | Mbytes of free memory
 | mem.swap_free_perc | | Percentage of free swap memory that is free
-| mem.swap_free_mb | | Megabytes of free swap memory that is free
-| mem.swap_total_mb | | Megabytes of total physical swap memory
-| mem.swap_used_mb | | Megabytes of total swap memory used
-| mem.total_mb | | Total megabytes of memory
-| mem.usable_mb | | Total megabytes of usable memory
+| mem.swap_free_mb | | Mbytes of free swap memory that is free
+| mem.swap_total_mb | | Mbytes of total physical swap memory
+| mem.swap_used_mb | | Mbytes of total swap memory used
+| mem.total_mb | | Total Mbytes of memory
+| mem.usable_mb | | Total Mbytes of usable memory
 | mem.usable_perc | | Percentage of total memory that is usable
-| mem.used_buffers | | Number of buffers being used by the kernel for block io
-| mem.used_cached | | Memory used for the page cache
-| mem.used_shared  | | Memory shared between separate processes and typically used for inter-process communication
+| mem.used_buffers | | Number of buffers in Mbytes being used by the kernel for block io
+| mem.used_cached | | Mbytes of memory used for the page cache
+| mem.used_shared  | | Mbytes of memory shared between separate processes and typically used for inter-process communication
 | net.in_bytes_sec  | device | Number of network bytes received per second
 | net.out_bytes_sec  | device | Number of network bytes sent per second
 | net.in_packets_sec  | device | Number of network packets received per second
@@ -114,6 +115,20 @@ This section documents the system metrics that are sent by the Agent.  This sect
 | monasca.emit_time_sec  | service=monitoring component=monasca-agent | Amount of time that the forwarder took to send metrics to the Monasca API.
 | monasca.collection_time_sec  | service=monitoring component=monasca-agent | Amount of time that the collector took for this collection run
 
+### Limiting System Metrics
+It is possible to reduce the number of system metrics with certain configuration parameters.
+
+| Config Option  | Values     | Description                                                                                |
+| -------------- | ---------- | ------------------------------------------------------------------------------------------ |
+| net_bytes_only | true/false | Sends bytes/sec metrics only, disabling packets/sec, packets_dropped/sec, and errors/sec.  |
+| cpu_idle_only  | true/false | Sends idle_perc only, disabling wait/stolen/system/user metrics                            |
+| send_io_stats  | true/false | If true, sends I/O metrics for each disk device.  If false, sends only disk space metrics. |
+
+These parameters may added to `instances` in the plugin `.yaml` configuration file, or added via `monasca-setup` like this:
+```
+monasca-setup -d system -a 'cpu_idle_only=true net_bytes_only=true send_io_stats=false' --overwrite
+```
+By default, all metrics are enabled.
 
 # Standard Plugins
 Plugins are the way to extend the Monasca Agent.  Plugins add additional functionality that allow the agent to perform checks on other applications, servers or services.  This section describes the standard plugins that are delivered by default.
@@ -518,13 +533,13 @@ The process checks return the following metrics:
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
-| process.mem.real_mbytes  | process_name, service, component | Amount of physical memory allocated to a process minus shared libraries in megabytes
-| process.mem.rss_mbytes  | process_name, service, component | Amount of physical memory allocated to a process, including memory from shared libraries in megabytes
-| process.mem.vsz_mbytes  | process_name, service, component | Amount of all the memory a process can access, including swapped, physical, and shared in megabytes
+| process.mem.real_mbytes  | process_name, service, component | Amount of physical memory allocated to a process minus shared libraries in Mbytes
+| process.mem.rss_mbytes  | process_name, service, component | Amount of physical memory allocated to a process, including memory from shared libraries in Mbytes
+| process.mem.vsz_mbytes  | process_name, service, component | Amount of all the memory a process can access, including swapped, physical, and shared in Mbytes
 | process.io.read_count  | process_name, service, component | Number of reads by a process
 | process.io.write_count  | process_name, service, component | Number of writes by a process
-| process.io.read_kbytes  | process_name, service, component | Kilobytes read by a process
-| process.io.write_kbytes  | process_name, service, component | Kilobytes written by a process
+| process.io.read_kbytes  | process_name, service, component | Kbytes read by a process
+| process.io.write_kbytes  | process_name, service, component | Kbytes written by a process
 | process.thread_count  | process_name, service, component | Number of threads a process is using
 | process.cpu_perc  | process_name, service, component | Percentage of cpu being consumed by a process
 | process.open_file_descriptors  | process_name, service, component | Number of files being used by a process
@@ -566,7 +581,7 @@ The http_status checks return the following metrics:
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
 | http_status  | url, detail | The status of the http endpoint call (0 = success, 1 = failure)
-| http_response_time  | url | The response time of the http endpoint call
+| http_response_time  | url | The response time in seconds of the http endpoint call
 
 
 ## Http Metrics
@@ -595,7 +610,7 @@ instances:
 ```
     
 ## MySQL Checks
-This section describes the mySQL check that can be performed by the Agent.  The mySQL check requires a configuration file called mysql.yaml to be available in the agent conf.d configuration directory.
+This section describes the mySQL check that can be performed by the Agent.  The mySQL check also supports MariaDB.  The mySQL check requires a configuration file called mysql.yaml to be available in the agent conf.d configuration directory.
 
 Sample config:
 
@@ -607,45 +622,46 @@ instances:
 	server: localhost
 	user: root
 ```
- 
+
+Almost metrics show the server status variables in MySQL or MariaDB.  The others are calculated by the server status variables of MySQL or MariaDB.  For details of the server status variables, please refer the documents of MySQL or MariaDB.
 The mySQL checks return the following metrics:
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
-| mysql.performance.questions | hostname, mode, service=mysql | |
-| mysql.performance.qcache_hits | hostname, mode, service=mysql | |
-| mysql.performance.open_files | hostname, mode, service=mysql | |
-| mysql.performance.created_tmp_tables | hostname, mode, service=mysql | |
-| mysql.performance.user_time | hostname, mode, service=mysql | |
-| mysql.performance.com_replace_select | hostname, mode, service=mysql | |
-| mysql.performance.kernel_time | hostname, mode, service=mysql | |
-| mysql.performance.com_insert | hostname, mode, service=mysql | |
-| mysql.performance.threads_connected | hostname, mode, service=mysql | |
-| mysql.performance.com_update_multi | hostname, mode, service=mysql | |
-| mysql.performance.table_locks_waited | hostname, mode, service=mysql | |
-| mysql.performance.com_insert_select | hostname, mode, service=mysql | |
-| mysql.performance.slow_queries | hostname, mode, service=mysql | |
-| mysql.performance.com_delete | hostname, mode, service=mysql | |
-| mysql.performance.com_select | hostname, mode, service=mysql | |
-| mysql.performance.queries | hostname, mode, service=mysql | |
-| mysql.performance.created_tmp_files | hostname, mode, service=mysql | |
-| mysql.performance.com_update | hostname, mode, service=mysql | |
-| mysql.performance.com_delete_multi | hostname, mode, service=mysql | |
-| mysql.performance.created_tmp_disk_tables | hostname, mode, service=mysql | |
-| mysql.innodb.mutex_spin_rounds | hostname, mode, service=mysql | |
-| mysql.innodb.current_row_locks | hostname, mode, service=mysql | |
-| mysql.innodb.mutex_os_waits | hostname, mode, service=mysql | |
-| mysql.innodb.buffer_pool_used | hostname, mode, service=mysql | |
-| mysql.innodb.data_writes | hostname, mode, service=mysql | |
-| mysql.innodb.data_reads | hostname, mode, service=mysql | |
-| mysql.innodb.row_lock_waits | hostname, mode, service=mysql | |
-| mysql.innodb.os_log_fsyncs | hostname, mode, service=mysql | |
-| mysql.innodb.buffer_pool_total | hostname, mode, service=mysql | |
-| mysql.innodb.row_lock_time | hostname, mode, service=mysql | |
-| mysql.innodb.mutex_spin_waits | hostname, mode, service=mysql | |
-| mysql.innodb.buffer_pool_free | hostname, mode, service=mysql | |
-| mysql.net.max_connections | hostname, mode, service=mysql | |
-| mysql.net.connections | hostname, mode, service=mysql | |
+| mysql.performance.questions | hostname, mode, service=mysql | Corresponding to "Question" of the server status variable. |
+| mysql.performance.qcache_hits | hostname, mode, service=mysql | Corresponding to "Qcache_hits" of the server status variable. |
+| mysql.performance.open_files | hostname, mode, service=mysql | Corresponding to "Open_files" of the server status variable. |
+| mysql.performance.created_tmp_tables | hostname, mode, service=mysql | Corresponding to "Created_tmp_tables" of the server status variable. |
+| mysql.performance.user_time | hostname, mode, service=mysql | The CPU user time for DB's performance, in seconds. |
+| mysql.performance.com_replace_select | hostname, mode, service=mysql | Corresponding to "Com_replace_select" of the server status variable. |
+| mysql.performance.kernel_time | hostname, mode, service=mysql | The kernel time for DB's performance, in seconds. |
+| mysql.performance.com_insert | hostname, mode, service=mysql | Corresponding to "Com_insert" of the server status variable. |
+| mysql.performance.threads_connected | hostname, mode, service=mysql | Corresponding to "Threads_connected" of the server status variable. |
+| mysql.performance.com_update_multi | hostname, mode, service=mysql | Corresponding to "Com_update_multi" of the server status variable. |
+| mysql.performance.table_locks_waited | hostname, mode, service=mysql | Corresponding to "Table_locks_waited" of the server status variable. |
+| mysql.performance.com_insert_select | hostname, mode, service=mysql | Corresponding to "Com_insert_select" of the server status variable. |
+| mysql.performance.slow_queries | hostname, mode, service=mysql | Corresponding to "Slow_queries" of the server status variable. |
+| mysql.performance.com_delete | hostname, mode, service=mysql | Corresponding to "Com_delete" of the server status variable. |
+| mysql.performance.com_select | hostname, mode, service=mysql | Corresponding to "Com_select" of the server status variable. |
+| mysql.performance.queries | hostname, mode, service=mysql | Corresponding to "Queries" of the server status variable. |
+| mysql.performance.created_tmp_files | hostname, mode, service=mysql | Corresponding to "Created_tmp_files" of the server status variable. |
+| mysql.performance.com_update | hostname, mode, service=mysql | Corresponding to "Com_update" of the server status variable. |
+| mysql.performance.com_delete_multi | hostname, mode, service=mysql | Corresponding to "Com_delete_multi" of the server status variable. |
+| mysql.performance.created_tmp_disk_tables | hostname, mode, service=mysql | Corresponding to "Created_tmp_disk_tables" of the server status variable. |
+| mysql.innodb.mutex_spin_rounds | hostname, mode, service=mysql | Corresponding to spinlock rounds of the server status variable. |
+| mysql.innodb.current_row_locks | hostname, mode, service=mysql | Corresponding to current row locks of the server status variable. |
+| mysql.innodb.mutex_os_waits | hostname, mode, service=mysql | Corresponding to the OS waits of the server status variable. |
+| mysql.innodb.buffer_pool_used | hostname, mode, service=mysql | The number of used pages, in bytes. This value is calculated by subtracting "Innodb_buffer_pool_pages_total" away from "Innodb_buffer_pool_pages_free" of the server status variable. |
+| mysql.innodb.data_writes | hostname, mode, service=mysql | Corresponding to "Innodb_data_writes" of the server status variable. |
+| mysql.innodb.data_reads | hostname, mode, service=mysql | Corresponding to "Innodb_data_reads" of the server status variable. |
+| mysql.innodb.row_lock_waits | hostname, mode, service=mysql | Corresponding to "Innodb_row_lock_waits" of the server status variable. |
+| mysql.innodb.os_log_fsyncs | hostname, mode, service=mysql | Corresponding to "Innodb_os_log_fsyncs" of the server status variable. |
+| mysql.innodb.buffer_pool_total | hostname, mode, service=mysql | The total size of buffer pool, in bytes. This value is calculated by multiplying "Innodb_buffer_pool_pages_total" and "Innodb_page_size" of the server status variable. |
+| mysql.innodb.row_lock_time | hostname, mode, service=mysql | Corresponding to "Innodb_row_lock_time" of the server status variable. |
+| mysql.innodb.mutex_spin_waits | hostname, mode, service=mysql | Corresponding to the spin waits of the server status variable. |
+| mysql.innodb.buffer_pool_free | hostname, mode, service=mysql | The number of free pages, in bytes. This value is calculated by multiplying "Innodb_buffer_pool_pages_free" and "Innodb_page_size" of the server status variable. |
+| mysql.net.max_connections | hostname, mode, service=mysql | Corresponding to "Max_used_connections" of the server status variable. |
+| mysql.net.connections | hostname, mode, service=mysql | Corresponding to "Connections" of the server status variable. |
 
 
 ## ZooKeeper Checks
@@ -808,9 +824,9 @@ The Apache checks return the following metrics:
 | apache.performance.idle_worker_count | hostname, service=apache component=apache | The number of idle workers |
 | apache.performance.busy_worker_count | hostname, service=apache component=apache | The number of workers serving requests |
 | apache.performance.cpu_load_perc | hostname, service=apache component=apache | The current percentage of CPU used by each worker and in total by all workers combined |
-| apache.net.total_kbytes | hostname, service=apache component=apache | A total number of byte count |
+| apache.net.total_kbytes | hostname, service=apache component=apache | A total number of Kbyte count |
 | apache.net.hits | hostname, service=apache component=apache | A total number of accesses |
-| apache.net.kbytes_sec | hostname, service=apache component=apache | A total number of byte count per second |
+| apache.net.kbytes_sec | hostname, service=apache component=apache | A total number of Kbyte count per second |
 | apache.net.requests_sec | hostname, service=apache component=apache | A total number of accesses per second |
 
 
@@ -997,6 +1013,8 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 
 `ping_check` includes the command line (sans the IP address) used to perform a ping check against instances.  Set to False (or omit altogether) to disable ping checks.  This is automatically populated during `monasca-setup` from a list of possible `ping` command lines.  Generally, `fping` is preferred over `ping` because it can return a failure with sub-second resolution, but if `fping` does not exist on the system, `ping` will be used instead.  If ping_check is disabled, the `host_alive_status` metric will not be published unless that VM is inactive.  This is because the host status is inconclusive without a ping check.
 
+`ping_only` will suppress all per-VM metrics aside from `host_alive_status` and `vm.host_alive_status`, including all I/O, network, memory, and CPU metrics.  [Aggregate Metrics](#aggregate-metrics), however, would still be enabled if `ping_only` is true.  By default, `ping_only` is false.  If both `ping_only` and `ping_check` are set to false, the only metrics published by the Libvirt plugin would be the Aggregate Metrics.
+
 Example config:
 ```
 init_config:
@@ -1009,12 +1027,18 @@ init_config:
     nova_refresh: 14400
     vm_probation: 300
     ping_check: /usr/bin/fping -n -c1 -t250 -q
+    ping_only: false
 instances:
     - {}
 ```
 `instances` are null in `libvirt.yaml`  because the libvirt plugin detects and runs against all provisioned VM instances; specifying them in `libvirt.yaml` is unnecessary.
 
 Note: If the Nova service login credentials are changed, `monasca-setup` would need to be re-run to use the new credentials.  Alternately, `/etc/monasca/agent/conf.d/libvirt.yaml` could be modified directly.
+
+Example `monasca-setup` usage:
+```
+monasca-setup -d libvirt -a 'ping_check=false ping_only=false'
+```
 
 ### Instance Cache
 The instance cache (`/dev/shm/libvirt_instances.yaml` by default) contains data that is not available to libvirt, but queried from Nova.  To limit calls to the Nova API, the cache is only updated if a new instance is detected (libvirt sees an instance not already in the cache), or every `nova_refresh` seconds (see Configuration above).

@@ -121,7 +121,7 @@ case "$1" in
 
     info)
         shift # Shift 'info' out of args so we can pass any
-              # addtional options to the real command
+              # additional options to the real command
               # (right now only monasca-agent supports additional flags)
         su $AGENTUSER -c "$AGENTPATH info $@"
         COLLECTOR_RETURN=$?

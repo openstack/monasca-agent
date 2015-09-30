@@ -19,7 +19,7 @@ instances:
           # * Restarting message broker rabbitmq-server
     #
     # For every instance a 'rabbitmq_api_url' must be provided, pointing to the api
-    # url of the RabbitMQ Managment Plugin (http://www.rabbitmq.com/management.html)
+    # url of the RabbitMQ Management Plugin (http://www.rabbitmq.com/management.html)
     # optional: 'rabbitmq_user' (default: guest) and 'rabbitmq_pass' (default: guest)
     #
     # If you have less than 5 queues, you don't have to set the queues parameters

@@ -37,9 +37,8 @@ def find_process_cmdline(search_string):
     """
     for process in psutil.process_iter():
         try:
-            for arg in process.cmdline():
-                if arg.find(search_string) != -1:
-                    return process
+            if search_string in ' '.join(process.cmdline()):
+                return process
         except psutil.NoSuchProcess:
             continue
 
@@ -66,12 +65,16 @@ def find_addr_listening_on_port(port):
             return conn.laddr[0].lstrip("::ffff:")
 
 
-def watch_process(search_strings, service=None, component=None, exact_match=True, detailed=False):
+def watch_process(search_strings, service=None, component=None,
+                  exact_match=True, detailed=False, process_name=None):
     """Takes a list of process search strings and returns a Plugins object with the config set.
         This was built as a helper as many plugins setup process watching
     """
     config = agent_config.Plugins()
-    parameters = {'name': search_strings[0],
+
+    # Fallback to default process_name strategy if process_name is not defined
+    process_name = process_name if process_name else search_strings[0]
+    parameters = {'name': process_name,
                   'detailed': detailed,
                   'exact_match': exact_match,
                   'search_string': search_strings}

@@ -19,11 +19,30 @@ import monasca_agent.common.keystone as keystone
 class HTTPCheck(services_checks.ServicesCheck):
 
     def __init__(self, name, init_config, agent_config, instances=None):
-        super(HTTPCheck, self).__init__(name, init_config, agent_config, instances)
+        super(HTTPCheck, self).__init__(name, init_config, agent_config,
+                                        instances)
+        # init the keystone client if instance has use_keystone
+        self._api_config = cfg.Config().get_config('Api')
+        self._ksclients = {}
+        for instance in instances:
+            addr, username, password, timeout, headers, response_time, \
+                disable_ssl_validation, use_keystone, keystone_config, \
+                instance_name = self._load_http_conf(instance)
+            if use_keystone:
+                # keystone is a singleton. It will be initialized once,
+                # the first config instance used.
+                if keystone_config:
+                    ksclient = keystone.Keystone(keystone_config)
+                else:
+                    ksclient = keystone.Keystone(self._api_config)
+                self._ksclients[instance_name] = ksclient
 
     @staticmethod
     def _load_http_conf(instance):
         # Fetches the conf
+        instance_name = instance.get('name', None)
+        if instance_name is None:
+            raise Exception("Bad configuration. You must specify a name")
         username = instance.get('username', None)
         password = instance.get('password', None)
         timeout = int(instance.get('timeout', 10))
@@ -36,7 +55,8 @@ class HTTPCheck(services_checks.ServicesCheck):
             raise Exception("Bad configuration. You must specify a url")
         ssl = instance.get('disable_ssl_validation', True)
 
-        return url, username, password, timeout, headers, response_time, ssl, use_keystone, keystone_config
+        return url, username, password, timeout, headers, response_time, \
+            ssl, use_keystone, keystone_config, instance_name
 
     def _create_status_event(self, status, msg, instance):
         """Does nothing: status events are not yet supported by Mon API.
@@ -44,10 +64,9 @@ class HTTPCheck(services_checks.ServicesCheck):
         return
 
     def _http_check(self, instance):
-        addr, username, password, timeout, headers, response_time, disable_ssl_validation, use_keystone, keystone_config = self._load_http_conf(
-            instance)
-        config = cfg.Config()
-        api_config = config.get_config('Api')
+        addr, username, password, timeout, headers, response_time, \
+            disable_ssl_validation, use_keystone, keystone_config, \
+            instance_name = self._load_http_conf(instance)
         dimensions = self._set_dimensions({'url': addr}, instance)
 
         start = time.time()
@@ -56,11 +75,8 @@ class HTTPCheck(services_checks.ServicesCheck):
         retry = False
         while not done or retry:
             if use_keystone:
-                if keystone_config:
-                    key = keystone.Keystone(keystone_config)
-                else:
-                    key = keystone.Keystone(api_config)
-                token = key.get_token()
+                ksclient = self._ksclients[instance_name]
+                token = ksclient.get_token()
                 if token:
                     headers["X-Auth-Token"] = token
                     headers["Content-type"] = "application/json"
@@ -112,7 +128,7 @@ class HTTPCheck(services_checks.ServicesCheck):
                         # Get a new token and retry
                         self.log.info("Token expired, getting new token and retrying...")
                         retry = True
-                        key.refresh_token()
+                        ksclient.refresh_token()
                         continue
                 else:
                     error_string = '{0} is DOWN, error code: {1}'.format(addr, str(resp.status))

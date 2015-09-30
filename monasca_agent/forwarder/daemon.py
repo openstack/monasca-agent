@@ -38,8 +38,6 @@ import monasca_agent.forwarder.transaction as transaction
 
 log = logging.getLogger('forwarder')
 
-WATCHDOG_INTERVAL_MULTIPLIER = 10  # 10x flush interval
-
 # Maximum delay before replaying a transaction
 MAX_WAIT_FOR_REPLAY = datetime.timedelta(seconds=90)
 
@@ -98,7 +96,7 @@ class AgentInputHandler(tornado.web.RequestHandler):
 
 class Forwarder(tornado.web.Application):
 
-    def __init__(self, port, agent_config, watchdog=True, skip_ssl_validation=False,
+    def __init__(self, port, agent_config, skip_ssl_validation=False,
                  use_simple_http_client=False):
         self._port = int(port)
         self._agent_config = agent_config
@@ -112,17 +110,11 @@ class Forwarder(tornado.web.Application):
                                                           agent_config)
         transaction.MetricTransaction.set_tr_manager(self._tr_manager)
 
-        self._watchdog = None
         self.skip_ssl_validation = skip_ssl_validation or agent_config.get(
             'skip_ssl_validation', False)
         self.use_simple_http_client = use_simple_http_client
         if self.skip_ssl_validation:
             log.info("Skipping SSL hostname validation, useful when using a transparent proxy")
-
-        if watchdog:
-            watchdog_timeout = self.flush_interval * WATCHDOG_INTERVAL_MULTIPLIER
-            self._watchdog = util.Watchdog(
-                watchdog_timeout, max_mem_mb=agent_config.get('limit_memory_consumption', None))
 
     def _post_metrics(self):
 
@@ -199,8 +191,6 @@ class Forwarder(tornado.web.Application):
         logging.getLogger().setLevel(self._agent_config.get('log_level', logging.INFO))
 
         def flush_trs():
-            if self._watchdog:
-                self._watchdog.reset()
             self._post_metrics()
             self._tr_manager.flush()
 
@@ -208,8 +198,6 @@ class Forwarder(tornado.web.Application):
             flush_trs, self.flush_interval, io_loop=self.mloop)
 
         # Start everything
-        if self._watchdog:
-            self._watchdog.reset()
         tr_sched.start()
 
         self.mloop.start()

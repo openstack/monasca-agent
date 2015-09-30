@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 def detect_init(*args, **kwargs):
     """Detect the service manager running on this box
        args/kwargs match those of service.Service
-    :return: The apropriate Service object for this system
+    :return: The appropriate Service object for this system
     """
     detected_os = platform.system()
     if detected_os == 'Linux':

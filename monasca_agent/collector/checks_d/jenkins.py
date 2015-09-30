@@ -121,7 +121,7 @@ class Jenkins(AgentCheck):
         dimensions = self._set_dimensions(None, instance)
         if self.high_watermarks.get(instance.get('name'), None) is None:
             # On the first run of check(), prime the high_watermarks dict
-            # so that we only send events that occured after the agent
+            # so that we only send events that occurred after the agent
             # started.
             # (Setting high_watermarks in the next statement prevents
             # any kind of infinite loop (assuming nothing ever sets
