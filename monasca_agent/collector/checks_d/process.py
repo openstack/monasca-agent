@@ -21,6 +21,11 @@ class ProcessCheck(checks.AgentCheck):
                      'process.voluntary_ctx_switches',
                      'process.involuntary_ctx_switches')
 
+    def __init__(self, name, init_config, agent_config, instances=None):
+        super(ProcessCheck, self).__init__(name, init_config, agent_config,
+                                           instances)
+        self._process_list = None
+
     @staticmethod
     def is_psutil_version_later_than(v):
         try:
@@ -36,7 +41,7 @@ class ProcessCheck(checks.AgentCheck):
         Search for search_string
         """
         found_process_list = []
-        for proc in psutil.process_iter():
+        for proc in self._process_list:
             found = False
             for string in search_string:
                 if exact_match:
@@ -177,6 +182,15 @@ class ProcessCheck(checks.AgentCheck):
                 open_file_descriptors_perc, read_count, write_count,
                 read_kbytes, write_kbytes, voluntary_ctx_switches,
                 involuntary_ctx_switches)
+
+    def prepare_run(self):
+        """Collect the list of processes once before each run"""
+        try:
+            import psutil
+        except ImportError:
+            raise Exception('You need the "psutil" package to run this check')
+
+        self._process_list = [process for process in psutil.process_iter()]
 
     def check(self, instance):
         try:
