@@ -1,6 +1,6 @@
 #!/bin/env python
 
-# Copyright (c) 2014 Hewlett-Packard Development Company, L.P.
+# (C) Copyright 2014, 2015 Hewlett Packard Enterprise Development Company LP
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -61,6 +61,7 @@ class LibvirtCheck(AgentCheck):
             from novaclient.v1_1 import client
 
         id_cache = {}
+        flavor_cache = {}
         # Get a list of all instances from the Nova API
         nova_client = client.Client(self.init_config.get('admin_user'),
                                     self.init_config.get('admin_password'),
@@ -74,7 +75,11 @@ class LibvirtCheck(AgentCheck):
         for instance in instances:
             inst_name = instance.__getattr__('OS-EXT-SRV-ATTR:instance_name')
             inst_az = instance.__getattr__('OS-EXT-AZ:availability_zone')
-            inst_flavor = nova_client.flavors.get(instance.flavor['id'])
+            if instance.flavor['id'] in flavor_cache:
+                inst_flavor = flavor_cache[instance.flavor['id']]
+            else:
+                inst_flavor = nova_client.flavors.get(instance.flavor['id'])
+                flavor_cache[instance.flavor['id']] = inst_flavor
             id_cache[inst_name] = {'instance_uuid': instance.id,
                                    'hostname': instance.name,
                                    'zone': inst_az,
