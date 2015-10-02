@@ -62,6 +62,21 @@ ATTRIBUTES = {QUEUE_TYPE: QUEUE_ATTRIBUTES,
               EXCHANGE_TYPE: EXCHANGE_ATTRIBUTES,
               NODE_TYPE: NODE_ATTRIBUTES}
 
+# whitelist of metrics to collect
+DEFAULT_WHITELIST = {
+    QUEUE_TYPE: ['message_stats/deliver_details/rate',
+                 'message_stats/publish_details/rate',
+                 'message_stats/redeliver_details/rate'],
+    EXCHANGE_TYPE: ['message_stats/publish_out',
+                    'message_stats/publish_out_details/rate',
+                    'message_stats/publish_in',
+                    'message_stats/publish_in_details/rate'],
+    NODE_TYPE: ['fd_used',
+                'mem_used',
+                'run_queue',
+                'sockets_used']
+}
+
 DIMENSIONS_MAP = {
     'queues': {'name': 'queue',
                'vhost': 'vhost',
@@ -210,6 +225,9 @@ class RabbitMQ(checks.AgentCheck):
                 self._get_metrics(data_line, object_type, instance)
 
     def _get_metrics(self, data, object_type, instance):
+        whitelist = instance.get('whitelist', {})
+        object_whitelist = whitelist.get(object_type, DEFAULT_WHITELIST[object_type])
+
         dimensions_list = DIMENSIONS_MAP[object_type].copy()
         dimensions = self._set_dimensions({'component': 'rabbitmq', 'service': 'rabbitmq'},
                                           instance)
@@ -219,6 +237,10 @@ class RabbitMQ(checks.AgentCheck):
                 dimensions[dimensions_list[d]] = dim
 
         for attribute, metric_name in ATTRIBUTES[object_type]:
+            # Check if the metric should be collected
+            if attribute not in object_whitelist:
+                continue
+
             # Walk down through the data path, e.g. foo/bar => d['foo']['bar']
             root = data
             keys = attribute.split('/')
