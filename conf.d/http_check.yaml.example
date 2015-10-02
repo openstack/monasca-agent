@@ -17,7 +17,7 @@ instances:
          # https://github.com/stackforge/monasca-agent/blob/master/agent.yaml.template
          # If use_keystone=True and keystone_config is not specified, the keystone information
          # from the agent config will be used.
-#        use_keystone=True
+#        use_keystone: True
 #        keystone_config:
 #            keystone_url: http://endpoint.com/v3/
 #            username: user
