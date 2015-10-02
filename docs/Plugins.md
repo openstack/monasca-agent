@@ -504,12 +504,11 @@ The instances section contains the hostname/IP to check, and the type of check t
     alive_test: ssh
 ```
 
-The host alive checks return the following Dimensions:
+The host alive checks return the following metrics
 
-| Dimensions| Value|
-| observer_host| fqdn |
-| hostname | supplied hostname being checked |
-| test_type| ping or ssh |
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| host_alive_status | observer_host=fqdn, hostname=supplied hostname being checked, test_type=ping or ssh | Status of remote host(device) is online or not. (0=online, 1=offline)
 
 Also in the case of an error the value_meta contains an error message.
 
