@@ -22,6 +22,7 @@
   - [Http Endpoint Checks](#http-endpoint-checks)
   - [Http Metrics](#http-metrics)
   - [MySQL Checks](#mysql-checks)
+  - [Elasticsearch Checks](#elasticsearch-checks)
   - [ZooKeeper Checks](#zookeeper-checks)
   - [Kafka Checks](#kafka-checks)
   - [RabbitMQ Checks](#rabbitmq-checks)
@@ -662,6 +663,128 @@ The mySQL checks return the following metrics:
 | mysql.innodb.buffer_pool_free | hostname, mode, service=mysql | The number of free pages, in bytes. This value is calculated by multiplying "Innodb_buffer_pool_pages_free" and "Innodb_page_size" of the server status variable. |
 | mysql.net.max_connections | hostname, mode, service=mysql | Corresponding to "Max_used_connections" of the server status variable. |
 | mysql.net.connections | hostname, mode, service=mysql | Corresponding to "Connections" of the server status variable. |
+
+
+## Elasticsearch Checks
+This section describes the Elasticsearch check that can be performed by the Agent.  The Elasticsearch check requires a configuration file called elastic.yaml to be available in the agent conf.d configuration directory.
+
+Sample config:
+
+```
+init_config: null
+instances:
+-   url: http://127.0.0.1:9200
+
+```
+ 
+The Elasticksearch checks return the following metrics:
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| elasticsearch.docs.count | url, hostname, service=monitoring | The number of docs. Include the count of nested documents. |
+| elasticsearch.docs.deleted | url, hostname, service=monitoring | The number of deleted docs. |
+| elasticsearch.store.size | url, hostname, service=monitoring | The filesystem storage size. |
+| elasticsearch.indexing.index.total | url, hostname, service=monitoring | |
+| elasticsearch.indexing.index.time | url, hostname, service=monitoring | |
+| elasticsearch.indexing.index.current | url, hostname, service=monitoring | |
+| elasticsearch.indexing.delete.total | url, hostname, service=monitoring | |
+| elasticsearch.indexing.delete.time | url, hostname, service=monitoring | |
+| elasticsearch.indexing.delete.current | url, hostname, service=monitoring | |
+| elasticsearch.get.total | url, hostname, service=monitoring | |
+| elasticsearch.get.time | url, hostname, service=monitoring | |
+| elasticsearch.get.current | url, hostname, service=monitoring | |
+| elasticsearch.get.exists.total | url, hostname, service=monitoring | |
+| elasticsearch.get.exists.time | url, hostname, service=monitoring | |
+| elasticsearch.get.missing.total | url, hostname, service=monitoring | |
+| elasticsearch.get.missing.time | url, hostname, service=monitoring | |
+| elasticsearch.search.query.total | url, hostname, service=monitoring | |
+| elasticsearch.search.query.time | url, hostname, service=monitoring | |
+| elasticsearch.search.query.current | url, hostname, service=monitoring | |
+| elasticsearch.search.fetch.total | url, hostname, service=monitoring | |
+| elasticsearch.search.fetch.time | url, hostname, service=monitoring | |
+| elasticsearch.search.fetch.current | url, hostname, service=monitoring | |
+| elasticsearch.merges.current | url, hostname, service=monitoring | |
+| elasticsearch.merges.current.docs | url, hostname, service=monitoring | |
+| elasticsearch.merges.current.size | url, hostname, service=monitoring | |
+| elasticsearch.merges.total | url, hostname, service=monitoring | |
+| elasticsearch.merges.total.time | url, hostname, service=monitoring | |
+| elasticsearch.merges.total.docs | url, hostname, service=monitoring | |
+| elasticsearch.merges.total.size | url, hostname, service=monitoring | |
+| elasticsearch.refresh.total | url, hostname, service=monitoring | |
+| elasticsearch.refresh.total.time | url, hostname, service=monitoring | |
+| elasticsearch.flush.total | url, hostname, service=monitoring | |
+| elasticsearch.flush.total.time | url, hostname, service=monitoring | The elasticsearch flush time. |
+| elasticsearch.process.open_fd | url, hostname, service=monitoring | The number of open files descriptors on the machine. |
+| elasticsearch.transport.rx_count | url, hostname, service=monitoring | |
+| elasticsearch.transport.tx_count | url, hostname, service=monitoring | |
+| elasticsearch.transport.rx_size | url, hostname, service=monitoring | |
+| elasticsearch.transport.tx_size | url, hostname, service=monitoring | |
+| elasticsearch.transport.server_open | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.bulk.active | url, hostname, service=monitoring | The number of active threads in the current thread pool. |
+| elasticsearch.thread_pool.bulk.threads | url, hostname, service=monitoring | The number of threads in the current thread pool. |
+| elasticsearch.thread_pool.bulk.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for bulk operations. |
+| elasticsearch.thread_pool.bulk.rejected | url, hostname, service=monitoring | The number of rejected tasks of thread pool used for bulk operations. |
+| elasticsearch.thread_pool.flush.active | url, hostname, service=monitoring | The number of active threads in the current thread pool. |
+| elasticsearch.thread_pool.flush.threads | url, hostname, service=monitoring | The number of threads in the current thread pool. |
+| elasticsearch.thread_pool.flush.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for flush operations. |
+| elasticsearch.thread_pool.flush.rejected | url, hostname, service=monitoring |  The number of rejected tasks of thread pool used for flush operations. |
+| elasticsearch.thread_pool.generic.active | url, hostname, service=monitoring | The number of active threads in the current thread pool. |
+| elasticsearch.thread_pool.generic.threads | url, hostname, service=monitoring | The number of threads in the current thread pool. |
+| elasticsearch.thread_pool.generic.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for generic operations. |
+| elasticsearch.thread_pool.generic.rejected | url, hostname, service=monitoring | The number of rejected tasks of thread pool used for generic operations. |
+| elasticsearch.thread_pool.get.active | url, hostname, service=monitoring | The number of active threads in the current thread pool. |
+| elasticsearch.thread_pool.get.threads | url, hostname, service=monitoring | The number of threads in the current thread pool. |
+| elasticsearch.thread_pool.get.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for get operations. |
+| elasticsearch.thread_pool.get.rejected | url, hostname, service=monitoring | The number of rejected tasks of thread pool used for get operations. |
+| elasticsearch.thread_pool.index.active | url, hostname, service=monitoring | The number of active threads in the current thread pool. |
+| elasticsearch.thread_pool.index.threads | url, hostname, service=monitoring | The number of threads in the current thread pool. |
+| elasticsearch.thread_pool.index.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for index operations. |
+| elasticsearch.thread_pool.index.rejected | url, hostname, service=monitoring | The number of rejected tasks of thread pool used for index operations. |
+| elasticsearch.thread_pool.management.active | url, hostname, service=monitoring | The number of active threads in the current thread pool. |
+| elasticsearch.thread_pool.management.threads | url, hostname, service=monitoring | The number of threads in the current thread pool. |
+| elasticsearch.thread_pool.management.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for management operations. |
+| elasticsearch.thread_pool.management.rejected | url, hostname, service=monitoring | The number of rejected tasks of thread pool used for management operations. |
+| elasticsearch.thread_pool.merge.active | url, hostname, service=monitoring | The number of active threads in the current thread pool. |
+| elasticsearch.thread_pool.merge.threads | url, hostname, service=monitoring | The number of threads in the current thread pool. |
+| elasticsearch.thread_pool.merge.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for merge operations. |
+| elasticsearch.thread_pool.merge.rejected | url, hostname, service=monitoring | The number of rejected tasks of thread pool used for merge operations. |
+| elasticsearch.thread_pool.percolate.active | url, hostname, service=monitoring | The number of active threads in the current thread pool. |
+| elasticsearch.thread_pool.percolate.threads | url, hostname, service=monitoring | The number of threads in the current thread pool. |
+| elasticsearch.thread_pool.percolate.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for percolate operations. |
+| elasticsearch.thread_pool.percolate.rejected | url, hostname, service=monitoring | The number of rejected tasks of thread pool used for percolate operations. |
+| elasticsearch.thread_pool.refresh.active | url, hostname, service=monitoring | The number of active threads in the current thread pool. |
+| elasticsearch.thread_pool.refresh.threads | url, hostname, service=monitoring | The number of threads in the current thread pool. |
+| elasticsearch.thread_pool.refresh.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for refresh operations. |
+| elasticsearch.thread_pool.refresh.rejected | url, hostname, service=monitoring | The number of rejected tasks of thread pool used for refresh operations. |
+| elasticsearch.thread_pool.search.active | url, hostname, service=monitoring | The number of active threads in the current thread pool. |
+| elasticsearch.thread_pool.search.threads | url, hostname, service=monitoring | The number of threads in the current thread pool. |
+| elasticsearch.thread_pool.search.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for search operations. |
+| elasticsearch.thread_pool.search.rejected | url, hostname, service=monitoring | The number of rejected tasks of thread pool used for search operations. |
+| elasticsearch.thread_pool.snapshot.active | url, hostname, service=monitoring | The number of active threads in the current thread pool. |
+| elasticsearch.thread_pool.snapshot.threads | url, hostname, service=monitoring | The number of threads in the current thread pool. |
+| elasticsearch.thread_pool.snapshot.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for snapshot operations. |
+| elasticsearch.thread_pool.snapshot.rejected | url, hostname, service=monitoring | The number of rejected tasks of thread pool used for snapshot operations. |
+| elasticsearch.http.current_open | url, hostname, service=monitoring | Current number of opened HTTP connections. |
+| elasticsearch.http.total_opened | url, hostname, service=monitoring | Max number of HTTP connections. |
+| jvm.gc.concurrent_mark_sweep.count | url, hostname, service=monitoring | |
+| jvm.gc.concurrent_mark_sweep.collection_time | url, hostname, service=monitoring | |
+| jvm.gc.par_new.count | url, hostname, service=monitoring | ParNew count. |
+| jvm.gc.par_new.collection_time | url, hostname, service=monitoring | ParNew pauses time. |
+| jvm.mem.heap_committed | url, hostname, service=monitoring | The allocated amount of heap memory. |
+| jvm.mem.heap_used | url, hostname, service=monitoring | The amount of heap memory which is actually in use. |
+| jvm.mem.non_heap_committed | url, hostname, service=monitoring | The allocated amount of non-heap memory. |
+| jvm.mem.non_heap_used | url, hostname, service=monitoring | The amount of non-heap memory which is actually in use. |
+| jvm.threads.count | url, hostname, service=monitoring | Current number of live daemon and non-daemon threads. |
+| jvm.threads.peak_count | url, hostname, service=monitoring | Peak live thread count since the JVM started or the peak was reset. |
+| elasticsearch.number_of_nodes | url, hostname, service=monitoring | Number of nodes. |
+| elasticsearch.number_of_data_nodes | url, hostname, service=monitoring | Number of data nodes. |
+| elasticsearch.active_primary_shards | url, hostname, service=monitoring | Indicates the number of primary shards in your cluster. This is an aggregate total across all indices. |
+| elasticsearch.active_shards | url, hostname, service=monitoring |  Aggregate total of all shards across all indices, which includes replica shards. |
+| elasticsearch.relocating_shards | url, hostname, service=monitoring | Shows the number of shards that are currently moving from one node to another node. |
+| elasticsearch.initializing_shards | url, hostname, service=monitoring | The count of shards that are being freshly created. |
+| elasticsearch.unassigned_shards | url, hostname, service=monitoring | The number of unassigned shards from the master node. |
+| elasticsearch.cluster_status | url, hostname, service=monitoring | Cluster health status. |
+
 
 
 ## ZooKeeper Checks
