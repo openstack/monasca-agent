@@ -192,21 +192,9 @@ class RabbitMQ(checks.AgentCheck):
                     self._get_metrics(data_line, object_type, instance)
                     specified_items.remove(name)
 
-        # No queues/node are specified. We will process every queue/node if it's under the limit
+        # No queues/node are specified. We will process every queue/node
         else:
-            # Monasca does not support events at this time.
-            # if len(data) > ALERT_THRESHOLD * max_detailed:
-            #   # Post a message on the dogweb stream to warn
-            #   self.alert(base_url, max_detailed, len(data), object_type)
-
-            if len(data) > max_detailed:
-                # Display a warning in the info page
-                self.warning(
-                    "Too many queues to fetch. You must choose the %s you are interested in by editing the rabbitmq.yaml configuration file" %
-                    object_type)
-
-            for data_line in data[:max_detailed]:
-                # We truncate the list of nodes/queues if it's above the limit
+            for data_line in data:
                 self._get_metrics(data_line, object_type, instance)
 
     def _get_metrics(self, data, object_type, instance):
@@ -232,7 +220,7 @@ class RabbitMQ(checks.AgentCheck):
                 self.log.debug("Collected data for %s: metric name: %s: value: %f dimensions: %s" % (object_type, metric_name, float(value), str(dimensions)))
                 self.gauge('rabbitmq.%s.%s' % (METRIC_SUFFIX[object_type], metric_name), float(value), dimensions=dimensions)
             except ValueError:
-                self.log.debug("Caught ValueError for %s %s = %s  with dimensions: %s" % (
+                self.log.exception("Caught ValueError for %s %s = %s  with dimensions: %s" % (
                     METRIC_SUFFIX[object_type], attribute, value, dimensions))
 
     def alert(self, base_url, max_detailed, size, object_type):
