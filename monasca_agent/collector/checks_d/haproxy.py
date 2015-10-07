@@ -191,7 +191,8 @@ class HAProxy(AgentCheck):
 
             metric_dimensions.update({'type': service,
                                       'instance_url': url,
-                                      'service_name': service_name})
+                                      'service_name': service_name,
+                                      'service': 'haproxy'})
             if service == Services.BACKEND:
                 metric_dimensions.update({'backend': hostname})
 
