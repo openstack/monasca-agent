@@ -215,7 +215,7 @@ class TransactionManager(util.Dimensions):
             self._trs_to_flush = to_flush
             self.flush_next()
             # The emit time is reported on the next run.
-            dimensions = self._set_dimensions({'component': 'monasca-agent'})
+            dimensions = self._set_dimensions({'component': 'monasca-agent', 'service': 'monitoring'})
             emit_measurement = metrics.Measurement('monasca.emit_time_sec', time.time(), timer.step(), dimensions)
             MetricTransaction([emit_measurement], headers={'Content-Type': 'application/json'})
         else:
