@@ -54,19 +54,16 @@ class LibvirtCheck(AgentCheck):
     def _update_instance_cache(self):
         """Collect instance_id, project_id, and AZ for all instance UUIDs
         """
-        # novaclient module versions were renamed in version 2.22
-        try:
-            from novaclient.v2 import client
-        except ImportError:
-            from novaclient.v1_1 import client
+        from novaclient import client
 
         id_cache = {}
         flavor_cache = {}
         # Get a list of all instances from the Nova API
-        nova_client = client.Client(self.init_config.get('admin_user'),
+        nova_client = client.Client(2, self.init_config.get('admin_user'),
                                     self.init_config.get('admin_password'),
                                     self.init_config.get('admin_tenant_name'),
                                     self.init_config.get('identity_uri'),
+                                    endpoint_type='internalURL',
                                     service_type="compute",
                                     region_name=self.init_config.get('region_name'))
         instances = nova_client.servers.list(search_opts={'all_tenants': 1,
