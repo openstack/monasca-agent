@@ -29,7 +29,8 @@ class Zookeeper(monasca_setup.detection.Plugin):
         config = monasca_setup.agent_config.Plugins()
         # First watch the process
         log.info("\tWatching the zookeeper process.")
-        config.merge(monasca_setup.detection.watch_process(['org.apache.zookeeper.server'], exact_match=False))
+        config.merge(monasca_setup.detection.watch_process(['org.apache.zookeeper.server'], 'zookeeper',
+                                                           exact_match=False))
 
         log.info("\tEnabling the zookeeper plugin")
         with open(os.path.join(self.template_dir, 'conf.d/zk.yaml.example'), 'r') as zk_template:

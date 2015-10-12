@@ -117,7 +117,7 @@ class Kafka(Plugin):
             Config includes: consumer_groups (include topics) and kafka_connection_str
         """
         # First watch the process
-        self.config.merge(watch_process(['kafka.Kafka'], exact_match=False))
+        self.config.merge(watch_process(['kafka.Kafka'], 'kafka', exact_match=False))
         log.info("\tWatching the kafka process.")
 
         if not self.dependencies_installed():
