@@ -540,9 +540,15 @@ class AgentCheck(util.Dimensions):
         self.warnings = []
         return warnings
 
+    def prepare_run(self):
+        """Do any setup required before running all instances"""
+        return
+
     def run(self):
         """Run all instances.
         """
+        self.prepare_run()
+
         instance_statuses = []
         for i, instance in enumerate(self.instances):
             try:

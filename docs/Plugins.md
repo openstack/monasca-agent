@@ -1151,5 +1151,59 @@ instances:
 
 ```
 
+
+## Network Time Protocol Checks
+This section describes the Network Time Protocol checks that can be performed by the Agent. The NTP checks monitors time offset between NTP server and your own server. The NTP checks requires a configuration file called ntp.yaml to be available in the agent conf.d configuration directory. The config file must contain the hostname and port number, version information, timeout(These are optional params) that you are interested in monitoring.
+
+Sample config:
+
+```
+init_config:
+
+instances:
+  - host: pool.ntp.org
+    port: ntp
+    version: 3
+    timeout: 5
+```
+
+The NTP checks return the following metrics:
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| ntp.offset | hostname | Time offset in seconds |
+
+
+## Postfix Checks
+This section describes the Postfix checks that can be performed by the Agent. The Postfix checks gathers metrics on the Postfix. The Postfix checks requires a configuration file called postfix.yaml to be available in the agent conf.d configuration directory. The config file must contain the name, directory and queue that you are interested in monitoring.
+
+NOTE: The user running monasca-agent must have passwordless sudo access for the find command to run the postfix check.  Here's an example:
+
+```
+ example /etc/sudoers entry:
+          monasca-agent ALL=(ALL) NOPASSWD:/usr/bin/find
+```
+
+Sample config:
+
+```
+init_config:
+
+instances:
+    - name: /var/spool/postfix
+      directory: /var/spool/postfix
+      queues:
+          - incoming
+          - active
+          - deferred
+```
+
+The Postfix return the following metrics:
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| postfix.queue_size | queue | A total number of queues |
+
+
 # License
 Copyright (c) 2015 Hewlett-Packard Development Company, L.P.

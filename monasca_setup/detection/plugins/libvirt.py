@@ -133,15 +133,11 @@ class Libvirt(Plugin):
 
     def dependencies_installed(self):
         try:
-            import novaclient
+            import monasca_agent.collector.virt.inspector
             import time
             import yaml
-            # novaclient module versions were renamed in version 2.22
-            if novaclient.__version__ < LooseVersion("2.22"):
-                import novaclient.v1_1.client
-            else:
-                import novaclient.v2.client
-            import monasca_agent.collector.virt.inspector
+
+            from novaclient import client
         except ImportError:
             log.warn("\tDependencies not satisfied; plugin not configured.")
             return False

@@ -46,19 +46,19 @@ class Memory(checks.AgentCheck):
                    dimensions=dimensions)
 
         count = 8
-        if 'buffers' in mem_info:
+        if hasattr(mem_info, 'buffers') and mem_info.buffers:
             self.gauge('mem.used_buffers',
                        int(mem_info.buffers / 1048576),
                        dimensions=dimensions)
             count += 1
 
-        if 'cached' in mem_info:
+        if hasattr(mem_info, 'cached') and mem_info.cached:
             self.gauge('mem.used_cache',
                        int(mem_info.cached / 1048576),
                        dimensions=dimensions)
             count += 1
 
-        if 'shared' in mem_info:
+        if hasattr(mem_info, 'shared') and mem_info.shared:
             self.gauge('mem.used_shared',
                        int(mem_info.shared / 1048576),
                        dimensions=dimensions)

@@ -54,19 +54,16 @@ class LibvirtCheck(AgentCheck):
     def _update_instance_cache(self):
         """Collect instance_id, project_id, and AZ for all instance UUIDs
         """
-        # novaclient module versions were renamed in version 2.22
-        try:
-            from novaclient.v2 import client
-        except ImportError:
-            from novaclient.v1_1 import client
+        from novaclient import client
 
         id_cache = {}
         flavor_cache = {}
         # Get a list of all instances from the Nova API
-        nova_client = client.Client(self.init_config.get('admin_user'),
+        nova_client = client.Client(2, self.init_config.get('admin_user'),
                                     self.init_config.get('admin_password'),
                                     self.init_config.get('admin_tenant_name'),
                                     self.init_config.get('identity_uri'),
+                                    endpoint_type='internalURL',
                                     service_type="compute",
                                     region_name=self.init_config.get('region_name'))
         instances = nova_client.servers.list(search_opts={'all_tenants': 1,
@@ -108,9 +105,9 @@ class LibvirtCheck(AgentCheck):
         return id_cache
 
     def _load_instance_cache(self):
-        """Load the cache if instance names to IDs.
+        """Load the cache map of instance names to Nova data.
 
-           If the cache does not yet exist, return an empty one.
+           If the cache does not yet exist or is damaged, (re-)build it.
         """
         instance_cache = {}
         try:
@@ -122,12 +119,21 @@ class LibvirtCheck(AgentCheck):
                     time_diff = time.time() - instance_cache['last_update']
                     if time_diff > self.init_config.get('nova_refresh'):
                         self._update_instance_cache()
-        except IOError:
-            # The file may not exist yet, and that's OK.  Build it now.
+        except (IOError, TypeError):
+            # The file may not exist yet, or is corrupt.  Rebuild it now.
+            self.log.warning("Instance cache missing or corrupt, rebuilding.")
             instance_cache = self._update_instance_cache()
             pass
 
         return instance_cache
+
+    def _is_cache_corrupt(self, cache):
+        """Verify that the cache contains a valid dictionary
+        """
+        if cache.__class__.__name__ != 'dict':
+            self.log.warning("Corrupt metrics cache detected.  Will rebuild.")
+            return True
+        return False
 
     def _load_metric_cache(self):
         """Load the counter metrics from the previous collection iteration
@@ -136,8 +142,11 @@ class LibvirtCheck(AgentCheck):
         try:
             with open(self.metric_cache_file, 'r') as cache_yaml:
                 metric_cache = yaml.safe_load(cache_yaml)
+            if self._is_cache_corrupt(metric_cache):
+                metric_cache = {}
         except IOError:
             # The file may not exist yet.
+            metric_cache = {}
             pass
 
         return metric_cache

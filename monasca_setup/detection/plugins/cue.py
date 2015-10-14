@@ -11,7 +11,7 @@ class Cue(monasca_setup.detection.ServicePlugin):
             'template_dir': template_dir,
             'overwrite': overwrite,
             'service_name': 'message-broker',
-            'process_names': ['cue-api', 'cue-worker'],
+            'process_names': ['cue-api', 'cue-worker', 'cue-monitor'],
             'service_api_url': 'http://localhost:8795/v1',
             'search_pattern': '.*v1.*'
         }
