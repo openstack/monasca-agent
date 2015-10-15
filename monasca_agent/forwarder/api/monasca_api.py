@@ -117,10 +117,8 @@ class MonascaAPI(object):
         token = self.keystone.get_token()
         if token:
             # Create the client.
-            kwargs = {
-                'token': token
-            }
-
+            kwargs = self.keystone.get_credential_args()
+            kwargs['token'] = token
             if not self.url:
                 self.url = self.keystone.get_monasca_url()
 
@@ -148,7 +146,7 @@ class MonascaAPI(object):
                 self._failure_reason = 'Invalid token detected. Waiting to get new token from Keystone'
                 wait_time = random.randint(MonascaAPI.MIN_BACKOFF, MonascaAPI.MAX_BACKOFF + 1)
                 self._resume_time = time.time() + wait_time
-                log.error("Invalid token detected. Waiting %d seconds before getting new token.", wait_time)
+                log.info("Invalid token detected. Waiting %d seconds before getting new token.", wait_time)
             else:
                 log.error("Error sending message to monasca-api. Error is {0}."
                           .format(str(ex.message)))
