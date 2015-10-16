@@ -24,9 +24,9 @@ class HAProxy(monasca_setup.detection.Plugin):
         config = monasca_setup.agent_config.Plugins()
         log.info("\tEnabling HAProxy process watching")
 
-        config.merge(monasca_setup.detection.watch_process(['haproxy'], exact_match=False))
+        config.merge(monasca_setup.detection.watch_process(['haproxy'], 'haproxy', exact_match=False))
         if monasca_setup.detection.find_process_cmdline('keepalived') is not None:
-            config.merge(monasca_setup.detection.watch_process(['keepalived'], exact_match=False))
+            config.merge(monasca_setup.detection.watch_process(['keepalived'], 'haproxy', exact_match=False))
 
         proxy_cfgfile = '/etc/haproxy/haproxy.cfg'
         if os.path.exists(proxy_cfgfile):

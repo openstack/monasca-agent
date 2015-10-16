@@ -33,7 +33,7 @@ class MySQL(monasca_setup.detection.Plugin):
         """
         config = monasca_setup.agent_config.Plugins()
         # First watch the process
-        config.merge(monasca_setup.detection.watch_process(['mysqld']))
+        config.merge(monasca_setup.detection.watch_process(['mysqld'], 'mysql'))
         log.info("\tWatching the mysqld process.")
 
         # Attempt login, requires either an empty root password from localhost

@@ -38,7 +38,7 @@ class Apache(monasca_setup.detection.Plugin):
         """
         config = monasca_setup.agent_config.Plugins()
         # First watch the process
-        config.merge(monasca_setup.detection.watch_process(['apache2']))
+        config.merge(monasca_setup.detection.watch_process(['apache2'], 'apache'))
         log.info("\tWatching the apache webserver process.")
 
         error_msg = '\n\t*** The Apache plugin is not configured ***\n\tPlease correct and re-run monasca-setup.'
