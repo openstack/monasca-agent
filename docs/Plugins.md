@@ -1205,5 +1205,56 @@ The Postfix return the following metrics:
 | postfix.queue_size | queue | A total number of queues |
 
 
+## PostgreSQL Checks
+This section describes the PostgreSQL checks that can be performed by the Agent.  The PostgreSQL checks requires a configuration file called postgres.yaml to be available in the agent conf.d configuration directory.
+
+Sample config:
+
+```
+init_config:
+
+instances:
+   -   host: localhost
+       port: 5432
+       username: my_username
+       password: my_password
+       dbname: db_name
+```
+
+If you want to track per-relation (table), you need to add relations keys and specify the list.
+
+```
+       relations:
+            - my_table
+            - my_other_table
+```
+
+Each metrics show statistics collected in PostgreSQL. The PostgreSQL checks return the following metrics:
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| postgresql.connections | hostname, db, service=postgres | Value of the "numbackends" of "pg_stat_database". |
+| postgresql.commits | hostname, db, service=postgres | Value of the "xact_commit" of "pg_stat_database". |
+| postgresql.rollbacks | hostname, db, service=postgres | Value of the "xact_rollback" of "pg_stat_database". |
+| postgresql.disk_read | hostname, db, service=postgres | Value of the "blks_read" of "pg_stat_database". |
+| postgresql.buffer_hit | hostname, db, service=postgres | Value of the "blks_hit" of "pg_stat_database". |
+| postgresql.rows_returned | hostname, db, service=postgres | Value of the "tup_returned" of "pg_stat_database". |
+| postgresql.rows_fetched | hostname, db, service=postgres | Value of the "tup_fetched" of "pg_stat_database". |
+| postgresql.deadlocks | hostname, db, service=postgres | Value of the "deadlocks" of "pg_stat_database". This is supported only in PostgreSQL 9.2 or later. |
+| postgresql.temp_bytes | hostname, db, service=postgres | Value of the "temp_bytes" of "pg_stat_database". This is supported only in PostgreSQL 9.2 or later. |
+| postgresql.temp_files | hostname, db, service=postgres | Value of the "temp_files" of "pg_stat_database". This is supported only in PostgreSQL 9.2 or later. |
+| postgresql.seq_scans | hostname, db, service=postgres, table | Value of the "seq_scan" of "pg_stat_user_tables" |
+| postgresql.seq_rows_read | hostname, db, service=postgres, table | Value of the "seq_tup_read" of "pg_stat_user_tables" |
+| postgresql.index_scans | hostname, db, service=postgres, table, index | Value of the "idx_scan" of "pg_stat_user_tables" or "pg_stat_user_indexes" |
+| postgresql.index_rows_fetched | hostname, db, service=postgres, table, index | Value of the "idx_tup_fetch" of "pg_stat_user_tables" or "pg_stat_user_indexes" |
+| postgresql.rows_inserted | hostname, db, service=postgres, table | Value of the "n_tup_ins" of "pg_stat_user_tables" or "pg_stat_database" |
+| postgresql.rows_updated | hostname, db, service=postgres, table | Value of the "n_tup_upd" of "pg_stat_user_tables" or "pg_stat_database" |
+| postgresql.rows_deleted | hostname, db, service=postgres, table | Value of the "n_tup_del" of "pg_stat_user_tables" or "pg_stat_database" |
+| postgresql.rows_hot_updated | hostname, db, service=postgres, table | Value of the "n_tup_hot_upd" of "pg_stat_user_tables"
+| postgresql.live_rows | hostname, db, service=postgres, table | Value of the "n_live_tup" of "pg_stat_user_tables" |
+| postgresql.dead_rows | hostname, db, service=postgres, table | Value of the "n_dead_tup" of "pg_stat_user_tables" |
+| postgresql.index_rows_read | hostname, db, service=postgres, table, index | Value of the "idx_tup_read" of "pg_stat_user_indexes" |
+
+
 # License
 Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
