@@ -85,6 +85,13 @@ class LibvirtCheck(AgentCheck):
                                    'vcpus': inst_flavor.vcpus,
                                    'ram': inst_flavor.ram,
                                    'disk': inst_flavor.disk}
+
+            if self.init_config.get('metadata'):
+                for metadata in self.init_config.get('metadata'):
+                    if instance.metadata.get(metadata):
+                        id_cache[inst_name][metadata] = (instance.metadata.
+                                                         get(metadata))
+
             # Try to add private_ip to id_cache[inst_name].  This may fail on ERROR'ed VMs.
             try:
                 id_cache[inst_name]['private_ip'] = instance.addresses['private'][0]['addr']
@@ -318,6 +325,12 @@ class LibvirtCheck(AgentCheck):
                 # Add dimensions that would be helpful for operations
                 dims_operations = dims_customer.copy()
                 dims_operations['tenant_id'] = instance_cache.get(inst_name)['tenant_id']
+                if self.init_config.get('metadata'):
+                    for metadata in self.init_config.get('metadata'):
+                        metadata_value = (instance_cache.get(inst_name).
+                                          get(metadata))
+                        if metadata_value:
+                            dims_operations[metadata] = metadata_value
                 # Remove customer 'hostname' dimension, this will be replaced by the VM name
                 del(dims_customer['hostname'])
             except TypeError:
