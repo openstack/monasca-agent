@@ -4,10 +4,10 @@ instances:
 #  -   kafka_connect_str: localhost:19092
 #      zk_connect_str: localhost:2181
 #      zk_prefix: /0.8
-# It is possible to get the lag for each partition the default is to sum lag for all partitions
+# It is possible to get the lag for each partition, the default is to sum lag for all partitions
 #      per_partition: False
 # Full includes additional metrics with actual offsets per partition, can't be set if per_partition is False
 #      full_output: False
 #      consumer_groups:
 #        my_consumer:
-#          my_topic: [0, 1, 4, 12]  # If the partitions is an empty list the plugin will use all existing partitions
+#          - my_topic  # the plugin will automatically collect from all existing partitions
