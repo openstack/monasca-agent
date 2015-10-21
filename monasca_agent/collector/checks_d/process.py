@@ -44,36 +44,25 @@ class ProcessCheck(checks.AgentCheck):
         for proc in self._process_list:
             found = False
             for string in search_string:
-                if exact_match:
-                    try:
+                try:
+                    if exact_match:
                         if proc.name() == string:
                             found = True
-                    except psutil.NoSuchProcess:
-                        self.log.warning('Process %s disappeared while scanning'
-                                         % string)
-                        pass
-                    except psutil.AccessDenied as e:
-                        self.log.error('Access denied to %s process' % string)
-                        self.log.error('Error: %s' % e)
-                        raise
-                else:
-                    try:
+                    else:
                         cmdline = proc.cmdline()
 
                         if string in ' '.join(cmdline):
                             found = True
-                    except psutil.NoSuchProcess:
-                        self.warning('Process %s disappeared while scanning'
-                                     % string)
-                        pass
-                    except psutil.AccessDenied as e:
-                        self.log.error('Access denied to %s process'
-                                       % string)
-                        self.log.error('Error: %s' % e)
-                        raise
 
-                if found or string == 'All':
-                    found_process_list.append(proc.pid)
+                    if found or string == 'All':
+                        found_process_list.append(proc.pid)
+                except psutil.NoSuchProcess:
+                    # No way to log useful information here so just move on
+                    pass
+                except psutil.AccessDenied as e:
+                    self.log.error('Access denied to %s process' % string)
+                    self.log.error('Error: %s' % e)
+                    raise
 
         return set(found_process_list)
 
@@ -170,7 +159,7 @@ class ProcessCheck(checks.AgentCheck):
 
             # Skip processes dead in the meantime
             except psutil.NoSuchProcess:
-                self.warning('Process %s disappeared while scanning' % pid)
+                self.warning('Process %s disappeared while metrics were being collected' % pid)
                 pass
 
         if got_denied:
