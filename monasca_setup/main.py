@@ -40,7 +40,9 @@ def main(argv=None):
     # Detect and if possibly enable the agent service
     agent_service = detect_init(PREFIX_DIR, args.config_dir, args.log_dir, args.template_dir, username=args.user)
 
-    if args.detection_plugins is None:  # Skip base setup if running specific detection plugins
+    # Skip base setup if only installing plugins or running specific detection
+    # plugins
+    if not args.install_plugins_only and args.detection_plugins is None:
         if not args.skip_enable:
             agent_service.enable()
 
@@ -82,10 +84,14 @@ def main(argv=None):
         return 0
 
     # Now that the config is built, start the service
-    try:
-        agent_service.start(restart=True)
-    except subprocess.CalledProcessError:
-        log.error('The service did not startup correctly see %s' % args.log_dir)
+    if args.install_plugins_only:
+        log.info('Command line option install_plugins_only set, skipping '
+                 'service (re)start.')
+    else:
+        try:
+            agent_service.start(restart=True)
+        except subprocess.CalledProcessError:
+            log.error('The service did not startup correctly see %s' % args.log_dir)
 
 
 def base_configuration(args):
@@ -191,6 +197,10 @@ def parse_arguments(parser):
                         action="store_true", default=False)
     parser.add_argument('--skip_enable', help="By default the service is enabled, " +
                                               "which requires the script run as root. Set this to skip that step.",
+                        action="store_true")
+    parser.add_argument('--install_plugins_only', help="Only update plugin "
+                        "configuration, do not configure services, users, etc."
+                        " or restart services",
                         action="store_true")
     parser.add_argument('--user', help="User name to run monasca-agent as", default='mon-agent')
     parser.add_argument('-s', '--service', help="Service this node is associated with, added as a dimension.")

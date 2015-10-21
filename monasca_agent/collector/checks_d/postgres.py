@@ -242,7 +242,7 @@ SELECT relname,
         db = self.get_connection(key, host, port, user, password, dbname)
 
         # preset dimensions to the database name
-        dimensions = self._set_dimensions({'db': dbname}, instance)
+        dimensions = self._set_dimensions({'db': dbname, 'service': 'postgres'}, instance)
 
         # Check version
         version = self._get_version(key, db)

@@ -118,7 +118,7 @@ class RabbitMQ(monasca_setup.detection.Plugin):
         """
         config = monasca_setup.agent_config.Plugins()
         # First watch the process
-        config.merge(monasca_setup.detection.watch_process(['rabbitmq-server']))
+        config.merge(monasca_setup.detection.watch_process(['rabbitmq-server'], 'rabbitmq'))
         log.info("\tWatching the rabbitmq-server process.")
 
         try:
