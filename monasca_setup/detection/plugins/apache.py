@@ -7,8 +7,9 @@ import monasca_setup.detection
 
 log = logging.getLogger(__name__)
 
-apache_conf = '/root/.apache.cnf'
+DEFAULT_APACHE_CONFIG = '/root/.apache.cnf'
 DEFAULT_APACHE_URL = 'http://localhost/server-status?auto'
+CONFIG_ARG_KEYS = set(["url", "user", "password"])
 
 
 class Apache(monasca_setup.detection.Plugin):
@@ -32,6 +33,30 @@ class Apache(monasca_setup.detection.Plugin):
         if monasca_setup.detection.find_process_cmdline('apache2') is not None:
             self.available = True
 
+    def _read_apache_config(self, config_location):
+        # Read the apache config file to extract the needed variables.
+        client_section = False
+        apache_url = None
+        apache_user = None
+        apache_pass = None
+        try:
+            with open(config_location, "r") as config_file:
+                for row in config_file:
+                    if "[client]" in row:
+                        client_section = True
+                        continue
+                    if client_section:
+                        if "url=" in row:
+                            apache_url = row.split("=")[1].strip()
+                        if "user=" in row:
+                            apache_user = row.split("=")[1].strip()
+                        if "password=" in row:
+                            apache_pass = row.split("=")[1].strip()
+        except IOError:
+            log.warn("\tUnable to read {:s}".format(config_location))
+
+        return apache_url, apache_user, apache_pass
+
     def build_config(self):
         """Build the config as a Plugins object and return.
 
@@ -45,34 +70,22 @@ class Apache(monasca_setup.detection.Plugin):
         # Attempt login, requires either an empty root password from localhost
         # or relying on a configured /root/.apache.cnf
         if self.dependencies_installed():
-            log.info(
-                "\tAttempting to use client credentials from {:s}".format(apache_conf))
-            # Read the apache config file to extract the needed variables.
-            client_section = False
-            apache_url = None
-            apache_user = None
-            apache_pass = None
-            try:
-                with open(apache_conf, "r") as confFile:
-                    for row in confFile:
-                        if "[client]" in row:
-                            client_section = True
-                            pass
-                        if client_section:
-                            if "url=" in row:
-                                apache_url = row.split("=")[1].strip()
-                            if "user=" in row:
-                                apache_user = row.split("=")[1].strip()
-                            if "password=" in row:
-                                apache_pass = row.split("=")[1].strip()
-            except IOError:
-                log.info("\tUnable to read {:s}".format(apache_conf))
-                log.info("\tWill try to setup Apache plugin using defaults.")
+            # If any of the exact keys are present, use them.
+            if self.args and self.args.viewkeys() & CONFIG_ARG_KEYS:
+                log.info("Attempting to use credentials from command args")
+                apache_url = self.args.get("url", None)
+                apache_user = self.args.get("user", None)
+                apache_pass = self.args.get("password", None)
+            elif self.args and self.args.get("apache_config_file"):
+                config_file = self.args.get("apache_config_file")
+                apache_url, apache_user, apache_pass = self._read_apache_config(config_file)
+            else:
+                apache_url, apache_user, apache_pass = self._read_apache_config(DEFAULT_APACHE_CONFIG)
 
             if not apache_url:
+                log.warn("No url specified, using default url {:s}".format(DEFAULT_APACHE_URL))
                 apache_url = DEFAULT_APACHE_URL
 
-            opener = None
             if apache_user and apache_pass:
                 password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
                 password_mgr.add_password(None,
@@ -88,7 +101,6 @@ class Apache(monasca_setup.detection.Plugin):
 
             opener = urllib2.build_opener(handler)
 
-            response = None
             try:
                 request = opener.open(apache_url)
                 response = request.read()
@@ -105,7 +117,8 @@ class Apache(monasca_setup.detection.Plugin):
             except urllib2.URLError as e:
                 log.error('\tError {0} received when accessing url {1}.'.format(e.reason, apache_url) +
                           '\n\tPlease ensure the Apache web server is running and your configuration ' +
-                          'information in /root/.apache.cnf is correct.' + error_msg)
+                          'information is correct.' + error_msg)
+            # TODO(Ryan Brandt) this exception code is unreachable, will be caught by superclass URLError above
             except urllib2.HTTPError as e:
                 log.error('\tError code {0} received when accessing {1}'.format(e.code, apache_url) + error_msg)
         else:
