@@ -108,7 +108,7 @@ class KafkaCheck(checks.AgentCheck):
 
     def check(self, instance):
         raw_consumer_groups = self.read_config(instance, 'consumer_groups')
-        consumer_groups = self._convert_consumer_groups(raw_consumer_groups)
+        consumer_groups = self._parse_consumer_groups(raw_consumer_groups)
 
         kafka_host_ports = self.read_config(instance, 'kafka_connect_str')
         full_output = self.read_config(instance, 'full_output', cast=bool, optional=True)
