@@ -18,10 +18,7 @@ class Keystone(object):
         self._keystone_client = None
         self._token = None
 
-    def _get_ksclient(self):
-        """Get an endpoint and auth token from Keystone.
-
-        """
+    def get_credential_args(self):
         auth_url = self.config.get('keystone_url', None)
         username = self.config.get('username', None)
         password = str(self.config.get('password', None))
@@ -58,7 +55,13 @@ class Keystone(object):
                 kc_args.update({'domain_name': project_domain_name})
             if project_domain_id:
                 kc_args.update({'domain_id': project_domain_id})
+        return kc_args
 
+    def _get_ksclient(self):
+        """Get an endpoint and auth token from Keystone.
+
+        """
+        kc_args = self.get_credential_args()
         return ksclient.KSClient(**kc_args)
 
     def get_monasca_url(self):
