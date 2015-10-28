@@ -127,7 +127,7 @@ class Libvirt(Plugin):
                     init_config[arg] = self.literal_eval(self.args[arg])
 
             config['libvirt'] = {'init_config': init_config,
-                                 'instances': [{}]}
+                                 'instances': []}
 
         return config
 
