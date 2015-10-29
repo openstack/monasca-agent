@@ -30,7 +30,9 @@ class Ntp(monasca_setup.detection.Plugin):
             if match is None:
                 ntp_server = 'pool.ntp.org'
             else:
-                ntp_server = match.group(1)
+                # There can be additional options after the server hostname or IP Address
+                server_val = match.group(1)
+                ntp_server = server_val.split()[0]
         else:
             ntp_server = 'pool.ntp.org'
         if re.match('^127', ntp_server):
