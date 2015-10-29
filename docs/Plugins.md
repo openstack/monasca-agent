@@ -1014,6 +1014,8 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 
 `ping_only` will suppress all per-VM metrics aside from `host_alive_status` and `vm.host_alive_status`, including all I/O, network, memory, and CPU metrics.  [Aggregate Metrics](#aggregate-metrics), however, would still be enabled if `ping_only` is true.  By default, `ping_only` is false.  If both `ping_only` and `ping_check` are set to false, the only metrics published by the Libvirt plugin would be the Aggregate Metrics.
 
+**Note:** Ping checks are not currently supported in compute environments that utilize network namespaces.  Neutron, by default, enables namespaces, and is therefore not supported at this time.  Ping checks are known to be functional with Nova networking when a guest network named 'private' is used.  In any other environment, ping checks are automatically disabled, and there will be no `host_alive_status` metric, except when the hypervisor sees that the VM has shut down (in which case the value of 2 is returned, as shown in [Per-Instance Metrics](#per-instance-metrics)).  Proper Neutron namespace support is planned for a future release.
+
 Example config:
 ```
 init_config:
@@ -1080,7 +1082,7 @@ instance-00000004:
 | Name                 | Description                            | Associated Dimensions  |
 | -------------------- | -------------------------------------- | ---------------------- |
 | cpu.utilization_perc | Overall CPU utilization (percentage)   |                        |
-| host_alive_status    | Returns status: 0=OK, 1=fails ping check, 2=inactive  |         |
+| host_alive_status    | Returns status: 0=passes ping check, 1=fails ping check, 2=inactive  |         |
 | io.read_ops_sec      | Disk I/O read operations per second    | 'device' (ie, 'hdd')   |
 | io.write_ops_sec     | Disk I/O write operations per second   | 'device' (ie, 'hdd')   |
 | io.read_bytes_sec    | Disk I/O read bytes per second         | 'device' (ie, 'hdd')   |
