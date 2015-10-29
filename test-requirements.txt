@@ -1,5 +1,6 @@
-mock>=1.3.0
-flake8>=2.2.4
 nose==1.3.0
 hacking>=0.10.2
-testtools==1.8.0
+testtools
+mock
+mccabe
+flake8>=2.2.4
