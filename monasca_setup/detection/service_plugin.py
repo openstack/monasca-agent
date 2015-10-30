@@ -26,8 +26,32 @@ class ServicePlugin(Plugin):
         self.process_names = kwargs['process_names']
         self.service_api_url = kwargs.get('service_api_url')
         self.search_pattern = kwargs['search_pattern']
+        overwrite = kwargs['overwrite']
+        template_dir = kwargs['template_dir'],
+        if 'args' in kwargs:
+            args = kwargs['args']
+            if isinstance(args, str):
+                try:
+                    # Turn 'service_api_url=url' into
+                    # dict {'service_api_url':'url'}
+                    args_dict = dict([item.split('=') for item
+                                      in args.split()])
 
-        super(ServicePlugin, self).__init__(kwargs['template_dir'], kwargs['overwrite'], kwargs.get('args'))
+                    # Allow args to override all of these parameters
+                    if 'process_names' in args_dict:
+                        self.process_names = args_dict['process_names'].split(',')
+                    if 'service_api_url' in args_dict:
+                        self.service_api_url = args_dict['service_api_url']
+                    if 'search_pattern' in args_dict:
+                        self.search_pattern = args_dict['search_pattern']
+                    if 'overwrite' in args_dict:
+                        overwrite = args_dict['overwrite']
+                    if 'template_dir' in args_dict:
+                        template_dir = args_dict['template_dir']
+                except Exception:
+                    log.exception('Error parsing detection arguments')
+
+        super(ServicePlugin, self).__init__(template_dir, overwrite, kwargs.get('args'))
 
     def _detect(self):
         """Run detection.
