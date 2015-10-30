@@ -16,6 +16,7 @@
 """Monasca Agent interface for libvirt metrics"""
 
 import json
+import libvirt
 import os
 import stat
 import subprocess
@@ -26,6 +27,14 @@ from datetime import datetime
 from distutils.version import LooseVersion
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.collector.virt import inspector
+
+DOM_STATES = {libvirt.VIR_DOMAIN_BLOCKED: 'VM is blocked',
+              libvirt.VIR_DOMAIN_CRASHED: 'VM has crashed',
+              libvirt.VIR_DOMAIN_NONE: 'VM has no state',
+              libvirt.VIR_DOMAIN_PAUSED: 'VM is paused',
+              libvirt.VIR_DOMAIN_PMSUSPENDED: 'VM is in power management (s3) suspend',
+              libvirt.VIR_DOMAIN_SHUTDOWN: 'VM is shutting down',
+              libvirt.VIR_DOMAIN_SHUTOFF: 'VM has been shut off'}
 
 
 class LibvirtCheck(AgentCheck):
@@ -281,6 +290,32 @@ class LibvirtCheck(AgentCheck):
                     'timestamp': sample_time,
                     'value': value}
 
+    def _inspect_state(self, insp, inst, instance_cache, dims_customer, dims_operations):
+        """Look at the state of the instance, publish a metric using a
+           user-friendly description in the 'detail' metadata, and return
+           a status code (calibrated to UNIX status codes where 0 is OK)
+           so that remaining metrics can be skipped if the VM is not OK
+        """
+        inst_name = inst.name()
+        dom_status = inst.state()[0] - 1
+        metatag = None
+
+        if inst.state()[0] in DOM_STATES:
+            metatag = {'detail': DOM_STATES[inst.state()[0]]}
+        # A nova-suspended VM has a SHUTOFF Power State, but alternate Status
+        if inst.state() == [libvirt.VIR_DOMAIN_SHUTOFF, 5]:
+            metatag = {'detail': 'VM has been suspended'}
+
+        self.gauge('host_alive_status', dom_status, dimensions=dims_customer,
+                   delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                   hostname=instance_cache.get(inst_name)['hostname'],
+                   value_meta=metatag)
+        self.gauge('vm.host_alive_status', dom_status,
+                   dimensions=dims_operations,
+                   value_meta=metatag)
+
+        return dom_status
+
     def check(self, instance):
         """Gather VM metrics for each instance"""
 
@@ -331,16 +366,20 @@ class LibvirtCheck(AgentCheck):
                 self.log.error("{0} is not known to nova after instance cache update -- skipping this ghost VM.".format(inst_name))
                 continue
 
-            # Skip instances that are inactive
-            if inst.isActive() == 0:
-                detail = 'Instance is not active'
-                self.gauge('host_alive_status', 2, dimensions=dims_customer,
-                           delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
-                           hostname=instance_cache.get(inst_name)['hostname'],
-                           value_meta={'detail': detail})
-                self.gauge('vm.host_alive_status', 2, dimensions=dims_operations,
-                           value_meta={'detail': detail})
+            # Accumulate aggregate data
+            for gauge in agg_gauges:
+                if gauge in instance_cache.get(inst_name):
+                    agg_values[gauge] += instance_cache.get(inst_name)[gauge]
+
+            # Skip further processing on VMs that are not in an active state
+            if self._inspect_state(insp, inst, instance_cache,
+                                   dims_customer, dims_operations) != 0:
                 continue
+
+            # Skip the remainder of the checks if alive_only is True in the config
+            if self.init_config.get('alive_only'):
+                continue
+
             if inst_name not in metric_cache:
                 metric_cache[inst_name] = {}
 
@@ -350,39 +389,6 @@ class LibvirtCheck(AgentCheck):
                 self.log.info("Libvirt: {0} in probation for another {1} seconds".format(instance_cache.get(inst_name)['hostname'].encode('utf8'),
                                                                                          vm_probation_remaining))
                 continue
-
-            # Test instance's general responsiveness (ping check) if so configured
-            if self.init_config.get('ping_check') and 'private_ip' in instance_cache.get(inst_name):
-                detail = 'Ping check OK'
-                ping_cmd = self.init_config.get('ping_check').split()
-                ping_cmd.append(instance_cache.get(inst_name)['private_ip'])
-                with open(os.devnull, "w") as fnull:
-                    try:
-                        res = subprocess.call(ping_cmd,
-                                              stdout=fnull,
-                                              stderr=fnull)
-                        if res > 0:
-                            detail = 'Host failed ping check'
-                        self.gauge('host_alive_status', res, dimensions=dims_customer,
-                                   delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
-                                   hostname=instance_cache.get(inst_name)['hostname'],
-                                   value_meta={'detail': detail})
-                        self.gauge('vm.host_alive_status', res, dimensions=dims_operations,
-                                   value_meta={'detail': detail})
-                        # Do not attempt to process any more metrics for offline hosts
-                        if res > 0:
-                            continue
-                    except OSError as e:
-                        self.log.warn("OS error running '{0}' returned {1}".format(ping_cmd, e))
-
-            # Skip the remainder of the checks if ping_only is True in the config
-            if self.init_config.get('ping_only'):
-                continue
-
-            # Accumulate aggregate data
-            for gauge in agg_gauges:
-                if gauge in instance_cache.get(inst_name):
-                    agg_values[gauge] += instance_cache.get(inst_name)[gauge]
 
             self._inspect_cpu(insp, inst, instance_cache, metric_cache, dims_customer, dims_operations)
             self._inspect_disks(insp, inst, instance_cache, metric_cache, dims_customer, dims_operations)
@@ -405,6 +411,25 @@ class LibvirtCheck(AgentCheck):
             except KeyError:
                 self.log.debug("Balloon driver not active/available on guest {0} ({1})".format(inst_name,
                                                                                                instance_cache.get(inst_name)['hostname']))
+            # Test instance's remote responsiveness (ping check) if so configured
+            # NOTE: This is only supported for Nova networking at this time.
+            if self.init_config.get('ping_check') and 'private_ip' in instance_cache.get(inst_name):
+                ping_cmd = self.init_config.get('ping_check').split()
+                ping_cmd.append(instance_cache.get(inst_name)['private_ip'])
+                with open(os.devnull, "w") as fnull:
+                    try:
+                        res = subprocess.call(ping_cmd,
+                                              stdout=fnull,
+                                              stderr=fnull)
+                        self.gauge('ping_status', res, dimensions=dims_customer,
+                                   delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                                   hostname=instance_cache.get(inst_name)['hostname'])
+                        self.gauge('vm.ping_status', res, dimensions=dims_operations)
+                        # Do not attempt to process any more metrics for offline hosts
+                        if res > 0:
+                            continue
+                    except OSError as e:
+                        self.log.warn("OS error running '{0}' returned {1}".format(ping_cmd, e))
 
         # Save these metrics for the next collector invocation
         self._update_metric_cache(metric_cache)
