@@ -133,9 +133,9 @@ class Libvirt(Plugin):
 
     def dependencies_installed(self):
         try:
+            import json
             import monasca_agent.collector.virt.inspector
             import time
-            import yaml
 
             from novaclient import client
         except ImportError:

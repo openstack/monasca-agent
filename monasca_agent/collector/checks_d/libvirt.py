@@ -15,11 +15,11 @@
 #    under the License.
 """Monasca Agent interface for libvirt metrics"""
 
+import json
 import os
 import stat
 import subprocess
 import time
-import yaml
 
 from calendar import timegm
 from datetime import datetime
@@ -35,9 +35,9 @@ class LibvirtCheck(AgentCheck):
     def __init__(self, name, init_config, agent_config, instances=None):
         AgentCheck.__init__(self, name, init_config, agent_config, instances=[{}])
         self.instance_cache_file = "{0}/{1}".format(self.init_config.get('cache_dir'),
-                                                    'libvirt_instances.yaml')
+                                                    'libvirt_instances.json')
         self.metric_cache_file = "{0}/{1}".format(self.init_config.get('cache_dir'),
-                                                  'libvirt_metrics.yaml')
+                                                  'libvirt_metrics.json')
 
     def _test_vm_probation(self, created):
         """Test to see if a VM was created within the probation period.
@@ -102,8 +102,8 @@ class LibvirtCheck(AgentCheck):
 
         # Write the updated cache
         try:
-            with open(self.instance_cache_file, 'w') as cache_yaml:
-                yaml.safe_dump(id_cache, cache_yaml)
+            with open(self.instance_cache_file, 'w') as cache_json:
+                json.dump(id_cache, cache_json)
             if stat.S_IMODE(os.stat(self.instance_cache_file).st_mode) != 0o600:
                 os.chmod(self.instance_cache_file, 0o600)
         except IOError as e:
@@ -118,15 +118,15 @@ class LibvirtCheck(AgentCheck):
         """
         instance_cache = {}
         try:
-            with open(self.instance_cache_file, 'r') as cache_yaml:
-                instance_cache = yaml.safe_load(cache_yaml)
+            with open(self.instance_cache_file, 'r') as cache_json:
+                instance_cache = json.load(cache_json)
 
                 # Is it time to force a refresh of this data?
                 if self.init_config.get('nova_refresh') is not None:
                     time_diff = time.time() - instance_cache['last_update']
                     if time_diff > self.init_config.get('nova_refresh'):
                         self._update_instance_cache()
-        except (IOError, TypeError):
+        except (IOError, TypeError, ValueError):
             # The file may not exist yet, or is corrupt.  Rebuild it now.
             self.log.warning("Instance cache missing or corrupt, rebuilding.")
             instance_cache = self._update_instance_cache()
@@ -134,25 +134,16 @@ class LibvirtCheck(AgentCheck):
 
         return instance_cache
 
-    def _is_cache_corrupt(self, cache):
-        """Verify that the cache contains a valid dictionary
-        """
-        if cache.__class__.__name__ != 'dict':
-            self.log.warning("Corrupt metrics cache detected.  Will rebuild.")
-            return True
-        return False
-
     def _load_metric_cache(self):
         """Load the counter metrics from the previous collection iteration
         """
         metric_cache = {}
         try:
-            with open(self.metric_cache_file, 'r') as cache_yaml:
-                metric_cache = yaml.safe_load(cache_yaml)
-            if self._is_cache_corrupt(metric_cache):
-                metric_cache = {}
-        except IOError:
+            with open(self.metric_cache_file, 'r') as cache_json:
+                metric_cache = json.load(cache_json)
+        except (IOError, TypeError, ValueError):
             # The file may not exist yet.
+            self.log.warning("Metrics cache missing or corrupt, rebuilding.")
             metric_cache = {}
             pass
 
@@ -160,8 +151,8 @@ class LibvirtCheck(AgentCheck):
 
     def _update_metric_cache(self, metric_cache):
         try:
-            with open(self.metric_cache_file, 'w') as cache_yaml:
-                yaml.safe_dump(metric_cache, cache_yaml)
+            with open(self.metric_cache_file, 'w') as cache_json:
+                json.dump(metric_cache, cache_json)
             if stat.S_IMODE(os.stat(self.metric_cache_file).st_mode) != 0o600:
                 os.chmod(self.metric_cache_file, 0o600)
         except IOError as e:
