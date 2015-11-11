@@ -760,37 +760,38 @@ exchanges=nova,cinder,ceilometer,glance,keystone,neutron,heat
 ```
 
  
+For more details of each metric, please refer the [RabbitMQ documentation](http://www.rabbitmq.com/documentation.html).
 The RabbitMQ checks return the following metrics:
 
-| Metric Name | Dimensions | Check Type |
-| ----------- | ---------- | --------- |
-| rabbitmq.node.fd_used | hostname, node, service=rabbitmq | Node |
-| rabbitmq.node.sockets_used | hostname, node, service=rabbitmq | Node |
-| rabbitmq.node.run_queue | hostname, node, service=rabbitmq | Node |
-| rabbitmq.node.mem_used | hostname, node, service=rabbitmq | Node |
-| rabbitmq.exchange.messages.received_count | hostname, exchange, vhost, type, service=rabbitmq | Exchange |
-| rabbitmq.exchange.messages.received_rate | hostname, exchange, vhost, type, service=rabbitmq | Exchange |
-| rabbitmq.exchange.messages.published_count | hostname, exchange, vhost, type, service=rabbitmq | Exchange |
-| rabbitmq.exchange.messages.published_rate | hostname, exchange, vhost, type, service=rabbitmq | Exchange |
-| rabbitmq.queue.consumers | hostname, queue, vhost, service=rabbitmq | Queue |
-| rabbitmq.queue.memory | hostname, queue, vhost, service=rabbitmq | Queue |
-| rabbitmq.queue.active_consumers | hostname, queue, vhost, service=rabbitmq | Queue |
-| rabbitmq.queue.messages | hostname, queue, vhost, service=rabbitmq | Queue |
-| rabbitmq.queue.messages.rate | hostname, queue, vhost, service=rabbitmq | Queue |
-| rabbitmq.queue.messages.ready | hostname, queue, vhost, service=rabbitmq | Queue |
-| rabbitmq.queue.messages.ready_rate | hostname, queue, vhost, service=rabbitmq | Queue |
-| rabbitmq.queue.messages.publish_count | hostname, queue, vhost, service=rabbitmq | Queue |
-| rabbitmq.queue.messages.publish_rate | hostname, queue, vhost, service=rabbitmq | Queue |
-| rabbitmq.queue.messages.deliver_count | hostname, queue, vhost, service=rabbitmq | Queue |
-| rabbitmq.queue.messages.deliver_rate | hostname, queue, vhost, service=rabbitmq | Queue |
-| rabbitmq.queue.messages.redeliver_count | hostname, queue, vhost, service=rabbitmq | Queue |
-| rabbitmq.queue.messages.redeliver_rate | hostname, queue, vhost, service=rabbitmq | Queue |
-| rabbitmq.queue.messages.unacknowledged | hostname, queue, vhost, service=rabbitmq | Queue |
-| rabbitmq.queue.messages.unacknowledged_rate | hostname, queue, vhost, service=rabbitmq | Queue |
-| rabbitmq.queue.messages.deliver_get_count | hostname, queue, vhost, service=rabbitmq | Queue |
-| rabbitmq.queue.messages.deliver_get_rate | hostname, queue, vhost, service=rabbitmq | Queue |
-| rabbitmq.queue.messages.ack_count | hostname, queue, vhost, service=rabbitmq | Queue |
-| rabbitmq.queue.messages.ack_rate | hostname, queue, vhost, service=rabbitmq | Queue |
+| Metric Name | Dimensions | Check Type | Description |
+| ----------- | ---------- | ---------- | ----------- |
+| rabbitmq.node.fd_used | hostname, node, service=rabbitmq | Node | Value of the "fd_used" field in the response of /api/nodes |
+| rabbitmq.node.sockets_used | hostname, node, service=rabbitmq | Node | Value of the "sockets_used" field in the response of /api/nodes |
+| rabbitmq.node.run_queue | hostname, node, service=rabbitmq | Node | Value of the "run_queue" field in the response of /api/nodes |
+| rabbitmq.node.mem_used | hostname, node, service=rabbitmq | Node | Value of the "mem_used" field in the response of /api/nodes |
+| rabbitmq.exchange.messages.received_count | hostname, exchange, vhost, type, service=rabbitmq | Exchange | Value of the "publish_in" field of "message_stats" object |
+| rabbitmq.exchange.messages.received_rate | hostname, exchange, vhost, type, service=rabbitmq | Exchange | Value of the "rate" field of "message_stats/publish_in_details" object |
+| rabbitmq.exchange.messages.published_count | hostname, exchange, vhost, type, service=rabbitmq | Exchange | Value of the "publish_out" field of "message_stats" object |
+| rabbitmq.exchange.messages.published_rate | hostname, exchange, vhost, type, service=rabbitmq | Exchange | Value of the "rate" field of "message_stats/publish_out_details" object |
+| rabbitmq.queue.consumers | hostname, queue, vhost, service=rabbitmq | Queue | Number of consumers |
+| rabbitmq.queue.memory | hostname, queue, vhost, service=rabbitmq | Queue | Bytes of memory consumed by the Erlang process associated with the queue, including stack, heap and internal structures |
+| rabbitmq.queue.active_consumers | hostname, queue, vhost, service=rabbitmq | Queue | |
+| rabbitmq.queue.messages | hostname, queue, vhost, service=rabbitmq | Queue | Sum of ready and unacknowledged messages (queue depth) |
+| rabbitmq.queue.messages.rate | hostname, queue, vhost, service=rabbitmq | Queue | Value of the "rate" field of "message_details" object |
+| rabbitmq.queue.messages.ready | hostname, queue, vhost, service=rabbitmq | Queue | Number of messages ready to be delivered to clients |
+| rabbitmq.queue.messages.ready_rate | hostname, queue, vhost, service=rabbitmq | Queue | Value of the "rate" field of "message_ready_details" object |
+| rabbitmq.queue.messages.publish_count | hostname, queue, vhost, service=rabbitmq | Queue | Value of the "publish" field of "message_stats" object |
+| rabbitmq.queue.messages.publish_rate | hostname, queue, vhost, service=rabbitmq | Queue | Value of the "rate" field of "message_stats/publish_details" object |
+| rabbitmq.queue.messages.deliver_count | hostname, queue, vhost, service=rabbitmq | Queue | Value of the "deliver" field of "message_stats" object |
+| rabbitmq.queue.messages.deliver_rate | hostname, queue, vhost, service=rabbitmq | Queue | Value of the "rate" field of "message_stats/deliver_details" object |
+| rabbitmq.queue.messages.redeliver_count | hostname, queue, vhost, service=rabbitmq | Queue | Value of the "redeliver" field of "message_stats" object |
+| rabbitmq.queue.messages.redeliver_rate | hostname, queue, vhost, service=rabbitmq | Queue | Value of the "rate" field of "message_stats/redeliver_details" object |
+| rabbitmq.queue.messages.unacknowledged | hostname, queue, vhost, service=rabbitmq | Queue | Number of messages delivered to clients but not yet acknowledged |
+| rabbitmq.queue.messages.unacknowledged_rate | hostname, queue, vhost, service=rabbitmq | Queue | Value of the "rate" field of "message_stats/messages_unacknowledged_details" object |
+| rabbitmq.queue.messages.deliver_get_count | hostname, queue, vhost, service=rabbitmq | Queue | Value of the "deliver_get" field of "message_stats" object |
+| rabbitmq.queue.messages.deliver_get_rate | hostname, queue, vhost, service=rabbitmq | Queue | Value of the "rate" field of "message_stats/deliver_get_details" object |
+| rabbitmq.queue.messages.ack_count | hostname, queue, vhost, service=rabbitmq | Queue | |
+| rabbitmq.queue.messages.ack_rate | hostname, queue, vhost, service=rabbitmq | Queue | |
 
 
 ## Apache Web Server Checks
@@ -1014,6 +1015,8 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 
 `ping_only` will suppress all per-VM metrics aside from `host_alive_status` and `vm.host_alive_status`, including all I/O, network, memory, and CPU metrics.  [Aggregate Metrics](#aggregate-metrics), however, would still be enabled if `ping_only` is true.  By default, `ping_only` is false.  If both `ping_only` and `ping_check` are set to false, the only metrics published by the Libvirt plugin would be the Aggregate Metrics.
 
+**Note:** Ping checks are not currently supported in compute environments that utilize network namespaces.  Neutron, by default, enables namespaces, and is therefore not supported at this time.  Ping checks are known to be functional with Nova networking when a guest network named 'private' is used.  In any other environment, ping checks are automatically disabled, and there will be no `host_alive_status` metric, except when the hypervisor sees that the VM has shut down (in which case the value of 2 is returned, as shown in [Per-Instance Metrics](#per-instance-metrics)).  Proper Neutron namespace support is planned for a future release.
+
 Example config:
 ```
 init_config:
@@ -1080,7 +1083,7 @@ instance-00000004:
 | Name                 | Description                            | Associated Dimensions  |
 | -------------------- | -------------------------------------- | ---------------------- |
 | cpu.utilization_perc | Overall CPU utilization (percentage)   |                        |
-| host_alive_status    | Returns status: 0=OK, 1=fails ping check, 2=inactive  |         |
+| host_alive_status    | Returns status: 0=passes ping check, 1=fails ping check, 2=inactive  |         |
 | io.read_ops_sec      | Disk I/O read operations per second    | 'device' (ie, 'hdd')   |
 | io.write_ops_sec     | Disk I/O write operations per second   | 'device' (ie, 'hdd')   |
 | io.read_bytes_sec    | Disk I/O read bytes per second         | 'device' (ie, 'hdd')   |

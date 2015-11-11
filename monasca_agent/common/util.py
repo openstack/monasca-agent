@@ -592,7 +592,7 @@ def load_check_directory():
             continue
 
         # Look for the per-check config, which *must* exist
-        if not check_config.get('instances'):
+        if 'instances' not in check_config:
             log.error("Config %s is missing 'instances'" % conf_path)
             continue
 

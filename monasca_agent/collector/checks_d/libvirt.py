@@ -32,8 +32,8 @@ class LibvirtCheck(AgentCheck):
 
     """Inherit Agent class and gather libvirt metrics"""
 
-    def __init__(self, name, init_config, agent_config):
-        AgentCheck.__init__(self, name, init_config, agent_config)
+    def __init__(self, name, init_config, agent_config, instances=None):
+        AgentCheck.__init__(self, name, init_config, agent_config, instances=[{}])
         self.instance_cache_file = "{0}/{1}".format(self.init_config.get('cache_dir'),
                                                     'libvirt_instances.yaml')
         self.metric_cache_file = "{0}/{1}".format(self.init_config.get('cache_dir'),
