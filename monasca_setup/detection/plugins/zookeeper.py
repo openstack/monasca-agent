@@ -29,7 +29,7 @@ class Zookeeper(monasca_setup.detection.Plugin):
         config = monasca_setup.agent_config.Plugins()
         # First watch the process
         log.info("\tWatching the zookeeper process.")
-        config.merge(monasca_setup.detection.watch_process(['org.apache.zookeeper.server'], 'zookeeper',
+        config.merge(monasca_setup.detection.watch_process(['org.apache.zookeeper.server'], component='zookeeper',
                                                            exact_match=False))
 
         log.info("\tEnabling the zookeeper plugin")
