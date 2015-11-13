@@ -7,7 +7,7 @@ log = logging.getLogger(__name__)
 
 class SwiftRecon(monasca_setup.detection.Plugin):
 
-    """Detect Swift proxy daemons and setup configuration to monitor them.
+    """Detect Swift proxy daemon and setup configuration for swift-recon.
 
     """
 
