@@ -1,7 +1,11 @@
+import logging
+
+import monasca_setup.agent_config
 import monasca_setup.detection
 
+log = logging.getLogger(__name__)
 
-class SwiftRecon(monasca_setup.detection.ServicePlugin):
+class SwiftRecon(monasca_setup.detection.Plugin):
 
     """Detect Swift proxy daemons and setup configuration to monitor them.
 
