@@ -32,10 +32,10 @@ class SwiftRecon(checks.AgentCheck):
                 m = re.match(r'Disk usage: space (\w+): (\d+) of (\d+)', line)
                 if m:
                     if m.group(1) == 'used':
-                        self.diskusage['used'] = long(m.group(2)) / 1024 / 1024
-                        self.diskusage['capacity'] = long(m.group(3)) / 1024 / 1024
+                        self.diskusage['used'] = long(m.group(2))
+                        self.diskusage['capacity'] = long(m.group(3))
                     elif m.group(1) == 'free':
-                        self.diskusage['free'] = long(m.group(2)) / 1024 / 1024
+                        self.diskusage['free'] = long(m.group(2))
                 else:
                     continue
         return self.diskusage
@@ -64,7 +64,7 @@ class SwiftRecon(checks.AgentCheck):
 
             assert type(value) in (types.IntType, types.LongType, types.FloatType)
 
-            metric = metric + '_kb'
+            metric = metric + '_bytes'
             metric = self.normalize(metric.lower(), 'swift.recon')
             log.debug("Sending {0}={1}".format(metric, value))
             self.gauge(metric, value, dimensions=dimensions)
