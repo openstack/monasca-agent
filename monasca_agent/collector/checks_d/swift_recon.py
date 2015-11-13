@@ -7,7 +7,7 @@ import monasca_agent.collector.checks as checks
 
 log = logging.getLogger(__name__)
 
-class SwiftRconProxy(checks.AgentCheck):
+class SwiftRecon(checks.AgentCheck):
 
     GAUGES = [
             "storage.used",
