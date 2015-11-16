@@ -65,6 +65,6 @@ class SwiftRecon(checks.AgentCheck):
             assert type(value) in (types.IntType, types.LongType, types.FloatType)
 
             metric = metric + '_bytes'
-            metric = self.normalize(metric.lower(), 'swift.recon')
+            metric = self.normalize(metric.lower(), 'swift.cluster')
             log.debug("Sending {0}={1}".format(metric, value))
             self.gauge(metric, value, dimensions=dimensions)
