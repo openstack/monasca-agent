@@ -1,0 +1,4 @@
+init_config: null
+
+instances:
+- name: swift-recon
