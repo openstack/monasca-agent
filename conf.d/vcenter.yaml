@@ -1,0 +1,13 @@
+init_config: {}
+
+instances:
+    # vcenter - hostname or ipaddress of the vcenter server
+    # username & password of the vcenter server
+    # clusters - list of clusters to be monitored
+    #    dimensions:
+    #        vcenter:ip
+    #        cluster:clustername
+    - vcenter_ip: <vcenter-ip>
+        username: <user>
+        password: <password>
+        clusters: <[cluster list]>

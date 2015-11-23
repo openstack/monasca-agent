@@ -61,6 +61,9 @@
     - [Overview](#overview-1)
     - [Metrics](#metrics-1)
     - [Configuration](#configuration-1)
+  - [VCenter Cluster Monitoring](#vcenter-cluster-monitoring)
+    - [ESX Cluster Metrics](#esx-cluster-metrics)
+    - [ESX Cluster Dimensions](#esx-cluster-dimensions)
 - [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -1295,5 +1298,42 @@ Each metrics show statistics collected in PostgreSQL. The PostgreSQL checks retu
 | postgresql.index_rows_read | hostname, db, service=postgres, table, index | Value of the "idx_tup_read" of "pg_stat_user_indexes" |
 
 
+# VCenter Cluster Monitoring
+This plugin provides metrics for VMware ESX clusters. It connects to vCenter server with its credentials and collects the configured cluster's performance data.
+
+## Sample Config
+```
+init_config: {}
+instances:
+    - vcenter_ip: <vcenter-ip or fqdn>
+        username: <vcenter-user>
+        password: <vcenter-password>
+        clusters: <[cluster-name-list]> # e.g: [cluster-1, cluster-2]
+```
+
+## ESX Cluster Metrics
+Below are the list of metrics collected by this plugin from the configured cluster
+| Metric Name | Description |
+| ----------- | ---------- |
+| vcenter.cpu.total_mhz | Total amount of CPU resources of all hosts in the cluster, as measured in megahertz. ESX counter name: cpu.totalmhz.average |
+| vcenter.cpu.used_mhz | Sum of the average CPU usage values, in megahertz, of all virtual machines in the cluster. ESX counter name: cpu.usagemhz.average |
+| vcenter.cpu.used_perc | CPU usage in percent, during the interval |
+| vcenter.cpu.total_logical_cores | Aggregated number of CPU threads. ESX counter name: numCpuThreads |
+| vcenter.mem.total_mb | Total amount of machine memory of all hosts in the cluster that is available for guest memory and guest overhead memory. ESX counter name: mem.consumed.average |
+| vcenter.mem.used_mb | A cluster's consumed memory consists of guest consumed memory and overhead memory. It does not include host-specific overhead memory. ESX counter name: mem.consumed.average |
+| vcenter.mem.used_perc | A cluster's consumed memory in percentage |
+| vcenter.disk.total_space_mb | Aggregation of maximum capacities of datastores connected to the hosts of a cluster, in megabytes. ESX counter name: summary.capacity |
+| vcenter.disk.total_used_space_mb | Aggregation of all available capacities of datastores connected to the hosts of a cluster, in megabytes. ESX counter name: summary.freeSpace |
+| vcenter.disk.total_used_space_perc | Aggregation of all available capacities of datastores connected to the hosts of a cluster, in percent |
+
+## ESX Cluster Dimensions
+```
+    "vcenter_ip": <vcenter-ip or fqdn>,
+    "cluster": <cluster-name>,
+    "host_type": "compute_node",
+    "role": "esx",
+    "id": <cluster-name>-<vcenter-ip or fqdn>
+```
+
 # License
-Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
+Copyright (c) 2016 Hewlett Packard Enterprise Development Company, L.P.
