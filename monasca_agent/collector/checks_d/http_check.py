@@ -138,7 +138,6 @@ class HTTPCheck(services_checks.ServicesCheck):
             return True, content
 
     def _check(self, instance):
-        content = ''
         addr = instance.get("url", None)
         pattern = instance.get('match_pattern', None)
 
@@ -155,12 +154,12 @@ class HTTPCheck(services_checks.ServicesCheck):
             if re.search(pattern, result_string, re.DOTALL):
                 self.log.debug("Pattern match successful")
             else:
-                error_string = 'Pattern match failed! "{0}" not in "{1}"'.format(pattern, content)
+                error_string = 'Pattern match failed! "{0}" not in "{1}"'.format(pattern, result_string)
                 self.log.info(error_string)
                 self.gauge('http_status',
                            1,
                            dimensions=dimensions,
-                           value_meta={'error': error_string})
+                           value_meta={'error': error_string[:2048]})
                 return services_checks.Status.DOWN, error_string
 
         success_string = '{0} is UP'.format(addr)
