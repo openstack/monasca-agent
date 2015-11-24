@@ -99,7 +99,7 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
 
         # Run the main loop.
         while self.run_forever:
-
+            collection_start = time.time()
             # enable profiler if needed
             profiled = False
             if config.get('profile', False) and config.get('profile').lower() == 'yes':
@@ -135,7 +135,13 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
             # Only plan for the next loop if we will continue,
             # otherwise just exit quickly.
             if self.run_forever:
-                time.sleep(check_frequency)
+                collection_time = time.time() - collection_start
+                if collection_time < check_frequency:
+                    time.sleep(check_frequency - collection_time)
+                else:
+                    log.info("Collection took {0} which is as long or longer then the configured collection frequency "
+                             "of {1}. Starting collection again without waiting in result.".format(collection_time,
+                                                                                                   check_frequency))
 
         # Now clean-up.
         try:
