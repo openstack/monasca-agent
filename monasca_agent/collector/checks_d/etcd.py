@@ -2,9 +2,8 @@
 import requests
 
 # project
-from checks import AgentCheck
-from config import _is_affirmative
-from util import headers
+from monasca_agent.collector.checks import AgentCheck
+from monasca_agent.common.util import headers
 
 
 class Etcd(AgentCheck):
@@ -74,7 +73,7 @@ class Etcd(AgentCheck):
         ssl_params = {
             'ssl_keyfile': instance.get('ssl_keyfile'),
             'ssl_certfile': instance.get('ssl_certfile'),
-            'ssl_cert_validation': _is_affirmative(instance.get('ssl_cert_validation', True)),
+            'ssl_cert_validation': instance.get('ssl_cert_validation', True),
             'ssl_ca_certs': instance.get('ssl_ca_certs'),
         }
 
