@@ -128,7 +128,7 @@ case "$1" in
               # (right now only monasca-agent supports additional flags)
         su $AGENTUSER -c "$AGENTPATH info $@"
         COLLECTOR_RETURN=$?
-        su $AGENTUSER -c "$MONASCASTATSDPATH info"
+        su $AGENTUSER -c "$MONASCASTATSDPATH --info"
         MONASCASTATSD_RETURN=$?
         su $AGENTUSER -c "$FORWARDERPATH info"
         FORWARDER_RETURN=$?
