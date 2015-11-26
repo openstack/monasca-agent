@@ -12,7 +12,13 @@ class SwiftRecon(checks.AgentCheck):
     GAUGES = [
             "storage.used",
             "storage.free",
-            "storage.capacity"
+            "storage.capacity",
+            "md5.ring.matched",
+            "md5.ring.not_matched",
+            "md5.ring.errors",
+            "md5.swiftconf.matched",
+            "md5.swiftconf.not_matched",
+            "md5.swiftconf.errors",
             ]
 
     def swift_recon(self, params):
@@ -40,10 +46,37 @@ class SwiftRecon(checks.AgentCheck):
                     continue
         return self.diskusage
 
+    md5 = {}
+    def get_md5 (self):
+        if not self.md5:
+            result = self.swift_recon("--md5")
+            kind = 'undef'
+            for line in result.splitlines():
+                m = re.match(r'.* Checking (\w+) md5sum', line)
+                if m:
+                    kind = m.group(1).replace(".", "")
+                    self.md5[kind] = {}
+                    continue
+
+                m = re.match(r'(\d+)/(\d+) hosts matched, (\d+) error\[s\] while checking hosts', line)
+                if m:
+                    self.md5[kind]['matched'] = int(m.group(1))
+                    self.md5[kind]['not_matched'] = int(m.group(2) - m.group(1))
+                    self.md5[kind]['errors'] = int(m.group(3))
+                else:
+                    continue
+        return self.md5
+
     def storgae(self, value):
         self.get_diskusage()
         if value in self.diskusage:
             return self.diskusage[value]
+
+    def consistency(self, kind, value):
+        self.get_md5()
+        if kind in self.md5:
+            if value in self.md5[kind]:
+                return self.md5[kind][value]
 
     def storage_free(self):
         return self.storgae('free')
@@ -53,6 +86,24 @@ class SwiftRecon(checks.AgentCheck):
 
     def storage_capacity(self):
         return self.storgae('capacity')
+
+    def md5_ring_matched(self):
+        return self.consistency('ring', 'matched')
+
+    def md5_ring_not_matched(self):
+        return self.consistency('ring', 'not_matched')
+
+    def md5_ring_errors(self):
+        return self.consistency('ring', 'errors')
+
+    def md5_swiftconf_matched(self):
+        return self.consistency('swiftconf', 'matched')
+
+    def md5_swiftconf_not_matched(self):
+        return self.consistency('swiftconf', 'not_matched')
+
+    def md5_swiftconf_errors(self):
+        return self.consistency('swiftconf', 'errors')
 
     def check(self, instance):
         dimensions = self._set_dimensions(None, instance)
@@ -64,7 +115,9 @@ class SwiftRecon(checks.AgentCheck):
 
             assert type(value) in (types.IntType, types.LongType, types.FloatType)
 
-            metric = metric + '_bytes'
+            if metric.startswith('storage'):
+                metric = metric + '_bytes'
+                
             metric = self.normalize(metric.lower(), 'swift.cluster')
             log.debug("Sending {0}={1}".format(metric, value))
             self.gauge(metric, value, dimensions=dimensions)
