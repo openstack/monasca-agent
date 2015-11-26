@@ -40,19 +40,19 @@ class SwiftRecon(checks.AgentCheck):
                     continue
         return self.diskusage
 
-    def storgae(self, value):
+    def storage(self, value):
         self.get_diskusage()
         if value in self.diskusage:
             return self.diskusage[value]
 
     def storage_free(self):
-        return self.storgae('free')
+        return self.storage('free')
 
     def storage_used(self):
-        return self.storgae('used')
+        return self.storage('used')
 
     def storage_capacity(self):
-        return self.storgae('capacity')
+        return self.storage('capacity')
 
     def check(self, instance):
         dimensions = self._set_dimensions(None, instance)
