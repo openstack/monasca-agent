@@ -16,9 +16,11 @@ class SwiftRecon(checks.AgentCheck):
             "md5.ring.matched",
             "md5.ring.not_matched",
             "md5.ring.errors",
+            "md5.ring.all",
             "md5.swiftconf.matched",
             "md5.swiftconf.not_matched",
             "md5.swiftconf.errors",
+            "md5.swiftconf.all",
             ]
 
     def swift_recon(self, params):
@@ -63,6 +65,7 @@ class SwiftRecon(checks.AgentCheck):
                     self.md5[kind]['matched'] = int(m.group(1))
                     self.md5[kind]['not_matched'] = int(m.group(2) - m.group(1))
                     self.md5[kind]['errors'] = int(m.group(3))
+                    self.md5[kind]['all'] = int(m.group(1) + m.group(2) + m.group(3))
                 else:
                     continue
         return self.md5
@@ -117,7 +120,7 @@ class SwiftRecon(checks.AgentCheck):
 
             if metric.startswith('storage'):
                 metric = metric + '_bytes'
-                
+
             metric = self.normalize(metric.lower(), 'swift.cluster')
             log.debug("Sending {0}={1}".format(metric, value))
             self.gauge(metric, value, dimensions=dimensions)
