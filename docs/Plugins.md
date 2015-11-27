@@ -54,6 +54,7 @@
     - [Instance Cache](#instance-cache)
     - [Metrics Cache](#metrics-cache)
     - [Per-Instance Metrics](#per-instance-metrics)
+      - [host_alive_status Codes](#host_alive_status-codes)
     - [VM Dimensions](#vm-dimensions)
     - [Aggregate Metrics](#aggregate-metrics)
   - [Crash Dump Monitoring](#crash-dump-monitoring)
@@ -1011,9 +1012,9 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 
 `vm_probation` specifies a period of time (in seconds) in which to suspend metrics from a newly-created VM.  This is to prevent quickly-obsolete metrics in an environment with a high amount of instance churn (VMs created and destroyed in rapid succession).  The default probation length is 300 seconds (five minutes).  Setting to 0 disables VM probation, and metrics will be recorded as soon as possible after a VM is created.
 
-`ping_check` includes the command line (sans the IP address) used to perform a ping check against instances.  Set to False (or omit altogether) to disable ping checks.  This is automatically populated during `monasca-setup` from a list of possible `ping` command lines.  Generally, `fping` is preferred over `ping` because it can return a failure with sub-second resolution, but if `fping` does not exist on the system, `ping` will be used instead.  If ping_check is disabled, the `host_alive_status` metric will not be published unless that VM is inactive.  This is because the host status is inconclusive without a ping check.
+`ping_check` includes the command line (sans the IP address) used to perform a ping check against instances.  Set to False (or omit altogether) to disable ping checks.  This is automatically populated during `monasca-setup` from a list of possible `ping` command lines.  Generally, `fping` is preferred over `ping` because it can return a failure with sub-second resolution, but if `fping` does not exist on the system, `ping` will be used instead.
 
-`ping_only` will suppress all per-VM metrics aside from `host_alive_status` and `vm.host_alive_status`, including all I/O, network, memory, and CPU metrics.  [Aggregate Metrics](#aggregate-metrics), however, would still be enabled if `ping_only` is true.  By default, `ping_only` is false.  If both `ping_only` and `ping_check` are set to false, the only metrics published by the Libvirt plugin would be the Aggregate Metrics.
+`alive_only` will suppress all per-VM metrics aside from `host_alive_status` and `vm.host_alive_status`, including all I/O, network, memory, ping, and CPU metrics.  [Aggregate Metrics](#aggregate-metrics), however, would still be enabled if `alive_only` is true.  By default, `alive_only` is false.
 
 **Note:** Ping checks are not currently supported in compute environments that utilize network namespaces.  Neutron, by default, enables namespaces, and is therefore not supported at this time.  Ping checks are known to be functional with Nova networking when a guest network named 'private' is used.  In any other environment, ping checks are automatically disabled, and there will be no `host_alive_status` metric, except when the hypervisor sees that the VM has shut down (in which case the value of 2 is returned, as shown in [Per-Instance Metrics](#per-instance-metrics)).  Proper Neutron namespace support is planned for a future release.
 
@@ -1029,7 +1030,7 @@ init_config:
     nova_refresh: 14400
     vm_probation: 300
     ping_check: /usr/bin/fping -n -c1 -t250 -q
-    ping_only: false
+    alive_only: false
 instances:
     - {}
 ```
@@ -1039,7 +1040,7 @@ Note: If the Nova service login credentials are changed, `monasca-setup` would n
 
 Example `monasca-setup` usage:
 ```
-monasca-setup -d libvirt -a 'ping_check=false ping_only=false'
+monasca-setup -d libvirt -a 'ping_check=false alive_only=false' --overwrite
 ```
 
 ### Instance Cache
@@ -1083,7 +1084,7 @@ instance-00000004:
 | Name                 | Description                            | Associated Dimensions  |
 | -------------------- | -------------------------------------- | ---------------------- |
 | cpu.utilization_perc | Overall CPU utilization (percentage)   |                        |
-| host_alive_status    | Returns status: 0=passes ping check, 1=fails ping check, 2=inactive  |         |
+| host_alive_status    | See [host_alive_status Codes](#host_alive_status-codes) below | |
 | io.read_ops_sec      | Disk I/O read operations per second    | 'device' (ie, 'hdd')   |
 | io.write_ops_sec     | Disk I/O write operations per second   | 'device' (ie, 'hdd')   |
 | io.read_bytes_sec    | Disk I/O read bytes per second         | 'device' (ie, 'hdd')   |
@@ -1093,11 +1094,26 @@ instance-00000004:
 | net.out_packets_sec  | Network transmitted packets per second | 'device' (ie, 'vnet0') |
 | net.in_bytes_sec     | Network received bytes per second      | 'device' (ie, 'vnet0') |
 | net.out_bytes_sec    | Network transmitted bytes per second   | 'device' (ie, 'vnet0') |
-| mem.free_mb          | Free memory in Mbytes               |                        |
-| mem.total_mb         | Total memory in Mbytes              |                        |
-| mem.used_mb          | Used memory in Mbytes               |                        |
+| mem.free_mb          | Free memory in Mbytes                  |                        |
+| mem.total_mb         | Total memory in Mbytes                 |                        |
+| mem.used_mb          | Used memory in Mbytes                  |                        |
 | mem.free_perc        | Percent of memory free                 |                        |
-| mem.swap_used_mb     | Used swap space in Mbytes           |                        |
+| mem.swap_used_mb     | Used swap space in Mbytes              |                        |
+| ping_status          | 0 for ping success, 1 for ping failure |                        |
+
+#### host_alive_status Codes
+| Code | Description                          | value_meta 'detail'                    |
+| ---- | -------------------------------------|--------------------------------------- |
+| -1   | No state                             | VM has no state                        |
+|  0   | Running / OK                         | None                                   |
+|  1   | Idle / blocked                       | VM is blocked                          |
+|  2   | Paused                               | VM is paused                           |
+|  3   | Shutting down                        | VM is shutting down                    |
+|  4   | Shut off                             | VM has been shut off                   |
+|  4   | Nova suspend                         | VM has been suspended                  |
+|  5   | Crashed                              | VM has crashed                         |
+|  6   | Power management suspend (S3 state)  | VM is in power management (s3) suspend |
+
 
 Memory statistics require a balloon driver on the VM.  For the Linux kernel, this is the `CONFIG_VIRTIO_BALLOON` configuration parameter, active by default in Ubuntu, and enabled by default as a kernel module in Debian, CentOS, and SUSE.
 
