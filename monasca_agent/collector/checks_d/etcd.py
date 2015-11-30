@@ -4,6 +4,7 @@ import requests
 # project
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.common.util import headers
+import monasca_agent.collector.checks.services_checks as services_checks
 
 
 class Etcd(AgentCheck):
@@ -66,8 +67,7 @@ class Etcd(AgentCheck):
             raise Exception('etcd instance missing "url" value.')
 
         # Load values from the instance config
-        url = instance['url']
-        instance_tags = instance.get('tags', [])
+        url = instance.get('url')
 
         # Load the ssl configuration
         ssl_params = {
@@ -82,7 +82,6 @@ class Etcd(AgentCheck):
                 del ssl_params[key]
         # Append the instance's URL in case there are more than one, that
         # way they can tell the difference!
-        instance_tags.append("url:{0}".format(url))
         timeout = float(instance.get('timeout', self.DEFAULT_TIMEOUT))
         is_leader = False
 
@@ -91,19 +90,25 @@ class Etcd(AgentCheck):
         if self_response is not None:
             if self_response['state'] == 'StateLeader':
                 is_leader = True
-                instance_tags.append('etcd_state:leader')
+                dimensions = self._set_dimensions({
+                    "etcd_tag_url": format(url),
+                    "etcd_tag_state": "leader"},
+                    instance)
             else:
-                instance_tags.append('etcd_state:follower')
+                dimensions = self._set_dimensions({
+                    "etcd_tag_url": format(url),
+                    "etcd_tag_state": "follower"},
+                    instance)
 
             for key in self.SELF_RATES:
                 if key in self_response:
-                    self.rate(self.SELF_RATES[key], self_response[key], tags=instance_tags)
+                    self.rate(self.SELF_RATES[key], self_response[key], dimensions)
                 else:
                     self.log.warn("Missing key {0} in stats.".format(key))
 
             for key in self.SELF_GAUGES:
                 if key in self_response:
-                    self.gauge(self.SELF_GAUGES[key], self_response[key], tags=instance_tags)
+                    self.gauge(self.SELF_GAUGES[key], self_response[key], dimensions)
                 else:
                     self.log.warn("Missing key {0} in stats.".format(key))
 
@@ -112,13 +117,13 @@ class Etcd(AgentCheck):
         if store_response is not None:
             for key in self.STORE_RATES:
                 if key in store_response:
-                    self.rate(self.STORE_RATES[key], store_response[key], tags=instance_tags)
+                    self.rate(self.STORE_RATES[key], store_response[key], dimensions)
                 else:
                     self.log.warn("Missing key {0} in stats.".format(key))
 
             for key in self.STORE_GAUGES:
                 if key in store_response:
-                    self.gauge(self.STORE_GAUGES[key], store_response[key], tags=instance_tags)
+                    self.gauge(self.STORE_GAUGES[key], store_response[key], dimensions)
                 else:
                     self.log.warn("Missing key {0} in stats.".format(key))
 
@@ -133,23 +138,18 @@ class Etcd(AgentCheck):
                     for key in self.LEADER_COUNTS:
                         self.rate(self.LEADER_COUNTS[key],
                                   followers[fol].get("counts").get(key),
-                                  tags=instance_tags + ['follower:{0}'.format(fol)])
+                                  dimensions)
                     # latency
                     for key in self.LEADER_LATENCY:
                         self.gauge(self.LEADER_LATENCY[key],
                                    followers[fol].get("latency").get(key),
-                                   tags=instance_tags + ['follower:{0}'.format(fol)])
-
-        # Service check
-        if self_response is not None and store_response is not None:
-            self.service_check(self.SERVICE_CHECK_NAME, AgentCheck.OK,
-                               tags=["url:{0}".format(url)])
+                                   dimensions)
 
     def _get_self_metrics(self, url, ssl_params, timeout):
-        return self._get_json(url + "/v2/stats/self",  ssl_params, timeout)
+        return self._get_json(url + "/v2/stats/self", ssl_params, timeout)
 
     def _get_store_metrics(self, url, ssl_params, timeout):
-        return self._get_json(url + "/v2/stats/store",  ssl_params, timeout)
+        return self._get_json(url + "/v2/stats/store", ssl_params, timeout)
 
     def _get_leader_metrics(self, url, ssl_params, timeout):
         return self._get_json(url + "/v2/stats/leader", ssl_params, timeout)
@@ -160,19 +160,12 @@ class Etcd(AgentCheck):
             if 'ssl_certfile' in ssl_params and 'ssl_keyfile' in ssl_params:
                 certificate = (ssl_params['ssl_certfile'], ssl_params['ssl_keyfile'])
             verify = ssl_params.get('ssl_ca_certs', True) if ssl_params['ssl_cert_validation'] else False
-            r = requests.get(url, verify=verify, cert=certificate, timeout=timeout, headers=headers(self.agentConfig))
+            r = requests.get(url, verify=verify, cert=certificate, timeout=timeout, headers=headers(self.agent_config))
         except requests.exceptions.Timeout:
             # If there's a timeout
-            self.service_check(self.SERVICE_CHECK_NAME, AgentCheck.CRITICAL,
-                               message="Timeout when hitting %s" % url,
-                               tags=["url:{0}".format(url)])
-            raise
+            return services_checks.Status.CRITICAL, "Timeout when hitting %s" % url
 
         if r.status_code != 200:
-            self.service_check(self.SERVICE_CHECK_NAME, AgentCheck.CRITICAL,
-                               message="Got %s when hitting %s" % (r.status_code, url),
-                               tags=["url:{0}".format(url)])
-            raise Exception("Http status code {0} on url {1}".format(r.status_code, url))
+            return services_checks.Status.CRITICAL, "Got %s when hitting %s" % (r.status_code, url)
 
         return r.json()
-
