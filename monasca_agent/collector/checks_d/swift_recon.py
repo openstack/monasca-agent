@@ -7,21 +7,22 @@ import monasca_agent.collector.checks as checks
 
 log = logging.getLogger(__name__)
 
+
 class SwiftRecon(checks.AgentCheck):
 
     GAUGES = [
-            "storage.used",
-            "storage.free",
-            "storage.capacity",
-            "md5.ring.matched",
-            "md5.ring.not_matched",
-            "md5.ring.errors",
-            "md5.ring.all",
-            "md5.swiftconf.matched",
-            "md5.swiftconf.not_matched",
-            "md5.swiftconf.errors",
-            "md5.swiftconf.all",
-            ]
+        "storage.used",
+        "storage.free",
+        "storage.capacity",
+        "md5.ring.matched",
+        "md5.ring.not_matched",
+        "md5.ring.errors",
+        "md5.ring.all",
+        "md5.swiftconf.matched",
+        "md5.swiftconf.not_matched",
+        "md5.swiftconf.errors",
+        "md5.swiftconf.all",
+    ]
 
     def swift_recon(self, params):
         command = 'swift-recon'
@@ -33,7 +34,8 @@ class SwiftRecon(checks.AgentCheck):
         return result
 
     diskusage = {}
-    def get_diskusage (self):
+
+    def get_diskusage(self):
         if not self.diskusage:
             result = self.swift_recon("--diskusage")
             for line in result.splitlines():
@@ -49,7 +51,8 @@ class SwiftRecon(checks.AgentCheck):
         return self.diskusage
 
     md5 = {}
-    def get_md5 (self):
+
+    def get_md5(self):
         if not self.md5:
             result = self.swift_recon("--md5")
             kind = 'undef'
@@ -114,7 +117,7 @@ class SwiftRecon(checks.AgentCheck):
         for metric in self.GAUGES:
             log.debug("Checking metric {0}".format(metric))
 
-            value = eval("self." + metric.replace(".", "_")+"()")
+            value = eval("self." + metric.replace(".", "_") + "()")
 
             assert type(value) in (types.IntType, types.LongType, types.FloatType)
 
