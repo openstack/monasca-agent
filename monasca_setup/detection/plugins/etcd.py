@@ -6,6 +6,7 @@ from monasca_setup.detection.utils import find_process_name
 
 log = logging.getLogger(__name__)
 
+
 class Etcd(monasca_setup.detection.Plugin):
 
     """Detect Etcd daemons and setup configuration to monitor them.
