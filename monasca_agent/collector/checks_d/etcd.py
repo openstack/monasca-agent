@@ -1,10 +1,13 @@
 # 3rd party
 import requests
+import logging
 
 # project
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.common.util import headers
 import monasca_agent.collector.checks.services_checks as services_checks
+
+log = logging.getLogger(__name__)
 
 
 class Etcd(AgentCheck):
@@ -104,13 +107,13 @@ class Etcd(AgentCheck):
                 if key in self_response:
                     self.rate(self.SELF_RATES[key], self_response[key], dimensions)
                 else:
-                    self.log.warn("Missing key {0} in stats.".format(key))
+                    log.warn("Missing key {0} in stats.".format(key))
 
             for key in self.SELF_GAUGES:
                 if key in self_response:
                     self.gauge(self.SELF_GAUGES[key], self_response[key], dimensions)
                 else:
-                    self.log.warn("Missing key {0} in stats.".format(key))
+                    log.warn("Missing key {0} in stats.".format(key))
 
         # Gather store metrics
         store_response = self._get_store_metrics(url, ssl_params, timeout)
@@ -119,13 +122,13 @@ class Etcd(AgentCheck):
                 if key in store_response:
                     self.rate(self.STORE_RATES[key], store_response[key], dimensions)
                 else:
-                    self.log.warn("Missing key {0} in stats.".format(key))
+                    log.warn("Missing key {0} in stats.".format(key))
 
             for key in self.STORE_GAUGES:
                 if key in store_response:
                     self.gauge(self.STORE_GAUGES[key], store_response[key], dimensions)
                 else:
-                    self.log.warn("Missing key {0} in stats.".format(key))
+                    log.warn("Missing key {0} in stats.".format(key))
 
         # Gather leader metrics
         if is_leader:
