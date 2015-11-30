@@ -6,6 +6,7 @@ from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.common.util import headers
 import monasca_agent.collector.checks.services_checks as services_checks
 
+
 class Etcd(AgentCheck):
 
     DEFAULT_TIMEOUT = 5
@@ -145,10 +146,10 @@ class Etcd(AgentCheck):
                                    dimensions)
 
     def _get_self_metrics(self, url, ssl_params, timeout):
-        return self._get_json(url + "/v2/stats/self",  ssl_params, timeout)
+        return self._get_json(url + "/v2/stats/self", ssl_params, timeout)
 
     def _get_store_metrics(self, url, ssl_params, timeout):
-        return self._get_json(url + "/v2/stats/store",  ssl_params, timeout)
+        return self._get_json(url + "/v2/stats/store", ssl_params, timeout)
 
     def _get_leader_metrics(self, url, ssl_params, timeout):
         return self._get_json(url + "/v2/stats/leader", ssl_params, timeout)
