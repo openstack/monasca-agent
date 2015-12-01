@@ -6,28 +6,6 @@ log = logging.getLogger(__name__)
 
 # set up some defaults
 whitelist = ['queriesRx', 'queriesExecuted', 'http_status', 'response_time']
-<<<<<<< HEAD
-metricmap = {'response_time':
-                 ['influxdb.response_time', 'gauge'],
-             'http_status':
-                 ['influxdb.http_status', 'gauge'],
-             'broadcastMessageTx':
-                 ['influxdb.broadcast_msg_tx', 'rate'],
-             'writeSeriesMessageTx':
-                 ['influxdb.write_series_msg_tx', 'rate'],
-             'queriesExecuted':
-                 ['influxdb.queries_executed', 'rate'],
-             'queriesRx':
-                 ['influxdb.queries_rx', 'rate'],
-             'shardsCreated':
-                 ['influxdb.shards_created', 'rate'],
-             'broadcastMessageRx':
-                 ['influxdb.broadcast_msg_rx', 'rate'],
-             'batchWriteRx':
-                 ['influxdb.batch_write_rx', 'rate'],
-             'pointWriteRx':
-                 ['influxdb.point_write_rx', 'rate']}
-=======
 metricmap = {'response_time': ['influxdb.response_time', 'gauge'],
              'http_status': ['influxdb.http_status', 'gauge'],
              'broadcastMessageTx': ['influxdb.broadcast_msg_tx', 'rate'],
@@ -38,13 +16,11 @@ metricmap = {'response_time': ['influxdb.response_time', 'gauge'],
              'broadcastMessageRx': ['influxdb.broadcast_msg_rx', 'rate'],
              'batchWriteRx': ['influxdb.batch_write_rx', 'rate'],
              'pointWriteRx': ['influxdb.point_write_rx', 'rate']}
->>>>>>> 8d9ebc5... An InfluxDB plugin to check status and performance metrics
 params = {'q': 'SHOW STATS'}
 dimensions = {'component': 'influxdb'}
 timeout = 1
 url = 'http://localhost:8086/query?'
 collect_response_time = True
-
 
 class InfluxDB(monasca_setup.detection.ArgsPlugin):
     """Setup an InfluxDB according to the passed in args.
