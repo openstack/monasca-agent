@@ -266,7 +266,7 @@ class MonInfluxDB(monasca_setup.detection.Plugin):
     def build_config(self):
         """Build the config as a Plugins object and return."""
         log.info("\tEnabling the Monasca InfluxDB check")
-        return watch_process(['influxd'], 'monitoring', 'influxd',
+        return watch_process(['influxd'], component='influxdb',
                              exact_match=False)
 
     def dependencies_installed(self):
