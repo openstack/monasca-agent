@@ -7,6 +7,8 @@ import monasca_setup.detection
 
 log = logging.getLogger(__name__)
 
+# Process name is apache2 on Debian derivatives, on RHEL derivatives it's httpd
+APACHE_PROCESS_NAMES = ('apache2', 'httpd')
 DEFAULT_APACHE_CONFIG = '/root/.apache.cnf'
 DEFAULT_APACHE_URL = 'http://localhost/server-status?auto'
 CONFIG_ARG_KEYS = set(["url", "user", "password"])
@@ -26,12 +28,18 @@ class Apache(monasca_setup.detection.Plugin):
         using a default URL.
     """
 
+    def __init__(self, *args, **kwargs):
+        self._apache_process_name = 'apache2'
+        super(Apache, self).__init__(*args, **kwargs)
+
     def _detect(self):
         """Run detection, set self.available True if the service is detected.
 
         """
-        if monasca_setup.detection.find_process_cmdline('apache2') is not None:
-            self.available = True
+        for proc_name in APACHE_PROCESS_NAMES:
+            if monasca_setup.detection.find_process_cmdline(proc_name) is not None:
+                self._apache_process_name = proc_name
+                self.available = True
 
     def _read_apache_config(self, config_location):
         # Read the apache config file to extract the needed variables.
@@ -63,7 +71,8 @@ class Apache(monasca_setup.detection.Plugin):
         """
         config = monasca_setup.agent_config.Plugins()
         # First watch the process
-        config.merge(monasca_setup.detection.watch_process(['apache2'], 'apache'))
+        config.merge(monasca_setup.detection.watch_process(
+            [self._apache_process_name], 'apache'))
         log.info("\tWatching the apache webserver process.")
 
         error_msg = '\n\t*** The Apache plugin is not configured ***\n\tPlease correct and re-run monasca-setup.'
