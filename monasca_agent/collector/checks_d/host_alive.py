@@ -1,4 +1,5 @@
 #!/bin/env python
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
 """Monitoring Agent remote host aliveness checker.
 
 """
@@ -73,19 +74,16 @@ class HostAlive(services_checks.ServicesCheck):
         ping_command = ping_prefix + host
 
         try:
-            ping = subprocess.check_output(ping_command.split(" "), stderr=subprocess.STDOUT)
+            subprocess.check_output(ping_command.split(" "), stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError:
-            error_message = 'ping command "{0}" failed to execute on operating system'.format(ping_command)
+            error_message = 'Host not accessible, ping test failed ("{0}")'.format(ping_command)
+            self.log.info(error_message)
+            return False, error_message
+        except OSError as err:
+            error_message = 'ping command "{0}" failed to run: {1}'.format(ping_command, err)
             self.log.warn(error_message)
             return False, error_message
-
-        # Look at the output for a packet loss percentage
-        if (ping.find('100%') > 0) or (ping.find('100.0%') > 0):
-            error_message = 'ping command "{0}" failed. {1} is not available.'.format(ping_command, host)
-            self.log.warn(error_message)
-            return False, error_message
-        else:
-            return True, None
+        return True, None
 
     def _create_status_event(self, status, msg, instance):
         """Does nothing: status events are not yet supported by Mon API.
@@ -129,6 +127,4 @@ class HostAlive(services_checks.ServicesCheck):
                        1,
                        dimensions=dimensions,
                        value_meta={'error': error_message})
-            self.log.error('Host alive check for {0} failed.  Error was {1}'.format(instance['host_name'],
-                                                                                    error_message))
             return services_checks.Status.DOWN, "DOWN"
