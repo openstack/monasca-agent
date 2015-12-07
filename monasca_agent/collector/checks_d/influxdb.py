@@ -7,10 +7,7 @@ from httplib2 import Http
 from httplib2 import httplib
 from httplib2 import HttpLib2Error
 
-<<<<<<< HEAD
-=======
 import json
->>>>>>> 8d9ebc5... An InfluxDB plugin to check status and performance metrics
 import logging
 import monasca_agent.collector.checks.services_checks as services_checks
 
@@ -110,22 +107,7 @@ class InfluxDB(services_checks.ServicesCheck):
                 length = int((time.time() - start) * 1000)
                 error_string = '{0} is DOWN, error: {1}. Connection failed ' \
                                'after {2} ms'.format(addr, str(e), length)
-<<<<<<< HEAD
-                self.log.info(error_string)
-                if 'http_status' in whitelist:
-                    if http_status_mtype == GAUGE:
-                        self.gauge(http_status_mname,
-                                   1,
-                                   dimensions=dimensions,
-                                   value_meta={'error': error_string})
-                    elif http_status_mtype == RATE:
-                        self.rate(http_status_mname,
-                                  1,
-                                  dimensions=dimensions,
-                                  value_meta={'error': error_string})
-=======
                 self.push_error(error_string, dimensions, http_status_mname, http_status_mtype, whitelist)
->>>>>>> 8d9ebc5... An InfluxDB plugin to check status and performance metrics
 
                 return services_checks.Status.DOWN, error_string
 
@@ -135,22 +117,7 @@ class InfluxDB(services_checks.ServicesCheck):
                                'routable after {2} ms'.format(addr,
                                                               repr(e),
                                                               length)
-<<<<<<< HEAD
-                self.log.info(error_string)
-                if 'http_status' in whitelist:
-                    if http_status_mtype == GAUGE:
-                            self.gauge(http_status_mname,
-                                       1,
-                                       dimensions=dimensions,
-                                       value_meta={'error': error_string})
-                    elif http_status_mtype == RATE:
-                            self.rate(http_status_mname,
-                                      1,
-                                      dimensions=dimensions,
-                                      value_meta={'error': error_string})
-=======
                 self.push_error(error_string, dimensions, http_status_mname, http_status_mtype, whitelist)
->>>>>>> 8d9ebc5... An InfluxDB plugin to check status and performance metrics
 
                 return services_checks.Status.DOWN, error_string
 
@@ -186,24 +153,6 @@ class InfluxDB(services_checks.ServicesCheck):
                         self.rate(response_time_mname, running_time,
                                   dimensions=dimensions)
 
-<<<<<<< HEAD
-            if int(resp.status) >= 400:
-                error_string = '{0} is DOWN, error code: {1}'\
-                    .format(addr, str(resp.status))
-                self.log.info(error_string)
-
-                if 'http_status' in whitelist:
-                    if http_status_mtype == GAUGE:
-                        self.gauge(http_status_mname,
-                                   1,
-                                   dimensions=dimensions,
-                                   value_meta={'error': error_string})
-                    elif http_status_mtype == RATE:
-                        self.rate(http_status_mname,
-                                  1,
-                                  dimensions=dimensions,
-                                  value_meta={'error': error_string})
-=======
             if int(resp.status) >= 500:
                 error_string = '{0} is DOWN, error code: {1}'\
                     .format(addr, str(resp.status))
@@ -214,7 +163,6 @@ class InfluxDB(services_checks.ServicesCheck):
                 error_string = 'InfluxDB check {0} causes HTTP errors when accessing {1}, error code: {2}'\
                     .format(instance.name, addr, str(resp.status))
                 self.warning(error_string)
->>>>>>> 8d9ebc5... An InfluxDB plugin to check status and performance metrics
 
                 return services_checks.Status.DOWN, error_string
 
@@ -239,11 +187,6 @@ class InfluxDB(services_checks.ServicesCheck):
             done = True
             return services_checks.Status.UP, success_string
 
-<<<<<<< HEAD
-    def _rate_or_gauge_statuses(self, content, dimensions,
-                                whitelist, metricmap):
-        import json
-=======
     def push_error(self, error_string, dimensions, http_status_mname, http_status_mtype, whitelist):
         self.log.info(error_string)
         if 'http_status' in whitelist:
@@ -260,7 +203,6 @@ class InfluxDB(services_checks.ServicesCheck):
 
     def _rate_or_gauge_statuses(self, content, dimensions,
                                 whitelist, metricmap):
->>>>>>> 8d9ebc5... An InfluxDB plugin to check status and performance metrics
         statuses = {}
         measurements = {}
 
@@ -268,57 +210,6 @@ class InfluxDB(services_checks.ServicesCheck):
         self.log.debug("data %s" % (data))
         if data and 'results' in data and 'series' in data['results'][0]:
             for d in data['results'][0]['series']:
-<<<<<<< HEAD
-                if 'name' in d:
-                    name = d['name']
-                    if 'server' in name:
-                        columns = d['columns']
-                        values = d['values'][0]
-
-                        # Just make sure we have the same amount of
-                        # data in both lists
-                        if len(columns) == len(values):
-                            cnt = 0
-                            while cnt < len(columns):
-                                cname = columns[cnt]
-                                cval = values[cnt]
-                                # See if we need to include the metric
-                                if cname in whitelist:
-                                    # See if we need to map it to the
-                                    # preferred name
-                                    if cname in metricmap:
-                                        mname, mtype = tuple(metricmap[cname])
-                                    # Otherwise just stuff in the original
-                                    # name we got from InfluxDB and use
-                                    # the default type of gauge
-                                    else:
-                                        mname, mtype = (cname, GAUGE)
-
-                                    self.log.debug("values %s, cval %s, cnt %s, "
-                                                   "mname %s, mtype %s, cname %s, "
-                                                   "statuses %s"
-                                                   % (values, cval, cnt, mname,
-                                                      mtype, cname, statuses))
-
-                                    statuses[cname] = (mname, mtype)
-                                    measurements[mname] = cval
-                                cnt += 1
-
-        for status, metric in statuses.iteritems():
-            metric_name, metric_type = metric
-            value = float(measurements[metric_name])
-
-            self.log.debug("status %s, statuses %s metric_name %s, "
-                           "metric_type %s, measurements %s"
-                           % (status, statuses, metric_name,
-                              metric_type, measurements))
-
-            if value is not None:
-                if metric_type == RATE:
-                    self.rate(metric_name, value, dimensions=dimensions)
-                elif metric_type == GAUGE:
-                    self.gauge(metric_name, value, dimensions=dimensions)
-=======
                 self.map_result(d, measurements, statuses, metricmap, whitelist)
 
             for status, metric in statuses.iteritems():
@@ -371,4 +262,3 @@ class InfluxDB(services_checks.ServicesCheck):
                             statuses[cname] = (mname, mtype)
                             measurements[mname] = cval
                         cnt += 1
->>>>>>> 8d9ebc5... An InfluxDB plugin to check status and performance metrics
