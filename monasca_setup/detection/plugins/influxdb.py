@@ -22,6 +22,7 @@ timeout = 1
 url = 'http://localhost:8086/query?'
 collect_response_time = True
 
+
 class InfluxDB(monasca_setup.detection.ArgsPlugin):
     """Setup an InfluxDB according to the passed in args.
        Despite being a detection plugin this plugin does no detection

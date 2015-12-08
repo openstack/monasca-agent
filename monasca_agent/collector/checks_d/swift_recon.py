@@ -1,7 +1,7 @@
 import commands
-import types
 import logging
 import re
+import types
 
 import monasca_agent.collector.checks as checks
 

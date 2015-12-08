@@ -1,11 +1,11 @@
 # 3rd party
-import requests
 import logging
+import requests
 
 # project
 from monasca_agent.collector.checks import AgentCheck
-from monasca_agent.common.util import headers
 import monasca_agent.collector.checks.services_checks as services_checks
+from monasca_agent.common.util import headers
 
 log = logging.getLogger(__name__)
 
