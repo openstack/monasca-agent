@@ -26,12 +26,12 @@ DIMENSIONS_KEY = '_dimensions'
 HTTP_STATUS_MNAME = "http_status"
 
 # meaningful defaults, keep configuration small (currently only for 0.9.4)
-DEFAULT_METRIC_WHITELIST = {'httpd': ['auth_fail', 'points_write_ok', 'query_req', 'write_req'],
+DEFAULT_METRICS_WHITELIST = {'httpd': ['auth_fail', 'points_write_ok', 'query_req', 'write_req'],
                             'engine': ['points_write', 'points_write_dedupe'],
                             'shard': ['series_create', 'fields_create', 'write_req', 'points_write_ok']}
 
 # ['queriesRx', 'queriesExecuted', 'http_status', 'response_time']
-DEFAULT_METRIC_DEF = {'httpd': {
+DEFAULT_METRICS_DEF = {'httpd': {
                           DIMENSIONS_KEY: {'binding': 'bind'},
                           'auth_fail': {TYPE_KEY: RATE},
                           'points_write_ok': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'points_written_ok'},
@@ -105,8 +105,8 @@ class InfluxDB(services_checks.ServicesCheck):
         password = instance.get('password', None)
         timeout = int(instance.get('timeout', 10))
         headers = instance.get('headers', {})
-        whitelist = instance.get('whitelist', DEFAULT_METRIC_WHITELIST)
-        metricdef = instance.get('metricdef', DEFAULT_METRIC_DEF)
+        whitelist = instance.get('whitelist', DEFAULT_METRICS_WHITELIST)
+        metricdef = instance.get('metricdef', DEFAULT_METRICS_DEF)
         uencode = instance.get('urlencode', True)
         response_time = instance.get('collect_response_time', False)
         disable_ssl_validation = instance.get('disable_ssl_validation', True)
