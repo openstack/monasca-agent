@@ -1,6 +1,6 @@
 # Monasca Agent Documentation
 
-Please refer to the [project readme](https://github.com/stackforge/monasca-agent) for Agent documentation.
+Please refer to the [project readme](https://github.com/openstack/monasca-agent) for Agent documentation.
 
 For full Monasca documentation visit [wiki.openstack.org/wiki/Monasca](https://wiki.openstack.org/wiki/Monasca)
 
@@ -21,7 +21,7 @@ For full Monasca documentation visit [wiki.openstack.org/wiki/Monasca](https://w
 
     ##### Edit the mkdocs yaml
     site_name: monasca-agent
-    repo_url: https://github.com/stackforge/monasca-agent
+    repo_url: https://github.com/openstack/monasca-agent
 
     ##### Move the existing README.md
     mv README.md docs

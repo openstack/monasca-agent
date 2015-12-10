@@ -1006,7 +1006,7 @@ In order to fetch data on hosted compute instances, the Libvirt plugin needs to 
 
 The Libvirt plugin uses a cache directory to persist data, which is `/dev/shm` by default.  On non-Linux systems (BSD, Mac OSX), `/dev/shm` may not exist, so `cache_dir` would need to be changed accordingly, either in `monasca_setup/detection/plugins/libvirt.py` prior to running `monasca-setup`, or `/etc/monasca/agent/conf.d/libvirt.yaml` afterwards.
 
-If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Submission can be setup. See this [documentation](https://github.com/stackforge/monasca-agent/blob/master/docs/MonascaMetrics.md#cross-tenant-metric-submission) for details.
+If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Submission can be setup. See this [documentation](https://github.com/openstack/monasca-agent/blob/master/docs/MonascaMetrics.md#cross-tenant-metric-submission) for details.
 
 `nova_refresh` specifies the number of seconds between calls to the Nova API to refresh the instance cache.  This is helpful for updating VM hostname and pruning deleted instances from the cache.  By default, it is set to 14,400 seconds (four hours).  Set to 0 to refresh every time the Collector runs, or to None to disable regular refreshes entirely (though the instance cache will still be refreshed if a new instance is detected).
 
