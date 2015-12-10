@@ -81,7 +81,7 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
 
         # Set defaults and read config or use arguments
         self.url = url
-        self.whitelist = influxdb.DEFAULT_WHITELIST
+        self.whitelist = influxdb.DEFAULT_METRICS_WHITELIST
         self.dimensions = dimensions
         self.timeout = timeout
         self.collect_response_time = collect_response_time

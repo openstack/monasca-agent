@@ -112,7 +112,7 @@ class InfluxDB(services_checks.ServicesCheck):
         disable_ssl_validation = instance.get('disable_ssl_validation', True)
 
         if disable_ssl_validation:
-            self.info('Skipping SSL certificate validation for %s based '
+            log.info('Skipping SSL certificate validation for %s based '
                       'on configuration', endpoint)
         if base_url is None:
             log.error("Bad configuration, no valid base URL "
@@ -149,23 +149,23 @@ class InfluxDB(services_checks.ServicesCheck):
             if collect_response_time:
                 # Stop the timer as early as possible
                 running_time = time.time() - start_time
-                self.gauge('http_response_time', running_time, dimensions=dimensions)
+                gauge('http_response_time', running_time, dimensions=dimensions)
 
             # check HTTP errors
             if int(resp.status) >= 500:
                 error_string = '{0} is DOWN, error code: {1}'.format(endpoint, str(resp.status))
-                self._push_error(error_string, dimensions)
+                _push_error(error_string, dimensions)
                 return services_checks.Status.DOWN, error_string
 
             elif int(resp.status) >= 400:
                 error_string = "InfluxDB check {0} causes HTTP errors when accessing {1}, error code: {2}".format(instance.get('name'), endpoint, str(resp.status))
-                self.log.warning(error_string)
+                log.warning(error_string)
                 return services_checks.Status.DOWN, error_string
 
             # check content
             if 'application/json' not in resp.get('content-type', []):
                 error_string = "InfluxDB check {0} received unexpected payload when accessing {1}: content_type={2}".format(instance['name'], endpoint, str(resp['content-type']))
-                self.log.error(error_string)
+                log.error(error_string)
 
             self._rate_or_gauge_statuses(content, instance, dimensions, whitelist, metricdef)
             self.log.debug('%s is UP', endpoint)
@@ -176,7 +176,7 @@ class InfluxDB(services_checks.ServicesCheck):
             length = int((time.time() - start) * 1000)
             error_string = '{0} is DOWN, error: {1}. Connection failed ' \
                            'after {2} ms'.format(endpoint, str(e), length)
-            self._push_error(error_string, dimensions)
+            _push_error(error_string, dimensions)
             return services_checks.Status.DOWN, error_string
 
         except httplib.ResponseNotReady as e:
@@ -185,7 +185,7 @@ class InfluxDB(services_checks.ServicesCheck):
                            'routable after {2} ms'.format(endpoint,
                                                           repr(e),
                                                           length)
-            self._push_error(error_string, dimensions)
+            _push_error(error_string, dimensions)
             return services_checks.Status.DOWN, error_string
 
         except (KeyError, TypeError) as e:
