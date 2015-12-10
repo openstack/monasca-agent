@@ -17,8 +17,77 @@ from urllib import urlencode
 
 log = logging.getLogger(__name__)
 
-GAUGE = "gauge"
-RATE = "rate"
+GAUGE = 'gauge'
+RATE = 'rate'
+TYPE_KEY = 'type'
+INFLUXDB_NAME_KEY = 'influxdb_name'
+DIMENSIONS_KEY = '_dimensions'
+
+HTTP_STATUS_MNAME = "http_status"
+
+# meaningful defaults, keep configuration small (currently only for 0.9.4)
+DEFAULT_METRIC_WHITELIST = {'httpd': ['auth_fail', 'points_write_ok', 'query_req', 'write_req'],
+                            'engine': ['points_write', 'points_write_dedupe'],
+                            'shard': ['series_create', 'fields_create', 'write_req', 'points_write_ok']}
+
+# ['queriesRx', 'queriesExecuted', 'http_status', 'response_time']
+DEFAULT_METRIC_DEF = {'httpd': {
+                          DIMENSIONS_KEY: {'binding': 'bind'},
+                          'auth_fail': {TYPE_KEY: RATE},
+                          'points_write_ok': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'points_written_ok'},
+                          'query_req': {TYPE_KEY: RATE},
+                          'query_resp_bytes': {TYPE_KEY: RATE},
+                          'req': {TYPE_KEY: RATE},
+                          'write_req': {TYPE_KEY: RATE},
+                          'write_req_bytes': {TYPE_KEY: RATE}},
+                      'engine': {
+                          DIMENSIONS_KEY: {'path': 'path'},
+                          'blks_write': {TYPE_KEY: RATE},
+                          'blks_write_bytes': {TYPE_KEY: RATE},
+                          'blks_write_bytes_c': {TYPE_KEY: RATE},
+                          'points_write': {TYPE_KEY: RATE},
+                          'points_write_dedupe': {TYPE_KEY: RATE}},
+                      'shard': {
+                          DIMENSIONS_KEY: {'influxdb_engine': 'engine', 'influxdb_shard': 'id'},
+                          'fields_create': {TYPE_KEY: RATE},
+                          'series_create': {TYPE_KEY: RATE},
+                          'write_points_ok': {TYPE_KEY: RATE},
+                          'write_req': {TYPE_KEY: RATE}},
+                      'wal': {
+                          DIMENSIONS_KEY: {'path': 'path'},
+                          'auto_flush': {TYPE_KEY: RATE},
+                          'flush_duration': {TYPE_KEY: RATE},
+                          'idle_flush': {TYPE_KEY: RATE},
+                          'mem_size': {TYPE_KEY: RATE},
+                          'meta_flush': {TYPE_KEY: RATE},
+                          'points_flush': {TYPE_KEY: RATE},
+                          'points_write': {TYPE_KEY: RATE},
+                          'points_write_req': {TYPE_KEY: RATE},
+                          'series_flush': {TYPE_KEY: RATE}},
+                      'write': {
+                          DIMENSIONS_KEY: {'path': 'path'},
+                          'point_req': {TYPE_KEY: RATE},
+                          'point_req_local': {TYPE_KEY: RATE},
+                          'req': {TYPE_KEY: RATE},
+                          'write_ok': {TYPE_KEY: RATE}},
+                      'runtime': {
+                          'alloc': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'Alloc'},
+                          'frees': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'Frees'},
+                          'heap_alloc': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'HeapAlloc'},
+                          'heap_idle': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'HeapIdle'},
+                          'heap_in_use': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'HeapInUse'},
+                          'heap_objects': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'HeapObjects'},
+                          'heap_released': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'HeapReleased'},
+                          'heap_sys': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'HeapSys'},
+                          'lookups': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'Lookups'},
+                          'mallocs': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'Mallocs'},
+                          'num_gc': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'NumGC'},
+                          'num_goroutine': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'NumGoroutine'},
+                          'pause_total_ns': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'PauseTotalNs'},
+                          'sys': {TYPE_KEY: GAUGE, INFLUXDB_NAME_KEY: 'Sys'},
+                          'total_alloc': {TYPE_KEY: GAUGE, INFLUXDB_NAME_KEY: 'TotalAlloc'}}}
+
+DEFAULT_QUERY = 'SHOW STATS'
 
 
 class InfluxDB(services_checks.ServicesCheck):
@@ -30,25 +99,31 @@ class InfluxDB(services_checks.ServicesCheck):
     @staticmethod
     def _load_conf(instance):
         # Fetches the conf
-        url = instance.get('url', None)
+        base_url = instance.get('url', None)
+        query = instance.get('query', DEFAULT_QUERY)
         username = instance.get('username', None)
         password = instance.get('password', None)
         timeout = int(instance.get('timeout', 10))
         headers = instance.get('headers', {})
-        whitelist = instance.get('whitelist', {})
-        metricmap = instance.get('metricmap', {})
-        params = instance.get('params', {'q': 'SHOW STATS'})
+        whitelist = instance.get('whitelist', DEFAULT_METRIC_WHITELIST)
+        metricdef = instance.get('metricdef', DEFAULT_METRIC_DEF)
         uencode = instance.get('urlencode', True)
         response_time = instance.get('collect_response_time', False)
+        disable_ssl_validation = instance.get('disable_ssl_validation', True)
 
-        if url is None:
-            log.error("Bad configuration, no valid endpoint "
+        if disable_ssl_validation:
+            self.info('Skipping SSL certificate validation for %s based '
+                      'on configuration', endpoint)
+        if base_url is None:
+            log.error("Bad configuration, no valid base URL "
                       "(url) found in config!")
             raise Exception("Bad configuration. You must specify a url")
-        ssl = instance.get('disable_ssl_validation', True)
 
-        return url, username, password, timeout, headers, whitelist, \
-            metricmap, params, uencode, response_time, ssl
+        endpoint = base_url + '/query'
+        dimensions = self._set_dimensions({'url': endpoint}, instance)
+
+        return endpoint, query, username, password, timeout, headers, dimensions, whitelist, \
+            metricdef, uencode, response_time, disable_ssl_validation
 
     def _create_status_event(self, status, msg, instance):
         """Does nothing: status events are not yet supported by Mon API.
@@ -57,208 +132,116 @@ class InfluxDB(services_checks.ServicesCheck):
         return
 
     def _check(self, instance):
-        addr, username, password, timeout, headers, whitelist, metricmap, \
-            params, encode, response_time, disable_ssl_validation, = \
-            self._load_conf(instance)
+        endpoint, query, username, password, timeout, headers, dimensions, whitelist, metricdef, \
+            encode, response_time, disable_ssl_validation, = self._load_conf(instance)
 
-        dimensions = self._set_dimensions({'url': addr}, instance)
-        http_status_mname = 'http_status'
-        http_status_mtype = GAUGE
-        response_time_mname = 'response_time'
-        response_time_mtype = GAUGE
+        start_time = time.time()
+        try:
+            self.log.debug('Connecting to %s', endpoint)
+            h = Http(timeout=timeout, disable_ssl_certificate_validation=disable_ssl_validation)
+            if username is not None and password is not None:
+                h.add_credentials(username, password)
+            uri = endpoint + '?q=' + urlencode(query)
 
-        if http_status_mname in metricmap:
-            http_status_mname, http_status_mtype = \
-                tuple(metricmap[http_status_mname])
-            # Otherwise you get a default
+            resp, content = h.request(uri, "GET", headers=headers)
 
-        if response_time_mname in metricmap:
-            response_time_mname, response_time_mtype = \
-                tuple(metricmap[response_time_mname])
-            # Otherwise you get a default
-
-        start = time.time()
-        done = False
-        retry = False
-        while not done or retry:
-            try:
-                self.log.debug("Connecting to %s" % addr)
-                if disable_ssl_validation:
-                    self.warning(
-                        "Skipping SSL certificate validation for %s based "
-                        "on configuration" % addr)
-                h = Http(timeout=timeout,
-                         disable_ssl_certificate_validation=disable_ssl_validation)
-
-                if username is not None and password is not None:
-                    h.add_credentials(username, password)
-
-                if params is not None:
-                    if encode:
-                        uri = addr + urlencode(params)
-                    else:
-                        uri = addr = params
-                else:
-                    uri = addr
-
-                resp, content = h.request(uri, "GET", headers=headers)
-
-            except (socket.timeout, HttpLib2Error, socket.error) as e:
-                length = int((time.time() - start) * 1000)
-                error_string = '{0} is DOWN, error: {1}. Connection failed ' \
-                               'after {2} ms'.format(addr, str(e), length)
-                self.push_error(error_string, dimensions, http_status_mname, http_status_mtype, whitelist)
-
-                return services_checks.Status.DOWN, error_string
-
-            except httplib.ResponseNotReady as e:
-                length = int((time.time() - start) * 1000)
-                error_string = '{0} is DOWN, error: {1}. Network is not ' \
-                               'routable after {2} ms'.format(addr,
-                                                              repr(e),
-                                                              length)
-                self.push_error(error_string, dimensions, http_status_mname, http_status_mtype, whitelist)
-
-                return services_checks.Status.DOWN, error_string
-
-            except Exception as e:
-                length = int((time.time() - start) * 1000)
-                error_string = '{0} is DOWN, error: {1}. Connection failed ' \
-                               'after {2} ms'.format(addr, str(e), length)
-                self.log.error('Unhandled exception {0}. Connection failed '
-                               'after {1} ms'.format(str(e), length))
-
-                if 'http_status' in whitelist:
-                    if http_status_mtype == GAUGE:
-                        self.gauge(http_status_mname,
-                                   1,
-                                   dimensions=dimensions,
-                                   value_meta={'error': error_string})
-                    elif http_status_mtype == RATE:
-                        self.rate(http_status_mname,
-                                  1,
-                                  dimensions=dimensions,
-                                  value_meta={'error': error_string})
-
-                return services_checks.Status.DOWN, error_string
-
-            if response_time:
+            # report response time first, even when there is HTTP errors
+            if collect_response_time:
                 # Stop the timer as early as possible
-                running_time = time.time() - start
-                if 'response_time' in whitelist:
-                    if response_time_mtype == GAUGE:
-                        self.gauge(response_time_mname, running_time,
-                                   dimensions=dimensions)
-                    elif response_time_mtype == RATE:
-                        self.rate(response_time_mname, running_time,
-                                  dimensions=dimensions)
+                running_time = time.time() - start_time
+                self.gauge('http_response_time', running_time, dimensions=dimensions)
 
+            # check HTTP errors
             if int(resp.status) >= 500:
-                error_string = '{0} is DOWN, error code: {1}'\
-                    .format(addr, str(resp.status))
-                self.push_error(error_string, dimensions, http_status_mname, http_status_mtype, whitelist)
-
+                error_string = '{0} is DOWN, error code: {1}'.format(endpoint, str(resp.status))
+                self._push_error(error_string, dimensions)
                 return services_checks.Status.DOWN, error_string
+
             elif int(resp.status) >= 400:
-                error_string = 'InfluxDB check {0} causes HTTP errors when accessing {1}, error code: {2}'\
-                    .format(instance.name, addr, str(resp.status))
-                self.warning(error_string)
-
+                error_string = "InfluxDB check {0} causes HTTP errors when accessing {1}, error code: {2}".format(instance.get('name'), endpoint, str(resp.status))
+                self.log.warning(error_string)
                 return services_checks.Status.DOWN, error_string
 
-            success_string = '{0} is UP'.format(addr)
-            self.log.debug(success_string)
+            # check content
+            if 'application/json' not in resp.get('content-type', []):
+                error_string = "InfluxDB check {0} received unexpected payload when accessing {1}: content_type={2}".format(instance['name'], endpoint, str(resp['content-type']))
+                self.log.error(error_string)
 
-            if 'http_status' in whitelist:
-                if http_status_mtype == GAUGE:
-                    self.gauge(http_status_mname, 0, dimensions=dimensions)
-                elif http_status_mtype == RATE:
-                    self.rate(http_status_mname, 0, dimensions=dimensions)
-
-            # If we got a JSON payload back from InfluxDB then we can push
-            # metrics based on the data.
-            if 'content-type' in resp and 'application/json' \
-                    in resp['content-type']:
-                self._rate_or_gauge_statuses(content,
-                                             dimensions,
-                                             whitelist,
-                                             metricmap)
-
-            done = True
+            self._rate_or_gauge_statuses(content, instance, dimensions, whitelist, metricdef)
+            self.log.debug('%s is UP', endpoint)
+            self.gauge(HTTP_STATUS_MNAME, 0, dimensions=dimensions)
             return services_checks.Status.UP, success_string
 
-    def push_error(self, error_string, dimensions, http_status_mname, http_status_mtype, whitelist):
+        except (socket.timeout, HttpLib2Error, socket.error) as e:
+            length = int((time.time() - start) * 1000)
+            error_string = '{0} is DOWN, error: {1}. Connection failed ' \
+                           'after {2} ms'.format(endpoint, str(e), length)
+            self._push_error(error_string, dimensions)
+            return services_checks.Status.DOWN, error_string
+
+        except httplib.ResponseNotReady as e:
+            length = int((time.time() - start) * 1000)
+            error_string = '{0} is DOWN, error: {1}. Network is not ' \
+                           'routable after {2} ms'.format(endpoint,
+                                                          repr(e),
+                                                          length)
+            self._push_error(error_string, dimensions)
+            return services_checks.Status.DOWN, error_string
+
+        except (KeyError, TypeError) as e:
+            error_string = "Unsupported schema returned by query endpoint of instance {0}: {1}".format(instance.get('url'), str(e))
+            self.log.error(error_string)
+            self.log.error('received: %s', content)
+            return services_checks.Status.UP, error_string
+
+        except Exception as e:
+            length = int((time.time() - start) * 1000)
+            error_string = 'Unhandled exception {0}. Connection failed after {1} ms'.format(str(e), length)
+            self.log.error(error_string)
+            return services_checks.Status.DOWN, error_string
+
+    def _push_error(self, error_string, dimensions):
         self.log.info(error_string)
-        if 'http_status' in whitelist:
-            if http_status_mtype == GAUGE:
-                self.gauge(http_status_mname,
-                           1,
-                           dimensions=dimensions,
-                           value_meta={'error': error_string})
-            elif http_status_mtype == RATE:
-                self.rate(http_status_mname,
-                          1,
-                          dimensions=dimensions,
-                          value_meta={'error': error_string})
+        self.gauge(HTTP_STATUS_MNAME, 1, dimensions=dimensions, value_meta={'error': error_string})
 
-    def _rate_or_gauge_statuses(self, content, dimensions,
-                                whitelist, metricmap):
-        statuses = {}
-        measurements = {}
+    def _rate_or_gauge_statuses(self, instance, content, dimensions,
+                                whitelist, metricdef):
 
+        trans = {}   # tabular content transformed into real dictionary
         data = json.loads(content)
-        self.log.debug("data %s" % (data))
-        if data and 'results' in data and 'series' in data['results'][0]:
-            for d in data['results'][0]['series']:
-                self.map_result(d, measurements, statuses, metricmap, whitelist)
+        self.log.debug('data: %s', data)
+        # create complete map
+        for results in data['results']:
+            for ser in results['series']:
+                mod = ser['name']
+                if mod in whitelist:  # pre-filter by module
+                    trans[mod] = {}
+                    i = 0
+                    for col in ser['columns']:
+                        trans[mod][col] = ser['values'][i]
+                        i = i + 1
+                    trans[mod][DIMENSIONS_KEY] = ser['tags']
 
-            for status, metric in statuses.iteritems():
-                metric_name, metric_type = metric
-                value = measurements[metric_name]
+        # extract required metrics per whitelisted module
+        for mod, met_list in whitelist:
+            dims = {}
+            for met, met_def in met_list:
+                if met == DIMENSIONS_KEY:      # map tags to appropriate dimensions
+                    for k, v in met_def:
+                        dims[k] = trans[mod][DIMENSIONS_KEY][v]
+                else:
+                    met_type = met_def[TYPE_KEY]
+                    met_iname = met_def.get(INFLUXDB_NAME_KEY, met)
+                    if met_iname in trans[mod]:
+                        value = trans[mod][met_iname]
+                        self._push_metric(met_type, met, value, dims)
+                    else:
+                        self.log.warn('InfluxDB does not report metric %s.%s', mod, met_iname)
 
-                self.log.debug("status %s, statuses %s metric_name %s, "
-                               "metric_type %s, measurements %s"
-                               % (status, statuses, metric_name,
-                                  metric_type, measurements))
+    def _push_metric(metric_type, metric_name, metric_value, dimensions):
+        self.log.debug('push %s %s = %s {%s}', metric_type, metric_name, dimensions)
 
-                if value is not None:
-                    if metric_type == RATE:
-                        self.rate(metric_name, float(value), dimensions=dimensions)
-                    elif metric_type == GAUGE:
-                        self.gauge(metric_name, float(value), dimensions=dimensions)
-
-    def map_result(self, stat_record, measurements, statuses, metricmap, whitelist):
-        if 'name' in stat_record:
-            name = stat_record['name']
-            if 'server' in name:
-                columns = stat_record['columns']
-                values = stat_record['values'][0]
-
-                # Just make sure we have the same amount of
-                # data in both lists
-                if len(columns) == len(values):
-                    cnt = 0
-                    while cnt < len(columns):
-                        cname = columns[cnt]
-                        cval = values[cnt]
-                        # See if we need to include the metric
-                        if cname in whitelist:
-                            # See if we need to map it to the
-                            # preferred name
-                            if cname in metricmap:
-                                mname, mtype = tuple(metricmap[cname])
-                            # Otherwise just stuff in the original
-                            # name we got from InfluxDB and use
-                            # the default type of gauge
-                            else:
-                                mname, mtype = (cname, GAUGE)
-
-                            self.log.debug("values %s, cval %s, cnt %s, "
-                                           "mname %s, mtype %s, cname %s, "
-                                           "statuses %s"
-                                           % (values, cval, cnt, mname,
-                                              mtype, cname, statuses))
-
-                            statuses[cname] = (mname, mtype)
-                            measurements[mname] = cval
-                        cnt += 1
+        if metric_type == RATE:
+            self.rate(metric_name, float(value), dimensions=dimensions)
+        elif metric_type == GAUGE:
+            self.gauge(metric_name, float(value), dimensions=dimensions)
