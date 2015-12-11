@@ -70,11 +70,11 @@ class SwiftRecon(checks.AgentCheck):
                 if m:
                     self.md5[kind]['matched'] = int(m.group(1))
                     self.md5[kind]['not_matched'] = (int(m.group(2)) -
-                        int(m.group(1)))
+                                                     int(m.group(1)))
                     self.md5[kind]['errors'] = int(m.group(3))
                     self.md5[kind]['all'] = (self.md5[kind]['matched'] +
-                        self.md5[kind]['not_matched'] +
-                        self.md5[kind]['errors'])
+                                             self.md5[kind]['not_matched'] +
+                                             self.md5[kind]['errors'])
                 else:
                     continue
         return self.md5
@@ -133,7 +133,7 @@ class SwiftRecon(checks.AgentCheck):
             value = eval("self." + metric.replace(".", "_") + "()")
 
             assert(type(value) in (types.IntType, types.LongType,
-                types.FloatType))
+                                   types.FloatType))
 
             if metric.startswith('storage'):
                 metric = metric + '_bytes'
