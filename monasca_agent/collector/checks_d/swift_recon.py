@@ -1,7 +1,7 @@
-import commands
-import types
 import logging
 import re
+import subprocess
+import types
 
 import monasca_agent.collector.checks as checks
 
@@ -24,16 +24,20 @@ class SwiftRecon(checks.AgentCheck):
         "md5.swiftconf.all",
     ]
 
+    def prepare(self):
+        self.diskusage = {}
+        self.md5 = {}
+
     def swift_recon(self, params):
-        command = 'swift-recon'
-
+        executable = 'swift-recon'
         if 'swift_recon' in self.init_config:
-            command = self.init_config['swift_recon']
+            executable = self.init_config['swift_recon']
 
-        status, result = commands.getstatusoutput(command + " " + params)
-        return result
-
-    diskusage = {}
+        cmd = " ".join((executable, params))
+        pipe = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
+                                universal_newlines=True)
+        out = "".join(pipe.stdout.readlines())
+        return out
 
     def get_diskusage(self):
         if not self.diskusage:
@@ -50,25 +54,27 @@ class SwiftRecon(checks.AgentCheck):
                     continue
         return self.diskusage
 
-    md5 = {}
-
     def get_md5(self):
         if not self.md5:
             result = self.swift_recon("--md5")
             kind = 'undef'
             for line in result.splitlines():
-                m = re.match(r'.* Checking (\w+) md5sum', line)
+                m = re.match(r'.* Checking ([\.a-zA-Z0-9_]+) md5sum', line)
                 if m:
                     kind = m.group(1).replace(".", "")
                     self.md5[kind] = {}
                     continue
-
-                m = re.match(r'(\d+)/(\d+) hosts matched, (\d+) error\[s\] while checking hosts', line)
+                pattern = (r"(\d+)/(\d+) hosts matched, (\d+) error\[s\] "
+                           "while checking hosts")
+                m = re.match(pattern, line)
                 if m:
                     self.md5[kind]['matched'] = int(m.group(1))
-                    self.md5[kind]['not_matched'] = int(m.group(2) - m.group(1))
+                    self.md5[kind]['not_matched'] = (int(m.group(2)) -
+                        int(m.group(1)))
                     self.md5[kind]['errors'] = int(m.group(3))
-                    self.md5[kind]['all'] = int(m.group(1) + m.group(2) + m.group(3))
+                    self.md5[kind]['all'] = (self.md5[kind]['matched'] +
+                        self.md5[kind]['not_matched'] +
+                        self.md5[kind]['errors'])
                 else:
                     continue
         return self.md5
@@ -102,6 +108,9 @@ class SwiftRecon(checks.AgentCheck):
     def md5_ring_errors(self):
         return self.consistency('ring', 'errors')
 
+    def md5_ring_all(self):
+        return self.consistency('ring', 'all')
+
     def md5_swiftconf_matched(self):
         return self.consistency('swiftconf', 'matched')
 
@@ -111,7 +120,11 @@ class SwiftRecon(checks.AgentCheck):
     def md5_swiftconf_errors(self):
         return self.consistency('swiftconf', 'errors')
 
+    def md5_swiftconf_all(self):
+        return self.consistency('swiftconf', 'all')
+
     def check(self, instance):
+        self.prepare()
         dimensions = self._set_dimensions(None, instance)
 
         for metric in self.GAUGES:
@@ -119,7 +132,8 @@ class SwiftRecon(checks.AgentCheck):
 
             value = eval("self." + metric.replace(".", "_") + "()")
 
-            assert type(value) in (types.IntType, types.LongType, types.FloatType)
+            assert(type(value) in (types.IntType, types.LongType,
+                types.FloatType))
 
             if metric.startswith('storage'):
                 metric = metric + '_bytes'
