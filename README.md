@@ -30,13 +30,13 @@ For an introduction to the Monasca Agent, including a complete list of the metri
 
 The Agent is extensible through configuration of additional check and setup plugins, written in Python. See the "Agent Customizations" detailed documentation.
 
-Agent [github.com/stackforge/monasca-agent/blob/master/docs/Agent.md](https://github.com/stackforge/monasca-agent/blob/master/docs/Agent.md)
+Agent [github.com/openstack/monasca-agent/blob/master/docs/Agent.md](https://github.com/openstack/monasca-agent/blob/master/docs/Agent.md)
 
-Agent Customizations [github.com/stackforge/monasca-agent/docs/Customizations.md](https://github.com/stackforge/monasca-agent/blob/master/docs/Customizations.md)
+Agent Customizations [github.com/openstack/monasca-agent/docs/Customizations.md](https://github.com/openstack/monasca-agent/blob/master/docs/Customizations.md)
 
-Monasca Metrics [github.com/stackforge/monasca-agent/docs/MonascaMetrics.md](https://github.com/stackforge/monasca-agent/blob/master/docs/MonascaMetrics.md)
+Monasca Metrics [github.com/openstack/monasca-agent/docs/MonascaMetrics.md](https://github.com/openstack/monasca-agent/blob/master/docs/MonascaMetrics.md)
 
-Agent Plugin details [github.com/stackforge/monasca-agent/docs/Plugins.md](https://github.com/stackforge/monasca-agent/blob/master/docs/Plugins.md)
+Agent Plugin details [github.com/openstack/monasca-agent/docs/Plugins.md](https://github.com/openstack/monasca-agent/blob/master/docs/Plugins.md)
 
 # License
 Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
