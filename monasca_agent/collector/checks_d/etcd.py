@@ -105,12 +105,14 @@ class Etcd(AgentCheck):
 
             for key in self.SELF_RATES:
                 if key in self_response:
+                    log.debug("Sending {0}={1}".format(self.SELF_RATES[key], self_response[key]))
                     self.rate(self.SELF_RATES[key], self_response[key], dimensions)
                 else:
                     log.warn("Missing key {0} in stats.".format(key))
 
             for key in self.SELF_GAUGES:
                 if key in self_response:
+                    log.debug("Sending {0}={1}".format(self.SELF_GAUGES[key], self_response[key]))
                     self.gauge(self.SELF_GAUGES[key], self_response[key], dimensions)
                 else:
                     log.warn("Missing key {0} in stats.".format(key))
@@ -120,12 +122,14 @@ class Etcd(AgentCheck):
         if store_response is not None:
             for key in self.STORE_RATES:
                 if key in store_response:
+                    log.debug("Sending {0}={1}".format(self.STORE_RATES[key], store_response[key]))
                     self.rate(self.STORE_RATES[key], store_response[key], dimensions)
                 else:
                     log.warn("Missing key {0} in stats.".format(key))
 
             for key in self.STORE_GAUGES:
                 if key in store_response:
+                    log.debug("Sending {0}={1}".format(self.STORE_GAUGES[key], store_response[key]))
                     self.gauge(self.STORE_GAUGES[key], store_response[key], dimensions)
                 else:
                     log.warn("Missing key {0} in stats.".format(key))
@@ -139,11 +143,13 @@ class Etcd(AgentCheck):
                 for fol in followers:
                     # counts
                     for key in self.LEADER_COUNTS:
+                        log.debug("Sending {0}={1}".format(self.LEADER_COUNTS[key], followers[fol].get("counts").get(key)))
                         self.rate(self.LEADER_COUNTS[key],
                                   followers[fol].get("counts").get(key),
                                   dimensions)
                     # latency
                     for key in self.LEADER_LATENCY:
+                        log.debug("Sending {0}={1}".format(self.LEADER_LATENCY[key], followers[fol].get("latency").get(key)))
                         self.gauge(self.LEADER_LATENCY[key],
                                    followers[fol].get("latency").get(key),
                                    dimensions)
