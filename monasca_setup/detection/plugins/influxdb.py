@@ -1,25 +1,16 @@
+import httplib2
 import logging
+import monasca_agent.collector.checks_d.influxdb as influxdb
 import monasca_setup.agent_config
 import monasca_setup.detection
+from urllib import urlencode
 
 log = logging.getLogger(__name__)
 
 # set up some defaults
-whitelist = ['queriesRx', 'queriesExecuted', 'http_status', 'response_time']
-metricmap = {'response_time': ['influxdb.response_time', 'gauge'],
-             'http_status': ['influxdb.http_status', 'gauge'],
-             'broadcastMessageTx': ['influxdb.broadcast_msg_tx', 'rate'],
-             'writeSeriesMessageTx': ['influxdb.write_series_msg_tx', 'rate'],
-             'queriesExecuted': ['influxdb.queries_executed', 'rate'],
-             'queriesRx': ['influxdb.queries_rx', 'rate'],
-             'shardsCreated': ['influxdb.shards_created', 'rate'],
-             'broadcastMessageRx': ['influxdb.broadcast_msg_rx', 'rate'],
-             'batchWriteRx': ['influxdb.batch_write_rx', 'rate'],
-             'pointWriteRx': ['influxdb.point_write_rx', 'rate']}
-params = {'q': 'SHOW STATS'}
 dimensions = {'component': 'influxdb'}
 timeout = 1
-url = 'http://localhost:8086/query?'
+url = 'http://localhost:8086'
 collect_response_time = True
 
 
@@ -50,11 +41,11 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
                 instance = {'name': self.url,
                             'url': self.url,
                             'whitelist': self.whitelist,
-                            'metricmap': self.metricmap,
+                            'metricdef': self.metricdef,
                             'collect_response_time':
                                 self.collect_response_time,
                             'timeout': self.timeout,
-                            'params': self.params,
+                            'query': self.query,
                             'dimensions': self.dimensions}
 
                 config['influxdb'] = {'init_config': None,
@@ -64,14 +55,12 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
                          ' the InfluxDB plugin is not configured.' +
                          ' Please correct and re-run monasca-setup.')
         except Exception as e:
-            log.exception('Error configuring the InfluxDB check plugin: {0} (error #{1})'.format(e.strerror, e.errno))
+            log.exception('Error configuring the InfluxDB check plugin: %s', str(e))
+
         return config
 
     def _connection_test(self):
         try:
-            import httplib2
-            from urllib import urlencode
-
             h = httplib2.Http(timeout=self.timeout)
 
             uri = self.url + urlencode(self.params)
@@ -79,9 +68,10 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
 
             if 'content-type' in resp and 'application/json' in resp['content-type']:
                 return True
+
         except Exception as e:
-            log.error('Unable to access the InfluxDB diagnostics URL {0}: {1} (error #{2})'
-                      .format(uri, e.strerror, e.errno))
+            log.error('Unable to access the InfluxDB query URL %s: %s', uri, str(e))
+
         return False
 
     def _get_config(self):
@@ -91,9 +81,7 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
 
         # Set defaults and read config or use arguments
         self.url = url
-        self.whitelist = whitelist
-        self.metricmap = metricmap
-        self.params = params
+        self.whitelist = influxdb.DEFAULT_METRICS_WHITELIST
         self.dimensions = dimensions
         self.timeout = timeout
         self.collect_response_time = collect_response_time
