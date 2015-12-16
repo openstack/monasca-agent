@@ -11,9 +11,13 @@ init_config:
     nova_refresh: 14400
     # How long before gathering data on newly-provisioned instances? (seconds)
     vm_probation: 300
-    # Command line to ping VMs, set to False (or simply remove) to disable
-    # Note that this is currently only supported by Nova networking
-    ping_check: /bin/ping -n -c1 -w1 -q
+    # Command line to ping VMs, set to False (or simply remove) to disable.
+    # The word 'NAMESPACE' is automatically replaced by the appropriate network
+    # namespace for each VM being monitored.
+    ping_check: sudo -n /sbin/ip exec NAMESPACE /usr/bin/fping -n -c1 -t250 -q
+    # Suppress all per-VM metrics aside from host_alive_status, including all
+    # I/O, network, memory, ping, and CPU metrics.
+    alive_only: false
     # List of instance metadata keys to be sent as dimensions
     # By default 'scale_group' metadata is used here for supporting auto
     # scaling in Heat.
