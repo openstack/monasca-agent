@@ -56,7 +56,7 @@ The built-in Python check plugin scripts are installed as part of the monasca-ag
 
 Config files for the plugin scripts can be added directly to the standard plugin configuration directory, `/etc/monasca/agent/conf.d` or added by a `monasca-setup` plugin script that auto-detects that the checks are required and then generates and adds the appropriate config file to enable them.
 
-See [Plugin Checks](#https://github.com/stackforge/monasca-agent/blob/master/docs/Plugins) for a description of the configuration and output of the built-in check plugins.
+See [Plugin Checks](#https://github.com/openstack/monasca-agent/blob/master/docs/Plugins.md#standard-plugins) for a description of the configuration and output of the built-in check plugins.
 
 ### Adding Custom Check Plugins
 
@@ -97,7 +97,7 @@ Be aware of these best practices before defining new metrics and adding custom p
 
 Here are some best practices concerning appropriate use of metrics:
 
-- Be aware of [naming conventions](#https://github.com/stackforge/monasca-agent/blob/master/docs/MonascaMetrics.md) with metrics.
+- Be aware of [naming conventions](#https://github.com/openstack/monasca-agent/blob/master/docs/MonascaMetrics.md) with metrics.
 - Considerations affecting system performance
   - Before installing and configuring a custom check plugin, be certain that you have identified consumers who will actually make use of the metric.
   - Before defining a new metric, make sure that a metric that is essentially the same hasn't already been defined. If it has, use that definition. Re-use is good!
@@ -107,7 +107,7 @@ Here are some best practices concerning appropriate use of metrics:
 
 ### Custom Plugin Best Practices
 
-- Before creating a custom plugin, see if your needs can be met by an existing plugin (See [Plugin Checks](#https://github.com/stackforge/monasca-agent/blob/master/README.md#plugin-checks) for a list of them.)
+- Before creating a custom plugin, see if your needs can be met by an existing plugin (See [Plugin Checks](#https://github.com/openstack/monasca-agent/blob/master/docs/Plugins.md#standard-plugins) for a list of them.)
 - If you identify a bug or other problem with an existing plugin, report the defect so everyone can benefit from your discovery.
 - If you do create custom plugins, consider upstreaming them if you think others would benefit from using them.
 - When writing your plugins, strive for efficiency and economy. Have the plugin perform the necessary checks in the most efficient way. Remember that cycles spent monitoring the system are cycles that cannot be used by the "application" components running on the system.
@@ -115,7 +115,7 @@ Here are some best practices concerning appropriate use of metrics:
 
 ## Creating Custom Plugins
 
-The references in these sections to classes, utilities, etc. are to locations in the monasca-agent git repo, `https://github.com/stackforge/monasca-agent`.
+The references in these sections to classes, utilities, etc. are to locations in the monasca-agent git repo, `https://git.openstack.org/openstack/monasca-agent`.
 
 ### Creating a Custom Check Plugin
 

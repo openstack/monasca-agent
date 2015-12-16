@@ -14,7 +14,7 @@ instances:
          # specify the information to collect a token to be used in the check.
          # This information should follow the same guidelines presented in
          # agent.yaml.template
-         # https://github.com/stackforge/monasca-agent/blob/master/agent.yaml.template
+         # https://github.com/openstack/monasca-agent/blob/master/agent.yaml.template
          # If use_keystone=True and keystone_config is not specified, the keystone information
          # from the agent config will be used.
 #        use_keystone=True
