@@ -409,8 +409,8 @@ class LibvirtCheck(AgentCheck):
                     self.gauge("vm.{0}".format(name), mem_metrics[name],
                                dimensions=dims_operations)
             except KeyError:
-                self.log.debug("Balloon driver not active/available on guest {0} ({1})".format(inst_name,
-                                                                                               instance_cache.get(inst_name)['hostname']))
+                self.log.debug(u"Balloon driver not active/available on guest {0} ({1})".format(inst_name,
+                                                                                                instance_cache.get(inst_name)['hostname']))
             # Test instance's remote responsiveness (ping check) if so configured
             # NOTE: This is only supported for Nova networking at this time.
             if self.init_config.get('ping_check') and 'private_ip' in instance_cache.get(inst_name):
