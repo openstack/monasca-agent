@@ -3,15 +3,13 @@ import logging
 import monasca_agent.collector.checks_d.influxdb as influxdb
 import monasca_setup.agent_config
 import monasca_setup.detection
-from urllib import urlencode
 
 log = logging.getLogger(__name__)
 
 # set up some defaults
-dimensions = {'component': 'influxdb'}
-timeout = 1
-url = 'http://localhost:8086'
-collect_response_time = True
+DEFAULT_TIMEOUT = 1
+DEFAULT_RENAME = 'http://localhost:8086'
+DEFAULT_COLLECT_RESPONSE_TIME = True
 
 
 class InfluxDB(monasca_setup.detection.ArgsPlugin):
@@ -41,12 +39,9 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
                 instance = {'name': self.url,
                             'url': self.url,
                             'whitelist': self.whitelist,
-                            'metricdef': self.metricdef,
                             'collect_response_time':
                                 self.collect_response_time,
-                            'timeout': self.timeout,
-                            'query': self.query,
-                            'dimensions': self.dimensions}
+                            'timeout': self.timeout}
 
                 config['influxdb'] = {'init_config': None,
                                       'instances': [instance]}
@@ -61,16 +56,18 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
 
     def _connection_test(self):
         try:
+            log.info('Attempting to connect to InfluxDB at %s', self.url)
             h = httplib2.Http(timeout=self.timeout)
 
-            uri = self.url + urlencode(self.params)
+            uri = self.url + "/ping"
             resp, content = h.request(uri, "GET")
+            self.version = content
+            log.info('Discovered InfluxDB version %s', self.version)
 
-            if 'content-type' in resp and 'application/json' in resp['content-type']:
-                return True
+            return resp.status == 200 and self.version >= '0.9.4'
 
         except Exception as e:
-            log.error('Unable to access the InfluxDB query URL %s: %s', uri, str(e))
+            log.error('Unable to access the InfluxDB query URL %s: %s', self.url, str(e))
 
         return False
 
@@ -80,15 +77,18 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
         """
 
         # Set defaults and read config or use arguments
-        self.url = url
+        self.url = DEFAULT_RENAME
         self.whitelist = influxdb.DEFAULT_METRICS_WHITELIST
-        self.dimensions = dimensions
-        self.timeout = timeout
-        self.collect_response_time = collect_response_time
+        self.timeout = DEFAULT_TIMEOUT
+        self.collect_response_time = DEFAULT_COLLECT_RESPONSE_TIME
 
         if self.args is not None:
-            for arg in self.args:
-                if arg == 'url':
-                    self.url = self.args.get('url', url)
+            for key, val in self.args:
+                if key == 'url':
+                    self.url = val
+                elif key == 'timeout':
+                    self.timeout = val
+                elif key == 'collect_response_time':
+                    self.collect_response_time = val
                 else:
-                    log.warn("Ignoring addition unsupported setup argument: {0}".format(arg))
+                    log.warn("Ignoring addition unsupported setup argument: {0}".format(key))
