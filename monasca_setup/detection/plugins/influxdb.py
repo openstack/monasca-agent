@@ -61,10 +61,11 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
 
             uri = self.url + "/ping"
             resp, content = h.request(uri, "GET")
-            self.version = content
+            self.version = resp.get('x-influxdb-version', '0')
+            log.debug('')
             log.info('Discovered InfluxDB version %s', self.version)
 
-            return resp.status == 200 and self.version >= '0.9.4'
+            return self.version >= '0.9.4'
 
         except Exception as e:
             log.error('Unable to access the InfluxDB query URL %s: %s', self.url, str(e))

@@ -14,6 +14,7 @@ from httplib2 import HttpLib2Error
 from httplib2 import httplib
 
 import monasca_agent.collector.checks.services_checks as services_checks
+import monasca_agent.common.util as util
 
 log = logging.getLogger(__name__)
 
@@ -106,7 +107,6 @@ class InfluxDB(services_checks.ServicesCheck):
         headers = instance.get('headers', {})
         whitelist = instance.get('whitelist', DEFAULT_METRICS_WHITELIST)
         metricdef = instance.get('metricdef', DEFAULT_METRICS_DEF)
-        uencode = instance.get('urlencode', True)
         dimensions = instance.get('dimensions', {})
         collect_response_time = instance.get('collect_response_time', False)
         disable_ssl_validation = instance.get('disable_ssl_validation', True)
@@ -121,7 +121,7 @@ class InfluxDB(services_checks.ServicesCheck):
 
         endpoint = base_url + '/query'
 
-        return endpoint, query, username, password, timeout, headers, dimensions, whitelist, metricdef, uencode, \
+        return endpoint, query, username, password, timeout, headers, dimensions, whitelist, metricdef, \
             collect_response_time, disable_ssl_validation
 
     def _create_status_event(self, status, msg, instance):
@@ -138,7 +138,7 @@ class InfluxDB(services_checks.ServicesCheck):
 
         trans = {}  # tabular content transformed into real dictionary
         data = json.loads(content)
-        self.log.debug('data: %s', data)
+        log.debug('data: %s', data)
         # create complete map
         for results in data['results']:
             for ser in results['series']:
@@ -177,21 +177,28 @@ class InfluxDB(services_checks.ServicesCheck):
 
     def _check(self, instance):
         endpoint, query, username, password, timeout, headers, dimensions, whitelist, metricdef,\
-           uencode, collect_response_time, disable_ssl_validation, = self._load_conf(instance)
+           collect_response_time, disable_ssl_validation = self._load_conf(instance)
 
         start_time = time.time()
         content = ""
-        merged_dimensions = instance._set_dimensions(
+        merged_dimensions = self._set_dimensions(
                 {'component': 'influxdb', 'url': endpoint}.update(dimensions.copy()), instance)
 
         try:
-            self.log.debug('Connecting to %s', endpoint)
             h = Http(timeout=timeout, disable_ssl_certificate_validation=disable_ssl_validation)
             if username is not None and password is not None:
                 h.add_credentials(username, password)
-            uri = endpoint + '?q=' + urlencode(query)
+            else:
+                log.warning("Access to InfluxDB-API w/o credentials")
 
-            resp, content = h.request(uri, "GET", headers=headers)
+            params={'q': query}
+            merged_headers=headers.copy()
+            merged_headers.update(util.headers(self.agent_config))
+
+            uri='{0}?{1}'.format(endpoint, urlencode(params))
+
+            log.debug('Query InfluxDB using GET to %s', uri)
+            resp, content = h.request(uri, "GET", headers=merged_headers)
 
             # report response time first, even when there is HTTP errors
             if collect_response_time:
@@ -207,16 +214,17 @@ class InfluxDB(services_checks.ServicesCheck):
 
             elif int(resp.status) >= 400:
                 error_string = "InfluxDB check {0} causes HTTP errors when accessing {1}, error code: {2}".format(
-                        instance.get('name'), endpoint, str(resp.status))
-                log.warning(error_string)
+                        instance.get('name'), uri, str(resp.status))
+                self.warning(error_string)
                 return services_checks.Status.DOWN, error_string
 
             # check content
             if 'application/json' not in resp.get('content-type', []):
                 error_string = "InfluxDB check {0} received unexpected payload when accessing {1}: content_type={2}"\
                     .format(
-                        instance['name'], endpoint, str(resp['content-type']))
-                log.error(error_string)
+                        instance['name'], uri, str(resp['content-type']))
+                self.error(error_string)
+                return services_checks.Status.DOWN, error_string
 
             self._rate_or_gauge_statuses(content, merged_dimensions, whitelist, metricdef)
             success_string = '{0} is UP'.format(endpoint)
@@ -243,8 +251,8 @@ class InfluxDB(services_checks.ServicesCheck):
         except (KeyError, TypeError) as e:
             error_string = "Unsupported schema returned by query endpoint of instance {0}: {1}".format(
                     instance.get('url'), str(e))
-            self.log.error(error_string)
-            self.log.error('received: %s', content)
+            self.log.exception(error_string)
+            self.log.debug('received: %s', content)
             return services_checks.Status.UP, error_string
 
         except Exception as e:
