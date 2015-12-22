@@ -177,20 +177,20 @@ class InfluxDB(services_checks.ServicesCheck):
 
     def _check(self, instance):
         endpoint, query, username, password, timeout, headers, dimensions, whitelist, metricdef,\
-           uencode, collect_response_time, disable_ssl_validation, = self._load_conf(instance)
+           collect_response_time, disable_ssl_validation = self._load_conf(instance)
 
         start_time = time.time()
         content = ""
-        merged_dimensions = instance._set_dimensions(
+        merged_dimensions = self._set_dimensions(
                 {'component': 'influxdb', 'url': endpoint}.update(dimensions.copy()), instance)
 
         try:
-            self.log.debug('Connecting to %s', endpoint)
             h = Http(timeout=timeout, disable_ssl_certificate_validation=disable_ssl_validation)
             if username is not None and password is not None:
                 h.add_credentials(username, password)
             uri = endpoint + '?q=' + urlencode(query)
 
+            self.log.debug('Query InfluxDB using GET to %s', uri)
             resp, content = h.request(uri, "GET", headers=headers)
 
             # report response time first, even when there is HTTP errors
@@ -243,8 +243,8 @@ class InfluxDB(services_checks.ServicesCheck):
         except (KeyError, TypeError) as e:
             error_string = "Unsupported schema returned by query endpoint of instance {0}: {1}".format(
                     instance.get('url'), str(e))
-            self.log.error(error_string)
-            self.log.error('received: %s', content)
+            self.log.exception(error_string)
+            self.log.debug('received: %s', content)
             return services_checks.Status.UP, error_string
 
         except Exception as e:
