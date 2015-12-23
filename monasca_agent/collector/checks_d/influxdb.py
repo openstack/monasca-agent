@@ -4,7 +4,6 @@
 """
 
 import json
-import logging
 import socket
 import time
 from urllib import urlencode
@@ -15,8 +14,6 @@ from httplib2 import httplib
 
 import monasca_agent.collector.checks.services_checks as services_checks
 import monasca_agent.common.util as util
-
-log = logging.getLogger(__name__)
 
 GAUGE = 'gauge'
 RATE = 'rate'
@@ -112,17 +109,17 @@ class InfluxDB(services_checks.ServicesCheck):
         disable_ssl_validation = instance.get('disable_ssl_validation', True)
 
         if disable_ssl_validation:
-            log.info('Skipping SSL certificate validation for %s based '
-                     'on configuration', base_url)
+            self.log.info('Skipping SSL certificate validation for %s based '
+                          'on configuration', base_url)
         if base_url is None:
-            log.error("Bad configuration, no valid base URL "
-                      "(url) found in config!")
+            self.log.error("Bad configuration, no valid base URL "
+                           "(url) found in config!")
             raise Exception("Bad configuration. You must specify a url")
 
         endpoint = base_url + '/query'
 
         return endpoint, query, username, password, timeout, headers, dimensions, whitelist, metricdef, \
-            collect_response_time, disable_ssl_validation
+               collect_response_time, disable_ssl_validation
 
     def _create_status_event(self, status, msg, instance):
         """Does nothing: status events are not yet supported by Mon API.
@@ -131,14 +128,14 @@ class InfluxDB(services_checks.ServicesCheck):
         return
 
     def _push_error(self, error_string, dimensions):
-        self.log.info(error_string)
+        self.warning(error_string)
         self.gauge(HTTP_STATUS_MNAME, 1, dimensions=dimensions, value_meta={'error': error_string})
 
     def _rate_or_gauge_statuses(self, content, dimensions, whitelist, metricdef):
 
         trans = {}  # tabular content transformed into real dictionary
         data = json.loads(content)
-        log.debug('data: %s', data)
+        self.log.debug('data: %s', data)
         # create complete map
         for results in data['results']:
             for ser in results['series']:
@@ -176,8 +173,8 @@ class InfluxDB(services_checks.ServicesCheck):
             self.gauge(metric_name, float(metric_value), dimensions=dimensions)
 
     def _check(self, instance):
-        endpoint, query, username, password, timeout, headers, dimensions, whitelist, metricdef,\
-           collect_response_time, disable_ssl_validation = self._load_conf(instance)
+	    endpoint, query, username, password, timeout, headers, dimensions, whitelist, metricdef,\
+                collect_response_time, disable_ssl_validation = self._load_conf(instance)
 
         start_time = time.time()
         content = ""
@@ -188,16 +185,14 @@ class InfluxDB(services_checks.ServicesCheck):
             h = Http(timeout=timeout, disable_ssl_certificate_validation=disable_ssl_validation)
             if username is not None and password is not None:
                 h.add_credentials(username, password)
-            else:
-                log.warning("Access to InfluxDB-API w/o credentials")
 
-            params={'q': query}
-            merged_headers=headers.copy()
+            params = {'q': query}
+            merged_headers = headers.copy()
             merged_headers.update(util.headers(self.agent_config))
 
-            uri='{0}?{1}'.format(endpoint, urlencode(params))
+            uri = '{0}?{1}'.format(endpoint, urlencode(params))
 
-            log.debug('Query InfluxDB using GET to %s', uri)
+            self.log.debug('Query InfluxDB using GET to %s', uri)
             resp, content = h.request(uri, "GET", headers=merged_headers)
 
             # report response time first, even when there is HTTP errors
@@ -220,10 +215,10 @@ class InfluxDB(services_checks.ServicesCheck):
 
             # check content
             if 'application/json' not in resp.get('content-type', []):
-                error_string = "InfluxDB check {0} received unexpected payload when accessing {1}: content_type={2}"\
+                error_string = "InfluxDB check {0} received unexpected payload when accessing {1}: content_type={2}" \
                     .format(
                         instance['name'], uri, str(resp['content-type']))
-                self.error(error_string)
+                self.warning(error_string)
                 return services_checks.Status.DOWN, error_string
 
             self._rate_or_gauge_statuses(content, merged_dimensions, whitelist, metricdef)
@@ -258,5 +253,6 @@ class InfluxDB(services_checks.ServicesCheck):
         except Exception as e:
             length = int((time.time() - start_time) * 1000)
             error_string = 'Unhandled exception {0}. Connection failed after {1} ms'.format(str(e), length)
-            self.log.error(error_string)
+            self.log.exception(error_string)
+            self.warning(error_string)
             return services_checks.Status.DOWN, error_string
