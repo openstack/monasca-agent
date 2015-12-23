@@ -93,8 +93,7 @@ class InfluxDB(services_checks.ServicesCheck):
         super(InfluxDB, self).__init__(name, init_config,
                                        agent_config, instances)
 
-    @staticmethod
-    def _load_conf(instance):
+    def _load_conf(self, instance):
         # Fetches the conf
         base_url = instance.get('url', None)
         query = instance.get('query', DEFAULT_QUERY)
