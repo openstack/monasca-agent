@@ -18,7 +18,7 @@ class SwiftDispersion(checks.AgentCheck):
         "container.copies_expected",
         "container.copies_found",
         "container.overlapping",
-        ]
+    ]
 
     def swift_dispersion(self):
         executable = 'swift-dispersion-report'
@@ -42,7 +42,7 @@ class SwiftDispersion(checks.AgentCheck):
             log.debug("Checking metric {0}".format(metric))
             disp_metric = metric.split('.', 1)
 
-            value = dispersion[disp_metric[0]][disp_metric[1]];
+            value = dispersion[disp_metric[0]][disp_metric[1]]
             assert(type(value) in (types.IntType, types.LongType,
                                    types.FloatType))
 
