@@ -119,7 +119,7 @@ class InfluxDB(services_checks.ServicesCheck):
         endpoint = base_url + '/query'
 
         return endpoint, query, username, password, timeout, headers, dimensions, whitelist, metricdef, \
-               collect_response_time, disable_ssl_validation
+                    collect_response_time, disable_ssl_validation
 
     def _create_status_event(self, status, msg, instance):
         """Does nothing: status events are not yet supported by Mon API.
@@ -173,7 +173,7 @@ class InfluxDB(services_checks.ServicesCheck):
             self.gauge(metric_name, float(metric_value), dimensions=dimensions)
 
     def _check(self, instance):
-	    endpoint, query, username, password, timeout, headers, dimensions, whitelist, metricdef,\
+        endpoint, query, username, password, timeout, headers, dimensions, whitelist, metricdef, \
                 collect_response_time, disable_ssl_validation = self._load_conf(instance)
 
         start_time = time.time()
