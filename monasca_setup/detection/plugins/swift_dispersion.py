@@ -23,6 +23,6 @@ class SwiftDispersion(monasca_setup.detection.Plugin):
         """
         config = monasca_setup.agent_config.Plugins()
         log.info("\tEnabling the swift-dispersion plugin")
-        config['swift_dispersion'] = {'init_config': None, 'instances': [{'name': 'swift-recon'}]}
+        config['swift_dispersion'] = {'init_config': None, 'instances': [{'name': 'swift-dispersion'}]}
 
         return config
