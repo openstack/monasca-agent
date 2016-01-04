@@ -53,29 +53,61 @@ class MonAPI(monasca_setup.detection.Plugin):
             {
                 "name": "jvm.memory.total.max",
                 "path": "gauges/jvm.memory.total.max/value",
-                "type": "gauge"},
+                "type": "gauge"
+            },
             {
                 "name": "jvm.memory.total.used",
                 "path": "gauges/jvm.memory.total.used/value",
-                "type": "gauge"},
+                "type": "gauge"
+            },
             {
                 "name": "metrics.published",
                 "path": "meters/monasca.api.app.MetricService.metrics.published/count",
-                "type": "rate"},
-            {
-                "name": "raw-sql.time.avg",
-                "path": "timers/org.skife.jdbi.v2.DBI.raw-sql/mean",
-                "type": "gauge"},
-            {
-                "name": "raw-sql.time.max",
-                "path": "timers/org.skife.jdbi.v2.DBI.raw-sql/max",
-                "type": "gauge"},
+                "type": "rate"
+            }
         ]
-        config.merge(dropwizard_metrics('monitoring', 'monasca-api', 'http://localhost:8081/metrics', whitelist))
+
+        if not self._is_hibernate_on():
+            # if hibernate is not used, it is mysql with DBI
+            # for that case having below entries makes sense
+            log.debug('MonApi has not enabled Hibernate, adding DBI metrics')
+            whitelist.extend([
+                {
+                    "name": "raw-sql.time.avg",
+                    "path": "timers/org.skife.jdbi.v2.DBI.raw-sql/mean",
+                    "type": "gauge"
+                },
+                {
+                    "name": "raw-sql.time.max",
+                    "path": "timers/org.skife.jdbi.v2.DBI.raw-sql/max",
+                    "type": "gauge"
+                }
+            ])
+
+        config.merge(dropwizard_metrics('monitoring',
+                                        'monasca-api',
+                                        'http://localhost:8081/metrics',
+                                        whitelist))
+
         return config
 
     def dependencies_installed(self):
         return True
+
+    def _is_hibernate_on(self):
+        # check if api_config has been declared in __init__
+        # if not it means that configuration file was not found
+        # or monasca-api Python implementation is running
+
+        api_config = getattr(self, 'api_config', None)
+        if api_config is None:
+            return False
+
+        hibernate_cfg = self.api_config.get('hibernate', None)
+        if hibernate_cfg is None:
+            return False
+
+        return hibernate_cfg.get('supportEnabled', False)
 
 
 class MonNotification(monasca_setup.detection.Plugin):
