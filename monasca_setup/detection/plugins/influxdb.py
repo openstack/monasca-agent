@@ -1,4 +1,4 @@
-import httplib2
+import requests
 import logging
 import monasca_agent.collector.checks_d.influxdb as influxdb
 import monasca_setup.agent_config
@@ -46,7 +46,6 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
                 config['influxdb'] = {'init_config': None,
                                       'instances': [instance]}
                 # watch processes using process plugin
-
                 config.merge(detection.watch_process(['influxd'], component='influxdb', exact_match=False))
             else:
                 log.warn('Unable to access the InfluxDB diagnostics URL;' +
@@ -60,11 +59,9 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
     def _connection_test(self, url):
         try:
             log.debug('Attempting to connect to InfluxDB API at %s', self.url)
-            h = httplib2.Http(timeout=self.timeout)
-
             uri = url + "/ping"
-            resp, content = h.request(uri, "GET")
-            self.version = resp.get('x-influxdb-version', '0 (unknown)')
+            resp = requests.get(url=uri, timeout=self.timeout)
+            self.version = resp.headers.get('x-influxdb-version', '0 (unknown)')
             log.info('Discovered InfluxDB version %s', self.version)
 
             supported = self.version >= '0.9.4'
@@ -83,7 +80,7 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
             for protocol in ['http', 'https']:
                 u = '{0}://localhost:{1}'.format(protocol, conn.laddr[0])
                 if self._connection_test(u):
-                    url = u
+                    self.url = u
                     return True
         return False
 
