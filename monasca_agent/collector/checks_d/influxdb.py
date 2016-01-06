@@ -155,11 +155,12 @@ class InfluxDB(services_checks.ServicesCheck):
                 else:
                     met_type = met_def[TYPE_KEY]
                     met_iname = met_def.get(INFLUXDB_NAME_KEY, met)
+                    fqmet = 'influxdb.{0}.{1}'.format(mod, met)
                     if met_iname in trans[mod]:
                         value = trans[mod][met_iname]
-                        self._push_metric(met_type, met, value, dims)
+                        self._push_metric(met_type, fqmet, value, dims)
                     else:
-                        self.log.debug('InfluxDB does not report metric %s.%s', mod, met_iname)
+                        self.log.debug('InfluxDB did not report metric %s.%s', mod, met_iname)
 
     def _push_metric(self, metric_type, metric_name, metric_value, dimensions):
         self.log.debug('push %s %s = %s {%s}', metric_type, metric_name, dimensions)
