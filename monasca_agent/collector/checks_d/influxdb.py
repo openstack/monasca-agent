@@ -94,7 +94,7 @@ class InfluxDB(services_checks.ServicesCheck):
         base_url = instance.get('url', None)
         username = instance.get('username', None)
         password = instance.get('password', None)
-        timeout = int(instance.get('timeout', 10))
+        timeout = int(instance.get('timeout', '1'))
         headers = instance.get('headers', {})
         whitelist = instance.get('whitelist', DEFAULT_METRICS_WHITELIST)
         metricdef = instance.get('metricdef', DEFAULT_METRICS_DEF)
