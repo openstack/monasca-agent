@@ -26,12 +26,7 @@ instances:
 
          # The (optional) headers parameter allows you to send extra headers
          # with the request. This is useful for explicitly specifying the host
-         # header or perhaps adding headers for authorization purposes. Note
-         # that the http client library converts all headers to lowercase.
-         # This is legal according to RFC2616
-         # (See: http://tools.ietf.org/html/rfc2616#section-4.2)
-         # but may be problematic with some HTTP servers
-         # (See: https://code.google.com/p/httplib2/issues/detail?id=169)
+         # header or perhaps adding headers for authorization purposes.
 
 #       Dimensions to use only for this specific plugin
         dimensions: !!map
@@ -42,14 +37,14 @@ instances:
 #       headers:
 #          Host: alternative.host.example.com
 #          X-Auth-Token: SOME-AUTH-TOKEN
-#       InfluxQL query to obtain self-monitoring data
-#       query : SHOW STATS
 
 #       List of metrics to publish to Monasca. The underlying metric definition are defined inside the InfluxDB plugin
-#       but can be replaced with custom ones (e.g. when the plugin is lagging behind InfluxDB)
+#       but can be replaced with custom ones (e.g. when the plugin is lagging behind InfluxDB). Whitelists as the metric
+#       definitions are organized by metric groups. The resulting metric is influxdb.<group>.<metricname>, e.g.
+#       'influxdb.httpd.auth_fail'
         whitelist: !!map
           httpd:
-            - auth_fail
+#            - auth_fail
             - points_write_ok
             - query_req
             - write_req
@@ -62,8 +57,9 @@ instances:
             - write_req
             - points_write_ok
 
-#       This defines agent meters and gauges metrics and describes how to map InfluxDB stats to them
-#      metricdef:
+#      This defines agent meters and gauges metrics and describes how to map InfluxDB stats to them
+#      metricdef: !!map
+#          httpd:
 #            _dimensions: { binding: bind}
 #            auth_fail: {type: rate}
 #            points_write_ok: {type: rate, influxdb_name: points_written_ok}
@@ -72,49 +68,49 @@ instances:
 #            req: {type: rate}
 #            write_req: {type: rate}
 #            write_req_bytes: {type: rate}}
-#            engine:
-#                DIMENSIONS_KEY: {path: path}
-#                blks_write: {type: rate}
-#                blks_write_bytes: {type: rate}
-#                blks_write_bytes_c: {type: rate}
-#                points_write: {type: rate}
-#                points_write_dedupe: {type: rate}
-#            shard:
-#                DIMENSIONS_KEY: {influxdb_engine: engine, influxdb_shard: id}
-#                fields_create: {type: rate}
-#                series_create: {type: rate}
-#                write_points_ok: {type: rate}
-#                write_req: {type: rate}
-#            wal:
-#                DIMENSIONS_KEY: {path: path}
-#                auto_flush: {type: rate}
-#                flush_duration: {type: rate}
-#                idle_flush: {type: rate}
-#                mem_size: {type: rate}
-#                meta_flush: {type: rate}
-#                points_flush: {type: rate}
-#                points_write: {type: rate}
-#                points_write_req: {type: rate}
-#                series_flush: {type: rate}
-#            write:
-#                DIMENSIONS_KEY: {path: path}
-#                point_req: {type: rate}
-#                point_req_local: {type: rate}
-#                req: {type: rate}
-#                write_ok: {type: rate}
-#            runtime:
-#                alloc: {type: rate, influxdb_name: Alloc}
-#                frees: {type: rate, influxdb_name: Frees}
-#                heap_alloc: {type: rate, influxdb_name: HeapAlloc}
-#                heap_idle: {type: rate, influxdb_name: HeapIdle}
-#                heap_in_use: {type: rate, influxdb_name: HeapInUse}
-#                heap_objects: {type: rate, influxdb_name: HeapObjects}
-#                heap_released: {type: rate, influxdb_name: HeapReleased}
-#                heap_sys: {type: rate, influxdb_name: HeapSys}
-#                lookups: {type: rate, influxdb_name: Lookups}
-#                mallocs: {type: rate, influxdb_name: Mallocs}
-#                num_gc: {type: rate, influxdb_name: NumGC}
-#                num_goroutine: {type: rate, influxdb_name: NumGoroutine}
-#                pause_total_ns: {type: rate, influxdb_name: PauseTotalNs}
-#                sys: {type: gauge, influxdb_name: Sys}
-#                total_alloc: {type: gauge, influxdb_name: TotalAlloc}
+#        engine:
+#            _dimensions: {path: path}
+#            blks_write: {type: rate}
+#            blks_write_bytes: {type: rate}
+#            blks_write_bytes_c: {type: rate}
+#            points_write: {type: rate}
+#            points_write_dedupe: {type: rate}
+#        shard:
+#            _dimensions: {influxdb_engine: engine, influxdb_shard: id}
+#            fields_create: {type: rate}
+#            series_create: {type: rate}
+#            write_points_ok: {type: rate}
+#            write_req: {type: rate}
+#        wal:
+#            _dimensions: {path: path}
+#            auto_flush: {type: rate}
+#            flush_duration: {type: rate}
+#            idle_flush: {type: rate}
+#            mem_size: {type: rate}
+#            meta_flush: {type: rate}
+#            points_flush: {type: rate}
+#            points_write: {type: rate}
+#            points_write_req: {type: rate}
+#            series_flush: {type: rate}
+#        write:
+#            _dimensions: {path: path}
+#            point_req: {type: rate}
+#            point_req_local: {type: rate}
+#            req: {type: rate}
+#            write_ok: {type: rate}
+#        runtime:
+#            alloc: {type: rate, influxdb_name: Alloc}
+#            frees: {type: rate, influxdb_name: Frees}
+#            heap_alloc: {type: rate, influxdb_name: HeapAlloc}
+#            heap_idle: {type: rate, influxdb_name: HeapIdle}
+#            heap_in_use: {type: rate, influxdb_name: HeapInUse}
+#            heap_objects: {type: rate, influxdb_name: HeapObjects}
+#            heap_released: {type: rate, influxdb_name: HeapReleased}
+#            heap_sys: {type: rate, influxdb_name: HeapSys}
+#            lookups: {type: rate, influxdb_name: Lookups}
+#            mallocs: {type: rate, influxdb_name: Mallocs}
+#            num_gc: {type: rate, influxdb_name: NumGC}
+#            num_goroutine: {type: rate, influxdb_name: NumGoroutine}
+#            pause_total_ns: {type: rate, influxdb_name: PauseTotalNs}
+#            sys: {type: gauge, influxdb_name: Sys}
+#            total_alloc: {type: gauge, influxdb_name: TotalAlloc}

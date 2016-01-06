@@ -3,7 +3,6 @@
 
 """
 
-import json
 import time
 
 import requests
@@ -25,15 +24,16 @@ DEFAULT_METRICS_WHITELIST = {'httpd': ['auth_fail', 'points_write_ok', 'query_re
                              'shard': ['series_create', 'fields_create', 'write_req', 'points_write_ok']}
 
 # ['queriesRx', 'queriesExecuted', 'http_status', 'response_time']
-DEFAULT_METRICS_DEF = {'httpd': {
-    DIMENSIONS_KEY: {'binding': 'bind'},
-    'auth_fail': {TYPE_KEY: RATE},
-    'points_write_ok': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'points_written_ok'},
-    'query_req': {TYPE_KEY: RATE},
-    'query_resp_bytes': {TYPE_KEY: RATE},
-    'req': {TYPE_KEY: RATE},
-    'write_req': {TYPE_KEY: RATE},
-    'write_req_bytes': {TYPE_KEY: RATE}},
+DEFAULT_METRICS_DEF = {
+    'httpd': {
+        DIMENSIONS_KEY: {'binding': 'bind'},
+        'auth_fail': {TYPE_KEY: RATE},
+        'points_write_ok': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'points_written_ok'},
+        'query_req': {TYPE_KEY: RATE},
+        'query_resp_bytes': {TYPE_KEY: RATE},
+        'req': {TYPE_KEY: RATE},
+        'write_req': {TYPE_KEY: RATE},
+        'write_req_bytes': {TYPE_KEY: RATE}},
     'engine': {
         DIMENSIONS_KEY: {'path': 'path'},
         'blks_write': {TYPE_KEY: RATE},
@@ -92,7 +92,6 @@ class InfluxDB(services_checks.ServicesCheck):
     def _load_conf(self, instance):
         # Fetches the conf
         base_url = instance.get('url', None)
-        query = instance.get('query', DEFAULT_QUERY)
         username = instance.get('username', None)
         password = instance.get('password', None)
         timeout = int(instance.get('timeout', 10))
@@ -113,7 +112,7 @@ class InfluxDB(services_checks.ServicesCheck):
 
         endpoint = base_url + '/query'
 
-        return endpoint, query, username, password, timeout, headers, dimensions, whitelist, metricdef, \
+        return endpoint, username, password, timeout, headers, dimensions, whitelist, metricdef, \
                collect_response_time, disable_ssl_validation
 
     def _create_status_event(self, status, msg, instance):
@@ -123,32 +122,35 @@ class InfluxDB(services_checks.ServicesCheck):
         return
 
     def _push_error(self, error_string, dimensions):
+        self.log.error(error_string)
         self.warning(error_string)
         self.gauge(HTTP_STATUS_MNAME, 1, dimensions=dimensions, value_meta={'error': error_string})
 
     def _rate_or_gauge_statuses(self, content, dimensions, whitelist, metricdef):
 
         trans = {}  # tabular content transformed into real dictionary
-        data = json.loads(content)
-        self.log.debug('data: %s', data)
+        self.log.debug('data: %s', content)
         # create complete map
-        for results in data['results']:
+        for results in content['results']:
             for ser in results['series']:
                 mod = ser['name']
                 if mod in whitelist:  # pre-filter by module
                     trans[mod] = {}
                     i = 0
                     for col in ser['columns']:
-                        trans[mod][col] = ser['values'][i]
+                        self.log.debug("")
+                        trans[mod][col] = ser['values'][0][i]
                         i += 1
                     trans[mod][DIMENSIONS_KEY] = ser['tags']
 
         # extract required metrics per whitelisted module
-        for mod, met_list in metricdef:
+        for mod, met_list in metricdef.iteritems():
+            if mod not in whitelist:
+                continue
             dims = dimensions.copy()
-            for met, met_def in met_list:
+            for met, met_def in met_list.iteritems():
                 if met == DIMENSIONS_KEY:  # map tags to appropriate dimensions
-                    for k, v in met_def:
+                    for k, v in met_def.iteritems():
                         dims[k] = trans[mod][DIMENSIONS_KEY][v]
                 else:
                     met_type = met_def[TYPE_KEY]
@@ -157,7 +159,7 @@ class InfluxDB(services_checks.ServicesCheck):
                         value = trans[mod][met_iname]
                         self._push_metric(met_type, met, value, dims)
                     else:
-                        self.log.warn('InfluxDB does not report metric %s.%s', mod, met_iname)
+                        self.log.debug('InfluxDB does not report metric %s.%s', mod, met_iname)
 
     def _push_metric(self, metric_type, metric_name, metric_value, dimensions):
         self.log.debug('push %s %s = %s {%s}', metric_type, metric_name, dimensions)
@@ -168,21 +170,20 @@ class InfluxDB(services_checks.ServicesCheck):
             self.gauge(metric_name, float(metric_value), dimensions=dimensions)
 
     def _check(self, instance):
-        endpoint, query, username, password, timeout, headers, dimensions, whitelist, metricdef, \
-                collect_response_time, disable_ssl_validation = self._load_conf(instance)
+        endpoint, username, password, timeout, headers, dimensions, whitelist, metricdef, \
+        collect_response_time, disable_ssl_validation = self._load_conf(instance)
 
         start_time = time.time()
-        content = ""
         merged_dimensions = self._set_dimensions(
                 {'component': 'influxdb', 'url': endpoint}.update(dimensions.copy()), instance)
 
         try:
             merged_headers = headers.copy()
             merged_headers.update(util.headers(self.agent_config))
-            params = {'q': query}
+            params = {'q': DEFAULT_QUERY}
             auth = (username, password)
             self.log.debug('Query InfluxDB using GET to %s', endpoint)
-            resp = requests.get(url=endpoint, params=params, headers=merged_headers, auth=auth, timeout=self.timeout,
+            resp = requests.get(endpoint, params=params, headers=merged_headers, auth=auth, timeout=self.timeout,
                                 verify=not disable_ssl_validation)
             content = resp.json()
 
@@ -241,5 +242,4 @@ class InfluxDB(services_checks.ServicesCheck):
             error_string = "Unsupported schema returned by query endpoint of instance {0}: {1}".format(
                     instance.get('url'), str(e))
             self.log.exception(error_string)
-            self.log.debug('received: %s', content)
             return services_checks.Status.UP, error_string

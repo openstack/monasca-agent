@@ -98,7 +98,7 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
         if self.args is not None:
             self.username = self.args.get('influxdb.username', None)
             self.password = self.args.get('influxdb.password', None)
-            self.timeout = self.args.get('influxdb.timeout', DEFAULT_TIMEOUT)
+            self.timeout = self.args.get('influxdb.timeout', None)
             self.collect_response_time = self.args.get('collect_response_time', DEFAULT_COLLECT_RESPONSE_TIME)
             return self._connection_test(self.url) or self._discover_config()
         else:
