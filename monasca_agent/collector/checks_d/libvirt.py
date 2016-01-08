@@ -17,12 +17,14 @@
 
 import json
 import libvirt
+import math
 import os
 import stat
 import subprocess
 import time
 
 from calendar import timegm
+from copy import deepcopy
 from datetime import datetime
 from distutils.version import LooseVersion
 from monasca_agent.collector.checks import AgentCheck
@@ -57,7 +59,7 @@ class LibvirtCheck(AgentCheck):
         """
         dt = datetime.strptime(created, '%Y-%m-%dT%H:%M:%SZ')
         created_sec = (time.time() - timegm(dt.timetuple()))
-        probation_time = self.init_config.get('vm_probation') - created_sec
+        probation_time = self.init_config.get('vm_probation', 300) - created_sec
         return int(probation_time)
 
     def _update_instance_cache(self):
@@ -158,10 +160,18 @@ class LibvirtCheck(AgentCheck):
 
         return metric_cache
 
-    def _update_metric_cache(self, metric_cache):
+    def _update_metric_cache(self, metric_cache, run_time):
+        # Remove inactive VMs from the metric cache
+        write_metric_cache = deepcopy(metric_cache)
+        for instance in metric_cache:
+            if (('cpu.time' not in metric_cache[instance] or
+                 self._test_vm_probation(time.strftime('%Y-%m-%dT%H:%M:%SZ',
+                                         time.gmtime(metric_cache[instance]['cpu.time']['timestamp'] + run_time))) < 0)):
+                self.log.info("Expiring old/empty {0} from cache".format(instance))
+                del(write_metric_cache[instance])
         try:
             with open(self.metric_cache_file, 'w') as cache_json:
-                json.dump(metric_cache, cache_json)
+                json.dump(write_metric_cache, cache_json)
             if stat.S_IMODE(os.stat(self.metric_cache_file).st_mode) != 0o600:
                 os.chmod(self.metric_cache_file, 0o600)
         except IOError as e:
@@ -319,6 +329,8 @@ class LibvirtCheck(AgentCheck):
     def check(self, instance):
         """Gather VM metrics for each instance"""
 
+        time_start = time.time()
+
         # Load metric cache
         metric_cache = self._load_metric_cache()
 
@@ -380,15 +392,15 @@ class LibvirtCheck(AgentCheck):
             if self.init_config.get('alive_only'):
                 continue
 
-            if inst_name not in metric_cache:
-                metric_cache[inst_name] = {}
-
             # Skip instances created within the probation period
             vm_probation_remaining = self._test_vm_probation(instance_cache.get(inst_name)['created'])
             if (vm_probation_remaining >= 0):
                 self.log.info("Libvirt: {0} in probation for another {1} seconds".format(instance_cache.get(inst_name)['hostname'].encode('utf8'),
                                                                                          vm_probation_remaining))
                 continue
+
+            if inst_name not in metric_cache:
+                metric_cache[inst_name] = {}
 
             self._inspect_cpu(insp, inst, instance_cache, metric_cache, dims_customer, dims_operations)
             self._inspect_disks(insp, inst, instance_cache, metric_cache, dims_customer, dims_operations)
@@ -409,8 +421,8 @@ class LibvirtCheck(AgentCheck):
                     self.gauge("vm.{0}".format(name), mem_metrics[name],
                                dimensions=dims_operations)
             except KeyError:
-                self.log.debug("Balloon driver not active/available on guest {0} ({1})".format(inst_name,
-                                                                                               instance_cache.get(inst_name)['hostname']))
+                self.log.debug(u"Balloon driver not active/available on guest {0} ({1})".format(inst_name,
+                                                                                                instance_cache.get(inst_name)['hostname']))
             # Test instance's remote responsiveness (ping check) if so configured
             # NOTE: This is only supported for Nova networking at this time.
             if self.init_config.get('ping_check') and 'private_ip' in instance_cache.get(inst_name):
@@ -432,7 +444,7 @@ class LibvirtCheck(AgentCheck):
                         self.log.warn("OS error running '{0}' returned {1}".format(ping_cmd, e))
 
         # Save these metrics for the next collector invocation
-        self._update_metric_cache(metric_cache)
+        self._update_metric_cache(metric_cache, math.ceil(time.time() - time_start))
 
         # Publish aggregate metrics
         for gauge in agg_gauges:

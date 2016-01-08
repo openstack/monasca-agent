@@ -1,19 +1,16 @@
 """Gather metrics on specific processes.
 
 """
+from collections import defaultdict
 import monasca_agent.collector.checks as checks
-import monasca_agent.common.util as util
 
 
 class ProcessCheck(checks.AgentCheck):
-
     PROCESS_GAUGE = ('process.thread_count',
                      'process.cpu_perc',
                      'process.mem.rss_mbytes',
-                     'process.mem.vsz_mbytes',
                      'process.mem.real_mbytes',
                      'process.open_file_descriptors',
-                     'process.open_file_descriptors_perc',
                      'process.io.read_count',
                      'process.io.write_count',
                      'process.io.read_kbytes',
@@ -24,7 +21,8 @@ class ProcessCheck(checks.AgentCheck):
     def __init__(self, name, init_config, agent_config, instances=None):
         super(ProcessCheck, self).__init__(name, init_config, agent_config,
                                            instances)
-        self._process_list = None
+        self._cached_processes = defaultdict(dict)
+        self._current_process_list = None
 
     @staticmethod
     def is_psutil_version_later_than(v):
@@ -41,7 +39,7 @@ class ProcessCheck(checks.AgentCheck):
         Search for search_string
         """
         found_process_list = []
-        for proc in self._process_list:
+        for proc in self._current_process_list:
             found = False
             for string in search_string:
                 try:
@@ -66,96 +64,82 @@ class ProcessCheck(checks.AgentCheck):
 
         return set(found_process_list)
 
-    def get_process_metrics(self, pids, psutil, cpu_check_interval):
-
-        # initialize process metrics
-        # process metrics available for all versions of psutil
-        rss = 0
-        vms = 0
-        cpu = 0
-        thr = 0
-
-        # process metrics available for psutil versions 0.6.0 and later
-        extended_metrics_0_6_0 = (self.is_psutil_version_later_than((0, 6, 0))
-                                  and not util.Platform.is_win32())
-        # On Windows ext_memory_info returns different metrics
-        if extended_metrics_0_6_0:
-            real = 0
-            voluntary_ctx_switches = 0
-            involuntary_ctx_switches = 0
-        else:
-            real = None
-            voluntary_ctx_switches = None
-            involuntary_ctx_switches = None
-
-        # process metrics available for psutil versions 0.5.0 and later on UNIX
-        extended_metrics_0_5_0_unix = (self.is_psutil_version_later_than((0, 5, 0))
-                                       and util.Platform.is_unix())
-        if extended_metrics_0_5_0_unix:
-            open_file_descriptors = 0
-            open_file_descriptors_perc = 0
-        else:
-            open_file_descriptors = None
-            open_file_descriptors_perc = None
-
-        # process I/O counters (agent might not have permission to access)
-        read_count = 0
-        write_count = 0
-        read_kbytes = 0
-        write_kbytes = 0
-
+    def get_process_metrics(self, pids, psutil, name):
+        processes_to_remove = set(self._cached_processes[name].keys()) - pids
+        for pid in processes_to_remove:
+            del self._cached_processes[name][pid]
         got_denied = False
+        io_permission = True
+
+        # initialize aggregation values
+        total_thr = 0
+        total_cpu = None
+        total_rss = 0
+        total_real = 0
+        total_open_file_descriptors = 0
+        total_read_count = 0
+        total_write_count = 0
+        total_read_kbytes = 0
+        total_write_kbytes = 0
+        total_voluntary_ctx_switches = 0
+        total_involuntary_ctx_switches = 0
 
         for pid in set(pids):
             try:
-                p = psutil.Process(pid)
-                if extended_metrics_0_6_0:
-                    mem = p.memory_info_ex()
-                    real += float((mem.rss - mem.shared) / 1048576)
-                    try:
-                        ctx_switches = p.num_ctx_switches()
-                        voluntary_ctx_switches += ctx_switches.voluntary
-                        involuntary_ctx_switches += ctx_switches.involuntary
-                    except NotImplementedError:
-                        # Handle old Kernels which don't provide this info.
-                        voluntary_ctx_switches = None
-                        involuntary_ctx_switches = None
+                added_process = False
+                if pid not in self._cached_processes[name]:
+                    p = psutil.Process(pid)
+                    self._cached_processes[name][pid] = p
+                    added_process = True
                 else:
-                    mem = p.memory_info()
+                    p = self._cached_processes[name][pid]
 
-                if extended_metrics_0_5_0_unix:
-                    try:
-                        open_file_descriptors = float(p.num_fds())
-                        max_open_file_descriptors = float(p.rlimit(psutil.RLIMIT_NOFILE)[1])
-                        if max_open_file_descriptors > 0.0:
-                            open_file_descriptors_perc = open_file_descriptors / max_open_file_descriptors * 100
-                        else:
-                            open_file_descriptors_perc = 0
-                    except psutil.AccessDenied:
-                        got_denied = True
+                mem = p.memory_info_ex()
+                total_real += float((mem.rss - mem.shared) / 1048576)
+                total_rss += float(mem.rss / 1048576)
+                total_thr += p.num_threads()
 
-                rss += float(mem.rss / 1048576)
-                vms += float(mem.vms / 1048576)
-                thr += p.num_threads()
-                cpu += p.cpu_percent(cpu_check_interval)
+                try:
+                    ctx_switches = p.num_ctx_switches()
+                    total_voluntary_ctx_switches += ctx_switches.voluntary
+                    total_involuntary_ctx_switches += ctx_switches.involuntary
+                except NotImplementedError:
+                    # Handle old Kernels which don't provide this info.
+                    total_voluntary_ctx_switches = None
+                    total_involuntary_ctx_switches = None
+
+                try:
+                    total_open_file_descriptors += float(p.num_fds())
+                except psutil.AccessDenied:
+                    got_denied = True
+
+                if not added_process:
+                    cpu = p.cpu_percent(interval=None)
+                    if not total_cpu:
+                        total_cpu = cpu
+                    else:
+                        total_cpu += cpu
+                else:
+                    p.cpu_percent(interval=None)
 
                 # user might not have permission to call io_counters()
-                if read_count is not None:
+                if io_permission:
                     try:
                         io_counters = p.io_counters()
-                        read_count += io_counters.read_count
-                        write_count += io_counters.write_count
-                        read_kbytes += float(io_counters.read_bytes / 1024)
-                        write_kbytes += float(io_counters.write_bytes / 1024)
+                        total_read_count += io_counters.read_count
+                        total_write_count += io_counters.write_count
+                        total_read_kbytes += float(io_counters.read_bytes / 1024)
+                        total_write_kbytes += float(io_counters.write_bytes / 1024)
                     except psutil.AccessDenied:
                         self.log.debug('monasca-agent user does not have ' +
                                        'access to I/O counters for process' +
                                        ' %d: %s'
                                        % (pid, p.name))
-                        read_count = None
-                        write_count = None
-                        read_kbytes = None
-                        write_kbytes = None
+                        io_permission = False
+                        total_read_count = None
+                        total_write_count = None
+                        total_read_kbytes = None
+                        total_write_kbytes = None
 
             # Skip processes dead in the meantime
             except psutil.NoSuchProcess:
@@ -166,11 +150,10 @@ class ProcessCheck(checks.AgentCheck):
             self.warning("The Monitoring Agent was denied access " +
                          "when trying to get the number of file descriptors")
 
-        # Memory values are in Byte
-        return (thr, cpu, rss, vms, real, open_file_descriptors,
-                open_file_descriptors_perc, read_count, write_count,
-                read_kbytes, write_kbytes, voluntary_ctx_switches,
-                involuntary_ctx_switches)
+        return dict(zip(ProcessCheck.PROCESS_GAUGE,
+                        (total_thr, total_cpu, total_rss, total_real, total_open_file_descriptors,
+                         total_read_count, total_write_count, total_read_kbytes, total_write_kbytes,
+                         total_voluntary_ctx_switches, total_involuntary_ctx_switches)))
 
     def prepare_run(self):
         """Collect the list of processes once before each run"""
@@ -179,7 +162,7 @@ class ProcessCheck(checks.AgentCheck):
         except ImportError:
             raise Exception('You need the "psutil" package to run this check')
 
-        self._process_list = [process for process in psutil.process_iter()]
+        self._current_process_list = [process for process in psutil.process_iter()]
 
     def check(self, instance):
         try:
@@ -190,17 +173,12 @@ class ProcessCheck(checks.AgentCheck):
         name = instance.get('name', None)
         exact_match = instance.get('exact_match', True)
         search_string = instance.get('search_string', None)
-        cpu_check_interval = instance.get('cpu_check_interval', 0.1)
 
         if name is None:
             raise KeyError('The "name" of process groups is mandatory')
 
         if search_string is None:
             raise KeyError('The "search_string" is mandatory')
-
-        if not isinstance(cpu_check_interval, (int, long, float)):
-            self.warning("cpu_check_interval not a number; defaulting to 0.1")
-            cpu_check_interval = 0.1
 
         pids = self.find_pids(search_string, psutil, exact_match=exact_match)
         dimensions = self._set_dimensions({'process_name': name}, instance)
@@ -210,11 +188,7 @@ class ProcessCheck(checks.AgentCheck):
         self.gauge('process.pid_count', len(pids), dimensions=dimensions)
 
         if instance.get('detailed', False):
-            metrics = dict(zip(ProcessCheck.PROCESS_GAUGE,
-                               self.get_process_metrics(pids,
-                                                        psutil,
-                                                        cpu_check_interval)))
-
-            for metric, value in metrics.iteritems():
-                if value is not None:
-                    self.gauge(metric, value, dimensions=dimensions)
+            metrics = self.get_process_metrics(pids, psutil, name)
+            for metric_name, metric_value in metrics.iteritems():
+                if metric_value is not None:
+                    self.gauge(metric_name, metric_value, dimensions=dimensions)
