@@ -518,6 +518,8 @@ Process checks can be performed to verify that a set of named processes are runn
 
 Each process entry consists of two primary keys: name and search_string. Optionally, if an exact match on name is required, the exact_match boolean can be added to the entry and set to True.
 
+To grab more process metrics beside the process.pid_count, which only shows that the process is up and running, the configuration option detailed must be set to true.
+
 ```
 init_config:
  
@@ -528,14 +530,17 @@ instances:
  - name: mysql
    search_string: ['mysql']
    exact_match: True
+
+ - name: kafka
+   search_string: ['kafka']
+   detailed: true
 ``` 
-The process checks return the following metrics:
+The process checks return the following metrics ( if detailed is set to true, otherwise process.pid_count is only returned ):
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
 | process.mem.real_mbytes  | process_name, service, component | Amount of physical memory allocated to a process minus shared libraries in Mbytes
 | process.mem.rss_mbytes  | process_name, service, component | Amount of physical memory allocated to a process, including memory from shared libraries in Mbytes
-| process.mem.vsz_mbytes  | process_name, service, component | Amount of all the memory a process can access, including swapped, physical, and shared in Mbytes
 | process.io.read_count  | process_name, service, component | Number of reads by a process
 | process.io.write_count  | process_name, service, component | Number of writes by a process
 | process.io.read_kbytes  | process_name, service, component | Kbytes read by a process
@@ -543,7 +548,6 @@ The process checks return the following metrics:
 | process.thread_count  | process_name, service, component | Number of threads a process is using
 | process.cpu_perc  | process_name, service, component | Percentage of cpu being consumed by a process
 | process.open_file_descriptors  | process_name, service, component | Number of files being used by a process
-| process.open_file_descriptors_perc  | process_name, service, component | Number of files being used by a process as a percentage of the total file descriptors allocated to the process
 | process.involuntary_ctx_switches  | process_name, service, component | Number of involuntary context switches for a process
 | process.voluntary_ctx_switches  | process_name, service, component | Number of voluntary context switches for a process
 | process.pid_count  | process_name, service, component | Number of processes that exist with this process name

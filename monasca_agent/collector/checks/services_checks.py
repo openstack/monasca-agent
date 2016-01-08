@@ -10,6 +10,7 @@ import monasca_agent.collector.checks.libs.thread_pool
 DEFAULT_TIMEOUT = 180
 DEFAULT_SIZE_POOL = 6
 MAX_LOOP_ITERATIONS = 1000
+MAX_ALLOWED_THREADS = 200
 FAILURE = "FAILURE"
 
 up_down = collections.namedtuple('up_down', ['UP', 'DOWN'])
@@ -81,11 +82,14 @@ class ServicesCheck(monasca_agent.collector.checks.AgentCheck):
     def check(self, instance):
         if not self.pool_started:
             self.start_pool()
-        # On Windows the agent runs on multiple threads so we need to have an
-        # offset of 5 in case the pool_size is 1
-        if threading.activeCount() > 5 * self.pool_size + 5:
-            raise Exception("Thread number (%s) is exploding. Skipping this check" %
-                            threading.activeCount())
+        if threading.activeCount() > MAX_ALLOWED_THREADS:
+            exception = "Thread number ({0}) exceeds maximum ({1}). Skipping this check.".format(threading.activeCount(),
+                                                                                                 MAX_ALLOWED_THREADS)
+            if self.pool_size >= MAX_ALLOWED_THREADS:
+                exception += " threads_count is set too high in the {0} plugin config.".format(self.name)
+            else:
+                exception += "  Another plugin may have threads_count set too high."
+            raise Exception(exception)
         self._process_results()
         self._clean()
         name = instance.get('name', None)

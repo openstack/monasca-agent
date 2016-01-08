@@ -1,3 +1,5 @@
+import os
+import psutil
 import unittest
 
 from tests.common import load_check
@@ -5,9 +7,10 @@ from tests.common import load_check
 
 class TestSimpleProcess(unittest.TestCase):
     def setUp(self):
+        p = psutil.Process(os.getpid())
         config = {'init_config': {}, 'instances': [{'name': 'test',
-                                                   'search_string': ['python'],
-                                                   'detailed': False}]}
+                                                    'search_string': [p.name()],
+                                                    'detailed': False}]}
         self.check = load_check('process', config)
 
     def testPidCount(self):
@@ -19,9 +22,10 @@ class TestSimpleProcess(unittest.TestCase):
 
 class TestDetailedProcess(unittest.TestCase):
     def setUp(self):
+        p = psutil.Process(os.getpid())
         config = {'init_config': {}, 'instances': [{'name': 'test',
-                                                   'search_string': ['python'],
-                                                   'detailed': True}]}
+                                                    'search_string': [p.name()],
+                                                    'detailed': True}]}
         self.check = load_check('process', config)
 
     def testPidCount(self):
@@ -29,7 +33,7 @@ class TestDetailedProcess(unittest.TestCase):
         metrics = self.check.get_metrics()
         self.assertTrue(len(metrics) > 1, metrics)
 
-    def testMeasurements(self):
+    def run_check(self):
         self.check.run()
         metrics = self.check.get_metrics()
 
@@ -38,19 +42,26 @@ class TestDetailedProcess(unittest.TestCase):
             measurement_names.append(metric.name)
 
         measurement_names.sort()
+        return measurement_names
 
-        expected_names = ['process.cpu_perc',
-                          'process.involuntary_ctx_switches',
+    def testMeasurements(self):
+        measurement_names = self.run_check()
+
+        # first run will not have cpu_perc in it
+        expected_names = ['process.involuntary_ctx_switches',
                           'process.io.read_count',
                           'process.io.read_kbytes',
                           'process.io.write_count',
                           'process.io.write_kbytes',
                           'process.mem.real_mbytes',
                           'process.mem.rss_mbytes',
-                          'process.mem.vsz_mbytes',
                           'process.open_file_descriptors',
-                          'process.open_file_descriptors_perc',
                           'process.pid_count',
                           'process.thread_count',
                           'process.voluntary_ctx_switches']
-        self.assertTrue(measurement_names == expected_names)
+        self.assertEquals(measurement_names, expected_names)
+
+        # run again to get cpu_perc
+        expected_names.insert(0, 'process.cpu_perc')
+        measurement_names = self.run_check()
+        self.assertEquals(measurement_names, expected_names)
