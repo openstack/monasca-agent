@@ -24,6 +24,8 @@ vm_probation = 60 * 5  # Five minutes
 ping_options = [["/usr/bin/fping", "-n", "-c1", "-t250", "-q"],
                 ["/sbin/fping", "-n", "-c1", "-t250", "-q"],
                 ["/bin/ping", "-n", "-c1", "-w1", "-q"]]
+# Path to 'ip' command (needed to execute ping within network namespaces)
+ip_cmd = "/sbin/ip"
 
 
 class Libvirt(Plugin):
@@ -96,30 +98,32 @@ class Libvirt(Plugin):
             else:
                 init_config['identity_uri'] = "{0}/v2.0".format(nova_cfg.get(cfg_section, 'identity_uri'))
 
-            # Verify functionality of the ping command to enable ping checks
+            # Verify requirements to enable ping checks
+            init_config['ping_check'] = self.literal_eval('False')
             if self.agent_user is None:
                 log.warn("\tUnable to determine agent user.  Skipping ping checks.")
             else:
-                for ping_cmd in ping_options:
-                    if os.path.isfile(ping_cmd[0]):
-                        with open(os.devnull, "w") as fnull:
-                            # Build a test command that uses sudo and hits localhost
-                            ping_local_cmd = ["sudo", "-u", self.agent_user]
-                            ping_local_cmd.extend(ping_cmd)
-                            ping_local_cmd.append("127.0.0.1")
-                            try:
-                                res = subprocess.call(ping_local_cmd,
-                                                      stdout=fnull,
-                                                      stderr=fnull)
-                            except subprocess.CalledProcessError:
-                                pass
-                            if res == 0:
-                                log.info("\tEnabling ping checks using {0}".format(ping_cmd[0]))
-                                init_config['ping_check'] = " ".join(ping_cmd)
-                                break
-                if 'ping_check' not in init_config:
-                    log.info("\tUnable to find suitable ping command, disabling ping checks.")
-                    init_config['ping_check'] = self.literal_eval('False')
+                try:
+                    from neutronclient.v2_0 import client
+                    # See if self.agent_user can exec commands in namespaces (sudo)
+                    sudo_cmd = ["sudo", "-u", self.agent_user,
+                                "sudo", "-ln", ip_cmd]
+                    with open(os.devnull, "w") as fnull:
+                        if subprocess.call(sudo_cmd, stdout=fnull, stderr=fnull) == 0:
+                            for ping_cmd in ping_options:
+                                if os.path.isfile(ping_cmd[0]):
+                                    init_config['ping_check'] = "sudo -n {0} netns exec NAMESPACE {1}".format(ip_cmd,
+                                                                                                              ' '.join(ping_cmd))
+                                    log.info("\tEnabling ping checks using {0}".format(ping_cmd[0]))
+                                    break
+                            if init_config['ping_check'] is False:
+                                log.warn("\tUnable to find suitable ping command, disabling ping checks.")
+                        else:
+                            log.warn("\t{0} cannot run {1} as sudo, required for ping checks.".format(self.agent_user,
+                                                                                                      ip_cmd))
+                except ImportError:
+                    log.warn("\tneutronclient module missing, required for ping checks.")
+                    pass
 
             # Handle monasca-setup detection arguments, which take precedence
             if self.args:
@@ -137,6 +141,7 @@ class Libvirt(Plugin):
             import monasca_agent.collector.virt.inspector
             import time
 
+            from netaddr import all_matching_cidrs
             from novaclient import client
         except ImportError:
             log.warn("\tDependencies not satisfied; plugin not configured.")

@@ -1004,9 +1004,9 @@ The following ceilometer processes are monitored, if they exist when the monasca
 The Libvirt plugin provides metrics for virtual machines when run on the hypervisor server.  It provides two sets of metrics per measurement: one designed for the owner of the VM, and one intended for the owner of the hypervisor server.
 
 ### Configuration
-The `monasca-setup` program will configure the Libvirt plugin if `nova-api` is running, `/etc/nova/nova.conf` exists, and `python-novaclient` is installed.
+The `monasca-setup` program will configure the Libvirt plugin if `nova-compute` is running, its `nova.conf` config file is readable by the Monasca Agent user (default: 'mon-agent'), and `python-novaclient` is installed.
 
-In order to fetch data on hosted compute instances, the Libvirt plugin needs to be able to talk to the Nova API.  It does this using credentials found in `/etc/nova/nova.conf` under `[keystone_authtoken]`, obtained when `monasca-setup` is run, and stored in `/etc/monasca/agent/conf.d/libvirt.yaml` as `admin_user`, `admin_password`, `admin_tenant_name`, and `admin_password`.  These credentials are only used to build and update the [Instance Cache](#instance-cache).
+In order to fetch data on hosted compute instances, the Libvirt plugin needs to be able to talk to the Nova API.  It does this using credentials found in `nova.conf` under `[keystone_authtoken]`, obtained when `monasca-setup` is run, and stored in `/etc/monasca/agent/conf.d/libvirt.yaml` as `admin_user`, `admin_password`, `admin_tenant_name`, and `admin_password`.  These credentials are only used to build and update the [Instance Cache](#instance-cache).
 
 The Libvirt plugin uses a cache directory to persist data, which is `/dev/shm` by default.  On non-Linux systems (BSD, Mac OSX), `/dev/shm` may not exist, so `cache_dir` would need to be changed accordingly, either in `monasca_setup/detection/plugins/libvirt.py` prior to running `monasca-setup`, or `/etc/monasca/agent/conf.d/libvirt.yaml` afterwards.
 
@@ -1016,11 +1016,20 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 
 `vm_probation` specifies a period of time (in seconds) in which to suspend metrics from a newly-created VM.  This is to prevent quickly-obsolete metrics in an environment with a high amount of instance churn (VMs created and destroyed in rapid succession).  The default probation length is 300 seconds (five minutes).  Setting to 0 disables VM probation, and metrics will be recorded as soon as possible after a VM is created.
 
-`ping_check` includes the command line (sans the IP address) used to perform a ping check against instances.  Set to False (or omit altogether) to disable ping checks.  This is automatically populated during `monasca-setup` from a list of possible `ping` command lines.  Generally, `fping` is preferred over `ping` because it can return a failure with sub-second resolution, but if `fping` does not exist on the system, `ping` will be used instead.
+`ping_check` includes the entire command line (sans the IP address, which is automatically appended) used to perform a ping check against instances, with a keyword `NAMESPACE` automatically replaced with the appropriate network namespace for the VM being monitored.  Set to False (or omit altogether) to disable ping checks.  This is automatically populated during `monasca-setup` from a list of possible `ping` command lines.  Generally, `fping` is preferred over `ping` because it can return a failure with sub-second resolution, but if `fping` does not exist on the system, `ping` will be used instead.
+
+Ping checks require:
+1. Neutron networking in DVR mode (legacy mode is supported on single-node installations, such as devstack)
+2. The `python-neutronclient` library and its dependencies installed and available to the Monasca Agent
+3. The ability for the Monasca Agent user (default: 'mon-agent') to run `/sbin/ip` under sudo without a password.  One possible implementation would be to create a file, `/etc/sudoers.d/mon-agent`, containing the following line:
+```
+mon-agent ALL=(root) NOPASSWD: /sbin/ip
+```
+4. A security rule for the guest VM which allows ICMP from the appropriate Neutron router IP address
+
+To limit false negatives, ping checks will not be peformed if the above requirements are not met.
 
 `alive_only` will suppress all per-VM metrics aside from `host_alive_status` and `vm.host_alive_status`, including all I/O, network, memory, ping, and CPU metrics.  [Aggregate Metrics](#aggregate-metrics), however, would still be enabled if `alive_only` is true.  By default, `alive_only` is false.
-
-**Note:** Ping checks are not currently supported in compute environments that utilize network namespaces.  Neutron, by default, enables namespaces, and is therefore not supported at this time.  Ping checks are known to be functional with Nova networking when a guest network named 'private' is used.  In any other environment, ping checks are automatically disabled, and there will be no `host_alive_status` metric, except when the hypervisor sees that the VM has shut down (in which case the value of 2 is returned, as shown in [Per-Instance Metrics](#per-instance-metrics)).  Proper Neutron namespace support is planned for a future release.
 
 Example config:
 ```
@@ -1033,7 +1042,7 @@ init_config:
     cache_dir: /dev/shm
     nova_refresh: 14400
     vm_probation: 300
-    ping_check: /usr/bin/fping -n -c1 -t250 -q
+    ping_check: sudo -n /sbin/ip exec NAMESPACE /usr/bin/fping -n -c1 -t250 -q
     alive_only: false
 instances:
     - {}
@@ -1048,17 +1057,29 @@ monasca-setup -d libvirt -a 'ping_check=false alive_only=false' --overwrite
 ```
 
 ### Instance Cache
-The instance cache (`/dev/shm/libvirt_instances.yaml` by default) contains data that is not available to libvirt, but queried from Nova.  To limit calls to the Nova API, the cache is only updated if a new instance is detected (libvirt sees an instance not already in the cache), or every `nova_refresh` seconds (see Configuration above).
+The instance cache (`/dev/shm/libvirt_instances.json` by default) contains data that is not available to libvirt, but queried from Nova.  To limit calls to the Nova API, the cache is only updated if a new instance is detected (libvirt sees an instance not already in the cache), or every `nova_refresh` seconds (see Configuration above).
 
 Example cache:
 ```
-instance-00000003: {created: '2015-06-26T23:25:06Z', disk: 1, hostname: vm03.testboy.net,
-  instance_uuid: 821994dd-bd88-41ae-89e0-6034cc4f4b67, private_ip: 172.31.1.4, ram: 512,
-  tenant_id: 121cc3c1d9014c6c89daae90b57213ff, vcpus: 1, zone: nova}
-instance-00000004: {created: '2015-06-26T23:29:21Z', disk: 1, hostname: vm04.testboy.net,
-  instance_uuid: 6fb6e51c-b9b0-4933-9b70-48acfd82e1f3, private_ip: 172.31.1.5, ram: 512,
-  tenant_id: 121cc3c1d9014c6c89daae90b57213ff, vcpus: 1, zone: nova}
-last_update: 1436281527
+{
+   "last_update" : 1450121034,
+   "instance-00000005" : {
+      "created" : "2015-12-14T19:10:07Z",
+      "instance_uuid" : "94b8511c-d4de-40c3-9676-558f28e0c3c1",
+      "network" : [
+         {
+            "ip" : "10.0.0.3",
+            "namespace" : "qrouter-ae714057-4453-48c4-81cb-15f8db9434a8"
+         }
+      ],
+      "disk" : 1,
+      "tenant_id" : "7d8e24a1e0cb4f8c8dedfb2010992b62",
+      "zone" : "nova",
+      "vcpus" : 1,
+      "hostname" : "vm01",
+      "ram" : 512
+   }
+}
 ```
 
 ### Metrics Cache
@@ -1068,20 +1089,7 @@ Since CPU Time is provided in nanoseconds, the timestamp recorded has nanosecond
 
 Example cache (excerpt, see next section for complete list of available metrics):
 ```
-instance-00000003:
-  cpu.time: {timestamp: 1413327252.150278, value: 191890000000}
-  io.read_bytes:
-    hdd: {timestamp: 1413327252, value: 139594}
-    vda: {timestamp: 1413327252, value: 1604608}
-  net.rx_packets:
-    vnet0: {timestamp: 1413327252, value: 24}
-instance-00000004:
-  cpu.time: {timestamp: 1413327252.196404, value: 34870000000}
-  io.write_requests:
-    hdd: {timestamp: 1413327252, value: 0}
-    vda: {timestamp: 1413327252, value: 447}
-  net.tx_bytes:
-    vnet1: {timestamp: 1413327252, value: 2260}
+{"instance-00000005": {"net.rx_packets": {"tap65d5c428-b4": {"timestamp": 1450121045.532205, "value": 63}}, "net.tx_packets": {"tap65d5c428-b4": {"timestamp": 1450121045.532205, "value": 54}}, "io.errors": {"vda": {"timestamp": 1450121045.505127, "value": -1}, "hdd": {"timestamp": 1450121045.517883, "value": -1}}, "io.write_bytes": {"vda": {"timestamp": 1450121045.505127, "value": 230400}, "hdd": {"timestamp": 1450121045.517883, "value": 0}}, "io.read_requests": {"vda": {"timestamp": 1450121045.505127, "value": 512}, "hdd": {"timestamp": 1450121045.517883, "value": 1}}, "net.rx_bytes": {"tap65d5c428-b4": {"timestamp": 1450121045.532205, "value": 6909}}, "io.write_requests": {"vda": {"timestamp": 1450121045.505127, "value": 51}, "hdd": {"timestamp": 1450121045.517883, "value": 0}}, "cpu.time": {"timestamp": 1450121045.478205, "value": 17060000000}, "net.tx_bytes": {"tap65d5c428-b4": {"timestamp": 1450121045.532205, "value": 5178}}, "io.read_bytes": {"vda": {"timestamp": 1450121045.505127, "value": 11591680}, "hdd": {"timestamp": 1450121045.517883, "value": 30}}}}
 ```
 ### Per-Instance Metrics
 

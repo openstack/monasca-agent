@@ -29,6 +29,7 @@ from datetime import datetime
 from distutils.version import LooseVersion
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.collector.virt import inspector
+from netaddr import all_matching_cidrs
 
 DOM_STATES = {libvirt.VIR_DOMAIN_BLOCKED: 'VM is blocked',
               libvirt.VIR_DOMAIN_CRASHED: 'VM has crashed',
@@ -62,6 +63,20 @@ class LibvirtCheck(AgentCheck):
         probation_time = self.init_config.get('vm_probation', 300) - created_sec
         return int(probation_time)
 
+    @staticmethod
+    def _validate_secgroup(cache, instance, source_ip):
+        """Search through an instance's security groups for pingability
+        """
+        for instance_secgroup in instance.security_groups:
+            for secgroup in cache:
+                if ((secgroup['tenant_id'] == instance.tenant_id and
+                     secgroup['name'] == instance_secgroup['name'])):
+                    for rule in secgroup['security_group_rules']:
+                        if ((rule['protocol'] == 'icmp' and
+                             all_matching_cidrs(source_ip,
+                                                [rule['remote_ip_prefix']]))):
+                                return True
+
     def _update_instance_cache(self):
         """Collect instance_id, project_id, and AZ for all instance UUIDs
         """
@@ -69,6 +84,8 @@ class LibvirtCheck(AgentCheck):
 
         id_cache = {}
         flavor_cache = {}
+        port_cache = None
+        netns = None
         # Get a list of all instances from the Nova API
         nova_client = client.Client(2, self.init_config.get('admin_user'),
                                     self.init_config.get('admin_password'),
@@ -79,6 +96,21 @@ class LibvirtCheck(AgentCheck):
                                     region_name=self.init_config.get('region_name'))
         instances = nova_client.servers.list(search_opts={'all_tenants': 1,
                                                           'host': self.hostname})
+        # Lay the groundwork for fetching VM IPs and network namespaces
+        if self.init_config.get('ping_check'):
+            from neutronclient.v2_0 import client
+            nu = client.Client(username=self.init_config.get('admin_user'),
+                               password=self.init_config.get('admin_password'),
+                               tenant_name=self.init_config.get('admin_tenant_name'),
+                               auth_url=self.init_config.get('identity_uri'),
+                               endpoint_type='internalURL')
+            port_cache = nu.list_ports()['ports']
+            # Finding existing network namespaces is an indication that either
+            # DVR agent_mode is enabled, or this is all-in-one (like devstack)
+            netns = subprocess.check_output(['ip', 'netns', 'list'])
+            if netns == '':
+                self.log.warn("Unable to ping VMs, no network namespaces found." +
+                              "Either no VMs are present, or routing is centralized.")
 
         for instance in instances:
             inst_name = instance.__getattr__('OS-EXT-SRV-ATTR:instance_name')
@@ -103,11 +135,50 @@ class LibvirtCheck(AgentCheck):
                         id_cache[inst_name][metadata] = (instance.metadata.
                                                          get(metadata))
 
-            # Try to add private_ip to id_cache[inst_name].  This may fail on ERROR'ed VMs.
-            try:
-                id_cache[inst_name]['private_ip'] = instance.addresses['private'][0]['addr']
-            except KeyError:
-                pass
+            # Build a list of pingable IP addresses attached to this VM and the
+            # appropriate namespace, for use in ping tests
+            if netns:
+                secgroup_cache = nu.list_security_groups()['security_groups']
+                # Find all active fixed IPs for this VM, fetch each subnet_id
+                for net in instance.addresses:
+                    for ip in instance.addresses[net]:
+                        if ip['OS-EXT-IPS:type'] == 'fixed':
+                            subnet_id = None
+                            nsuuid = None
+                            for port in port_cache:
+                                if ((port['mac_address'] == ip['OS-EXT-IPS-MAC:mac_addr']
+                                     and port['tenant_id'] == instance.tenant_id
+                                     and port['status'] == 'ACTIVE')):
+                                    for fixed in port['fixed_ips']:
+                                        if fixed['ip_address'] == ip['addr']:
+                                            subnet_id = fixed['subnet_id']
+                                            break
+                            # Use the subnet_id to find the router
+                            ping_allowed = False
+                            if subnet_id is not None:
+                                for port in port_cache:
+                                    if ((port['device_owner'].startswith('network:router_interface')
+                                         and port['tenant_id'] == instance.tenant_id
+                                         and port['status'] == 'ACTIVE')):
+                                        nsuuid = port['device_id']
+                                        for fixed in port['fixed_ips']:
+                                            if fixed['subnet_id'] == subnet_id:
+                                                # Validate security group
+                                                if self._validate_secgroup(secgroup_cache,
+                                                                           instance,
+                                                                           fixed['ip_address']):
+                                                    ping_allowed = True
+                                                    break
+                                    if nsuuid is not None:
+                                        break
+                            if nsuuid is not None and ping_allowed:
+                                if 'network' not in id_cache[inst_name]:
+                                    id_cache[inst_name]['network'] = []
+                                id_cache[inst_name]['network'].append({'namespace': "qrouter-{0}".format(nsuuid),
+                                                                       'ip': ip['addr']})
+                            elif ping_allowed is False:
+                                self.log.debug("ICMP disallowed for {0} on {1}".format(inst_name,
+                                                                                       ip['addr']))
 
         id_cache['last_update'] = int(time.time())
 
@@ -124,7 +195,6 @@ class LibvirtCheck(AgentCheck):
 
     def _load_instance_cache(self):
         """Load the cache map of instance names to Nova data.
-
            If the cache does not yet exist or is damaged, (re-)build it.
         """
         instance_cache = {}
@@ -421,27 +491,31 @@ class LibvirtCheck(AgentCheck):
                     self.gauge("vm.{0}".format(name), mem_metrics[name],
                                dimensions=dims_operations)
             except KeyError:
-                self.log.debug(u"Balloon driver not active/available on guest {0} ({1})".format(inst_name,
-                                                                                                instance_cache.get(inst_name)['hostname']))
-            # Test instance's remote responsiveness (ping check) if so configured
-            # NOTE: This is only supported for Nova networking at this time.
-            if self.init_config.get('ping_check') and 'private_ip' in instance_cache.get(inst_name):
-                ping_cmd = self.init_config.get('ping_check').split()
-                ping_cmd.append(instance_cache.get(inst_name)['private_ip'])
-                with open(os.devnull, "w") as fnull:
-                    try:
-                        res = subprocess.call(ping_cmd,
-                                              stdout=fnull,
-                                              stderr=fnull)
-                        self.gauge('ping_status', res, dimensions=dims_customer,
-                                   delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
-                                   hostname=instance_cache.get(inst_name)['hostname'])
-                        self.gauge('vm.ping_status', res, dimensions=dims_operations)
-                        # Do not attempt to process any more metrics for offline hosts
-                        if res > 0:
-                            continue
-                    except OSError as e:
-                        self.log.warn("OS error running '{0}' returned {1}".format(ping_cmd, e))
+                self.log.debug("Balloon driver not active/available on guest {0} ({1})".format(inst_name,
+                                                                                               instance_cache.get(inst_name)['hostname']))
+            # Test instance's remote responsiveness (ping check) if possible
+            if self.init_config.get('ping_check') and 'network' in instance_cache.get(inst_name):
+                for net in instance_cache.get(inst_name)['network']:
+
+                    ping_cmd = self.init_config.get('ping_check').replace('NAMESPACE',
+                                                                          net['namespace']).split()
+                    ping_cmd.append(net['ip'])
+                    dims_customer_ip = dims_customer.copy()
+                    dims_operations_ip = dims_operations.copy()
+                    dims_customer_ip['ip'] = net['ip']
+                    dims_operations_ip['ip'] = net['ip']
+                    with open(os.devnull, "w") as fnull:
+                        try:
+                            self.log.debug("Running ping test: {0}".format(' '.join(ping_cmd)))
+                            res = subprocess.call(ping_cmd,
+                                                  stdout=fnull,
+                                                  stderr=fnull)
+                            self.gauge('ping_status', res, dimensions=dims_customer_ip,
+                                       delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                                       hostname=instance_cache.get(inst_name)['hostname'])
+                            self.gauge('vm.ping_status', res, dimensions=dims_operations_ip)
+                        except OSError as e:
+                            self.log.warn("OS error running '{0}' returned {1}".format(ping_cmd, e))
 
         # Save these metrics for the next collector invocation
         self._update_metric_cache(metric_cache, math.ceil(time.time() - time_start))
