@@ -40,8 +40,9 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
                             'whitelist': self.whitelist,
                             'collect_response_time':
                                 self.collect_response_time,
-                            'timeout': self.timeout}
-
+                            }
+                if self.timeout is not None:
+                    instance['timeout'] = self.timeout
                 # extract stats continuously
                 config['influxdb'] = {'init_config': None,
                                       'instances': [instance]}
