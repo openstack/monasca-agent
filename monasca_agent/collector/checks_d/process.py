@@ -33,34 +33,38 @@ class ProcessCheck(checks.AgentCheck):
         except Exception:
             return False
 
-    def find_pids(self, search_string, psutil, exact_match=True):
+    def find_pids(self, search_string, psutil, username, exact_match=True):
         """Create a set of pids of selected processes.
 
         Search for search_string
         """
         found_process_list = []
         for proc in self._current_process_list:
-            found = False
-            for string in search_string:
-                try:
-                    if exact_match:
-                        if proc.name() == string:
-                            found = True
-                    else:
-                        cmdline = proc.cmdline()
-
-                        if string in ' '.join(cmdline):
-                            found = True
-
-                    if found or string == 'All':
+            try:
+                if username is not None:
+                    if proc.username() == username:
                         found_process_list.append(proc.pid)
-                except psutil.NoSuchProcess:
-                    # No way to log useful information here so just move on
-                    pass
-                except psutil.AccessDenied as e:
-                    self.log.error('Access denied to %s process' % string)
-                    self.log.error('Error: %s' % e)
-                    raise
+
+                else:
+                    for string in search_string:
+                        if exact_match:
+                            if proc.name() == string:
+                                found_process_list.append(proc.pid)
+                        else:
+                            cmdline = proc.cmdline()
+                            if string in ' '.join(cmdline):
+                                found_process_list.append(proc.pid)
+
+                        if string == 'All':
+                            found_process_list.append(proc.pid)
+                            break
+            except psutil.NoSuchProcess:
+                # No way to log useful information here so just move on
+                pass
+            except psutil.AccessDenied as e:
+                self.log.error('Access denied to process')
+                self.log.error('Error: %s' % e)
+                raise
 
         return set(found_process_list)
 
@@ -173,15 +177,20 @@ class ProcessCheck(checks.AgentCheck):
         name = instance.get('name', None)
         exact_match = instance.get('exact_match', True)
         search_string = instance.get('search_string', None)
+        username = instance.get('username', None)
 
         if name is None:
             raise KeyError('The "name" of process groups is mandatory')
 
-        if search_string is None:
-            raise KeyError('The "search_string" is mandatory')
+        if (search_string is None and username is None) or (search_string is not None and username is not None):
+            raise KeyError('"You must provide either "search_string" or "user"')
 
-        pids = self.find_pids(search_string, psutil, exact_match=exact_match)
-        dimensions = self._set_dimensions({'process_name': name}, instance)
+        if username is None:
+            dimensions = self._set_dimensions({'process_name': name}, instance)
+        else:
+            dimensions = self._set_dimensions({'process_user': username, 'process_name': name}, instance)
+
+        pids = self.find_pids(search_string, psutil, username, exact_match=exact_match)
 
         self.log.debug('ProcessCheck: process %s analysed' % name)
 

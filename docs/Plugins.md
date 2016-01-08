@@ -514,19 +514,23 @@ The host alive checks return the following metrics
 Also in the case of an error the value_meta contains an error message.
 
 ## Process Checks
-Process checks can be performed to verify that a set of named processes are running on the local system. The YAML file `process.yaml` contains the list of processes that are checked. The processes can be identified using a pattern match or exact match on the process name. A Python script `process.py` runs each execution cycle to check that required processes are alive. If the process is running a value of 0 is sent, otherwise a value of 1 is sent to the Monasca API.
+Process checks can be performed to both verify that a set of named processes are running on the local system and collect/send system level metrics on those processes. The YAML file `process.yaml` contains the list of processes that are checked. 
 
-Each process entry consists of two primary keys: name and search_string. Optionally, if an exact match on name is required, the exact_match boolean can be added to the entry and set to True.
+The processes that are monitored can be filtered using a pattern to specify the matching process names or distinctly identified by process name or by the username that owns the process.
+
+A Python script `process.py` runs each execution cycle to check that required processes are alive. If the process is running a value of 0 is sent, otherwise a value of 1 is sent to the Monasca API.
+
+Each process entry consists of one primary key: name. Either search_string or username must be set but you can not set both. Optionally, if an exact match on search_string is required the exact_match boolean can be added to the entry and set to True.
 
 To grab more process metrics beside the process.pid_count, which only shows that the process is up and running, the configuration option detailed must be set to true.
 
 ```
 init_config:
- 
-instances: 
+
+instances:
  - name: ssh
    search_string: ['ssh', 'sshd']
- 
+
  - name: mysql
    search_string: ['mysql']
    exact_match: True
@@ -534,7 +538,11 @@ instances:
  - name: kafka
    search_string: ['kafka']
    detailed: true
-``` 
+
+ - name: monasca_agent
+   username: mon-agent
+   detailed: true
+```
 The process checks return the following metrics ( if detailed is set to true, otherwise process.pid_count is only returned ):
 
 | Metric Name | Dimensions | Semantics |

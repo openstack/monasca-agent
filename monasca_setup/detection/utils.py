@@ -88,6 +88,25 @@ def watch_process(search_strings, service=None, component=None,
     return config
 
 
+def watch_process_by_username(username, process_name, service=None, component=None, detailed=False):
+    """Takes a user and returns a Plugins object with the config set for a process check by user.
+        This was built as a helper as many plugins setup process watching.
+    """
+    config = agent_config.Plugins()
+
+    parameters = {'name': process_name,
+                  'detailed': detailed,
+                  'username': username}
+
+    dimensions = _get_dimensions(service, component)
+    if len(dimensions) > 0:
+        parameters['dimensions'] = dimensions
+
+    config['process'] = {'init_config': None,
+                         'instances': [parameters]}
+    return config
+
+
 def service_api_check(name, url, pattern, service=None, component=None):
     """Setup a service api to be watched by the http_check plugin.
     """
