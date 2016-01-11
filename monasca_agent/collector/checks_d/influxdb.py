@@ -98,7 +98,7 @@ class InfluxDB(services_checks.ServicesCheck):
         headers = instance.get('headers', {})
         whitelist = instance.get('whitelist', DEFAULT_METRICS_WHITELIST)
         metricdef = instance.get('metricdef', DEFAULT_METRICS_DEF)
-        dimensions = instance.get('dimensions', {})
+        dimensions = instance.get('dimensions', DEFAULT_DIMENSIONS)
         collect_response_time = instance.get('collect_response_time', False)
         disable_ssl_validation = instance.get('disable_ssl_validation', True)
 
