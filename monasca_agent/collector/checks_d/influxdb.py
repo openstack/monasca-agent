@@ -80,7 +80,6 @@ DEFAULT_METRICS_DEF = {
         'pause_total_ns': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'PauseTotalNs'},
         'sys': {TYPE_KEY: GAUGE, INFLUXDB_NAME_KEY: 'Sys'},
         'total_alloc': {TYPE_KEY: GAUGE, INFLUXDB_NAME_KEY: 'TotalAlloc'}}}
-DEFAULT_DIMENSIONS = {'component': 'influxdb'}
 DEFAULT_QUERY = 'SHOW STATS'
 
 
@@ -98,7 +97,6 @@ class InfluxDB(services_checks.ServicesCheck):
         headers = instance.get('headers', {})
         whitelist = instance.get('whitelist', DEFAULT_METRICS_WHITELIST)
         metricdef = instance.get('metricdef', DEFAULT_METRICS_DEF)
-        dimensions = instance.get('dimensions', DEFAULT_DIMENSIONS)
         collect_response_time = instance.get('collect_response_time', False)
         disable_ssl_validation = instance.get('disable_ssl_validation', True)
 
@@ -112,7 +110,7 @@ class InfluxDB(services_checks.ServicesCheck):
 
         endpoint = base_url + '/query'
 
-        return endpoint, username, password, timeout, headers, dimensions, whitelist, metricdef, \
+        return endpoint, username, password, timeout, headers, whitelist, metricdef, \
                collect_response_time, disable_ssl_validation
 
     def _create_status_event(self, status, msg, instance):
@@ -171,12 +169,11 @@ class InfluxDB(services_checks.ServicesCheck):
             self.gauge(metric_name, float(metric_value), dimensions=dimensions)
 
     def _check(self, instance):
-        endpoint, username, password, timeout, headers, dimensions, whitelist, metricdef, \
+        endpoint, username, password, timeout, headers, whitelist, metricdef, \
         collect_response_time, disable_ssl_validation = self._load_conf(instance)
 
         start_time = time.time()
-        merged_dimensions = self._set_dimensions(
-                {'component': 'influxdb', 'url': endpoint}.update(dimensions.copy()), instance)
+        merged_dimensions = self._set_dimensions({'component': 'influxdb', 'url': endpoint}, instance)
 
         try:
             merged_headers = headers.copy()
