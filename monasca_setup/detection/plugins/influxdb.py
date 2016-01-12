@@ -52,7 +52,7 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
                          ' the InfluxDB plugin is not configured.' +
                          ' Please correct and re-run monasca-setup.')
         except Exception as e:
-            log.exception('Error configuring the InfluxDB check plugin: %s', str(e))
+            log.exception('Error configuring the InfluxDB check plugin: %s', repr(e))
 
         return config
 
@@ -71,7 +71,7 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
             return supported
 
         except Exception as e:
-            log.exception('Unable to access the InfluxDB query URL %s', self.url)
+            log.exception('Unable to access the InfluxDB query URL %s: %s', self.url, repr(e))
 
         return False
 

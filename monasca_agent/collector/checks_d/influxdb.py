@@ -218,7 +218,7 @@ class InfluxDB(services_checks.ServicesCheck):
             return services_checks.Status.DOWN, error_string
 
         except requests.exceptions.Timeout as e:
-            length = timer.total()*1000.0
+            length = timer.total() * 1000.0
             error_string = '{0} did not respond within {2} ms, error: {1}.'.format(endpoint,
                                                                                    repr(e),
                                                                                    length)
@@ -233,6 +233,6 @@ class InfluxDB(services_checks.ServicesCheck):
 
         except (KeyError, TypeError) as e:
             error_string = "Unsupported schema returned by query endpoint of instance {0}: {1}".format(
-                    instance.get('url'), repr(e))
+                instance.get('url'), repr(e))
             self.log.exception(error_string)
             return services_checks.Status.UP, error_string
