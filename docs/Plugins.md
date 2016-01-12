@@ -21,6 +21,7 @@
   - [Process Checks](#process-checks)
   - [Http Endpoint Checks](#http-endpoint-checks)
   - [Http Metrics](#http-metrics)
+  - [InfluxDB Checks](#influxdb-checks)
   - [MySQL Checks](#mysql-checks)
   - [ZooKeeper Checks](#zookeeper-checks)
   - [Kafka Checks](#kafka-checks)
@@ -613,6 +614,159 @@ instances:
               type: gauge
 ```
     
+## InfluxDB Checks
+This section describes how InfluxDB installations can be monitored by the Agent. The InfluxDB check currently supports InfluxDB 0.9.4 and compatible successors. In order to authenticate with InfluxDB the check either requires detection arguments to be passed to ```monasca-setup``` or a configuration file named influxdb.yaml in the ```/etc/monasca/agent/conf.d``` plugin configuration directory.
+
+### Configuration Using Detection
+
+Detection arguments:
+| Argument Name | Default | Semantics |
+| ----------- | ---------- | --------- |
+| influxdb.username | no auth. | InfluxDB user with permission to perform the query [SHOW STATS](https://influxdb.com/docs/v0.9/administration/statistics.html) |
+| influxdb.password | no auth. | Password of above InfluxDB user |
+| influxdb.timeout | 1 sec. | Timeout for querying InfluxDB (secs.) |
+
+Example:
+
+```
+monasca-setup ... -a "influxdb.username=root influxdb.password=root"
+```
+
+### Manual Configuration
+
+init_config:
+
+instances:
+    -   name: InfluxDB
+        url: http://localhost:8086
+        timeout: 5
+        username: user
+        password: pass
+
+        # standard parameters not specific to InfluxDB plugin
+        collect_response_time: true
+        disable_ssl_validation: false
+        dimensions: !!map
+          service : monitoring
+          component : influxdb
+
+By default the following metrics are provided to Monasca:
+
+* influxdb.httpd.auth_fail
+* influxdb.httpd.points_write_ok
+* influxdb.httpd.query_req
+* influxdb.httpd.write_req
+* influxdb.engine.points_write
+* influxdb.engine.points_write_dedupe
+* influxdb.shard.series_create
+* influxdb.shard.fields_create
+* influxdb.shard.write_req
+* influxdb.shard.points_write_ok
+
+Optionally, you can select from a much broader selection of metrics (see InfluxDB documentation on [SHOW STATS](https://influxdb.com/docs/v0.9/administration/statistics.html)).
+
+        # Select relevant metrics per group (optional!)
+        whitelist: !!map
+          httpd:
+            - auth_fail
+            # note: this metric carries a different name than the field provided by InfluxDB
+            - points_write_ok
+            - query_req
+            - write_req
+          shard:
+            - write_req
+            - points_write_ok
+
+The InfluxDB supports the following metric groups:
+
+|------------|-------------|------------------------------------|
+| Group | Supported Dimensions | Description |
+| httpd |binding: port binding of the REST-API | InfluxDB API (REST) |
+| engine | path: file path used for storage | Storage engine |
+| shard | influxdb_engine: type of storage engine used, influxdb_shard: shard no. | ??? |
+| wal | path: file path used for storage | ??? |
+| write | path: file path used for storage | ??? |
+| runtime | | Go runtime metrics |
+
+Full list of metrics supported by the plugin today:
+
+|----------|-------|-------------------------------------------------------|
+| Metric   | Type  | Description                                           |
+| influxdb.httpd.auth_fail | rate | auth_fail |
+| influxdb.httpd.points_write_ok | rate | points_written_ok |
+| influxdb.httpd.query_req | rate | query_req |
+| influxdb.httpd.query_resp_bytes | rate | query_resp_bytes |
+| influxdb.httpd.req | rate | req |
+| influxdb.httpd.write_req | rate | write_req |
+| influxdb.httpd.write_req_bytes | rate | write_req_bytes |
+| influxdb.engine.blks_write | rate | blks_write |
+| influxdb.engine.blks_write_bytes | rate | blks_write_bytes |
+| influxdb.engine.blks_write_bytes_c | rate | blks_write_bytes_c |
+| influxdb.engine.points_write | rate | points_write |
+| influxdb.engine.points_write_dedupe | rate |  points_write_dedupe |
+| influxdb.shard.fields_create | rate | fields_create |
+| influxdb.shard.series_create | rate | series_create |
+| influxdb.shard.write_points_ok | rate | write_points_ok |
+| influxdb.shard.write_req | rate | write_req |
+| influxdb.wal.auto_flush | rate | auto_flush |
+| influxdb.wal.flush_duration | rate | flush_duration |
+| influxdb.wal.idle_flush | rate | idle_flush |
+| influxdb.wal.mem_size | rate | mem_size |
+| influxdb.wal.meta_flush | rate | meta_flush |
+| influxdb.wal.points_flush | rate | points_flush |
+| influxdb.wal.points_write | rate | points_write |
+| influxdb.wal.points_write_req | rate | points_write_req |
+| influxdb.wal.series_flush | rate | series_flush |
+| influxdb.write.point_req | rate | point_req |
+| influxdb.write.point_req_local | rate | point_req_local |
+| influxdb.write.req | rate | req |
+| influxdb.write.write_ok | rate | write_ok |
+| influxdb.runtime.alloc | rate | Alloc |
+| influxdb.runtime.frees | rate | Frees |
+| influxdb.runtime.heap_alloc | rate | HeapAlloc |
+| influxdb.runtime.heap_idle | rate | HeapIdle |
+| influxdb.runtime.heap_in_use | rate | HeapInUse |
+| influxdb.runtime.heap_objects | rate | HeapObjects |
+| influxdb.runtime.heap_released | rate | HeapReleased |
+| influxdb.runtime.heap_sys | rate | HeapSys |
+| influxdb.runtime.lookups | rate | Lookups |
+| influxdb.runtime.mallocs | rate | Mallocs |
+| influxdb.runtime.num_gc | rate | NumGC |
+| influxdb.runtime.num_goroutine | rate | NumGoroutine |
+| influxdb.runtime.pause_total_ns | rate | PauseTotalNs |
+| influxdb.runtime.sys | gauge | Sys |
+| influxdb.runtime.total_alloc | gauge | TotalAlloc |
+
+
+You can redefine InfluxDB meters and gauges metric. InfluxDB treats its own statistics the same way as
+regular measurements. Therefore we need a specification how to map _points_ of a InfluxDB data _series_ to _meters_
+resp. _gauges_ of a Monsca _measurement_. In this process, InfluxDB _tags_ can be mapped to Monasca _dimensions_, too.
+
+The Monasca metrics follow the naming rule ```influxdb.<series>.<field>```
+
+```
+    metricdef: !!map
+        # 'httpd' is the name of the data series delivered by SHOW STATS query
+        httpd:
+            # map tag 'bind' to dimension 'binding'
+            _dimensions: { binding: bind}
+            # map field 'auth_fail' to rate metric 'influxdb.httpd.auth_fail{binding=...}' in Monasca
+            auth_fail: {type: rate}
+            # map field 'points_written_ok' to rate metric 'influxdb.httpd.points_write_ok{binding=...}' in Monasca
+            points_write_ok: {type: rate, influxdb_name: points_written_ok}
+            query_req: {type: rate}
+            write_req: {type: rate}
+        shard:
+            # map multiple tags
+            _dimensions: {influxdb_engine: engine, influxdb_shard: id}
+            write_points_ok: {type: rate}
+            write_req: {type: rate}
+        runtime:
+            alloc: {type: rate, influxdb_name: Alloc}
+            frees: {type: rate, influxdb_name: Frees}
+            sys: {type: gauge, influxdb_name: Sys}
+            total_alloc: {type: gauge, influxdb_name: TotalAlloc}
+
 ## MySQL Checks
 This section describes the mySQL check that can be performed by the Agent.  The mySQL check also supports MariaDB.  The mySQL check requires a configuration file called mysql.yaml to be available in the agent conf.d configuration directory.
 
