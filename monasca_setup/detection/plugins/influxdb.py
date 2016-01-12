@@ -1,5 +1,5 @@
-import requests
 import logging
+import requests
 import monasca_agent.collector.checks_d.influxdb as influxdb
 import monasca_setup.agent_config
 import monasca_setup.detection as detection

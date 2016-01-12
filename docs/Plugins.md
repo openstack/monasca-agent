@@ -298,7 +298,7 @@ The Agent can run Nagios plugins. A YAML file (nagios_wrapper.yaml) contains the
     0, 1, 2, 3, 4
     OK, Warning, Critical, Unknown
     error: error_message
-    
+
 Similar to all plugins, the configuration is done in YAML, and consists of two keys: init_config and instances.
 
 init_config contains global configuration options:
@@ -307,7 +307,7 @@ init_config contains global configuration options:
 init_config:
   # Directories where Nagios checks (scripts, programs) may live
   check_path: /usr/lib/nagios/plugins:/usr/local/bin/nagios
- 
+
   # Where to store last-run timestamps for each check
   temp_file_path: /dev/shm/
 ```
@@ -318,7 +318,7 @@ instances contains the list of checks to run
 instances:
   - service_name: load
     check_command: check_load -r -w 2,1.5,1 -c 10,5,4
- 
+
   - service_name: disk
     check_command: check_disk -w 15\% -c 5\% -A -i /srv/node
     check_interval: 300
@@ -406,7 +406,7 @@ The configuration file (`/etc/monasca/agent/conf.d/mk_livestatus.yaml` by defaul
     * *dimensions* - (Optional) Extra Monasca dimensions to include, in `{'key': 'value'}` format
 
 If *host_name* is not specified, metrics for all hosts will be reported.
- 
+
 This configuration example shows several ways to specify instances:
 ```
 init_config:
@@ -453,7 +453,7 @@ An extension to the Agent can provide basic "aliveness" checks of other systems,
     observer_host: fqdn
     hostname: fqdn | supplied
     test_type: ping | ssh | Unrecognized alive_test
-    
+
  default value_meta
     error: error_message
 
@@ -523,11 +523,11 @@ To grab more process metrics beside the process.pid_count, which only shows that
 
 ```
 init_config:
- 
-instances: 
+
+instances:
  - name: ssh
    search_string: ['ssh', 'sshd']
- 
+
  - name: mysql
    search_string: ['mysql']
    exact_match: True
@@ -535,7 +535,7 @@ instances:
  - name: kafka
    search_string: ['kafka']
    detailed: true
-``` 
+```
 The process checks return the following metrics ( if detailed is set to true, otherwise process.pid_count is only returned ):
 
 | Metric Name | Dimensions | Semantics |
@@ -559,12 +559,12 @@ This section describes the http endpoint check that can be performed by the Agen
 
  default dimensions:
     url: endpoint
- 
+
  default value_meta
     error: error_message
 
 The Agent supports additional functionality through the use of Python scripts. A YAML file (http_check.yaml) contains the list of URLs to check (among other optional parameters). A Python script (http_check.py) runs checks each host in turn, returning a 0 on success and a 1 on failure in the result sent through the Forwarder and on the Monitoring API.
- 
+
 Similar to other checks, the configuration is done in YAML, and consists of two keys: init_config and instances.  The former is not used by http_check, while the later contains one or more URLs to check, plus optional parameters like a timeout, username/password, pattern to match against the HTTP response body, whether or not to include the HTTP response in the metric (as a 'detail' dimension), whether or not to also record the response time, and more.
 If the endpoint being checked requires authentication, there are two options. First, a username and password supplied in the instance options will be used by the check for authentication. Alternately, the check can retrieve a keystone token for authentication. Specific keystone information can be provided for each check, otherwise the information from the agent config will be used.
 
@@ -572,7 +572,7 @@ Sample config:
 
 ```
 init_config:
- 
+
 instances:
        url: http://192.168.0.254/healthcheck
        timeout: 1
@@ -580,7 +580,7 @@ instances:
        collect_response_time: true
        match_pattern: '.*OK.*OK.*OK.*OK.*OK'
 ```
- 
+
 The http_status checks return the following metrics:
 
 | Metric Name | Dimensions | Semantics |
@@ -613,18 +613,19 @@ instances:
               path: gauges/jvm.memory.total.max/value
               type: gauge
 ```
-    
+
 ## InfluxDB Checks
-This section describes how InfluxDB installations can be monitored by the Agent. The InfluxDB check currently supports InfluxDB 0.9.4 and compatible successors. In order to authenticate with InfluxDB the check either requires detection arguments to be passed to ```monasca-setup``` or a configuration file named influxdb.yaml in the ```/etc/monasca/agent/conf.d``` plugin configuration directory.
+This section describes how InfluxDB installations can be monitored by the Agent. The InfluxDB check currently supports InfluxDB 0.9.4 and compatible successors. In order to authenticate with InfluxDB the check either requires detection arguments to be passed to ```monasca-setup``` or a configuration file.
 
 ### Configuration Using Detection
 
 Detection arguments:
-| Argument Name | Default | Semantics |
-| ----------- | ---------- | --------- |
+
+| Argument Name | Default    | Semantics |
+| ------------- | ---------- | --------- |
 | influxdb.username | no auth. | InfluxDB user with permission to perform the query [SHOW STATS](https://influxdb.com/docs/v0.9/administration/statistics.html) |
 | influxdb.password | no auth. | Password of above InfluxDB user |
-| influxdb.timeout | 1 sec. | Timeout for querying InfluxDB (secs.) |
+| influxdb.timeout  | 1 sec.   | Timeout for querying InfluxDB (secs.) |
 
 Example:
 
@@ -634,6 +635,9 @@ monasca-setup ... -a "influxdb.username=root influxdb.password=root"
 
 ### Manual Configuration
 
+For more sophisticated configuration, you can bypass the detection step for the _influxdb_ plugin (```-d influxdb```) and place a configuration file named influxdb.yaml in the ```/etc/monasca/agent/conf.d``` folder.
+
+```
 init_config:
 
 instances:
@@ -649,6 +653,7 @@ instances:
         dimensions: !!map
           service : monitoring
           component : influxdb
+```
 
 By default the following metrics are provided to Monasca:
 
@@ -663,8 +668,9 @@ By default the following metrics are provided to Monasca:
 * influxdb.shard.write_req
 * influxdb.shard.points_write_ok
 
-Optionally, you can select from a much broader selection of metrics (see InfluxDB documentation on [SHOW STATS](https://influxdb.com/docs/v0.9/administration/statistics.html)).
+Optionally, you can select from a much broader list of metrics (see InfluxDB documentation on [SHOW STATS](https://influxdb.com/docs/v0.9/administration/statistics.html)).
 
+```
         # Select relevant metrics per group (optional!)
         whitelist: !!map
           httpd:
@@ -676,12 +682,16 @@ Optionally, you can select from a much broader selection of metrics (see InfluxD
           shard:
             - write_req
             - points_write_ok
+          wal:
+            - mem_size
+            - meta_flush
+```
 
 The InfluxDB supports the following metric groups:
 
-|------------|-------------|------------------------------------|
-| Group | Supported Dimensions | Description |
-| httpd |binding: port binding of the REST-API | InfluxDB API (REST) |
+| Group        | Supported Dimensions | Description |
+| ------------ | -------------------- | ------------|
+| httpd | binding: port binding of the REST-API | InfluxDB API (REST) |
 | engine | path: file path used for storage | Storage engine |
 | shard | influxdb_engine: type of storage engine used, influxdb_shard: shard no. | ??? |
 | wal | path: file path used for storage | ??? |
@@ -690,8 +700,8 @@ The InfluxDB supports the following metric groups:
 
 Full list of metrics supported by the plugin today:
 
-|----------|-------|-------------------------------------------------------|
-| Metric   | Type  | Description                                           |
+| Metric | Type  | Description                                           |
+| ------ | ----- | ----------------------------------------------------- |
 | influxdb.httpd.auth_fail | rate | auth_fail |
 | influxdb.httpd.points_write_ok | rate | points_written_ok |
 | influxdb.httpd.query_req | rate | query_req |
@@ -745,7 +755,7 @@ resp. _gauges_ of a Monsca _measurement_. In this process, InfluxDB _tags_ can b
 The Monasca metrics follow the naming rule ```influxdb.<series>.<field>```
 
 ```
-    metricdef: !!map
+    metricdef:
         # 'httpd' is the name of the data series delivered by SHOW STATS query
         httpd:
             # map tag 'bind' to dimension 'binding'
@@ -766,6 +776,7 @@ The Monasca metrics follow the naming rule ```influxdb.<series>.<field>```
             frees: {type: rate, influxdb_name: Frees}
             sys: {type: gauge, influxdb_name: Sys}
             total_alloc: {type: gauge, influxdb_name: TotalAlloc}
+```
 
 ## MySQL Checks
 This section describes the mySQL check that can be performed by the Agent.  The mySQL check also supports MariaDB.  The mySQL check requires a configuration file called mysql.yaml to be available in the agent conf.d configuration directory.
@@ -776,9 +787,9 @@ Sample config:
 init_config:
 
 instances:
-	defaults_file: /root/.my.cnf
-	server: localhost
-	user: root
+    defaults_file: /root/.my.cnf
+    server: localhost
+    user: root
 ```
 
 Almost metrics show the server status variables in MySQL or MariaDB.  The others are calculated by the server status variables of MySQL or MariaDB.  For details of the server status variables, please refer the documents of MySQL or MariaDB.
@@ -832,11 +843,11 @@ Sample config:
 init_config:
 
 instances:
-	host: localhost
-	port: 2181
-	timeout: 3
+    host: localhost
+    port: 2181
+    timeout: 3
 ```
- 
+
 The Zookeeper checks return the following metrics:
 
 | Metric Name | Dimensions | Semantics |
@@ -876,7 +887,7 @@ instances:
   kafka_connect_str: localhost:9092
   zk_connect_str: localhost:2181
 ```
- 
+
 The Kafka checks return the following metrics:
 
 | Metric Name | Dimensions | Semantics |
@@ -918,7 +929,6 @@ queues=conductor
 exchanges=nova,cinder,ceilometer,glance,keystone,neutron,heat
 ```
 
- 
 For more details of each metric, please refer the [RabbitMQ documentation](http://www.rabbitmq.com/documentation.html).
 The RabbitMQ checks return the following metrics:
 
@@ -1158,9 +1168,9 @@ The following ceilometer processes are monitored, if they exist when the monasca
 The Libvirt plugin provides metrics for virtual machines when run on the hypervisor server.  It provides two sets of metrics per measurement: one designed for the owner of the VM, and one intended for the owner of the hypervisor server.
 
 ### Configuration
-The `monasca-setup` program will configure the Libvirt plugin if `nova-api` is running, `/etc/nova/nova.conf` exists, and `python-novaclient` is installed.
+The `monasca-setup` program will configure the Libvirt plugin if `nova-compute` is running, its `nova.conf` config file is readable by the Monasca Agent user (default: 'mon-agent'), and `python-novaclient` is installed.
 
-In order to fetch data on hosted compute instances, the Libvirt plugin needs to be able to talk to the Nova API.  It does this using credentials found in `/etc/nova/nova.conf` under `[keystone_authtoken]`, obtained when `monasca-setup` is run, and stored in `/etc/monasca/agent/conf.d/libvirt.yaml` as `admin_user`, `admin_password`, `admin_tenant_name`, and `admin_password`.  These credentials are only used to build and update the [Instance Cache](#instance-cache).
+In order to fetch data on hosted compute instances, the Libvirt plugin needs to be able to talk to the Nova API.  It does this using credentials found in `nova.conf` under `[keystone_authtoken]`, obtained when `monasca-setup` is run, and stored in `/etc/monasca/agent/conf.d/libvirt.yaml` as `admin_user`, `admin_password`, `admin_tenant_name`, and `admin_password`.  These credentials are only used to build and update the [Instance Cache](#instance-cache).
 
 The Libvirt plugin uses a cache directory to persist data, which is `/dev/shm` by default.  On non-Linux systems (BSD, Mac OSX), `/dev/shm` may not exist, so `cache_dir` would need to be changed accordingly, either in `monasca_setup/detection/plugins/libvirt.py` prior to running `monasca-setup`, or `/etc/monasca/agent/conf.d/libvirt.yaml` afterwards.
 
@@ -1170,11 +1180,20 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 
 `vm_probation` specifies a period of time (in seconds) in which to suspend metrics from a newly-created VM.  This is to prevent quickly-obsolete metrics in an environment with a high amount of instance churn (VMs created and destroyed in rapid succession).  The default probation length is 300 seconds (five minutes).  Setting to 0 disables VM probation, and metrics will be recorded as soon as possible after a VM is created.
 
-`ping_check` includes the command line (sans the IP address) used to perform a ping check against instances.  Set to False (or omit altogether) to disable ping checks.  This is automatically populated during `monasca-setup` from a list of possible `ping` command lines.  Generally, `fping` is preferred over `ping` because it can return a failure with sub-second resolution, but if `fping` does not exist on the system, `ping` will be used instead.
+`ping_check` includes the entire command line (sans the IP address, which is automatically appended) used to perform a ping check against instances, with a keyword `NAMESPACE` automatically replaced with the appropriate network namespace for the VM being monitored.  Set to False (or omit altogether) to disable ping checks.  This is automatically populated during `monasca-setup` from a list of possible `ping` command lines.  Generally, `fping` is preferred over `ping` because it can return a failure with sub-second resolution, but if `fping` does not exist on the system, `ping` will be used instead.
+
+Ping checks require:
+1. Neutron networking in DVR mode (legacy mode is supported on single-node installations, such as devstack)
+2. The `python-neutronclient` library and its dependencies installed and available to the Monasca Agent
+3. The ability for the Monasca Agent user (default: 'mon-agent') to run `/sbin/ip` under sudo without a password.  One possible implementation would be to create a file, `/etc/sudoers.d/mon-agent`, containing the following line:
+```
+mon-agent ALL=(root) NOPASSWD: /sbin/ip
+```
+4. A security rule for the guest VM which allows ICMP from the appropriate Neutron router IP address
+
+To limit false negatives, ping checks will not be peformed if the above requirements are not met.
 
 `alive_only` will suppress all per-VM metrics aside from `host_alive_status` and `vm.host_alive_status`, including all I/O, network, memory, ping, and CPU metrics.  [Aggregate Metrics](#aggregate-metrics), however, would still be enabled if `alive_only` is true.  By default, `alive_only` is false.
-
-**Note:** Ping checks are not currently supported in compute environments that utilize network namespaces.  Neutron, by default, enables namespaces, and is therefore not supported at this time.  Ping checks are known to be functional with Nova networking when a guest network named 'private' is used.  In any other environment, ping checks are automatically disabled, and there will be no `host_alive_status` metric, except when the hypervisor sees that the VM has shut down (in which case the value of 2 is returned, as shown in [Per-Instance Metrics](#per-instance-metrics)).  Proper Neutron namespace support is planned for a future release.
 
 Example config:
 ```
@@ -1187,7 +1206,7 @@ init_config:
     cache_dir: /dev/shm
     nova_refresh: 14400
     vm_probation: 300
-    ping_check: /usr/bin/fping -n -c1 -t250 -q
+    ping_check: sudo -n /sbin/ip exec NAMESPACE /usr/bin/fping -n -c1 -t250 -q
     alive_only: false
 instances:
     - {}
@@ -1202,17 +1221,29 @@ monasca-setup -d libvirt -a 'ping_check=false alive_only=false' --overwrite
 ```
 
 ### Instance Cache
-The instance cache (`/dev/shm/libvirt_instances.yaml` by default) contains data that is not available to libvirt, but queried from Nova.  To limit calls to the Nova API, the cache is only updated if a new instance is detected (libvirt sees an instance not already in the cache), or every `nova_refresh` seconds (see Configuration above).
+The instance cache (`/dev/shm/libvirt_instances.json` by default) contains data that is not available to libvirt, but queried from Nova.  To limit calls to the Nova API, the cache is only updated if a new instance is detected (libvirt sees an instance not already in the cache), or every `nova_refresh` seconds (see Configuration above).
 
 Example cache:
 ```
-instance-00000003: {created: '2015-06-26T23:25:06Z', disk: 1, hostname: vm03.testboy.net,
-  instance_uuid: 821994dd-bd88-41ae-89e0-6034cc4f4b67, private_ip: 172.31.1.4, ram: 512,
-  tenant_id: 121cc3c1d9014c6c89daae90b57213ff, vcpus: 1, zone: nova}
-instance-00000004: {created: '2015-06-26T23:29:21Z', disk: 1, hostname: vm04.testboy.net,
-  instance_uuid: 6fb6e51c-b9b0-4933-9b70-48acfd82e1f3, private_ip: 172.31.1.5, ram: 512,
-  tenant_id: 121cc3c1d9014c6c89daae90b57213ff, vcpus: 1, zone: nova}
-last_update: 1436281527
+{
+   "last_update" : 1450121034,
+   "instance-00000005" : {
+      "created" : "2015-12-14T19:10:07Z",
+      "instance_uuid" : "94b8511c-d4de-40c3-9676-558f28e0c3c1",
+      "network" : [
+         {
+            "ip" : "10.0.0.3",
+            "namespace" : "qrouter-ae714057-4453-48c4-81cb-15f8db9434a8"
+         }
+      ],
+      "disk" : 1,
+      "tenant_id" : "7d8e24a1e0cb4f8c8dedfb2010992b62",
+      "zone" : "nova",
+      "vcpus" : 1,
+      "hostname" : "vm01",
+      "ram" : 512
+   }
+}
 ```
 
 ### Metrics Cache
@@ -1222,20 +1253,7 @@ Since CPU Time is provided in nanoseconds, the timestamp recorded has nanosecond
 
 Example cache (excerpt, see next section for complete list of available metrics):
 ```
-instance-00000003:
-  cpu.time: {timestamp: 1413327252.150278, value: 191890000000}
-  io.read_bytes:
-    hdd: {timestamp: 1413327252, value: 139594}
-    vda: {timestamp: 1413327252, value: 1604608}
-  net.rx_packets:
-    vnet0: {timestamp: 1413327252, value: 24}
-instance-00000004:
-  cpu.time: {timestamp: 1413327252.196404, value: 34870000000}
-  io.write_requests:
-    hdd: {timestamp: 1413327252, value: 0}
-    vda: {timestamp: 1413327252, value: 447}
-  net.tx_bytes:
-    vnet1: {timestamp: 1413327252, value: 2260}
+{"instance-00000005": {"net.rx_packets": {"tap65d5c428-b4": {"timestamp": 1450121045.532205, "value": 63}}, "net.tx_packets": {"tap65d5c428-b4": {"timestamp": 1450121045.532205, "value": 54}}, "io.errors": {"vda": {"timestamp": 1450121045.505127, "value": -1}, "hdd": {"timestamp": 1450121045.517883, "value": -1}}, "io.write_bytes": {"vda": {"timestamp": 1450121045.505127, "value": 230400}, "hdd": {"timestamp": 1450121045.517883, "value": 0}}, "io.read_requests": {"vda": {"timestamp": 1450121045.505127, "value": 512}, "hdd": {"timestamp": 1450121045.517883, "value": 1}}, "net.rx_bytes": {"tap65d5c428-b4": {"timestamp": 1450121045.532205, "value": 6909}}, "io.write_requests": {"vda": {"timestamp": 1450121045.505127, "value": 51}, "hdd": {"timestamp": 1450121045.517883, "value": 0}}, "cpu.time": {"timestamp": 1450121045.478205, "value": 17060000000}, "net.tx_bytes": {"tap65d5c428-b4": {"timestamp": 1450121045.532205, "value": 5178}}, "io.read_bytes": {"vda": {"timestamp": 1450121045.505127, "value": 11591680}, "hdd": {"timestamp": 1450121045.517883, "value": 30}}}}
 ```
 ### Per-Instance Metrics
 

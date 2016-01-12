@@ -25,9 +25,9 @@ instances:
 #        disable_ssl_validation: true
 
 #       Dimensions to use only for this specific plugin
-        dimensions: !!map
-          service : monitoring
-          component : influxdb
+        dimensions:
+          service: monitoring
+          component: influxdb
 
 #       Special headers to add to the InfluxDB HTTP request
 #       headers:
@@ -38,7 +38,7 @@ instances:
 #       but can be replaced with custom ones (e.g. when the plugin is lagging behind InfluxDB). Whitelists as the metric
 #       definitions are organized by metric groups. The resulting metric is influxdb.<group>.<metricname>, e.g.
 #       'influxdb.httpd.auth_fail'
-        whitelist: !!map
+        whitelist:
           httpd:
 #            - auth_fail
             - points_write_ok
@@ -54,7 +54,7 @@ instances:
             - points_write_ok
 
 #      This defines agent meters and gauges metrics and describes how to map InfluxDB stats to them
-#      metricdef: !!map
+#      metricdef:
 #          httpd:
 #            _dimensions: { binding: bind}
 #            auth_fail: {type: rate}
