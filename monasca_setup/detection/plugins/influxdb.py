@@ -1,14 +1,13 @@
 import logging
-import requests
 import monasca_agent.collector.checks_d.influxdb as influxdb
 import monasca_setup.agent_config
 import monasca_setup.detection as detection
+import requests
 
 log = logging.getLogger(__name__)
 
 # set up some defaults
 DEFAULT_TIMEOUT = 1
-DEFAULT_URL = 'http://localhost:8086'
 DEFAULT_COLLECT_RESPONSE_TIME = True
 
 
@@ -65,13 +64,14 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
             self.version = resp.headers.get('x-influxdb-version', '0 (unknown)')
             log.info('Discovered InfluxDB version %s', self.version)
 
+            # this will work for 0.9.4 but not necessarily future stable releases (e.g. 1.0.11)
             supported = self.version >= '0.9.4'
             if not supported:
-                log.error('Unsupported InfluxDB version')
+                log.error('Unsupported InfluxDB version: {0}'.format(self.version))
             return supported
 
         except Exception as e:
-            log.error('Unable to access the InfluxDB query URL %s: %s', self.url, str(e))
+            log.exception('Unable to access the InfluxDB query URL %s', self.url)
 
         return False
 
@@ -90,7 +90,7 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
         """
 
         # Set defaults and read config or use arguments
-        self.url = DEFAULT_URL
+        self.url = influxdb.DEFAULT_URL
         self.whitelist = influxdb.DEFAULT_METRICS_WHITELIST
         self.timeout = DEFAULT_TIMEOUT
         self.collect_response_time = DEFAULT_COLLECT_RESPONSE_TIME
