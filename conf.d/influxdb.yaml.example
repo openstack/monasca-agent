@@ -24,16 +24,12 @@ instances:
 
 #        disable_ssl_validation: true
 
-         # The (optional) headers parameter allows you to send extra headers
-         # with the request. This is useful for explicitly specifying the host
-         # header or perhaps adding headers for authorization purposes.
-
 #       Dimensions to use only for this specific plugin
         dimensions: !!map
           service : monitoring
           component : influxdb
 
-#       Special headers to add to the InfluxDB request
+#       Special headers to add to the InfluxDB HTTP request
 #       headers:
 #          Host: alternative.host.example.com
 #          X-Auth-Token: SOME-AUTH-TOKEN
