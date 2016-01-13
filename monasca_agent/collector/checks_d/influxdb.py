@@ -79,7 +79,7 @@ DEFAULT_METRICS_DEF = {
         'sys': {TYPE_KEY: GAUGE, INFLUXDB_NAME_KEY: 'Sys'},
         'total_alloc': {TYPE_KEY: GAUGE, INFLUXDB_NAME_KEY: 'TotalAlloc'}}}
 DEFAULT_QUERY = 'SHOW STATS'
-DEFAULT_URL = 'localhost:8086'
+DEFAULT_URL = 'http://localhost:8086'
 PARAMS = {'q': DEFAULT_QUERY}
 
 
