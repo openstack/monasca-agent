@@ -3,6 +3,7 @@ import monasca_agent.collector.checks_d.influxdb as influxdb
 import monasca_setup.agent_config
 import monasca_setup.detection as detection
 import requests
+import semver
 
 log = logging.getLogger(__name__)
 
@@ -64,8 +65,7 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
             self.version = resp.headers.get('x-influxdb-version', '0 (unknown)')
             log.info('Discovered InfluxDB version %s', self.version)
 
-            # this will work for 0.9.4 but not necessarily future stable releases (e.g. 1.0.11)
-            supported = self.version >= '0.9.4'
+            supported = semver.match(self.version, '>=0.9.4')
             if not supported:
                 log.error('Unsupported InfluxDB version: {0}'.format(self.version))
             return supported
