@@ -59,7 +59,7 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
 
     def _connection_test(self, url):
         try:
-            log.debug('Attempting to connect to InfluxDB API at %s', self.url)
+            log.debug('Attempting to connect to InfluxDB API at %s', url)
             uri = url + "/ping"
             resp = requests.get(url=uri, timeout=self.timeout)
             self.version = resp.headers.get('x-influxdb-version', '0 (unknown)')
