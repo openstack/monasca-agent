@@ -2,8 +2,8 @@ import logging
 import monasca_agent.collector.checks_d.influxdb as influxdb
 import monasca_setup.agent_config
 import monasca_setup.detection as detection
+import re
 import requests
-import semver
 
 log = logging.getLogger(__name__)
 
@@ -57,21 +57,28 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
 
         return config
 
+    @staticmethod
+    def _compare_versions(v1, v2):
+        def normalize(v):
+            return [int(x) for x in re.sub(r'(\.0+)*$', '', v).split(".")]
+
+        return cmp(normalize(v1), normalize(v2))
+
     def _connection_test(self, url):
+        log.debug('Attempting to connect to InfluxDB API at %s', url)
+        uri = url + "/ping"
         try:
-            log.debug('Attempting to connect to InfluxDB API at %s', url)
-            uri = url + "/ping"
             resp = requests.get(url=uri, timeout=self.timeout)
             self.version = resp.headers.get('x-influxdb-version', '0 (unknown)')
             log.info('Discovered InfluxDB version %s', self.version)
 
-            supported = semver.match(self.version, '>=0.9.4')
+            supported = self._compare_versions(self.version, '0.9.4') >= 0
             if not supported:
-                log.error('Unsupported InfluxDB version: {0}'.format(self.version))
+                log.error('Unsupported InfluxDB version: %s', self.version)
             return supported
 
         except Exception as e:
-            log.exception('Unable to access the InfluxDB query URL %s: %s', self.url, repr(e))
+            log.exception('Unable to access the InfluxDB query URL %s: %s', uri, repr(e))
 
         return False
 
