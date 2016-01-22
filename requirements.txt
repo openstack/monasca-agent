@@ -1,6 +1,4 @@
-semver
 requests>=2.7.0,<2.8
-
 oslo.config<2.5.0
 oslo.concurrency<2.7.0
 oslo.i18n<=2.6.0
@@ -8,7 +6,7 @@ oslo.log<1.12.0
 oslo.middleware<2.9.0
 oslo.serialization<1.10.0
 oslo.utils<2.6.0
-
+netaddr>=0.7.4
 gearman>=2.0.2,<2.1
 httplib2>=0.9.1,<1.0
 ntplib>=0.3.2,<0.4
@@ -20,4 +18,4 @@ redis>=2.10.3,<2.11
 simplejson>=3.7.3,<3.9
 supervisor>=3.1.3,<3.2
 tornado>=4.2,<4.3
-python-monascaclient>=1.0.24,<1.1
+python-monascaclient>=1.0.22,<1.1
