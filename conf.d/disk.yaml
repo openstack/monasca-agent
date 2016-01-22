@@ -11,7 +11,7 @@ instances:
 
       # Send additional disk rollup system metrics (Default = False)
       # These metrics include the following metrics aggregated across all disks:
-      # disk.total_mb and disk.total_used_mb
+      # disk.total_space_mb and disk.total_used_space_mb
       #send_rollup_stats: True
 
       # Some infrastructures have many constantly changing virtual devices (e.g. folks
