@@ -38,8 +38,12 @@ class MonAPI(monasca_setup.detection.Plugin):
 
     def build_config(self):
         """Build the config as a Plugins object and return."""
-        log.info("\tEnabling the Monasca api healthcheck")
         config = monasca_setup.agent_config.Plugins()
+
+        log.info("\tEnabling the Monasca api process check")
+        config.merge(watch_process(['monasca-api'], 'monitoring', 'monasca-api', exact_match=False))
+
+        log.info("\tEnabling the Monasca api healthcheck")
         config.merge(dropwizard_health_check('monitoring', 'monasca-api', 'http://localhost:8081/healthcheck'))
 
         log.info("\tEnabling the Monasca api metrics")
@@ -111,8 +115,12 @@ class MonPersister(monasca_setup.detection.Plugin):
 
         database_type = self.persister_config['databaseConfiguration']['databaseType']
 
-        log.info("\tEnabling the Monasca persister healthcheck")
         config = monasca_setup.agent_config.Plugins()
+
+        log.info("\tEnabling the Monasca persister process check")
+        config.merge(watch_process(['monasca-persister'], 'monitoring', 'monasca-persister', exact_match=False))
+
+        log.info("\tEnabling the Monasca persister healthcheck")
         config.merge(dropwizard_health_check('monitoring', 'monasca-persister', 'http://localhost:8091/healthcheck'))
 
         log.info("\tEnabling the Monasca persister metrics")

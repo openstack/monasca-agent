@@ -48,6 +48,8 @@ class Plugin(object):
         :return: An agent_config.Plugins object
         """
         conf = self.build_config()
+        if conf is None:
+            return None
         for plugin_type in conf.itervalues():
             for inst in plugin_type['instances']:
                 inst['built_by'] = self.__class__.__name__

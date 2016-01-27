@@ -725,3 +725,10 @@ def chunks(iterable, chunk_size):
             if count:
                 yield chunk[:count]
             break
+
+
+def get_sub_collection_warn():
+    config = configuration.Config()
+    agent_config = config.get_config(sections='Main')
+    sub_collection_warn = agent_config.get('sub_collection_warn')
+    return sub_collection_warn

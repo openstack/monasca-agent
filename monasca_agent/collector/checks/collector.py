@@ -79,14 +79,14 @@ class Collector(util.Dimensions):
             log.exception("Error persisting collector status")
 
         if self.run_count <= FLUSH_LOGGING_INITIAL or self.run_count % FLUSH_LOGGING_PERIOD == 0:
-            log.info("Finished run #%s. Collection time: %ss." %
+            log.info("Finished run #%s. Collection time: %.2fs." %
                      (self.run_count, round(collect_duration, 2)))
             if self.run_count == FLUSH_LOGGING_INITIAL:
                 log.info("First flushes done, next flushes will be logged every %s flushes." %
                          FLUSH_LOGGING_PERIOD)
 
         else:
-            log.debug("Finished run #%s. Collection time: %ss." %
+            log.debug("Finished run #%s. Collection time: %.2fs." %
                       (self.run_count, round(collect_duration, 2),))
 
     def collector_stats(self, num_metrics, num_events, collection_time):
@@ -159,13 +159,14 @@ class Collector(util.Dimensions):
 
         returns a list of Measurements, a dictionary of events and a list of check statuses.
         """
+        sub_timer = util.Timer()
         measurements = []
         events = {}
         check_statuses = []
         for check in self.initialized_checks_d:
             if not self.continue_running:
                 return
-            log.info("Running check %s" % check.name)
+            log.debug("Running check %s" % check.name)
             instance_statuses = []
             metric_count = 0
             event_count = 0
@@ -194,6 +195,13 @@ class Collector(util.Dimensions):
             status_check = check_status.CheckStatus(check.name, instance_statuses, metric_count, event_count,
                                                     library_versions=check.get_library_info())
             check_statuses.append(status_check)
+            sub_collect_duration = sub_timer.step()
+            sub_collect_duration_mills = sub_collect_duration * 1000
+            log.debug("Finished run check %s. Collection time: %.2fms." % (
+                check.name, round(sub_collect_duration_mills, 2)))
+            if sub_collect_duration > util.get_sub_collection_warn():
+                log.warn("Collection time for check %s is high: %.2fs." % (
+                    check.name, round(sub_collect_duration, 2)))
 
         for check_name, info in self.init_failed_checks_d.iteritems():
             if not self.continue_running:
