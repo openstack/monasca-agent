@@ -15,8 +15,9 @@ class Etcd(monasca_setup.detection.Plugin):
     def _detect(self):
         """Run detection, set self.available True if the service is detected.
         """
-        if find_process_name('etcd') is not None:
-            self.available = True
+        self.available = False
+        #if find_process_name('etcd') is not None:
+        #    self.available = True
 
     def build_config(self):
         """Build the config as a Plugins object and return.
