@@ -14,7 +14,7 @@ class Ironic(monasca_setup.detection.ServicePlugin):
             'args': args,
             'template_dir': template_dir,
             'overwrite': overwrite,
-            'service_name': 'Baremetal',
+            'service_name': 'baremetal',
             'process_names': ['ironic-api', 'ironic-conductor'],
             'service_api_url': "http://localhost:6385",
             'search_pattern': '.*200 OK.*',
