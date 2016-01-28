@@ -35,12 +35,13 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
                 log.info("\tEnabling the InfluxDB check for {:s}".format(self.url))
                 instance = {'name': 'localhost',
                             'url': self.url,
-                            'username': self.username,
-                            'password': self.password,
                             'whitelist': self.whitelist,
                             'collect_response_time':
                                 self.collect_response_time,
                             }
+                if self.username is not None and self.password is not None:
+                    instance['username'] = self.username
+                    instance['password'] = self.password
                 if self.timeout is not None:
                     instance['timeout'] = self.timeout
                 # extract stats continuously
