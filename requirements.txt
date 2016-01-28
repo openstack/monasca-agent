@@ -13,7 +13,7 @@ gearman>=2.0.2,<2.1
 httplib2
 netaddr
 ntplib>=0.3.2,<0.4
-#psutil>=2.2.1,<3.1.0
+psutil>=2.2.1,<3.1.0
 pymongo
 python-memcached
 python-monascaclient>=1.0.22,<1.1
