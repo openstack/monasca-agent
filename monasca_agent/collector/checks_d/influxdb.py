@@ -194,7 +194,7 @@ class InfluxDB(services_checks.ServicesCheck):
 
             elif int(resp.status_code) >= 400:
                 error_string = "InfluxDB check {0} causes HTTP errors when accessing {1}, error code: {2}".format(
-                        instance.get('name'), endpoint, resp.status_code)
+                    instance.get('name'), endpoint, resp.status_code)
                 self.warning(error_string)
                 return services_checks.Status.DOWN, error_string
 
