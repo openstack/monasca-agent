@@ -70,7 +70,7 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
         uri = url + "/ping"
         try:
             resp = requests.get(url=uri, timeout=self.timeout)
-            self.version = resp.headers.get('x-influxdb-version', '0 (unknown)')
+            self.version = resp.headers.get('x-influxdb-version', '0')
             log.info('Discovered InfluxDB version %s', self.version)
 
             supported = self._compare_versions(self.version, '0.9.4') >= 0
@@ -79,7 +79,7 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
             return supported
 
         except Exception as e:
-            log.exception('Unable to access the InfluxDB query URL %s: %s', uri, repr(e))
+            log.error('Unable to access the InfluxDB query URL %s: %s', uri, repr(e))
 
         return False
 
