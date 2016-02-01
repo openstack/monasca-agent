@@ -87,7 +87,7 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
         # discover API port
         for conn in self.influxd.connections('inet'):
             for protocol in ['http', 'https']:
-                u = '{0}://{1}:{2}'.format(protocol, conn.laddr[0], conn.laddr[1])
+                u = '{0}://localhost:{1}'.format(protocol, conn.laddr[1])
                 if self._connection_test(u):
                     self.url = u
                     return True
