@@ -87,7 +87,7 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
         # discover API port
         for conn in self.influxd.connections('inet'):
             for protocol in ['http', 'https']:
-                u = '{0}://localhost:{1}'.format(protocol, conn.laddr[0])
+                u = '{0}://{1]:{2}'.format(protocol, conn.laddr[0], conn.laddr[1])
                 if self._connection_test(u):
                     self.url = u
                     return True
@@ -98,7 +98,6 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
         """
 
         # Set defaults and read config or use arguments
-        self.url = influxdb.DEFAULT_URL
         self.whitelist = influxdb.DEFAULT_METRICS_WHITELIST
         self.timeout = DEFAULT_TIMEOUT
         self.collect_response_time = DEFAULT_COLLECT_RESPONSE_TIME
@@ -109,7 +108,7 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
             self.password = self.args.get('influxdb.password', None)
             self.timeout = self.args.get('influxdb.timeout', None)
             self.collect_response_time = self.args.get('collect_response_time', DEFAULT_COLLECT_RESPONSE_TIME)
-            return self._connection_test(self.url) or self._discover_config()
         else:
             log.warning("No username and password supplied to InfluxDB detection!")
-            return self._discover_config()
+
+        return self._discover_config()
