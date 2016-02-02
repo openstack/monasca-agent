@@ -1,6 +1,5 @@
 import json
 import logging
-import re
 import subprocess
 import types
 
@@ -14,9 +13,11 @@ class SwiftDispersion(checks.AgentCheck):
     GAUGES = [
         "object.copies_expected",
         "object.copies_found",
+        "object.copies_missing",
         "object.overlapping",
         "container.copies_expected",
         "container.copies_found",
+        "container.copies_missing",
         "container.overlapping",
     ]
 
@@ -42,7 +43,12 @@ class SwiftDispersion(checks.AgentCheck):
             log.debug("Checking metric {0}".format(metric))
             disp_metric = metric.split('.', 1)
 
-            value = dispersion[disp_metric[0]][disp_metric[1]]
+            if disp_metric[1] == 'copies_missing':
+                value = (dispersion[disp_metric[0]]['copies_expected'] -
+                         dispersion[disp_metric[0]]['copies_found'])
+            else:
+                value = dispersion[disp_metric[0]][disp_metric[1]]
+
             assert(type(value) in (types.IntType, types.LongType,
                                    types.FloatType))
 
