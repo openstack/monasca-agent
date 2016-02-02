@@ -10,14 +10,11 @@ class ProcessCheck(checks.AgentCheck):
     PROCESS_GAUGE = ('process.thread_count',
                      'process.cpu_perc',
                      'process.mem.rss_mbytes',
-                     'process.mem.real_mbytes',
                      'process.open_file_descriptors',
                      'process.io.read_count',
                      'process.io.write_count',
                      'process.io.read_kbytes',
-                     'process.io.write_kbytes',
-                     'process.voluntary_ctx_switches',
-                     'process.involuntary_ctx_switches')
+                     'process.io.write_kbytes')
 
     def __init__(self, name, init_config, agent_config, instances=None):
         super(ProcessCheck, self).__init__(name, init_config, agent_config,
@@ -80,14 +77,11 @@ class ProcessCheck(checks.AgentCheck):
         total_thr = 0
         total_cpu = None
         total_rss = 0
-        total_real = 0
         total_open_file_descriptors = 0
         total_read_count = 0
         total_write_count = 0
         total_read_kbytes = 0
         total_write_kbytes = 0
-        total_voluntary_ctx_switches = 0
-        total_involuntary_ctx_switches = 0
 
         for pid in set(pids):
             try:
@@ -100,18 +94,8 @@ class ProcessCheck(checks.AgentCheck):
                     p = self._cached_processes[name][pid]
 
                 mem = p.memory_info_ex()
-                total_real += float((mem.rss - mem.shared) / 1048576)
                 total_rss += float(mem.rss / 1048576)
                 total_thr += p.num_threads()
-
-                try:
-                    ctx_switches = p.num_ctx_switches()
-                    total_voluntary_ctx_switches += ctx_switches.voluntary
-                    total_involuntary_ctx_switches += ctx_switches.involuntary
-                except NotImplementedError:
-                    # Handle old Kernels which don't provide this info.
-                    total_voluntary_ctx_switches = None
-                    total_involuntary_ctx_switches = None
 
                 try:
                     total_open_file_descriptors += float(p.num_fds())
@@ -156,9 +140,8 @@ class ProcessCheck(checks.AgentCheck):
                          "when trying to get the number of file descriptors")
 
         return dict(zip(ProcessCheck.PROCESS_GAUGE,
-                        (total_thr, total_cpu, total_rss, total_real, total_open_file_descriptors,
-                         total_read_count, total_write_count, total_read_kbytes, total_write_kbytes,
-                         total_voluntary_ctx_switches, total_involuntary_ctx_switches)))
+                        (total_thr, total_cpu, total_rss, total_open_file_descriptors, total_read_count,
+                         total_write_count, total_read_kbytes, total_write_kbytes)))
 
     def prepare_run(self):
         """Collect the list of processes once before each run"""
