@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 
 import glob
 import hashlib
@@ -734,3 +734,11 @@ def get_sub_collection_warn():
     agent_config = config.get_config(sections='Main')
     sub_collection_warn = agent_config.get('sub_collection_warn')
     return sub_collection_warn
+
+
+def get_collector_restart_interval():
+    config = configuration.Config()
+    agent_config = config.get_config(sections='Main')
+    restart_interval = agent_config.get('collector_restart_interval')
+    restart_interval_in_sec = restart_interval * 60 * 60
+    return restart_interval_in_sec

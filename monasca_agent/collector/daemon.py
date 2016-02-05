@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 
 # Core modules
 import glob
@@ -31,7 +31,6 @@ if int(sys.version_info[1]) <= 3:
 
 # Constants
 PID_NAME = "monasca-agent"
-RESTART_INTERVAL = 4 * 24 * 60 * 60  # Defaults to 4 days
 START_COMMANDS = ['start', 'restart', 'foreground']
 
 # Globals
@@ -95,7 +94,7 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
         check_frequency = int(config['check_freq'])
 
         # Initialize the auto-restarter
-        self.restart_interval = int(config.get('restart_interval', RESTART_INTERVAL))
+        self.restart_interval = int(util.get_collector_restart_interval())
         self.agent_start = time.time()
 
         # Run the main loop.
@@ -171,7 +170,6 @@ def main():
     options, args = util.get_parsed_args()
     config = cfg.Config()
     collector_config = config.get_config(['Main', 'Api', 'Logging'])
-    # todo autorestart isn't used remove
     autorestart = collector_config.get('autorestart', False)
 
     COMMANDS = [
@@ -229,17 +227,8 @@ def main():
         if autorestart:
             # Set-up the supervisor callbacks and fork it.
             logging.info('Running Agent with auto-restart ON')
-
-            def child_func():
-                agent.run()
-
-            def parent_func():
-                agent.start_event = False
-
-            monasca_agent.common.daemon.AgentSupervisor.start(parent_func, child_func)
-        else:
-            # Run in the standard foreground.
-            agent.run(collector_config)
+        # Run in the standard foreground.
+        agent.run(collector_config)
 
     elif 'check' == command:
         check_name = args[1]
