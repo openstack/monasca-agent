@@ -623,17 +623,18 @@ instances:
 ```
 
 ## InfluxDB Checks
-This section describes how InfluxDB installations can be monitored by the Agent. The InfluxDB check currently supports InfluxDB 0.9.4 and compatible successors. In order to authenticate with InfluxDB the check either requires detection arguments to be passed to ```monasca-setup``` or a configuration file.
 
-### Configuration Using Detection
+This section describes how InfluxDB installations can be monitored by the Agent. The InfluxDB check currently supports InfluxDB 0.9.4 and compatible successors. In order to authenticate with InfluxDB the check either requires user credentials to be passed to ```monasca-setup``` or a configuration file.
 
-Detection arguments:
+### Configuration Using Detection (monasca-setup)
 
-| Argument Name | Default    | Semantics |
-| ------------- | ---------- | --------- |
-| influxdb.username | no auth. | InfluxDB user with permission to perform the query [SHOW STATS](https://influxdb.com/docs/v0.9/administration/statistics.html) |
-| influxdb.password | no auth. | Password of above InfluxDB user |
-| influxdb.timeout  | 1 sec.   | Timeout for querying InfluxDB (secs.) |
+The ```monasca-setup``` tool is able to configure the InfluxDB check automatically when the credentials of the monitoring user are passed as either environment variables or detection arguments (```-a``` option).
+
+| ENV-Variable | Detection Argument | Default    | Semantics |
+| -------------| ------------- | ---------- | --------- |
+| INFLUXDB_MONITOR_USERNAME | influxdb.username | no auth. | InfluxDB user with permission to perform the query [SHOW STATS](https://influxdb.com/docs/v0.9/administration/statistics.html) |
+| INFLUXDB_MONITOR_PASSWORD | influxdb.password | no auth. | Password of above InfluxDB user |
+| INFLUXDB_MONITOR_TIMEOUT | influxdb.timeout  | 1 sec.   | Timeout for querying InfluxDB (secs.) |
 
 Example:
 

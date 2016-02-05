@@ -2,6 +2,7 @@ import logging
 import monasca_agent.collector.checks_d.influxdb as influxdb
 import monasca_setup.agent_config
 import monasca_setup.detection as detection
+import os
 import re
 import requests
 
@@ -98,17 +99,19 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
         """
 
         # Set defaults and read config or use arguments
+        self.username = os.getenv('INFLUXDB_MONITORING_USERNAME')
+        self.password = os.getenv('INFLUXDB_MONITORING_PASSWORD')
+        self.timeout = os.getenv('INFLUXDB_MONITORING_TIMEOUT', DEFAULT_TIMEOUT)
         self.whitelist = influxdb.DEFAULT_METRICS_WHITELIST
-        self.timeout = DEFAULT_TIMEOUT
         self.collect_response_time = DEFAULT_COLLECT_RESPONSE_TIME
 
         # when args have been passed, then not self discovery is attempted
         if self.args is not None:
-            self.username = self.args.get('influxdb.username', None)
-            self.password = self.args.get('influxdb.password', None)
-            self.timeout = self.args.get('influxdb.timeout', None)
+            self.username = self.args.get('influxdb.username', self.username)
+            self.password = self.args.get('influxdb.password', self.password)
+            self.timeout = self.args.get('influxdb.timeout', self.timeout)
             self.collect_response_time = self.args.get('collect_response_time', DEFAULT_COLLECT_RESPONSE_TIME)
-        else:
+        elif self.username is None or self.password is None:
             log.warning("No username and password supplied to InfluxDB detection!")
 
         return self._discover_config()
