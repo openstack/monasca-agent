@@ -1,0 +1,17 @@
+# Copyright 2016 FUJITSU LIMITED
+
+init_config:
+  # URL that check uses to access Kibana metrics
+  url: http://192.168.10.6:5601/api/status
+instances:
+- built_by: Kibana
+  # List of metrics check should collect
+  # You can disable collecting of some metrics
+  # by removing them from the list
+  metrics:
+    - heap_total
+    - heap_used
+    - load
+    - requests_per_second
+    - response_time_avg
+    - response_time_max
