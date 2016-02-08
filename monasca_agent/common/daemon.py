@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 """
     ***
     Modified generic daemon class
@@ -18,7 +18,6 @@ import logging
 import os
 import signal
 import sys
-import time
 
 log = logging.getLogger(__name__)
 
@@ -105,22 +104,17 @@ class Daemon(object):
         os.chdir("/")
         os.setsid()
 
-        if self.autorestart:
-            # Set up the supervisor callbacks and put a fork in it.
-            logging.info('Running with auto-restart ON')
-            AgentSupervisor.start(parent_func=None, child_func=None)
-        else:
-            # Do second fork
-            try:
-                pid = os.fork()
-                if pid > 0:
-                    # Exit from second parent
-                    sys.exit(0)
-            except OSError as e:
-                msg = "fork #2 failed: %d (%s)" % (e.errno, e.strerror)
-                logging.error(msg)
-                sys.stderr.write(msg + "\n")
-                sys.exit(1)
+        # Do second fork
+        try:
+            pid = os.fork()
+            if pid > 0:
+                # Exit from second parent
+                sys.exit(0)
+        except OSError as e:
+            msg = "fork #2 failed: %d (%s)" % (e.errno, e.strerror)
+            logging.error(msg)
+            sys.stderr.write(msg + "\n")
+            sys.exit(1)
 
         if sys.platform != 'darwin':  # This block breaks on OS X
             # Redirect standard file descriptors
@@ -173,16 +167,8 @@ class Daemon(object):
 
         if pid > 1:
             try:
-                if self.autorestart:
-                    # Try killing the supervising process
-                    try:
-                        os.kill(os.getpgid(pid), signal.SIGTERM)
-                    except OSError:
-                        log.warn("Couldn't not kill parent pid %s. Killing pid." % os.getpgid(pid))
-                        os.kill(pid, signal.SIGTERM)
-                else:
-                    # No supervising process present
-                    os.kill(pid, signal.SIGTERM)
+                # No supervising process present
+                os.kill(pid, signal.SIGTERM)
                 log.info("Daemon is stopped")
             except OSError as err:
                 if str(err).find("No such process") <= 0:
