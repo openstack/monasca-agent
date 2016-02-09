@@ -1,5 +1,5 @@
 #!/bin/env python
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 """Monitoring Agent plugin for HTTP/API checks.
 
 """
@@ -82,10 +82,10 @@ class HTTPCheck(services_checks.ServicesCheck):
                     headers["X-Auth-Token"] = token
                     headers["Content-type"] = "application/json"
                 else:
-                    error_string = """Unable to get token. Keystone API server may be down.
-                                     Skipping check for {0}""".format(addr)
-                    self.log.warning(error_string)
-                    return False, error_string
+                    warning_string = """Unable to get token. Keystone API
+                    server may be down. Skipping check for {0}""".format(addr)
+                    self.log.warning(warning_string)
+                    return False, warning_string
             try:
                 self.log.debug("Connecting to %s" % addr)
                 if disable_ssl_validation:
@@ -98,20 +98,23 @@ class HTTPCheck(services_checks.ServicesCheck):
 
             except (socket.timeout, HttpLib2Error, socket.error) as e:
                 length = int((time.time() - start) * 1000)
-                error_string = '{0} is DOWN, error: {1}. Connection failed after {2} ms'.format(addr, str(e), length)
-                self.log.info(error_string)
-                return False, error_string
+                warn_string = '{0} is DOWN, error: {1}. Connection failed ' \
+                              'after {2} ms'.format(addr, repr(e), length)
+                self.log.warn(warn_string)
+                return False, warn_string
 
             except httplib.ResponseNotReady as e:
                 length = int((time.time() - start) * 1000)
-                error_string = '{0} is DOWN, error: {1}. Network is not routable after {2} ms'.format(addr, repr(e), length)
-                self.log.info(error_string)
-                return False, error_string
+                warn_string = '{0} is DOWN, error: {1}. Network is not ' \
+                              'routable after {2} ms'.format(addr, repr(e),
+                                                             length)
+                self.log.warn(warn_string)
+                return False, warn_string
 
             except Exception as e:
                 length = int((time.time() - start) * 1000)
-                error_string = '{0} is DOWN, error: {1}. Connection failed after {2} ms'.format(addr, str(e), length)
-                self.log.error('Unhandled exception {0}. Connection failed after {1} ms'.format(str(e), length))
+                error_string = '{0} is DOWN, error: {1}. Connection failed after {2} ms'.format(addr, repr(e), length)
+                self.log.error(error_string)
                 return False, error_string
 
             if response_time:
@@ -132,9 +135,10 @@ class HTTPCheck(services_checks.ServicesCheck):
                         ksclient.refresh_token()
                         continue
                 else:
-                    error_string = '{0} is DOWN, error code: {1}'.format(addr, str(resp.status))
-                    self.log.info(error_string)
-                    return False, error_string
+                    warn_string = '{0} is DOWN, error code: {1}'.\
+                        format(addr, str(resp.status))
+                    self.log.warn(warn_string)
+                    return False, warn_string
             done = True
             return True, content
 
