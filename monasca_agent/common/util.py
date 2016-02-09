@@ -209,13 +209,13 @@ class Dimensions(object):
         """
         new_dimensions = {'hostname': get_hostname()}
 
-        if dimensions is not None:
-            # Add or update any dimensions from the plugin itself
-            new_dimensions.update(dimensions.copy())
         default_dimensions = self.agent_config.get('dimensions', {})
         if default_dimensions:
             # Add or update any default dimensions that were set in the agent config file
             new_dimensions.update(default_dimensions)
+        if dimensions is not None:
+            # Add or update any dimensions from the plugin itself
+            new_dimensions.update(dimensions.copy())
         if instance:
             # Add or update any per instance dimensions that were set in the plugin config file
             new_dimensions.update(instance.get('dimensions', {}))
