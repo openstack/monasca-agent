@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 
 import logging
 import urllib2
@@ -139,11 +139,15 @@ class RabbitMQ(monasca_setup.detection.Plugin):
 
                 config['rabbitmq'] = {'init_config': None, 'instances': [instance_config]}
             else:
-                log.warn('Unable to access the RabbitMQ admin URL;' +
-                         ' the RabbitMQ plugin is not configured.' +
-                         ' Please correct and re-run monasca-setup.')
+                exception_msg = 'Unable to access the RabbitMQ admin URL; ' \
+                                'the RabbitMQ plugin is not configured. ' \
+                                'Please correct and re-run monasca-setup.'
+                log.error(exception_msg)
+                raise Exception(exception_msg)
         except Exception:
-            log.exception('Error configuring the RabbitMQ check plugin')
+            exception_msg = 'Error configuring the RabbitMQ check plugin'
+            log.exception(exception_msg)
+            raise Exception(exception_msg)
 
         return config
 
