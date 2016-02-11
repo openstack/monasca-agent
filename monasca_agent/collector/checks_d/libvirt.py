@@ -1,6 +1,6 @@
 #!/bin/env python
 
-# (C) Copyright 2014, 2015 Hewlett Packard Enterprise Development Company LP
+# (c) Copyright 2014-2016 Hewlett Packard Enterprise Development Company LP
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -72,7 +72,8 @@ class LibvirtCheck(AgentCheck):
                 if ((secgroup['tenant_id'] == instance.tenant_id and
                      secgroup['name'] == instance_secgroup['name'])):
                     for rule in secgroup['security_group_rules']:
-                        if ((rule['protocol'] == 'icmp' and
+                        if ((rule['remote_ip_prefix'] and
+                             rule['protocol'] == 'icmp' and
                              all_matching_cidrs(source_ip,
                                                 [rule['remote_ip_prefix']]))):
                                 return True
@@ -321,6 +322,8 @@ class LibvirtCheck(AgentCheck):
                        delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
                        hostname=instance_cache.get(inst_name)['hostname'])
             self.gauge('vm.cpu.utilization_perc', int(round(rate, 0)),
+                       dimensions=dims_operations)
+            self.gauge('vm.cpu.time_ms', insp.inspect_cpus(inst).time,
                        dimensions=dims_operations)
 
         metric_cache[inst_name]['cpu.time'] = {'timestamp': sample_time,
