@@ -22,7 +22,8 @@ class Neutron(monasca_setup.detection.ServicePlugin):
                               'neutron-ns-metadata-proxy',
                               'bin/neutron-lbaas-agent',
                               'neutron-lbaasv2-agent',
-                              'neutron-l2gateway-agent'],
+                              'neutron-l2gateway-agent',
+                              'infoblox-ipam-agent'],
             'service_api_url': 'http://localhost:9696',
             'search_pattern': '.*v2.0.*'
         }
