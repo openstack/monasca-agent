@@ -19,6 +19,7 @@
     - [MK Livestatus](#mk-livestatus)
   - [Host Alive Checks](#host-alive-checks)
   - [Process Checks](#process-checks)
+  - [File Size Checks](#file-size-checks)
   - [Http Endpoint Checks](#http-endpoint-checks)
   - [Http Metrics](#http-metrics)
   - [MySQL Checks](#mysql-checks)
@@ -156,6 +157,7 @@ The following plugins are delivered via setup as part of the standard plugin che
 | disk | | |
 | docker | | |
 | elastic | | |
+| file_size | | |
 | gearmand | | |
 | glance | | OpenStack component |
 | gunicorn | | |
@@ -564,12 +566,47 @@ The process checks return the following metrics ( if detailed is set to true, ot
 | process.pid_count  | process_name, service, component | Number of processes that exist with this process name
 
 
+## File Size Checks
+This section describes the file size check that can be performed by the Agent. File size checks are used for gathering the size of individual files or the size of each file under a specific directory. The agent supports additional functionality through the use of Python scripts. A YAML file (file_size.yaml) contains the list of file directory names and file names to check. A Python script (file_size.py) runs checks each host in turn to gather stats. 
+
+Similar to other checks, the configuration is done in YAML, and consists of two keys: init_config and instances. The former is not used by file_size, while the later contains one or more sets of file directory name and file names to check, plus optional parameter recursive. When recursive is true and file_name is set to '*', file_size check will take all the files under the given directory recursively. 
+
+Sample config:
+
+```
+init_config: null
+instances:
+- built_by: FileSize
+  directory_name: /var/log/monasca/agent/
+  file_names:
+  - '*'
+  recursive: false
+- built_by: FileSize
+  directory_name: /var/log/monasca/api
+  file_names:
+  - monasca-api.log
+  - request.log
+  recursive: false
+- built_by: FileSize
+  directory_name: /var/log/monasca/notification
+  file_names:
+  - notification.log
+  recursive: false
+```
+
+The file_size checks return the following metrics:
+
+| Metric Name | Dimensions |
+| ----------- | ---------- |
+| file.size_bytes  | file_name, directory_name, hostname, service |
+
+
 ## Http Endpoint Checks
 This section describes the http endpoint check that can be performed by the Agent. Http endpoint checks are checks that perform simple up/down checks on services, such as HTTP/REST APIs. An agent, given a list of URLs, can dispatch an http request and report to the API success/failure as a metric.
 
  default dimensions:
     url: endpoint
- 
+
  default value_meta
     error: error_message
 
