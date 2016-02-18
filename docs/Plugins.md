@@ -22,6 +22,7 @@
   - [Http Endpoint Checks](#http-endpoint-checks)
   - [Http Metrics](#http-metrics)
   - [MySQL Checks](#mysql-checks)
+  - [Elasticsearch Checks](#elasticsearch-checks)
   - [ZooKeeper Checks](#zookeeper-checks)
   - [Kafka Checks](#kafka-checks)
   - [RabbitMQ Checks](#rabbitmq-checks)
@@ -300,7 +301,7 @@ The Agent can run Nagios plugins. A YAML file (nagios_wrapper.yaml) contains the
     0, 1, 2, 3, 4
     OK, Warning, Critical, Unknown
     error: error_message
-    
+
 Similar to all plugins, the configuration is done in YAML, and consists of two keys: init_config and instances.
 
 init_config contains global configuration options:
@@ -309,7 +310,7 @@ init_config contains global configuration options:
 init_config:
   # Directories where Nagios checks (scripts, programs) may live
   check_path: /usr/lib/nagios/plugins:/usr/local/bin/nagios
- 
+
   # Where to store last-run timestamps for each check
   temp_file_path: /dev/shm/
 ```
@@ -320,7 +321,7 @@ instances contains the list of checks to run
 instances:
   - service_name: load
     check_command: check_load -r -w 2,1.5,1 -c 10,5,4
- 
+
   - service_name: disk
     check_command: check_disk -w 15\% -c 5\% -A -i /srv/node
     check_interval: 300
@@ -408,7 +409,7 @@ The configuration file (`/etc/monasca/agent/conf.d/mk_livestatus.yaml` by defaul
     * *dimensions* - (Optional) Extra Monasca dimensions to include, in `{'key': 'value'}` format
 
 If *host_name* is not specified, metrics for all hosts will be reported.
- 
+
 This configuration example shows several ways to specify instances:
 ```
 init_config:
@@ -455,7 +456,7 @@ An extension to the Agent can provide basic "aliveness" checks of other systems,
     observer_host: fqdn
     hostname: fqdn | supplied
     test_type: ping | ssh | Unrecognized alive_test
-    
+
  default value_meta
     error: error_message
 
@@ -517,7 +518,7 @@ The host alive checks return the following metrics
 Also in the case of an error the value_meta contains an error message.
 
 ## Process Checks
-Process checks can be performed to both verify that a set of named processes are running on the local system and collect/send system level metrics on those processes. The YAML file `process.yaml` contains the list of processes that are checked. 
+Process checks can be performed to both verify that a set of named processes are running on the local system and collect/send system level metrics on those processes. The YAML file `process.yaml` contains the list of processes that are checked.
 
 The processes that are monitored can be filtered using a pattern to specify the matching process names or distinctly identified by process name or by the username that owns the process.
 
@@ -569,12 +570,12 @@ This section describes the http endpoint check that can be performed by the Agen
 
  default dimensions:
     url: endpoint
- 
+
  default value_meta
     error: error_message
 
 The Agent supports additional functionality through the use of Python scripts. A YAML file (http_check.yaml) contains the list of URLs to check (among other optional parameters). A Python script (http_check.py) runs checks each host in turn, returning a 0 on success and a 1 on failure in the result sent through the Forwarder and on the Monitoring API.
- 
+
 Similar to other checks, the configuration is done in YAML, and consists of two keys: init_config and instances.  The former is not used by http_check, while the later contains one or more URLs to check, plus optional parameters like a timeout, username/password, pattern to match against the HTTP response body, whether or not to include the HTTP response in the metric (as a 'detail' dimension), whether or not to also record the response time, and more.
 If the endpoint being checked requires authentication, there are two options. First, a username and password supplied in the instance options will be used by the check for authentication. Alternately, the check can retrieve a keystone token for authentication. Specific keystone information can be provided for each check, otherwise the information from the agent config will be used.
 
@@ -582,7 +583,7 @@ Sample config:
 
 ```
 init_config:
- 
+
 instances:
        url: http://192.168.0.254/healthcheck
        timeout: 1
@@ -590,7 +591,7 @@ instances:
        collect_response_time: true
        match_pattern: '.*OK.*OK.*OK.*OK.*OK'
 ```
- 
+
 The http_status checks return the following metrics:
 
 | Metric Name | Dimensions | Semantics |
@@ -623,7 +624,7 @@ instances:
               path: gauges/jvm.memory.total.max/value
               type: gauge
 ```
-    
+
 ## MySQL Checks
 This section describes the mySQL check that can be performed by the Agent.  The mySQL check also supports MariaDB.  The mySQL check requires a configuration file called mysql.yaml to be available in the agent conf.d configuration directory.
 
@@ -679,6 +680,130 @@ The mySQL checks return the following metrics:
 | mysql.net.connections | hostname, mode, service=mysql | Corresponding to "Connections" of the server status variable. |
 
 
+## Elasticsearch Checks
+This section describes the Elasticsearch check that can be performed by the Agent.  The Elasticsearch check requires a configuration file called elastic.yaml to be available in the agent conf.d configuration directory.
+
+Sample config:
+
+```
+init_config:
+instances:
+-   url: http://127.0.0.1:9200
+
+```
+
+The Elasticsearch checks return the following metrics:
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| elasticsearch.docs.count | url, hostname, service=monitoring | The total number of docs including nested documents. |
+| elasticsearch.docs.deleted | url, hostname, service=monitoring | The number of deleted docs. |
+| elasticsearch.store.size | url, hostname, service=monitoring | The filesystem storage size. |
+| elasticsearch.indexing.index.total | url, hostname, service=monitoring | |
+| elasticsearch.indexing.index.time | url, hostname, service=monitoring | |
+| elasticsearch.indexing.index.current | url, hostname, service=monitoring | |
+| elasticsearch.indexing.delete.total | url, hostname, service=monitoring | |
+| elasticsearch.indexing.delete.time | url, hostname, service=monitoring | |
+| elasticsearch.indexing.delete.current | url, hostname, service=monitoring | |
+| elasticsearch.get.total | url, hostname, service=monitoring | |
+| elasticsearch.get.time | url, hostname, service=monitoring | |
+| elasticsearch.get.current | url, hostname, service=monitoring | |
+| elasticsearch.get.exists.total | url, hostname, service=monitoring | |
+| elasticsearch.get.exists.time | url, hostname, service=monitoring | |
+| elasticsearch.get.missing.total | url, hostname, service=monitoring | |
+| elasticsearch.get.missing.time | url, hostname, service=monitoring | |
+| elasticsearch.search.query.total | url, hostname, service=monitoring | |
+| elasticsearch.search.query.time | url, hostname, service=monitoring | |
+| elasticsearch.search.query.current | url, hostname, service=monitoring | |
+| elasticsearch.search.fetch.total | url, hostname, service=monitoring | |
+| elasticsearch.search.fetch.time | url, hostname, service=monitoring | |
+| elasticsearch.search.fetch.current | url, hostname, service=monitoring | |
+| elasticsearch.merges.current | url, hostname, service=monitoring | |
+| elasticsearch.merges.current.docs | url, hostname, service=monitoring | |
+| elasticsearch.merges.current.size | url, hostname, service=monitoring | |
+| elasticsearch.merges.total | url, hostname, service=monitoring | |
+| elasticsearch.merges.total.time | url, hostname, service=monitoring | |
+| elasticsearch.merges.total.docs | url, hostname, service=monitoring | |
+| elasticsearch.merges.total.size | url, hostname, service=monitoring | |
+| elasticsearch.refresh.total | url, hostname, service=monitoring | |
+| elasticsearch.refresh.total.time | url, hostname, service=monitoring | |
+| elasticsearch.flush.total | url, hostname, service=monitoring | |
+| elasticsearch.flush.total.time | url, hostname, service=monitoring | The elasticsearch flush time. |
+| elasticsearch.process.open_fd | url, hostname, service=monitoring | The number of open files descriptors on the machine. |
+| elasticsearch.transport.rx_count | url, hostname, service=monitoring | |
+| elasticsearch.transport.tx_count | url, hostname, service=monitoring | |
+| elasticsearch.transport.rx_size | url, hostname, service=monitoring | |
+| elasticsearch.transport.tx_size | url, hostname, service=monitoring | |
+| elasticsearch.transport.server_open | url, hostname, service=monitoring | |
+| elasticsearch.thread_pool.bulk.active | url, hostname, service=monitoring | The number of active threads for bulk operations. |
+| elasticsearch.thread_pool.bulk.threads | url, hostname, service=monitoring | The total number of threads for bulk operations. |
+| elasticsearch.thread_pool.bulk.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for bulk operations. |
+| elasticsearch.thread_pool.bulk.rejected | url, hostname, service=monitoring | The number of rejected tasks of thread pool used for bulk operations. |
+| elasticsearch.thread_pool.flush.active | url, hostname, service=monitoring | The number of active threads for flush operations. |
+| elasticsearch.thread_pool.flush.threads | url, hostname, service=monitoring | The total number of threads for flush operations. |
+| elasticsearch.thread_pool.flush.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for flush operations. |
+| elasticsearch.thread_pool.flush.rejected | url, hostname, service=monitoring |  The number of rejected tasks of thread pool used for flush operations. |
+| elasticsearch.thread_pool.generic.active | url, hostname, service=monitoring | The number of active threads for generic operations (i.e. node discovery). |
+| elasticsearch.thread_pool.generic.threads | url, hostname, service=monitoring | The total number of threads for generic operations (i.e. node discovery). |
+| elasticsearch.thread_pool.generic.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for generic operations. |
+| elasticsearch.thread_pool.generic.rejected | url, hostname, service=monitoring | The number of rejected tasks of thread pool used for generic operations. |
+| elasticsearch.thread_pool.get.active | url, hostname, service=monitoring | The number of active threads for get operations. |
+| elasticsearch.thread_pool.get.threads | url, hostname, service=monitoring | The total number of threads for get operations. |
+| elasticsearch.thread_pool.get.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for get operations. |
+| elasticsearch.thread_pool.get.rejected | url, hostname, service=monitoring | The number of rejected tasks of thread pool used for get operations. |
+| elasticsearch.thread_pool.index.active | url, hostname, service=monitoring | The number of active threads for indexing operations. |
+| elasticsearch.thread_pool.index.threads | url, hostname, service=monitoring | The total number of threads for indexing operations. |
+| elasticsearch.thread_pool.index.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for indexing operations. |
+| elasticsearch.thread_pool.index.rejected | url, hostname, service=monitoring | The number of rejected tasks of thread pool used for indexing operations. |
+| elasticsearch.thread_pool.management.active | url, hostname, service=monitoring | The number of active threads for management operations. |
+| elasticsearch.thread_pool.management.threads | url, hostname, service=monitoring | The total number of threads for management operations. |
+| elasticsearch.thread_pool.management.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for management operations. |
+| elasticsearch.thread_pool.management.rejected | url, hostname, service=monitoring | The number of rejected tasks of thread pool used for management operations. |
+| elasticsearch.thread_pool.merge.active | url, hostname, service=monitoring | The number of active threads for merging operation. |
+| elasticsearch.thread_pool.merge.threads | url, hostname, service=monitoring | The total number of threads for merging operation. |
+| elasticsearch.thread_pool.merge.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for merge operations. |
+| elasticsearch.thread_pool.merge.rejected | url, hostname, service=monitoring | The number of rejected tasks of thread pool used for merge operations. |
+| elasticsearch.thread_pool.percolate.active | url, hostname, service=monitoring | The number of active threads for percolate operations. |
+| elasticsearch.thread_pool.percolate.threads | url, hostname, service=monitoring | The total number of threads for percolate operations. |
+| elasticsearch.thread_pool.percolate.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for percolate operations. |
+| elasticsearch.thread_pool.percolate.rejected | url, hostname, service=monitoring | The number of rejected tasks of thread pool used for percolate operations. |
+| elasticsearch.thread_pool.refresh.active | url, hostname, service=monitoring | The number of active threads for refresh operations. |
+| elasticsearch.thread_pool.refresh.threads | url, hostname, service=monitoring | The total number of threads for refresh operations. |
+| elasticsearch.thread_pool.refresh.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for refresh operations. |
+| elasticsearch.thread_pool.refresh.rejected | url, hostname, service=monitoring | The number of rejected tasks of thread pool used for refresh operations. |
+| elasticsearch.thread_pool.search.active | url, hostname, service=monitoring | The number of active threads for search operations. |
+| elasticsearch.thread_pool.search.threads | url, hostname, service=monitoring | The total number of threads for search operations. |
+| elasticsearch.thread_pool.search.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for search operations. |
+| elasticsearch.thread_pool.search.rejected | url, hostname, service=monitoring | The number of rejected tasks of thread pool used for search operations. |
+| elasticsearch.thread_pool.snapshot.active | url, hostname, service=monitoring | The number of active threads for snapshot operations. |
+| elasticsearch.thread_pool.snapshot.threads | url, hostname, service=monitoring | The total number of threads for snapshot operations. |
+| elasticsearch.thread_pool.snapshot.queue | url, hostname, service=monitoring | The number of tasks in queue of thread pool used for snapshot operations. |
+| elasticsearch.thread_pool.snapshot.rejected | url, hostname, service=monitoring | The number of rejected tasks of thread pool used for snapshot operations. |
+| elasticsearch.http.current_open | url, hostname, service=monitoring | Current number of opened HTTP connections. |
+| elasticsearch.http.total_opened | url, hostname, service=monitoring | Max number of HTTP connections. |
+| jvm.gc.concurrent_mark_sweep.count | url, hostname, service=monitoring | |
+| jvm.gc.concurrent_mark_sweep.collection_time | url, hostname, service=monitoring | |
+| jvm.gc.par_new.count | url, hostname, service=monitoring | ParNew count. |
+| jvm.gc.par_new.collection_time | url, hostname, service=monitoring | ParNew pauses time. |
+| jvm.mem.heap_committed | url, hostname, service=monitoring | The allocated amount of heap memory. |
+| jvm.mem.heap_used | url, hostname, service=monitoring | The amount of heap memory which is actually in use. |
+| jvm.mem.non_heap_committed | url, hostname, service=monitoring | The allocated amount of non-heap memory. |
+| jvm.mem.non_heap_used | url, hostname, service=monitoring | The amount of non-heap memory which is actually in use. |
+| jvm.threads.count | url, hostname, service=monitoring | Current number of live daemon and non-daemon threads. |
+| jvm.threads.peak_count | url, hostname, service=monitoring | Peak live thread count since the JVM started or the peak was reset. |
+| elasticsearch.number_of_nodes | url, hostname, service=monitoring | Number of nodes. |
+| elasticsearch.number_of_data_nodes | url, hostname, service=monitoring | Number of data nodes. |
+| elasticsearch.active_primary_shards | url, hostname, service=monitoring | Indicates the number of primary shards in your cluster. This is an aggregate total across all indices. |
+| elasticsearch.active_shards | url, hostname, service=monitoring |  Aggregate total of all shards across all indices, which includes replica shards. |
+| elasticsearch.relocating_shards | url, hostname, service=monitoring | Shows the number of shards that are currently moving from one node to another node. |
+| elasticsearch.initializing_shards | url, hostname, service=monitoring | The count of shards that are being freshly created. |
+| elasticsearch.unassigned_shards | url, hostname, service=monitoring | The number of unassigned shards from the master node. |
+| elasticsearch.cluster_status | url, hostname, service=monitoring | Cluster health status. |
+
+### Additional links
+
+* [List of available thread pools](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-threadpool.html)
+
 ## ZooKeeper Checks
 This section describes the Zookeeper check that can be performed by the Agent.  The Zookeeper check requires a configuration file called zk.yaml to be available in the agent conf.d configuration directory.
 The Zookeeper check parses the result of zookeeper's `stat` admin command.
@@ -693,7 +818,7 @@ instances:
 	port: 2181
 	timeout: 3
 ```
- 
+
 The Zookeeper checks return the following metrics:
 
 | Metric Name | Dimensions | Semantics |
@@ -733,7 +858,7 @@ instances:
   kafka_connect_str: localhost:9092
   zk_connect_str: localhost:2181
 ```
- 
+
 The Kafka checks return the following metrics:
 
 | Metric Name | Dimensions | Semantics |
@@ -775,7 +900,7 @@ queues=conductor
 exchanges=nova,cinder,ceilometer,glance,keystone,neutron,heat
 ```
 
- 
+
 For more details of each metric, please refer the [RabbitMQ documentation](http://www.rabbitmq.com/documentation.html).
 The RabbitMQ checks return the following metrics:
 
