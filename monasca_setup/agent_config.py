@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 
 """Classes to aid in configuration of the agent."""
 
@@ -92,3 +92,16 @@ def save_plugin_config(config_dir, plugin_name, user, conf):
     gid = pwd.getpwnam(user).pw_gid
     os.chmod(config_path, 0o640)
     os.chown(config_path, 0, gid)
+
+
+def check_endpoint_changes(value, config):
+    new_url = value['instances'][0]['url']
+    old_urls = [i['url'] for i in config['instances'] if 'url' in i]
+    new_path = new_url.split("://")[1]
+    old_paths = [url.split("://")[1] for url in old_urls]
+    for i, old_path in enumerate(old_paths):
+        if old_path == new_path:
+            if config['instances'][i]['url'] == config['instances'][i]['name']:
+                config['instances'][i]['name'] = new_url
+            config['instances'][i]['url'] = new_url
+    return value, config
