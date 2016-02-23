@@ -1,3 +1,5 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+
 """Classes for detection of running resources to be monitored.
 
     Detection classes should be platform independent

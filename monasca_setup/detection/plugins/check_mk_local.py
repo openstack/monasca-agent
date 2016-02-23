@@ -1,3 +1,5 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+
 """Detection plugin for the existence of check_mk_agent, whose <<<local>>>
    check output may parsed for metrics."""
 

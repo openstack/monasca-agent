@@ -1,0 +1,45 @@
+# (C) Copyright 2016 Hewlett Packard Enterprise Development Company LP
+
+init_config:
+
+instances:
+    # This config is for the File Check which is used to report metrics
+    # for the size of the files in a given directory
+    #
+    # NOTE: This check is NOT currently supported on Windows systems
+    #
+    # For each instance, both parameters 'directory_name' and 'file_names' are
+    # required
+    #
+    # WARNING: Ensure the user account running the Agent (typically mon-agent)
+    # has read access to the monitored directory and files.
+    #
+    # Instances take the following parameters:
+    # "directory_name" - string, the directory of the files to monitor.
+    #                    Required
+    # "file_names" - list of strings, names of the files to monitor. Required
+    # "recursive" - boolean, when true and file_name is set to '*' will
+    #               recursively grab files under the given directory to gather
+    #               stats on.
+
+    # Check the size of all the files under directory_1
+#    -  built_by: Logging
+#       directory_name: /path/to/directory_1
+#       file_names:
+#       - '*'
+#       recursive: True
+
+    # Check one file under directory_2
+#    -  built_by: Logging
+#       directory_name: /path/to/directory_2
+#       file_names:
+#       -file_name2
+#       recursive: False
+
+    # Check two or more files under directory_3
+#    -  built_by: Logging
+#       directory_name: /path/to/directory_3
+#       file_names:
+#       -file_name31
+#       -file_name32
+#       recursive: False

@@ -1,3 +1,5 @@
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+
 import glob
 import hashlib
 import imp
@@ -207,13 +209,13 @@ class Dimensions(object):
         """
         new_dimensions = {'hostname': get_hostname()}
 
-        if dimensions is not None:
-            # Add or update any dimensions from the plugin itself
-            new_dimensions.update(dimensions.copy())
         default_dimensions = self.agent_config.get('dimensions', {})
         if default_dimensions:
             # Add or update any default dimensions that were set in the agent config file
             new_dimensions.update(default_dimensions)
+        if dimensions is not None:
+            # Add or update any dimensions from the plugin itself
+            new_dimensions.update(dimensions.copy())
         if instance:
             # Add or update any per instance dimensions that were set in the plugin config file
             new_dimensions.update(instance.get('dimensions', {}))
@@ -732,3 +734,11 @@ def get_sub_collection_warn():
     agent_config = config.get_config(sections='Main')
     sub_collection_warn = agent_config.get('sub_collection_warn')
     return sub_collection_warn
+
+
+def get_collector_restart_interval():
+    config = configuration.Config()
+    agent_config = config.get_config(sections='Main')
+    restart_interval = agent_config.get('collector_restart_interval')
+    restart_interval_in_sec = restart_interval * 60 * 60
+    return restart_interval_in_sec

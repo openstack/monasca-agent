@@ -1,3 +1,4 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
 # stdlib
 from datetime import datetime
 from datetime import timedelta

@@ -1,3 +1,4 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
 """Windows Only.
 
 Generic WMI check. This check allows you to specify particular metrics that you

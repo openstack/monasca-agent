@@ -1,3 +1,5 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+
 """Collects metrics from the gunicorn web server.
 
 http://gunicorn.org/

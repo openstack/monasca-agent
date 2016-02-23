@@ -1,3 +1,4 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
 """Parses the response from zookeeper's `stat` admin command, which looks like:
 
 ```

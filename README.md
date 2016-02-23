@@ -39,4 +39,4 @@ Monasca Metrics [github.com/openstack/monasca-agent/docs/MonascaMetrics.md](http
 Agent Plugin details [github.com/openstack/monasca-agent/docs/Plugins.md](https://github.com/openstack/monasca-agent/blob/master/docs/Plugins.md)
 
 # License
-Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
+(C) Copyright 2015 Hewlett Packard Enterprise Development Company LP

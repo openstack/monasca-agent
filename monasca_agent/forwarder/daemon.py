@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
 """
     Licensed under Simplified BSD License (see LICENSE)
     (C) Boxed Ice 2010 all rights reserved

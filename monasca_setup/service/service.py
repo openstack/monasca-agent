@@ -1,3 +1,5 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+
 """Code to handle various service managers used on different OS
 
 """

@@ -183,4 +183,4 @@ Here are some examples of how code can be instrumented using calls to monasca-st
 ```
 
 # License
-Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
+(C) Copyright 2015 Hewlett Packard Enterprise Development Company LP

@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+
 """ Detect running daemons then configure and start the agent.
 """
 
@@ -137,6 +139,9 @@ def modify_config(args, detected_config):
             old_config = agent_config.read_plugin_config_from_disk(args.config_dir, key)
             # merge old and new config, new has precedence
             if old_config is not None:
+                if key is "http_check":
+                    old_config_urls = [i['url'] for i in old_config['instances'] if 'url' in i]
+                    value, old_config = agent_config.check_endpoint_changes(value, old_config)
                 agent_config.merge_by_name(value['instances'], old_config['instances'])
                 # Sort before compare, if instances have no name the sort will fail making order changes significant
                 try:
@@ -144,8 +149,13 @@ def modify_config(args, detected_config):
                     old_config['instances'].sort(key=lambda k: k['name'])
                 except Exception:
                     pass
-                if value == old_config:  # Don't write config if no change
-                    continue
+                value_urls = [i['url'] for i in value['instances'] if 'url' in i]
+                if key is "http_check":
+                    if value_urls is old_config_urls:  # Don't write config if no change
+                        continue
+                else:
+                    if value is old_config:
+                        continue
             changes = True
             if args.dry_run:
                 log.info("Changes would be made to the config file for the {0} check plugin".format(key))
@@ -210,6 +220,7 @@ def parse_arguments(parser):
     parser.add_argument('-v', '--verbose', help="Verbose Output", action="store_true")
     parser.add_argument('--dry_run', help="Make no changes just report on changes", action="store_true")
     parser.add_argument('--sub_collection_warn', help="Threshold value for warning on collection time of each check (in second)", type=int, default=5)
+    parser.add_argument('--collector_restart_interval', help="Collector restart interval (in hour)", type=int, default=24)
     return parser.parse_args()
 
 

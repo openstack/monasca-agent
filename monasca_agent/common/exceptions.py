@@ -1,3 +1,6 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+
+
 class Infinity(Exception):
     pass
 

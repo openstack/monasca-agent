@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+
 """
 A Python Statsd implementation with dimensions added
 """

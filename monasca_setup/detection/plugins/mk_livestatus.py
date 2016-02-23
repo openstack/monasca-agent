@@ -1,3 +1,5 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+
 """Detection Plugin for MK_Livestatus Nagios/Icinga Event Broker Module
    This monasca_setup detection plugin will determine if either Nagios or
    Icinga is configured on this system, if that configuration includes the

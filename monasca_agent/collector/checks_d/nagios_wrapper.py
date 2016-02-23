@@ -1,4 +1,5 @@
 #!/bin/env python
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
 """Monasca Agent wrapper for Nagios checks.
 
 """

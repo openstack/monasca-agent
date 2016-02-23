@@ -1,7 +1,7 @@
 site_name: monasca-agent
 repo_url: https://github.com/openstack/monasca-agent
 docs_dir: docs
-copyright: Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
+copyright: (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
 
 pages:
 - [index.md, Home]

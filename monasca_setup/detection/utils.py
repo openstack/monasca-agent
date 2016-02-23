@@ -1,3 +1,5 @@
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+
 """ Util functions to assist in detection.
 """
 import logging
@@ -107,6 +109,20 @@ def watch_process_by_username(username, process_name, service=None, component=No
     return config
 
 
+def watch_file_size(directory_name, file_names, file_recursive):
+    """Takes a directory, a list of files, recursive flag and returns a
+        Plugins object with the config set.
+    """
+    config = agent_config.Plugins()
+    parameters = {'directory_name': directory_name,
+                  'file_names': file_names,
+                  'recursive': file_recursive}
+
+    config['file_size'] = {'init_config': None,
+                           'instances': [parameters]}
+    return config
+
+
 def service_api_check(name, url, pattern, service=None, component=None):
     """Setup a service api to be watched by the http_check plugin.
     """
@@ -123,7 +139,6 @@ def service_api_check(name, url, pattern, service=None, component=None):
 
     config['http_check'] = {'init_config': None,
                             'instances': [parameters]}
-
     return config
 
 

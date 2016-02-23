@@ -1,5 +1,6 @@
 # {{{ http://code.activestate.com/recipes/576519/ (r9)
 # Author: David Decotigny, Oct 1 2008
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
 # @brief Pool of threads similar to multiprocessing.Pool
 # See http://docs.python.org/dev/library/multiprocessing.html
 # Differences: added imap_async and imap_unordered_async, and terminate()

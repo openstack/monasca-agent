@@ -1,0 +1,104 @@
+# (C) Copyright 2016 Hewlett Packard Enterprise Development Company LP
+
+import ConfigParser
+import logging
+import psutil
+
+import monasca_setup.agent_config
+from monasca_setup.detection import Plugin
+
+log = logging.getLogger(__name__)
+
+
+class VCenter(Plugin):
+    """Configures ESX Cluster monitoring through VCenter"""
+
+    def _detect(self):
+        """Method to detect the nova-compute service,
+        if found set the nova.conf, the flags under vmware section will be used to
+        configure the plugin, else the args are used to configure.
+        """
+        # Find the nova compute process and locate its conf
+        nova_conf = None
+        for proc in psutil.process_iter():
+            try:
+                cmd = proc.cmdline()
+                if len(cmd) > 2 and 'python' in cmd[0] and 'nova-compute' in cmd[1]:
+                    param = [cmd.index(y) for y in cmd if 'nova.conf' in y][0]
+                    if '=' in cmd[param]:
+                        nova_conf = cmd[param].split('=')[1]
+                    else:
+                        nova_conf = cmd[param]
+            except IOError:
+                # Process has already terminated, ignore
+                continue
+        # for cases where this plugin and nova-compute service runs separately
+        # we will configure the plugin with given args.
+        # so, we have to set these below variables
+        self.nova_conf = nova_conf
+        self.available = True
+
+    def build_config(self):
+        """Build the config as a Plugins object and return back.
+        """
+        config = monasca_setup.agent_config.Plugins()
+
+        if self.dependencies_installed():
+            nova_cfg = ConfigParser.SafeConfigParser()
+            instance = {}
+            if self.nova_conf is None:
+                log.warn("No nova compute service found.")
+                if self.args:
+                    # read from arg list
+                    instance = self._read_from_args(instance)
+                else:
+                    # get the default config format
+                    instance = self._config_format()
+            else:
+                log.info("Using nova configuration file {0}".format(self.nova_conf))
+                nova_cfg.read(self.nova_conf)
+                cfg_section = 'vmware'
+
+                # extract the vmware config from nova.conf and build instances
+                if (nova_cfg.has_option(cfg_section, 'host_ip')
+                        and nova_cfg.has_option(cfg_section, 'host_username')
+                        and nova_cfg.has_option(cfg_section, 'host_password')
+                        and nova_cfg.has_option(cfg_section, 'cluster_name')):
+
+                    instance = {
+                        'vcenter_ip': nova_cfg.get(cfg_section, 'host_ip'),
+                        'username': nova_cfg.get(cfg_section, 'host_username'),
+                        'password': nova_cfg.get(cfg_section, 'host_password'),
+                        'clusters': [nova_cfg.get(cfg_section, 'cluster_name')]
+                    }
+                else:
+                    # put default format
+                    instance = self._config_format()
+            config['vcenter'] = {'init_config': {},
+                                 'instances': [instance]}
+        return config
+
+    def _config_format(self):
+        """Default configuration format for vcenter plugin
+        """
+        instance = {'vcenter_ip': None,
+                    'username': None,
+                    'password': None,
+                    'clusters': []}
+        return instance
+
+    def _read_from_args(self, instance):
+        """Read the args and build the instance config
+        """
+        for arg in self.args:
+            if arg == 'clusters':
+                cls_lst = self.args[arg].split(',')
+                instance[arg] = cls_lst
+            else:
+                instance[arg] = self.args[arg]
+        return instance
+
+    def dependencies_installed(self):
+        """Import the dependencies.
+        """
+        return True

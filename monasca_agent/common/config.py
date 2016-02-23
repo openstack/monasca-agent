@@ -1,3 +1,5 @@
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+
 import logging
 import os
 import pkg_resources
@@ -46,9 +48,10 @@ class Config(object):
                                  'additional_checksd': '/usr/lib/monasca/agent/custom_checks.d',
                                  'limit_memory_consumption': None,
                                  'skip_ssl_validation': False,
-                                 'autorestart': False,
+                                 'autorestart': True,
                                  'non_local_traffic': False,
-                                 'sub_collection_warn': 5},
+                                 'sub_collection_warn': 5,
+                                 'collector_restart_interval': 24},
                         'Api': {'is_enabled': False,
                                 'url': '',
                                 'project_name': '',

@@ -1,4 +1,6 @@
-# Warning  
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+
+# Warning
 # The user running the Datadog Agent (usually "dd-agent") must be part of the "docker" group
 
 init_config:

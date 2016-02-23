@@ -1,3 +1,5 @@
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+
 import logging
 import psutil
 import urlparse
@@ -7,8 +9,8 @@ from plugin import Plugin
 from monasca_setup import agent_config
 from monasca_setup.detection.utils import find_process_cmdline
 from monasca_setup.detection.utils import service_api_check
+from monasca_setup.detection.utils import watch_file_size
 from monasca_setup.detection.utils import watch_process
-
 
 log = logging.getLogger(__name__)
 
@@ -23,7 +25,8 @@ class ServicePlugin(Plugin):
 
     def __init__(self, kwargs):
         self.service_name = kwargs['service_name']
-        self.process_names = kwargs['process_names']
+        self.process_names = kwargs.get('process_names')
+        self.file_dirs_names = kwargs.get('file_dirs_names')
         self.service_api_url = kwargs.get('service_api_url')
         self.search_pattern = kwargs['search_pattern']
         overwrite = kwargs['overwrite']
@@ -34,12 +37,14 @@ class ServicePlugin(Plugin):
                 try:
                     # Turn 'service_api_url=url' into
                     # dict {'service_api_url':'url'}
-                    args_dict = dict([item.split('=') for item
-                                      in args.split()])
+                    args_dict = dict(
+                        [item.split('=') for item in args.split()])
 
                     # Allow args to override all of these parameters
                     if 'process_names' in args_dict:
                         self.process_names = args_dict['process_names'].split(',')
+                    if 'file_dirs_names' in args_dict:
+                        self.file_dirs_names = args_dict['file_dirs_names']
                     if 'service_api_url' in args_dict:
                         self.service_api_url = args_dict['service_api_url']
                     if 'search_pattern' in args_dict:
@@ -58,11 +63,13 @@ class ServicePlugin(Plugin):
 
         """
         self.found_processes = []
-
-        for process in self.process_names:
-            if find_process_cmdline(process) is not None:
-                self.found_processes.append(process)
-        if len(self.found_processes) > 0:
+        if self.process_names:
+            for process in self.process_names:
+                if find_process_cmdline(process) is not None:
+                    self.found_processes.append(process)
+            if len(self.found_processes) > 0:
+                self.available = True
+        if self.file_dirs_names:
             self.available = True
 
     def build_config(self):
@@ -70,10 +77,29 @@ class ServicePlugin(Plugin):
 
         """
         config = agent_config.Plugins()
-        for process in self.found_processes:
-            # Watch the service processes
-            log.info("\tMonitoring the {0} {1} process.".format(process, self.service_name))
-            config.merge(watch_process([process], self.service_name, process, exact_match=False))
+        if self.found_processes:
+            for process in self.found_processes:
+                # Watch the service processes
+                log.info("\tMonitoring the {0} {1} process.".format(process, self.service_name))
+                config.merge(watch_process([process], self.service_name, process, exact_match=False))
+
+        if self.file_dirs_names:
+            for file_dir_name in self.file_dirs_names:
+                # Watch file size
+                file_dir = file_dir_name[0]
+                file_names = file_dir_name[1]
+                if len(file_dir_name) == 3:
+                    file_recursive = file_dir_name[2]
+                else:
+                    file_recursive = False
+                if file_names == ['*']:
+                    log.info("\tMonitoring the size of all the files in the "
+                             "directory {0}.".format(file_dir))
+                else:
+                    log.info("\tMonitoring the size of files {0} in the "
+                             "directory {1}.".format(", ".join(str(name) for name in file_names), file_dir))
+                config.merge(watch_file_size(file_dir, file_names,
+                                             file_recursive))
 
         # Skip the http_check if disable_http_check is set
         if self.args is not None and self.args.get('disable_http_check', False):

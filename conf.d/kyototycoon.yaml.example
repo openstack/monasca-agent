@@ -1,3 +1,5 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+
 init_config:
 # The Kyoto Tycoon check does not require any init_config
 

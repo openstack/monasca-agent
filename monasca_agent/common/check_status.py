@@ -1,3 +1,4 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
 """
 This module contains classes which are used to occasionally persist the status
 of checks.

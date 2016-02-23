@@ -1,3 +1,5 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+
 import re
 import subprocess
 import xml.parsers.expat  # python 2.4 compatible
