@@ -20,6 +20,7 @@
   - [Host Alive Checks](#host-alive-checks)
   - [Process Checks](#process-checks)
   - [File Size Checks](#file-size-checks)
+  - [Directory Checks](#directory-checks)
   - [Http Endpoint Checks](#http-endpoint-checks)
   - [Http Metrics](#http-metrics)
   - [MySQL Checks](#mysql-checks)
@@ -519,6 +520,7 @@ The host alive checks return the following metrics
 
 Also in the case of an error the value_meta contains an error message.
 
+
 ## Process Checks
 Process checks can be performed to both verify that a set of named processes are running on the local system and collect/send system level metrics on those processes. The YAML file `process.yaml` contains the list of processes that are checked.
 
@@ -600,6 +602,30 @@ The file_size checks return the following metrics:
 | Metric Name | Dimensions |
 | ----------- | ---------- |
 | file.size_bytes  | file_name, directory_name, hostname, service |
+
+
+## Directory Checks
+This section describes the directory check that can be performed by the Agent. Directory checks are used for gathering the total size of all the files under a specific directory. A YAML file (directory.yaml) contains the list of directory names to check. A Python script (directory.py) runs checks each host in turn to gather stats. Note: for sparse file, directory check is using its resident size instead of the actual size.
+
+Similar to other checks, the configuration is done in YAML, and consists of two keys: init_config and instances. The former is not used by directory check, while the later contains one or more sets of directory names to check on. Directory check will sum the size of all the files under the given directory recursively.
+
+Sample config:
+
+```
+init_config: null
+instances:
+- built_by: Directory
+  directory: /var/log/monasca/agent
+- built_by: Directory
+  directory: /etc/monasca/agent
+```
+
+The directory checks return the following metrics:
+
+| Metric Name | Dimensions |
+| ----------- | ---------- |
+| directory.size_bytes  | path, hostname, service |
+| directory.files_count  | path, hostname, service |
 
 
 ## Http Endpoint Checks

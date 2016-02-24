@@ -123,8 +123,19 @@ def watch_file_size(directory_name, file_names, file_recursive):
     return config
 
 
-def service_api_check(name, url, pattern, use_keystone=True,
-                      service=None, component=None):
+def watch_directory(directory_name):
+    """Takes a directory name and returns a Plugins object with the config set.
+    """
+    config = agent_config.Plugins()
+    parameters = {'directory': directory_name}
+
+    config['directory'] = {'init_config': None,
+                           'instances': [parameters]}
+    return config
+
+
+def service_api_check(name, url, pattern,
+                      use_keystone=True, service=None, component=None):
     """Setup a service api to be watched by the http_check plugin.
     """
     config = agent_config.Plugins()
