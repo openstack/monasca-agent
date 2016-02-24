@@ -84,7 +84,7 @@ for example `monasca-setup -d mysql`. This allows a base install to setup the ag
 All parameters require a '--' before the parameter such as '--verbose'. Run `monasca-setup --help` for a full listing of options.
 
 | Parameter | Description | Example Value|
-| ----------- | ------------ | ----------- |
+| --------- | ----------- | ------------ |
 | username | This is a required parameter that specifies the username needed to login to Keystone to get a token | myuser |
 | password | This is a required parameter that specifies the password needed to login to Keystone to get a token | mypassword |
 | user_domain_id | User domain id for username scoping | dcff2e7ede243eb7b3c2c1d57cfc46d1 |
@@ -97,21 +97,19 @@ All parameters require a '--' before the parameter such as '--verbose'. Run `mon
 | keystone_url | This is a required parameter that specifies the url of the keystone api for retrieving tokens. It must be a v3 endpoint. | http://192.168.1.5:35357/v3 |
 | dimensions | A comma separated list of key:value pairs to include as dimensions in all submitted metrics| region:a,az:1 |
 | service | This is an optional parameter that specifies the name of the service associated with this particular node | nova, cinder, myservice |
-| monasca_url | This is a optional parameter that specifies the url of the monasca api for retrieving tokens. By default this is obtained from the registered service in keystone. | http://192.168.1.4:8080/v2.0 |
+| monasca_url | This is an optional parameter that specifies the url of the monasca api for retrieving tokens. By default this is obtained from the registered service in keystone. | http://192.168.1.4:8080/v2.0 |
 | skip_enable | This is an optional parameter. By default the service is enabled, which requires the script run as root. Set this parameter to skip that step. | |
 | verbose | This is an optional parameter that specifies whether the monasca-setup script will print additional information for debugging purposes | |
 | dry_run | If specified no config changes will be made but what changes will happen will be reported. | |
 | service | Service this node is associated with, added as a dimension. | |
 | system_only | This optional parameter if set true will cause only the basic system checks to be configured all other detection will be skipped. Basic system checks include cpu, disk, load, memory, network. | |
- detection_plugins | Skip base config and service setup and only configure provided space separated list of plugins. This assumes the base config has already run.| kafka ntp|
-| overwrite | This is an optional parameter to overwrite the plugin configuration.  Use this if you don't want to keep the original configuration.  If this pa
-rameter is not specified, the configuration will be appended to the existing configuration, possibly creating duplicate checks.  **NOTE:** The agent config fil
-e, agent.yaml, will always be overwritten, even if this parameter is not specified |  |
+| detection_plugins | Skip base config and service setup and only configure provided space separated list of plugins. This assumes the base config has already run.| kafka ntp|
+| overwrite | This is an optional parameter to overwrite the plugin configuration.  Use this if you don't want to keep the original configuration.  If this parameter is not specified, the configuration will be appended to the existing configuration, possibly creating duplicate checks.  **NOTE:** The agent config file, agent.yaml, will always be overwritten, even if this parameter is not specified. | |
 | detection_args | Some detection plugins can be passed arguments. This is a string that will be passed to the detection plugins. | "hostname=ping.me" |
 
 ### Providing Arguments to Detection plugins
 When running individual detection plugins you can specify arguments that augment the configuration created. In some instances the arguments just provide additional
-information for the detection plugin, for example `monasca-setup -d nova -a disable_http_check=true. In others detection is skipped entirely and the arguments provide
+information for the detection plugin, for example `monasca-setup -d nova -a disable_http_check=true.` In others detection is skipped entirely and the arguments provide
 the configuration details. For the argument based plugins monasca-setup is used not for detection but as a tool to merge various configurations details without having to parse the configuration.
 For example, `monasca-setup -d httpcheck -a 'url=http://ip:port/ dimensions=service:my_service'`. Both the httpcheck and hostalive check are argument based plugins.
 

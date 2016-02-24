@@ -72,8 +72,11 @@ Main:
   # time to wait between collection runs
   check_freq: {args.check_frequency}
 
-  # Threshold value for warning on collection time of each check (in second)
+  # Threshold value for warning on collection time of each check (in seconds)
   sub_collection_warn: {args.sub_collection_warn}
+
+  # Collector restart interval (in hours)
+  collector_restart_interval: {args.collector_restart_interval}
 
   # Change port the Agent is listening to
   # listen_port: 17123
