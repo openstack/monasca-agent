@@ -1157,13 +1157,11 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 Ping checks require:
 1. Neutron networking in DVR mode (legacy mode is supported on single-node installations, such as devstack)
 2. The `python-neutronclient` library and its dependencies installed and available to the Monasca Agent
-3. The ability for the Monasca Agent user (default: 'mon-agent') to run `/sbin/ip` under sudo without a password.  One possible implementation would be to create a file, `/etc/sudoers.d/mon-agent`, containing the following line:
-```
-mon-agent ALL=(root) NOPASSWD: /sbin/ip
-```
-4. A security rule for the guest VM which allows ICMP from the appropriate Neutron router IP address
+3. A security rule for the guest VM which allows ICMP from the appropriate Neutron router IP address
 
 To limit false negatives, ping checks will not be peformed if the above requirements are not met.
+
+Executing the ping command inside a namespace requires enhanced privileges.  To accomplish this, the `monasca-setup` process will copy `/sbin/ip` to a local directory (`sys.path[0]`), lock down the ownership and permissions, and use `setcap` to apply `cap_sys_admin`, thus letting the 'mon-agent' user execute a ping command within a separate network namespace, without the need for `sudo`.
 
 `alive_only` will suppress all per-VM metrics aside from `host_alive_status` and `vm.host_alive_status`, including all I/O, network, memory, ping, and CPU metrics.  [Aggregate Metrics](#aggregate-metrics), however, would still be enabled if `alive_only` is true.  By default, `alive_only` is false.
 
@@ -1178,7 +1176,8 @@ init_config:
     cache_dir: /dev/shm
     nova_refresh: 14400
     vm_probation: 300
-    ping_check: sudo -n /sbin/ip exec NAMESPACE /usr/bin/fping -n -c1 -t250 -q
+    ping_check: /opt/stack/venv/monasca_agent-20160224T213950Z/bin/ip netns exec NAMESPACE
+      /bin/ping -n -c1 -w1 -q
     alive_only: false
 instances:
     - {}
