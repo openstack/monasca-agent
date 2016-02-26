@@ -22,6 +22,7 @@
   - [Http Endpoint Checks](#http-endpoint-checks)
   - [Http Metrics](#http-metrics)
   - [MySQL Checks](#mysql-checks)
+  - [Vertica Checks](#vertica-checks)
   - [Elasticsearch Checks](#elasticsearch-checks)
   - [ZooKeeper Checks](#zookeeper-checks)
   - [Kafka Checks](#kafka-checks)
@@ -176,6 +177,7 @@ The following plugins are delivered via setup as part of the standard plugin che
 | memory | | |
 | mongo | | |
 | mysql | /root/.my.cnf | |
+| vertica | /root/.vertica.cnf | |
 | nagios_wrapper | | |
 | network | | |
 | neutron | | OpenStack component |
@@ -246,6 +248,7 @@ The following plugin groups are detected by setup with the default command line 
 | MonPersister | |
 | MonThresh | Monasca API, Persister, Threshold Engine |
 | MySQL | |
+| Vertica | |
 | Neutron | |
 | Nova | |
 | Ntp | |
@@ -678,6 +681,26 @@ The mySQL checks return the following metrics:
 | mysql.innodb.buffer_pool_free | hostname, mode, service=mysql | The number of free pages, in bytes. This value is calculated by multiplying "Innodb_buffer_pool_pages_free" and "Innodb_page_size" of the server status variable. |
 | mysql.net.max_connections | hostname, mode, service=mysql | Corresponding to "Max_used_connections" of the server status variable. |
 | mysql.net.connections | hostname, mode, service=mysql | Corresponding to "Connections" of the server status variable. |
+
+
+## Vertica Checks
+This section describes the vertica check that can be performed by the Agent.  The vertica check requires a configuration file called vertica.yaml to be available in the agent conf.d configuration directory.
+
+Sample config:
+
+```
+init_config:
+
+instances:
+	user: mon_api
+	password: password
+	service: monasca (optional, defaults to vertica)
+	timeout: 3 (optional, defaults to 3 seconds)
+```
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| vertica.db.connection_status | hostname, service=vertica | Value of DB connection status (0=Healthy).
 
 
 ## Elasticsearch Checks
