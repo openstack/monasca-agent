@@ -123,7 +123,8 @@ def watch_file_size(directory_name, file_names, file_recursive):
     return config
 
 
-def service_api_check(name, url, pattern, service=None, component=None):
+def service_api_check(name, url, pattern, use_keystone=True,
+                      service=None, component=None):
     """Setup a service api to be watched by the http_check plugin.
     """
     config = agent_config.Plugins()
@@ -131,7 +132,7 @@ def service_api_check(name, url, pattern, service=None, component=None):
                   'url': url,
                   'match_pattern': pattern,
                   'timeout': 10,
-                  'use_keystone': True}
+                  'use_keystone': use_keystone}
 
     dimensions = _get_dimensions(service, component)
     if len(dimensions) > 0:
