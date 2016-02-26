@@ -172,6 +172,15 @@ def main():
     collector_config = config.get_config(['Main', 'Api', 'Logging'])
     autorestart = collector_config.get('autorestart', False)
 
+    collector_restart_interval = collector_config.get(
+        'collector_restart_interval', 24)
+    if collector_restart_interval in range(1, 49):
+        pass
+    else:
+        log.error("Collector_restart_interval = {0} is out of legal range"
+                  " [1, 48]. Reset collector_restart_interval to 24".format(collector_restart_interval))
+        collector_restart_interval = 24
+
     COMMANDS = [
         'start',
         'stop',
