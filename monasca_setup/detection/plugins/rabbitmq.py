@@ -120,8 +120,10 @@ class RabbitMQ(monasca_setup.detection.Plugin):
         """
         config = monasca_setup.agent_config.Plugins()
         # First watch the process
-        config.merge(monasca_setup.detection.watch_process(['rabbitmq-server'], 'rabbitmq'))
+        config.merge(monasca_setup.detection.watch_process(['rabbitmq-server'], 'rabbitmq', detailed=False))
         log.info("\tWatching the rabbitmq-server process.")
+        config.merge(monasca_setup.detection.watch_process_by_username('rabbitmq', 'rabbitmq'))
+        log.info("\tWatching all processes owned by the rabbitmq user.")
 
         try:
             self._get_config()

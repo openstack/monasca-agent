@@ -68,7 +68,7 @@ def find_addr_listening_on_port(port):
 
 
 def watch_process(search_strings, service=None, component=None,
-                  exact_match=True, detailed=False, process_name=None):
+                  exact_match=True, detailed=True, process_name=None):
     """Takes a list of process search strings and returns a Plugins object with the config set.
         This was built as a helper as many plugins setup process watching
     """
@@ -90,7 +90,7 @@ def watch_process(search_strings, service=None, component=None,
     return config
 
 
-def watch_process_by_username(username, process_name, service=None, component=None, detailed=False):
+def watch_process_by_username(username, process_name, service=None, component=None, detailed=True):
     """Takes a user and returns a Plugins object with the config set for a process check by user.
         This was built as a helper as many plugins setup process watching.
     """
