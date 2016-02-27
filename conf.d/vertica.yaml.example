@@ -1,0 +1,10 @@
+# (C) Copyright 2016 Hewlett Packard Enterprise Development Company LP
+
+init_config:
+
+instances:
+#  - name: localhost
+#    user: username
+#    password: my_password
+#    service: monasca # Optional
+#    timeout: 3       # Optional (secs)
