@@ -9,6 +9,7 @@ from plugin import Plugin
 from monasca_setup import agent_config
 from monasca_setup.detection.utils import find_process_cmdline
 from monasca_setup.detection.utils import service_api_check
+from monasca_setup.detection.utils import watch_directory
 from monasca_setup.detection.utils import watch_file_size
 from monasca_setup.detection.utils import watch_process
 
@@ -27,8 +28,9 @@ class ServicePlugin(Plugin):
         self.service_name = kwargs['service_name']
         self.process_names = kwargs.get('process_names')
         self.file_dirs_names = kwargs.get('file_dirs_names')
+        self.directory_names = kwargs.get('directory_names')
         self.service_api_url = kwargs.get('service_api_url')
-        self.search_pattern = kwargs['search_pattern']
+        self.search_pattern = kwargs.get('search_pattern')
         overwrite = kwargs['overwrite']
         template_dir = kwargs['template_dir'],
         if 'args' in kwargs:
@@ -39,12 +41,13 @@ class ServicePlugin(Plugin):
                     # dict {'service_api_url':'url'}
                     args_dict = dict(
                         [item.split('=') for item in args.split()])
-
                     # Allow args to override all of these parameters
                     if 'process_names' in args_dict:
                         self.process_names = args_dict['process_names'].split(',')
                     if 'file_dirs_names' in args_dict:
                         self.file_dirs_names = args_dict['file_dirs_names']
+                    if 'directory_names' in args_dict:
+                        self.directory_names = args_dict['directory_names'].split(',')
                     if 'service_api_url' in args_dict:
                         self.service_api_url = args_dict['service_api_url']
                     if 'search_pattern' in args_dict:
@@ -70,6 +73,8 @@ class ServicePlugin(Plugin):
             if len(self.found_processes) > 0:
                 self.available = True
         if self.file_dirs_names:
+            self.available = True
+        if self.directory_names:
             self.available = True
 
     def build_config(self):
@@ -100,6 +105,12 @@ class ServicePlugin(Plugin):
                              "directory {1}.".format(", ".join(str(name) for name in file_names), file_dir))
                 config.merge(watch_file_size(file_dir, file_names,
                                              file_recursive))
+
+        if self.directory_names:
+            for dir_name in self.directory_names:
+                log.info("\tMonitoring the size of directory {0}.".format(
+                    dir_name))
+                config.merge(watch_directory(dir_name))
 
         # Skip the http_check if disable_http_check is set
         if self.args is not None and self.args.get('disable_http_check', False):
