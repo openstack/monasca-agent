@@ -66,7 +66,8 @@ ATTRIBUTES = {QUEUE_TYPE: QUEUE_ATTRIBUTES,
 
 # whitelist of metrics to collect
 DEFAULT_WHITELIST = {
-    QUEUE_TYPE: ['message_stats/deliver_details/rate',
+    QUEUE_TYPE: ['messages',
+                 'message_stats/deliver_details/rate',
                  'message_stats/publish_details/rate',
                  'message_stats/redeliver_details/rate'],
     EXCHANGE_TYPE: ['message_stats/publish_out',
