@@ -26,7 +26,7 @@ DEFAULT_METRICS_DEF_0_9_6 = {
     'httpd': {
         DIMENSIONS_KEY: {'binding': 'bind'},
         'auth_fail': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'pingReq'},
-        'points_write_ok': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'pointsWrittenOk'},
+        'points_write_ok': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'pointsWrittenOK'},
         'query_req': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'queryReq'},
         'query_resp_bytes': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'queryRespBytes'},
         'req': {TYPE_KEY: RATE},
