@@ -22,7 +22,7 @@ DEFAULT_METRICS_WHITELIST = {'httpd': ['auth_fail', 'points_write_ok', 'query_re
                              'shard': ['series_create', 'fields_create', 'write_req', 'points_write_ok']}
 
 # ['queriesRx', 'queriesExecuted', 'http_status', 'response_time']
-DEFAULT_METRICS_DEF_0_9_6 = {
+DEFAULT_METRICS_DEF_0_9_5 = {
     'httpd': {
         DIMENSIONS_KEY: {'binding': 'bind'},
         'auth_fail': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'pingReq'},
@@ -96,7 +96,7 @@ class InfluxDB(services_checks.ServicesCheck):
         timeout = float(instance.get('timeout', '1'))
         headers = instance.get('headers', {})
         whitelist = instance.get('whitelist', DEFAULT_METRICS_WHITELIST)
-        metricdef = instance.get('metricdef', DEFAULT_METRICS_DEF_0_9_6)
+        metricdef = instance.get('metricdef', DEFAULT_METRICS_DEF_0_9_5)
         collect_response_time = instance.get('collect_response_time', False)
         disable_ssl_validation = instance.get('disable_ssl_validation', True)
 
