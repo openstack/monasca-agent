@@ -74,7 +74,7 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
             self.version = resp.headers.get('x-influxdb-version', '0')
             log.info('Discovered InfluxDB version %s', self.version)
 
-            supported = self._compare_versions(self.version, '0.9.4') >= 0
+            supported = self._compare_versions(self.version, '0.9.6') >= 0
             if not supported:
                 log.error('Unsupported InfluxDB version: %s', self.version)
             return supported
