@@ -22,55 +22,55 @@ DEFAULT_METRICS_WHITELIST = {'httpd': ['auth_fail', 'points_write_ok', 'query_re
                              'shard': ['series_create', 'fields_create', 'write_req', 'points_write_ok']}
 
 # ['queriesRx', 'queriesExecuted', 'http_status', 'response_time']
-DEFAULT_METRICS_DEF = {
+DEFAULT_METRICS_DEF_0_9_6 = {
     'httpd': {
         DIMENSIONS_KEY: {'binding': 'bind'},
-        'auth_fail': {TYPE_KEY: RATE},
-        'points_write_ok': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'points_written_ok'},
-        'query_req': {TYPE_KEY: RATE},
-        'query_resp_bytes': {TYPE_KEY: RATE},
+        'auth_fail': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'pingReq'},
+        'points_write_ok': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'pointsWrittenOK'},
+        'query_req': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'queryReq'},
+        'query_resp_bytes': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'queryRespBytes'},
         'req': {TYPE_KEY: RATE},
-        'write_req': {TYPE_KEY: RATE},
-        'write_req_bytes': {TYPE_KEY: RATE}},
+        'write_req': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'writeReq'},
+        'write_req_bytes': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'writeReqBytes'}},
     'engine': {
         DIMENSIONS_KEY: {'path': 'path'},
-        'blks_write': {TYPE_KEY: RATE},
-        'blks_write_bytes': {TYPE_KEY: RATE},
-        'blks_write_bytes_c': {TYPE_KEY: RATE},
-        'points_write': {TYPE_KEY: RATE},
-        'points_write_dedupe': {TYPE_KEY: RATE}},
+        'blks_write': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'blksWrite'},
+        'blks_write_bytes': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'blksWriteBytes'},
+        'blks_write_bytes_c': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'blksWriteBytesC'},
+        'points_write': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'pointsWrite'},
+        'points_write_dedupe': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'pointsWriteDedupe'}},
     'shard': {
         DIMENSIONS_KEY: {'influxdb_engine': 'engine', 'influxdb_shard': 'id'},
-        'fields_create': {TYPE_KEY: RATE},
-        'series_create': {TYPE_KEY: RATE},
-        'write_points_ok': {TYPE_KEY: RATE},
-        'write_req': {TYPE_KEY: RATE}},
+        'fields_create': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'fieldsCreate'},
+        'series_create': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'seriesCreate'},
+        'write_points_ok': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'writePointsOk'},
+        'write_req': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'writeReq'}},
     'wal': {
         DIMENSIONS_KEY: {'path': 'path'},
-        'auto_flush': {TYPE_KEY: RATE},
-        'flush_duration': {TYPE_KEY: RATE},
-        'idle_flush': {TYPE_KEY: RATE},
-        'mem_size': {TYPE_KEY: RATE},
-        'meta_flush': {TYPE_KEY: RATE},
-        'points_flush': {TYPE_KEY: RATE},
-        'points_write': {TYPE_KEY: RATE},
-        'points_write_req': {TYPE_KEY: RATE},
-        'series_flush': {TYPE_KEY: RATE}},
+        'auto_flush': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'autoFlush'},
+        'flush_duration': {TYPE_KEY: GAUGE, INFLUXDB_NAME_KEY: 'flushDuration'},
+        'idle_flush': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'idleFlush'},
+        'mem_size': {TYPE_KEY: GAUGE, INFLUXDB_NAME_KEY: 'memSize'},
+        'meta_flush': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'metaFlush'},
+        'points_flush': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'pointsFlush'},
+        'points_write': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'pointsWrite'},
+        'points_write_req': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'pointsWriteReq'},
+        'series_flush': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'seriesFlush'}},
     'write': {
         DIMENSIONS_KEY: {'path': 'path'},
-        'point_req': {TYPE_KEY: RATE},
-        'point_req_local': {TYPE_KEY: RATE},
+        'point_req': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'pointReq'},
+        'point_req_local': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'pointReqLocal'},
         'req': {TYPE_KEY: RATE},
-        'write_ok': {TYPE_KEY: RATE}},
+        'write_ok': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'writeOk'}},
     'runtime': {
         'alloc': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'Alloc'},
         'frees': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'Frees'},
-        'heap_alloc': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'HeapAlloc'},
-        'heap_idle': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'HeapIdle'},
-        'heap_in_use': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'HeapInUse'},
-        'heap_objects': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'HeapObjects'},
-        'heap_released': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'HeapReleased'},
-        'heap_sys': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'HeapSys'},
+        'heap_alloc': {TYPE_KEY: GAUGE, INFLUXDB_NAME_KEY: 'HeapAlloc'},
+        'heap_idle': {TYPE_KEY: GAUGE, INFLUXDB_NAME_KEY: 'HeapIdle'},
+        'heap_in_use': {TYPE_KEY: GAUGE, INFLUXDB_NAME_KEY: 'HeapInUse'},
+        'heap_objects': {TYPE_KEY: GAUGE, INFLUXDB_NAME_KEY: 'HeapObjects'},
+        'heap_released': {TYPE_KEY: GAUGE, INFLUXDB_NAME_KEY: 'HeapReleased'},
+        'heap_sys': {TYPE_KEY: GAUGE, INFLUXDB_NAME_KEY: 'HeapSys'},
         'lookups': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'Lookups'},
         'mallocs': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'Mallocs'},
         'num_gc': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'NumGC'},
@@ -96,7 +96,7 @@ class InfluxDB(services_checks.ServicesCheck):
         timeout = float(instance.get('timeout', '1'))
         headers = instance.get('headers', {})
         whitelist = instance.get('whitelist', DEFAULT_METRICS_WHITELIST)
-        metricdef = instance.get('metricdef', DEFAULT_METRICS_DEF)
+        metricdef = instance.get('metricdef', DEFAULT_METRICS_DEF_0_9_6)
         collect_response_time = instance.get('collect_response_time', False)
         disable_ssl_validation = instance.get('disable_ssl_validation', True)
 
@@ -195,14 +195,6 @@ class InfluxDB(services_checks.ServicesCheck):
             elif int(resp.status_code) >= 400:
                 error_string = "InfluxDB check {0} causes HTTP errors when accessing {1}, error code: {2}".format(
                     instance.get('name'), endpoint, resp.status_code)
-                self.warning(error_string)
-                return services_checks.Status.DOWN, error_string
-
-            # check content
-            if 'application/json' not in resp.headers.get('content-type', []):
-                error_string = "InfluxDB check {0} received unexpected payload when accessing {1}: content_type={2}" \
-                    .format(
-                        instance['name'], endpoint, resp.headers['content-type'])
                 self.warning(error_string)
                 return services_checks.Status.DOWN, error_string
 
