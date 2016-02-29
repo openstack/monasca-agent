@@ -69,7 +69,7 @@ class MySql(checks.AgentCheck):
         host, port, user, password, mysql_sock, defaults_file, options = self._get_config(
             instance)
 
-        dimensions = self._set_dimensions({'component': 'mysql', 'service': 'mysql'}, instance)
+        dimensions = self._set_dimensions({'component': 'mysql'}, instance)
 
         if (not host or not user) and not defaults_file:
             raise Exception("Mysql host and user are needed.")

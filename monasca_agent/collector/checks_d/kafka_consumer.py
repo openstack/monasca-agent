@@ -117,7 +117,7 @@ class KafkaCheck(checks.AgentCheck):
         per_partition = self.read_config(instance, 'per_partition', cast=bool, optional=True)
         if not per_partition:
             full_output = False
-        dimensions = {'component': 'kafka', 'service': 'kafka'}
+        dimensions = {'component': 'kafka'}
 
         # Connect to Kafka and pull information
         with KafkaConnection(kafka_host_ports) as kafka_conn:

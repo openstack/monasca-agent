@@ -61,7 +61,6 @@ class Apache(checks.AgentCheck):
 
         dimensions = self._set_dimensions({'apache_host': apache_host,
                                            'apache_port': apache_port,
-                                           'service': 'apache',
                                            'component': 'apache'},
                                           instance)
 
