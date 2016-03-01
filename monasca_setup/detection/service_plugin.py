@@ -104,13 +104,13 @@ class ServicePlugin(Plugin):
                     log.info("\tMonitoring the size of files {0} in the "
                              "directory {1}.".format(", ".join(str(name) for name in file_names), file_dir))
                 config.merge(watch_file_size(file_dir, file_names,
-                                             file_recursive))
+                                             file_recursive, self.service_name))
 
         if self.directory_names:
             for dir_name in self.directory_names:
                 log.info("\tMonitoring the size of directory {0}.".format(
                     dir_name))
-                config.merge(watch_directory(dir_name))
+                config.merge(watch_directory(dir_name, self.service_name))
 
         # Skip the http_check if disable_http_check is set
         if self.args is not None and self.args.get('disable_http_check', False):

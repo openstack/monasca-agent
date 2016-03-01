@@ -109,7 +109,8 @@ def watch_process_by_username(username, process_name, service=None, component=No
     return config
 
 
-def watch_file_size(directory_name, file_names, file_recursive):
+def watch_file_size(directory_name, file_names, file_recursive,
+                    service=None, component=None):
     """Takes a directory, a list of files, recursive flag and returns a
         Plugins object with the config set.
     """
@@ -118,16 +119,24 @@ def watch_file_size(directory_name, file_names, file_recursive):
                   'file_names': file_names,
                   'recursive': file_recursive}
 
+    dimensions = _get_dimensions(service, component)
+    if len(dimensions) > 0:
+        parameters['dimensions'] = dimensions
+
     config['file_size'] = {'init_config': None,
                            'instances': [parameters]}
     return config
 
 
-def watch_directory(directory_name):
+def watch_directory(directory_name, service=None, component=None):
     """Takes a directory name and returns a Plugins object with the config set.
     """
     config = agent_config.Plugins()
     parameters = {'directory': directory_name}
+
+    dimensions = _get_dimensions(service, component)
+    if len(dimensions) > 0:
+        parameters['dimensions'] = dimensions
 
     config['directory'] = {'init_config': None,
                            'instances': [parameters]}
