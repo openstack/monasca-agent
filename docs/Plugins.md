@@ -1236,6 +1236,8 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 
 `nova_refresh` specifies the number of seconds between calls to the Nova API to refresh the instance cache.  This is helpful for updating VM hostname and pruning deleted instances from the cache.  By default, it is set to 14,400 seconds (four hours).  Set to 0 to refresh every time the Collector runs, or to None to disable regular refreshes entirely (though the instance cache will still be refreshed if a new instance is detected).
 
+'metadata' specifies the list of instance metadata keys to be sent as dimensions. This is helpful to give more information about an instance. By default 'scale_group' metadata is used for supporting auto scaling in Heat.
+
 `vm_probation` specifies a period of time (in seconds) in which to suspend metrics from a newly-created VM.  This is to prevent quickly-obsolete metrics in an environment with a high amount of instance churn (VMs created and destroyed in rapid succession).  The default probation length is 300 seconds (five minutes).  Setting to 0 disables VM probation, and metrics will be recorded as soon as possible after a VM is created.
 
 `ping_check` includes the entire command line (sans the IP address, which is automatically appended) used to perform a ping check against instances, with a keyword `NAMESPACE` automatically replaced with the appropriate network namespace for the VM being monitored.  Set to False (or omit altogether) to disable ping checks.  This is automatically populated during `monasca-setup` from a list of possible `ping` command lines.  Generally, `fping` is preferred over `ping` because it can return a failure with sub-second resolution, but if `fping` does not exist on the system, `ping` will be used instead.
@@ -1261,6 +1263,8 @@ init_config:
     region_name: 'region1'
     cache_dir: /dev/shm
     nova_refresh: 14400
+    metadata:
+    - scale_group
     vm_probation: 300
     ping_check: /opt/stack/venv/monasca_agent-20160224T213950Z/bin/ip netns exec NAMESPACE
       /bin/ping -n -c1 -w1 -q
@@ -1296,6 +1300,7 @@ Example cache:
       "disk" : 1,
       "tenant_id" : "7d8e24a1e0cb4f8c8dedfb2010992b62",
       "zone" : "nova",
+      "scale_group": "a1207522-c5fb-4621-a839-c00b638cfb47",
       "vcpus" : 1,
       "hostname" : "vm01",
       "ram" : 512
