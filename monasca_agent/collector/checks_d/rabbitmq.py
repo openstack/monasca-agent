@@ -219,7 +219,7 @@ class RabbitMQ(checks.AgentCheck):
         object_whitelist = whitelist.get(object_type, DEFAULT_WHITELIST[object_type])
 
         dimensions_list = DIMENSIONS_MAP[object_type].copy()
-        dimensions = self._set_dimensions({'component': 'rabbitmq', 'service': 'rabbitmq'},
+        dimensions = self._set_dimensions({'component': 'rabbitmq'},
                                           instance)
         for d in dimensions_list.iterkeys():
             dim = data.get(d, None)
