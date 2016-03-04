@@ -6,7 +6,6 @@ from monasca_agent.common.util import timeout_command
 import monasca_setup.agent_config
 import monasca_setup.detection
 from monasca_setup.detection.utils import find_process_name
-from monasca_setup.detection.utils import watch_process
 from monasca_setup.detection.utils import watch_process_by_username
 
 log = logging.getLogger(__name__)
@@ -110,11 +109,8 @@ class Vertica(monasca_setup.detection.Plugin):
         config = monasca_setup.agent_config.Plugins()
         try:
             self._get_config()
-            for process in ['vertica', 'spread']:
-                config.merge(watch_process([process], self.service, process,
-                             exact_match=False, detailed=False))
-            config.merge(watch_process_by_username('dbadmin', 'vertica', self.service))
-            log.info("\tWatching the vertica process.")
+            config.merge(watch_process_by_username('dbadmin', 'vertica', self.service, 'vertica'))
+            log.info("\tWatching the vertica processes.")
             if self._connection_test():
                 log.info("\tBuilding vertica config.")
                 instance_config = {'name': 'localhost',
