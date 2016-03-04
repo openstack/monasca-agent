@@ -17,7 +17,7 @@ DIMENSIONS_KEY = '_dimensions'
 HTTP_STATUS_MNAME = "http_status"
 
 # meaningful defaults, keep configuration small (currently only for 0.9.4)
-DEFAULT_METRICS_WHITELIST = {'httpd': ['auth_fail', 'points_write_ok', 'query_req', 'write_req'],
+DEFAULT_METRICS_WHITELIST = {'httpd': ['points_write_ok', 'query_req', 'write_req'],
                              'engine': ['points_write', 'points_write_dedupe'],
                              'shard': ['series_create', 'fields_create', 'write_req', 'points_write_ok']}
 
@@ -25,7 +25,7 @@ DEFAULT_METRICS_WHITELIST = {'httpd': ['auth_fail', 'points_write_ok', 'query_re
 DEFAULT_METRICS_DEF_0_9_5 = {
     'httpd': {
         DIMENSIONS_KEY: {'binding': 'bind'},
-        'auth_fail': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'pingReq'},
+        'ping_req': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'pingReq'},
         'points_write_ok': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'pointsWrittenOK'},
         'query_req': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'queryReq'},
         'query_resp_bytes': {TYPE_KEY: RATE, INFLUXDB_NAME_KEY: 'queryRespBytes'},
