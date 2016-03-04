@@ -34,6 +34,7 @@ class TestDetailedProcess(unittest.TestCase):
         self.assertTrue(len(metrics) > 1, metrics)
 
     def run_check(self):
+        self.check.prepare_run()
         self.check.run()
         metrics = self.check.get_metrics()
 
@@ -56,6 +57,7 @@ class TestDetailedProcess(unittest.TestCase):
                           'process.open_file_descriptors',
                           'process.pid_count',
                           'process.thread_count']
+
         self.assertEquals(measurement_names, expected_names)
 
         # run again to get cpu_perc

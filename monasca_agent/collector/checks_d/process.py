@@ -1,9 +1,12 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 """Gather metrics on specific processes.
 
 """
 from collections import defaultdict
+from collections import namedtuple
 import monasca_agent.collector.checks as checks
+
+ProcessStruct = namedtuple("Process", "name pid username cmdline")
 
 
 class ProcessCheck(checks.AgentCheck):
@@ -40,16 +43,16 @@ class ProcessCheck(checks.AgentCheck):
         for proc in self._current_process_list:
             try:
                 if username is not None:
-                    if proc.username() == username:
+                    if proc.username == username:
                         found_process_list.append(proc.pid)
 
                 else:
                     for string in search_string:
                         if exact_match:
-                            if proc.name() == string:
+                            if proc.name == string:
                                 found_process_list.append(proc.pid)
                         else:
-                            cmdline = proc.cmdline()
+                            cmdline = proc.cmdline
                             if string in ' '.join(cmdline):
                                 found_process_list.append(proc.pid)
 
@@ -150,7 +153,14 @@ class ProcessCheck(checks.AgentCheck):
         except ImportError:
             raise Exception('You need the "psutil" package to run this check')
 
-        self._current_process_list = [process for process in psutil.process_iter()]
+        self._current_process_list = []
+
+        for process in psutil.process_iter():
+            p = ProcessStruct(name=process.name(),
+                              pid=process.pid,
+                              username=process.username(),
+                              cmdline=process.cmdline())
+            self._current_process_list.append(p)
 
     def check(self, instance):
         try:
