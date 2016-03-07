@@ -12,6 +12,10 @@ log = logging.getLogger(__name__)
 DEFAULT_TIMEOUT = 1
 DEFAULT_COLLECT_RESPONSE_TIME = True
 
+# meaningful defaults, keep configuration small (currently only for 0.9.5/0.9.6)
+DEFAULT_METRICS_WHITELIST = {'httpd': ['points_write_ok', 'query_req', 'write_req'],
+                             'engine': ['points_write', 'points_write_dedupe'],
+                             'shard': ['series_create', 'fields_create', 'write_req', 'points_write_ok']}
 
 class InfluxDB(monasca_setup.detection.ArgsPlugin):
     """Setup an InfluxDB according to the passed in args.
@@ -36,7 +40,6 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
                 log.info("\tEnabling the InfluxDB check for {:s}".format(self.url))
                 instance = {'name': 'localhost',
                             'url': self.url,
-                            'whitelist': self.whitelist,
                             'collect_response_time':
                                 self.collect_response_time,
                             }
@@ -45,6 +48,8 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
                     instance['password'] = self.password
                 if self.timeout is not None:
                     instance['timeout'] = self.timeout
+                if self.whitelist is not None:
+                    instance['whitelist'] = self.whitelist
                 # extract stats continuously
                 config['influxdb'] = {'init_config': None,
                                       'instances': [instance]}
@@ -102,13 +107,15 @@ class InfluxDB(monasca_setup.detection.ArgsPlugin):
         self.username = os.getenv('INFLUXDB_MONITORING_USERNAME')
         self.password = os.getenv('INFLUXDB_MONITORING_PASSWORD')
         self.timeout = os.getenv('INFLUXDB_MONITORING_TIMEOUT', DEFAULT_TIMEOUT)
-        self.whitelist = influxdb.DEFAULT_METRICS_WHITELIST
+        self.whitelist = DEFAULT_METRICS_WHITELIST
         self.collect_response_time = DEFAULT_COLLECT_RESPONSE_TIME
 
         # when args have been passed, then not self discovery is attempted
         if self.args is not None:
             self.username = self.args.get('influxdb.username', self.username)
             self.password = self.args.get('influxdb.password', self.password)
+            if self.args.get('influxdb.whitelist', None) == '*':
+                self.whitelist = None    # meaning any
             self.timeout = self.args.get('influxdb.timeout', self.timeout)
             self.collect_response_time = self.args.get('collect_response_time', DEFAULT_COLLECT_RESPONSE_TIME)
         elif self.username is None or self.password is None:

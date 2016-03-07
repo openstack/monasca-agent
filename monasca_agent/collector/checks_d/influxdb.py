@@ -16,11 +16,6 @@ DIMENSIONS_KEY = '_dimensions'
 
 HTTP_STATUS_MNAME = "http_status"
 
-# meaningful defaults, keep configuration small (currently only for 0.9.4)
-DEFAULT_METRICS_WHITELIST = {'httpd': ['points_write_ok', 'query_req', 'write_req'],
-                             'engine': ['points_write', 'points_write_dedupe'],
-                             'shard': ['series_create', 'fields_create', 'write_req', 'points_write_ok']}
-
 # ['queriesRx', 'queriesExecuted', 'http_status', 'response_time']
 DEFAULT_METRICS_DEF_0_9_5 = {
     'httpd': {
@@ -95,7 +90,7 @@ class InfluxDB(services_checks.ServicesCheck):
         password = instance.get('password', None)
         timeout = float(instance.get('timeout', '1'))
         headers = instance.get('headers', {})
-        whitelist = instance.get('whitelist', DEFAULT_METRICS_WHITELIST)
+        whitelist = instance.get('whitelist', None)
         metricdef = instance.get('metricdef', DEFAULT_METRICS_DEF_0_9_5)
         collect_response_time = instance.get('collect_response_time', False)
         disable_ssl_validation = instance.get('disable_ssl_validation', True)
@@ -128,7 +123,7 @@ class InfluxDB(services_checks.ServicesCheck):
         for results in content['results']:
             for ser in results['series']:
                 mod = ser['name']
-                if mod in whitelist:  # pre-filter by module
+                if whitelist is None or mod in whitelist:  # pre-filter by module
                     trans[mod] = {}
                     for i, col in enumerate(ser['columns']):
                         trans[mod][col] = ser['values'][0][i]
@@ -136,7 +131,7 @@ class InfluxDB(services_checks.ServicesCheck):
 
         # extract required metrics per whitelisted module
         for mod, met_list in metricdef.iteritems():
-            if mod not in whitelist:
+            if whitelist is None and mod not in whitelist:
                 continue
             dims = dimensions.copy()
             for met, met_def in met_list.iteritems():

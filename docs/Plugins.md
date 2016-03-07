@@ -639,7 +639,7 @@ The ```monasca-setup``` tool is able to configure the InfluxDB check automatical
 | INFLUXDB_MONITOR_USERNAME | influxdb.username | no auth. | InfluxDB user with permission to perform the query [SHOW STATS](https://influxdb.com/docs/v0.9/administration/statistics.html) |
 | INFLUXDB_MONITOR_PASSWORD | influxdb.password | no auth. | Password of above InfluxDB user |
 | INFLUXDB_MONITOR_TIMEOUT | influxdb.timeout  | 1 sec.   | Timeout for querying InfluxDB (secs.) |
-
+|                          | influxdb.whitelist | | ```ìnfluxdb.whitelist=*``` will report any known metrics for InfluxDB
 Example:
 
 ```
@@ -663,14 +663,13 @@ instances:
         # standard parameters not specific to InfluxDB plugin
         collect_response_time: true
         disable_ssl_validation: false
-        dimensions: !!map
+        dimensions:
           service : monitoring
           component : influxdb
 ```
 
 By default the following metrics are provided to Monasca:
 
-* influxdb.httpd.auth_fail
 * influxdb.httpd.points_write_ok
 * influxdb.httpd.query_req
 * influxdb.httpd.write_req
@@ -681,13 +680,14 @@ By default the following metrics are provided to Monasca:
 * influxdb.shard.write_req
 * influxdb.shard.points_write_ok
 
-Optionally, you can select from a much broader list of metrics (see InfluxDB documentation on [SHOW STATS](https://influxdb.com/docs/v0.9/administration/statistics.html)).
+Optionally, you can select from a much broader list of metrics (see InfluxDB documentation on [SHOW STATS](https://influxdb.com/docs/v0.9/administration/statistics.html)). In InfluxDB, metrics are grouped by _groups_, referring to the _modules_ of InfluxDB.
 
+You can restrict the number of reported metrics using the ```whitelist``` element. If it is missing from the influxdb.yaml file, then any known metric will be reported. 
+ 
 ```
         # Select relevant metrics per group (optional!)
-        whitelist: !!map
+        whitelist:
           httpd:
-            - auth_fail
             # note: this metric carries a different name than the field provided by InfluxDB
             - points_write_ok
             - query_req
@@ -715,7 +715,7 @@ Full list of metrics supported by the plugin today:
 
 | Metric | Type  | Description                                           |
 | ------ | ----- | ----------------------------------------------------- |
-| influxdb.httpd.auth_fail | rate | auth_fail |
+| influxdb.httpd.ping_req | rate | ping_req |
 | influxdb.httpd.points_write_ok | rate | points_written_ok |
 | influxdb.httpd.query_req | rate | query_req |
 | influxdb.httpd.query_resp_bytes | rate | query_resp_bytes |
@@ -773,8 +773,6 @@ The Monasca metrics follow the naming rule ```influxdb.<series>.<field>```
         httpd:
             # map tag 'bind' to dimension 'binding'
             _dimensions: { binding: bind}
-            # map field 'auth_fail' to rate metric 'influxdb.httpd.auth_fail{binding=...}' in Monasca
-            auth_fail: {type: rate}
             # map field 'points_written_ok' to rate metric 'influxdb.httpd.points_write_ok{binding=...}' in Monasca
             points_write_ok: {type: rate, influxdb_name: points_written_ok}
             query_req: {type: rate}
