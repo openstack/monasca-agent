@@ -99,6 +99,9 @@ class VCenter(Plugin):
         return instance
 
     def dependencies_installed(self):
-        """Import the dependencies.
-        """
+        try:
+            import oslo_vmware
+        except ImportError:
+            return False
+
         return True
