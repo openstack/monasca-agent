@@ -43,7 +43,9 @@ class VCenter(Plugin):
         """
         config = monasca_setup.agent_config.Plugins()
 
-        if self.dependencies_installed():
+        if not self.dependencies_installed():
+                      log.warning("Dependencies not installed, skipping vcenter plugin configuration.")
+        elif self.dependencies_installed():
             nova_cfg = ConfigParser.SafeConfigParser()
             instance = {}
             if self.nova_conf is None:
