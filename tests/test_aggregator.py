@@ -1,3 +1,4 @@
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 import unittest
 
 import monasca_agent.common.aggregator as aggregator
@@ -223,3 +224,70 @@ class TestMetricsAggregator(unittest.TestCase):
             self.submit_metric('test-counter', 2,
                                dimensions={'test-key': 'test{}value'.format(c)},
                                exception=aggregator.InvalidDimensionValue)
+
+    def testTooManyValueMeta(self):
+        dimensions = {'A': 'B', 'B': 'C', 'D': 'E'}
+        value_meta = {}
+        for i in range(0, 17):
+            value_meta['key{}'.format(i)] = 'value{}'.format(i)
+        self.submit_metric("Foo",
+                           2,
+                           dimensions=dimensions,
+                           value_meta=value_meta,
+                           exception=aggregator.InvalidValueMeta)
+
+    def testEmptyValueMetaKey(self):
+        dimensions = {'A': 'B', 'B': 'C', 'D': 'E'}
+        value_meta = {'': 'BBB'}
+        self.submit_metric("Foo",
+                           2,
+                           dimensions=dimensions,
+                           value_meta=value_meta,
+                           exception=aggregator.InvalidValueMeta)
+
+    def testEmptyValueMetaKey(self):
+        dimensions = {'A': 'B', 'B': 'C', 'D': 'E'}
+        value_meta = {'': 'BBB'}
+        self.submit_metric("Foo",
+                           2,
+                           dimensions=dimensions,
+                           value_meta=value_meta,
+                           exception=aggregator.InvalidValueMeta)
+
+    def testTooLongValueMetaKey(self):
+        dimensions = {'A': 'B', 'B': 'C', 'D': 'E'}
+        key = "K"
+        for i in range(0, aggregator.VALUE_META_NAME_MAX_LENGTH):
+            key = "{}{}".format(key, "1")
+        value_meta = {key: 'BBB'}
+        print(key)
+        self.submit_metric("Foo",
+                           2,
+                           dimensions=dimensions,
+                           value_meta=value_meta,
+                           exception=aggregator.InvalidValueMeta)
+
+    def testEmptyValueMetaKey(self):
+        dimensions = {'A': 'B', 'B': 'C', 'D': 'E'}
+        value_meta = {'': 'BBB'}
+        self.submit_metric("Foo",
+                           2,
+                           dimensions=dimensions,
+                           value_meta=value_meta,
+                           exception=aggregator.InvalidValueMeta)
+
+    def testTooLargeValueMeta(self):
+        dimensions = {'A': 'B', 'B': 'C', 'D': 'E'}
+        value_meta_value = ""
+        num_value_meta = 10
+        for i in range(0, aggregator.VALUE_META_VALUE_MAX_LENGTH/num_value_meta):
+            value_meta_value = '{}{}'.format(value_meta_value, '1')
+
+        value_meta = {}
+        for i in range(0, num_value_meta):
+            value_meta['key{}'.format(i)] = value_meta_value
+        self.submit_metric("Foo",
+                           2,
+                           dimensions=dimensions,
+                           value_meta=value_meta,
+                           exception=aggregator.InvalidValueMeta)
