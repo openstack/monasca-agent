@@ -24,6 +24,10 @@ cache_dir = "/dev/shm"
 nova_refresh = 60 * 60 * 4  # Four hours
 # Probation period before metrics are gathered for a VM (in seconds)
 vm_probation = 60 * 5  # Five minutes
+# List of instance metadata keys to be sent as dimensions
+# By default 'scale_group' metadata is used here for supporting auto
+# scaling in Heat.
+metadata = ['scale_group']
 # List 'ping' commands (paths and parameters) in order of preference.
 # The plugin will use the first fuctional command. 127.0.0.1 will be appended.
 ping_options = [["/usr/bin/fping", "-n", "-c1", "-t250", "-q"],
@@ -95,7 +99,8 @@ class Libvirt(Plugin):
             # Start with plugin-specific configuration parameters
             init_config = {'cache_dir': cache_dir,
                            'nova_refresh': nova_refresh,
-                           'vm_probation': vm_probation}
+                           'vm_probation': vm_probation,
+                           'metadata': metadata}
 
             for option in cfg_needed:
                 init_config[option] = nova_cfg.get(cfg_section, cfg_needed[option])
