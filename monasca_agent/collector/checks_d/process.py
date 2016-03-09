@@ -40,33 +40,23 @@ class ProcessCheck(checks.AgentCheck):
         Search for search_string
         """
         found_process_list = []
-        for proc in self._current_process_list:
-            try:
-                if username is not None:
-                    if proc.username == username:
-                        found_process_list.append(proc.pid)
-
+        if username:
+            found_process_list = \
+                [proc.pid for proc in self._current_process_list if
+                 proc.username == username]
+        else:
+            for string in search_string:
+                if string == 'All':
+                    found_process_list = [proc.pid for proc in
+                                          self._current_process_list]
+                elif exact_match:
+                    found_process_list = \
+                        [proc.pid for proc in self._current_process_list
+                         if proc.name == string]
                 else:
-                    for string in search_string:
-                        if exact_match:
-                            if proc.name == string:
-                                found_process_list.append(proc.pid)
-                        else:
-                            cmdline = proc.cmdline
-                            if string in ' '.join(cmdline):
-                                found_process_list.append(proc.pid)
-
-                        if string == 'All':
-                            found_process_list.append(proc.pid)
-                            break
-            except psutil.NoSuchProcess:
-                # No way to log useful information here so just move on
-                pass
-            except psutil.AccessDenied as e:
-                self.log.error('Access denied to process')
-                self.log.error('Error: %s' % e)
-                raise
-
+                    found_process_list = \
+                        [proc.pid for proc in self._current_process_list
+                         if string in proc.cmdline]
         return set(found_process_list)
 
     def get_process_metrics(self, pids, psutil, name):
@@ -123,7 +113,7 @@ class ProcessCheck(checks.AgentCheck):
                         total_read_kbytes += float(io_counters.read_bytes / 1024)
                         total_write_kbytes += float(io_counters.write_bytes / 1024)
                     except psutil.AccessDenied:
-                        self.log.debug('monasca-agent user does not have ' +
+                        self.log.error('monasca-agent user does not have ' +
                                        'access to I/O counters for process' +
                                        ' %d: %s'
                                        % (pid, p.name))
@@ -156,11 +146,18 @@ class ProcessCheck(checks.AgentCheck):
         self._current_process_list = []
 
         for process in psutil.process_iter():
-            p = ProcessStruct(name=process.name(),
-                              pid=process.pid,
-                              username=process.username(),
-                              cmdline=process.cmdline())
-            self._current_process_list.append(p)
+            try:
+                p = ProcessStruct(name=process.name(),
+                                  pid=process.pid,
+                                  username=process.username(),
+                                  cmdline=' '.join(process.cmdline()))
+                self._current_process_list.append(p)
+            except psutil.NoSuchProcess:
+                # No way to log useful information here so just move on
+                pass
+            except psutil.AccessDenied as e:
+                self.log.info('Access denied to process {0}: {1}'.format(
+                    process.name(), e))
 
     def check(self, instance):
         try:
