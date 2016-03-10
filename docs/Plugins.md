@@ -1064,10 +1064,6 @@ queues=conductor
 exchanges=nova,cinder,ceilometer,glance,keystone,neutron,heat
 ```
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 53f6df0ddf3a05c7d3cbc04df2feb95f41f9a7d2
 For more details of each metric, please refer the [RabbitMQ documentation](http://www.rabbitmq.com/documentation.html).
 The RabbitMQ checks return the following metrics:
 
