@@ -1,3 +1,17 @@
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
 import itertools
 import logging
 import os
@@ -115,35 +129,49 @@ class Ceph(Plugin):
         return expected_processes
 
     def _radosgw_config(self, cluster_name, config_file):
+        service_dir = self.service_constants['radosgw']['service_dir']
         expected_processes = list()
-        # RADOS Gateway processes is of the format:
-        # /usr/bin/radosgw -c <config_file> -n <rados_username>
-        # E.g.,
-        # /usr/bin/radosgw -c /etc/ceph/ceph.conf -n client.radosgw.gateway
-        process = dict()
-        process['search_string'] = list()
-        process['name'] = '%s-radosgw' % cluster_name
-        process['type'] = self.service_constants['radosgw']['display_name']
-        executable = self.service_constants['radosgw']['executable']
+        # Get the list of daemon identifiers
+        instance_list = os.listdir(service_dir) \
+            if os.path.exists(service_dir) else list()
 
-        process_options = ['-n client.radosgw.',
-                           '--name=client.radosgw.']
-        for opt in process_options:
-            # Adding multiple combinations for all possible use cases, since
-            # any of the following combination can be used to start the process
+        for instance in instance_list:
+            # RADOS Gateway processes is of the format:
+            # /usr/bin/radosgw -c <config_file> -n <rados_username>
+            # E.g.,
+            # /usr/bin/radosgw -c /etc/ceph/ceph.conf -n client.radosgw.gateway
+            process = dict()
 
-            # Trivial case (This will be the most used scenario)
-            # E.g., /usr/bin/radosgw -n client.radosgw.gateway
-            process['search_string'].append('%s %s' % (executable, opt))
+            # The rados user will have a designated data directory, of the
+            # format ceph-radosw.<rados_username> in the service dir.
+            # E.g., /var/lib/ceph/radosgw/ceph-radosgw.gateway
+            rados_username = instance.replace('ceph-radosgw.', '')
+            process['search_string'] = list()
+            process['name'] = '%s-radosgw.%s' % (cluster_name, rados_username)
+            process['type'] = self.service_constants['radosgw']['display_name']
+            executable = self.service_constants['radosgw']['executable']
 
-            # Service started with specific conf file (For rare cases)
-            # E.g., /usr/bin/radosgw -c custom.conf -n client.radosgw.gateway
-            process['search_string'].append('%s -c %s %s'
-                                            % (executable, config_file, opt))
-            process['search_string'].append('%s --conf=%s %s'
-                                            % (executable, config_file, opt))
+            process_options = ['-n client.radosgw.%s' % rados_username,
+                               '--name=client.radosgw.%s' % rados_username]
+            for opt in process_options:
+                # Adding multiple combinations for all possible use cases,
+                # since any of the following combination can be used to start
+                # the process
 
-        expected_processes.append(process)
+                # Trivial case (This will be the most used scenario)
+                # E.g.,
+                # /usr/bin/radosgw -n client.radosgw.gateway
+                process['search_string'].append('%s %s' % (executable, opt))
+
+                # Service started with specific conf file (For rare cases)
+                # E.g.,
+                # /usr/bin/radosgw -c custom.conf -n client.radosgw.gateway
+                process['search_string'].append(
+                    '%s -c %s %s' % (executable, config_file, opt))
+                process['search_string'].append(
+                    '%s --conf=%s %s' % (executable, config_file, opt))
+
+            expected_processes.append(process)
         return expected_processes
 
     def build_config(self):
