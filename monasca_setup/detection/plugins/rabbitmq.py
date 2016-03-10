@@ -123,7 +123,7 @@ class RabbitMQ(monasca_setup.detection.Plugin):
         # First watch the process
         config.merge(monasca_setup.detection.watch_process(['rabbitmq-server'], 'rabbitmq', detailed=False))
         log.info("\tWatching the rabbitmq-server process.")
-        config.merge(monasca_setup.detection.watch_process_by_username('rabbitmq', 'rabbitmq'))
+        config.merge(monasca_setup.detection.watch_process_by_username('rabbitmq', 'rabbitmq', 'rabbitmq'))
         log.info("\tWatching all processes owned by the rabbitmq user.")
 
         try:
