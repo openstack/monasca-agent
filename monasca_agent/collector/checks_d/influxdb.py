@@ -142,7 +142,7 @@ class InfluxDB(services_checks.ServicesCheck):
                     met_type = met_def[TYPE_KEY]
                     met_iname = met_def.get(INFLUXDB_NAME_KEY, met)
                     fqmet = 'influxdb.{0}.{1}'.format(mod, met)
-                    if met_iname in trans[mod]:
+                    if met_iname in trans.get(mod, {}):
                         value = trans[mod][met_iname]
                         self._push_metric(met_type, fqmet, value, dims)
                     else:
