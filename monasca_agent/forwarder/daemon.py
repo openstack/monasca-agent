@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 """
     Licensed under Simplified BSD License (see LICENSE)
     (C) Boxed Ice 2010 all rights reserved
@@ -7,7 +7,6 @@
 """
 
 # Standard imports
-import datetime
 import logging
 import signal
 import socket
@@ -35,81 +34,50 @@ import monasca_agent.common.config as cfg
 import monasca_agent.common.metrics as metrics
 import monasca_agent.common.util as util
 import monasca_agent.forwarder.api.monasca_api as mon
-import monasca_agent.forwarder.transaction as transaction
 
 log = logging.getLogger('forwarder')
 
-# Maximum delay before replaying a transaction
-MAX_WAIT_FOR_REPLAY = datetime.timedelta(seconds=90)
+# Max amount of iterations to wait to meet min batch size before flushing
+MAX_FLUSH_ATTEMPTS = 3
 
-# Maximum queue size in bytes (when this is reached, old messages are dropped)
-MAX_QUEUE_SIZE = 30 * 1024 * 1024  # 30MB
+MIN_BATCH_SIZE = 200
 
-THROTTLING_DELAY = datetime.timedelta(microseconds=1000000 / 2)  # 2 msg/second
+message_batch = []
 
-
-class StatusHandler(tornado.web.RequestHandler):
-
-    def get(self):
-        threshold = int(self.get_argument('threshold', -1))
-
-        m = transaction.MetricTransaction.get_tr_manager()
-
-        self.write(
-            "<table><tr><td>Id</td><td>Size</td><td>Error count</td><td>Next flush</td></tr>")
-        transactions = m.get_transactions()
-        for tr in transactions:
-            self.write("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>" %
-                       (tr.get_id(), tr.get_size(), tr.get_error_count(), tr.get_next_flush()))
-        self.write("</table>")
-
-        if threshold >= 0:
-            if len(transactions) > threshold:
-                self.set_status(503)
+# In seconds
+FLUSH_INTERVAL = 1
 
 
 class AgentInputHandler(tornado.web.RequestHandler):
-
     def post(self):
-        """Read the message and forward it to the intake
-            The message is expected to follow the format:
-
+        """Read the message and add it to the batch.
+            Batch will be sent to Monasca API once the batch size or max wait time
+            has been reached. Whichever one first.
         """
-        # read the message it should be a list of
-        # monasca_agent.common.metrics.Measurements expressed as a dict
+        global message_batch
+
         msg = tornado.escape.json_decode(self.request.body)
         try:
-            measurements = [metrics.Measurement(**m) for m in msg]
+            message_batch.extend([metrics.Measurement(**m) for m in msg])
         except Exception:
             log.exception('Error parsing body of Agent Input')
             raise tornado.web.HTTPError(500)
 
-        headers = self.request.headers
-
-        if len(measurements) > 0:
-            # Setup a transaction for this message
-            tr = transaction.MetricTransaction(measurements, headers)
-        else:
-            raise tornado.web.HTTPError(500)
-
-        self.write("Transaction: %s" % tr.get_id())
-
 
 class Forwarder(tornado.web.Application):
-
     def __init__(self, port, agent_config, skip_ssl_validation=False,
                  use_simple_http_client=False):
+
+        self._unflushed_iterations = 0
+        self._endpoint = mon.MonascaAPI(agent_config)
+
+        self._ioloop = None
+
         self._port = int(port)
-        self._agent_config = agent_config
-        self.flush_interval = (int(agent_config.get('check_freq')) / 2) * 1000
-        self._metrics = {}
-        transaction.MetricTransaction.set_application(self)
-        transaction.MetricTransaction.set_endpoints(mon.MonascaAPI(agent_config))
-        self._tr_manager = transaction.TransactionManager(MAX_WAIT_FOR_REPLAY,
-                                                          MAX_QUEUE_SIZE,
-                                                          THROTTLING_DELAY,
-                                                          agent_config)
-        transaction.MetricTransaction.set_tr_manager(self._tr_manager)
+        self._flush_interval = FLUSH_INTERVAL * 1000
+        self._non_local_traffic = agent_config.get("non_local_traffic", False)
+
+        logging.getLogger().setLevel(agent_config.get('log_level', logging.INFO))
 
         self.skip_ssl_validation = skip_ssl_validation or agent_config.get(
             'skip_ssl_validation', False)
@@ -117,13 +85,6 @@ class Forwarder(tornado.web.Application):
         if self.skip_ssl_validation:
             log.info("Skipping SSL hostname validation, useful when using a transparent proxy")
 
-    def _post_metrics(self):
-
-        if len(self._metrics) > 0:
-            transaction.MetricTransaction(self._metrics, headers={'Content-Type': 'application/json'})
-            self._metrics = {}
-
-    # todo why is the tornado logging method overridden? Perhaps ditch this.
     def log_request(self, handler):
         """Override the tornado logging method.
         If everything goes well, log level is DEBUG.
@@ -139,11 +100,9 @@ class Forwarder(tornado.web.Application):
         log_method("%d %s %.2fms", handler.get_status(),
                    handler._request_summary(), request_time)
 
-    def run(self):
+    def _add_tornado_handlers(self):
         handlers = [
-            (r"/intake/?", AgentInputHandler),
-            (r"/api/v1/series/?", AgentInputHandler),
-            (r"/status/?", StatusHandler),
+            (r"/intake/?", AgentInputHandler)
         ]
 
         settings = dict(
@@ -153,14 +112,12 @@ class Forwarder(tornado.web.Application):
             log_function=self.log_request
         )
 
-        non_local_traffic = self._agent_config.get("non_local_traffic", False)
-
         tornado.web.Application.__init__(self, handlers, **settings)
-        http_server = tornado.httpserver.HTTPServer(self)
 
+    def _bind_http_server(self, http_server):
         try:
             # non_local_traffic must be == True to match, not just some non-false value
-            if non_local_traffic is True:
+            if self._non_local_traffic is True:
                 http_server.listen(self._port)
             else:
                 # localhost in lieu of 127.0.0.1 to support IPv6
@@ -186,26 +143,43 @@ class Forwarder(tornado.web.Application):
 
         log.info("Listening on port %d" % self._port)
 
-        # Register callbacks
-        self.mloop = util.get_tornado_ioloop()
+    def _post_metrics(self):
+        global message_batch
+        self._endpoint.post_metrics(message_batch)
+        log.info("wrote {}".format(len(message_batch)))
+        message_batch = []
+        self._unflushed_iterations = 0
 
-        logging.getLogger().setLevel(self._agent_config.get('log_level', logging.INFO))
-
-        def flush_trs():
+    def flush(self):
+        if not message_batch:
+            return
+        if len(message_batch) >= MIN_BATCH_SIZE or self._unflushed_iterations >= MAX_FLUSH_ATTEMPTS:
             self._post_metrics()
-            self._tr_manager.flush()
+        else:
+            self._unflushed_iterations += 1
 
-        tr_sched = tornado.ioloop.PeriodicCallback(
-            flush_trs, self.flush_interval, io_loop=self.mloop)
+    def run(self):
+        log.info("Forwarder RUN")
+        self._add_tornado_handlers()
 
-        # Start everything
-        tr_sched.start()
+        http_server = tornado.httpserver.HTTPServer(self)
+        self._bind_http_server(http_server)
 
-        self.mloop.start()
+        self._ioloop = util.get_tornado_ioloop()
+
+        callback = tornado.ioloop.PeriodicCallback(self.flush,
+                                                   self._flush_interval,
+                                                   io_loop=self._ioloop)
+
+        callback.start()
+
+        self._ioloop.start()
+
         log.info("Stopped")
 
     def stop(self):
-        self.mloop.stop()
+        if self._ioloop:
+            self._ioloop.stop()
 
 
 def init_forwarder(skip_ssl_validation=False, use_simple_http_client=False):
