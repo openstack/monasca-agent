@@ -558,7 +558,6 @@ The process checks return the following metrics ( if detailed is set to true, ot
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
-| process.mem.real_mbytes  | process_name, service, component | Amount of physical memory allocated to a process minus shared libraries in Mbytes
 | process.mem.rss_mbytes  | process_name, service, component | Amount of physical memory allocated to a process, including memory from shared libraries in Mbytes
 | process.io.read_count  | process_name, service, component | Number of reads by a process
 | process.io.write_count  | process_name, service, component | Number of writes by a process
@@ -567,10 +566,9 @@ The process checks return the following metrics ( if detailed is set to true, ot
 | process.thread_count  | process_name, service, component | Number of threads a process is using
 | process.cpu_perc  | process_name, service, component | Percentage of cpu being consumed by a process
 | process.open_file_descriptors  | process_name, service, component | Number of files being used by a process
-| process.involuntary_ctx_switches  | process_name, service, component | Number of involuntary context switches for a process
-| process.voluntary_ctx_switches  | process_name, service, component | Number of voluntary context switches for a process
 | process.pid_count  | process_name, service, component | Number of processes that exist with this process name
 
+On linux if the agent is not run as root or the owner of the process the io metrics and the open_file_descriptors metric will fail to be reported if the mon-agent user does not have permission to get it for the process.
 
 ## File Size Checks
 This section describes the file size check that can be performed by the Agent. File size checks are used for gathering the size of individual files or the size of each file under a specific directory. The agent supports additional functionality through the use of Python scripts. A YAML file (file_size.yaml) contains the list of file directory names and file names to check. A Python script (file_size.py) runs checks each host in turn to gather stats. 

@@ -113,7 +113,7 @@ class ProcessCheck(checks.AgentCheck):
                         total_read_kbytes += float(io_counters.read_bytes / 1024)
                         total_write_kbytes += float(io_counters.write_bytes / 1024)
                     except psutil.AccessDenied:
-                        self.log.error('monasca-agent user does not have ' +
+                        self.log.debug('monasca-agent user does not have ' +
                                        'access to I/O counters for process' +
                                        ' %d: %s'
                                        % (pid, p.name))
@@ -125,12 +125,12 @@ class ProcessCheck(checks.AgentCheck):
 
             # Skip processes dead in the meantime
             except psutil.NoSuchProcess:
-                self.warning('Process %s disappeared while metrics were being collected' % pid)
+                self.log.warn('Process %s disappeared while metrics were being collected' % pid)
                 pass
 
         if got_denied:
-            self.warning("The Monitoring Agent was denied access " +
-                         "when trying to get the number of file descriptors")
+            self.log.debug("The Monitoring Agent was denied access " +
+                           "when trying to get the number of file descriptors")
 
         return dict(zip(ProcessCheck.PROCESS_GAUGE,
                         (total_thr, total_cpu, total_rss, total_open_file_descriptors, total_read_count,
@@ -190,5 +190,5 @@ class ProcessCheck(checks.AgentCheck):
         if instance.get('detailed', False):
             metrics = self.get_process_metrics(pids, psutil, name)
             for metric_name, metric_value in metrics.iteritems():
-                if metric_value is not None:
+                if metric_value is not None and metric_value > 0:
                     self.gauge(metric_name, metric_value, dimensions=dimensions)
