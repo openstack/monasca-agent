@@ -72,10 +72,10 @@ class LibvirtCheck(AgentCheck):
                 if ((secgroup['tenant_id'] == instance.tenant_id and
                      secgroup['name'] == instance_secgroup['name'])):
                     for rule in secgroup['security_group_rules']:
-                        if ((rule['remote_ip_prefix'] and
-                             rule['protocol'] == 'icmp' and
-                             all_matching_cidrs(source_ip,
-                                                [rule['remote_ip_prefix']]))):
+                        if rule['protocol'] == 'icmp':
+                            if ((not rule['remote_ip_prefix'] or
+                                 all_matching_cidrs(source_ip,
+                                                    [rule['remote_ip_prefix']]))):
                                 return True
 
     def _update_instance_cache(self):
