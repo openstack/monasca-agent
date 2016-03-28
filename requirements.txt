@@ -10,6 +10,7 @@ oslo.utils
 oslo.vmware
 
 PyYAML
+gevent
 gearman>=2.0.2,<2.1
 httplib2
 netaddr
