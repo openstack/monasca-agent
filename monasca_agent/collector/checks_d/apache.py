@@ -107,7 +107,7 @@ class Apache(checks.AgentCheck):
         if metric_count == 0:
             if self.url[-5:] != '?auto':
                 self.url = '%s?auto' % self.url
-                self.warning("Assuming url was not correct. Trying to add ?auto suffix to the url")
+                self.log.warn("Assuming url was not correct. Trying to add ?auto suffix to the url")
                 self.check(instance)
             else:
                 return services_checks.Status.DOWN, "%s is DOWN, error: No metrics available.".format(service_check_name)

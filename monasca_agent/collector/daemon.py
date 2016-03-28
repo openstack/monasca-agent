@@ -66,10 +66,6 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
         self._handle_sigterm(signum, frame)
         self._do_restart()
 
-    def info(self, verbose=None):
-        logging.getLogger().setLevel(logging.ERROR)
-        return monasca_agent.common.check_status.CollectorStatus.print_latest_status(verbose=verbose)
-
     def run(self, config):
         """Main loop of the collector.
 
@@ -82,9 +78,6 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
 
         # Handle Keyboard Interrupt
         signal.signal(signal.SIGINT, self._handle_sigterm)
-
-        # Save the agent start-up stats.
-        monasca_agent.common.check_status.CollectorStatus().persist()
 
         # Load the checks_d checks
         checksd = util.load_check_directory()
@@ -142,12 +135,6 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
                     log.info("Collection took {0} which is as long or longer then the configured collection frequency "
                              "of {1}. Starting collection again without waiting in result.".format(collection_time,
                                                                                                    check_frequency))
-
-        # Now clean-up.
-        try:
-            monasca_agent.common.check_status.CollectorStatus.remove_latest_status()
-        except Exception:
-            pass
 
         # Explicitly kill the process, because it might be running
         # as a daemon.

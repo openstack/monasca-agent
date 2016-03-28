@@ -232,18 +232,11 @@ class Paths(object):
 
     def get_confd_path(self):
         bad_path = ''
-        if self.osname == 'windows':
-            try:
-                return self._windows_confd_path()
-            except PathNotFound as e:
-                if len(e.args) > 0:
-                    bad_path = e.args[0]
-        else:
-            try:
-                return self._unix_confd_path()
-            except PathNotFound as e:
-                if len(e.args) > 0:
-                    bad_path = e.args[0]
+        try:
+            return self._unix_confd_path()
+        except PathNotFound as e:
+            if len(e.args) > 0:
+                bad_path = e.args[0]
 
         cur_path = os.path.dirname(os.path.realpath(__file__))
         cur_path = os.path.join(cur_path, 'conf.d')
@@ -262,18 +255,8 @@ class Paths(object):
             return path2
         raise PathNotFound(path)
 
-    def _windows_confd_path(self):
-        common_data = self._windows_commondata_path()
-        path = os.path.join(common_data, 'Datadog', 'conf.d')
-        if os.path.exists(path):
-            return path
-        raise PathNotFound(path)
-
     def get_checksd_path(self):
-        if self.osname == 'windows':
-            return self._windows_checksd_path()
-        else:
-            return self._unix_checksd_path()
+        return self._unix_checksd_path()
 
     def _unix_checksd_path(self):
         # Unix only will look up based on the current directory
@@ -284,54 +267,6 @@ class Paths(object):
         if os.path.exists(checksd_path):
             return checksd_path
         raise PathNotFound(checksd_path)
-
-    def _windows_checksd_path(self):
-        if hasattr(sys, 'frozen'):
-            # we're frozen - from py2exe
-            prog_path = os.path.dirname(sys.executable)
-            checksd_path = os.path.join(prog_path, '..', 'checks_d')
-        else:
-            cur_path = os.path.dirname(__file__)
-            checksd_path = os.path.join(cur_path, '../collector/checks_d')
-
-        if os.path.exists(checksd_path):
-            return checksd_path
-        raise PathNotFound(checksd_path)
-
-    def _windows_commondata_path():
-        """Return the common appdata path, using ctypes
-        From http://stackoverflow.com/questions/626796/\
-        how-do-i-find-the-windows-common-application-data-folder-using-python
-        """
-        import ctypes
-        from ctypes import windll
-        from ctypes import wintypes
-
-        _SHGetFolderPath = windll.shell32.SHGetFolderPathW
-        _SHGetFolderPath.argtypes = [wintypes.HWND,
-                                     ctypes.c_int,
-                                     wintypes.HANDLE,
-                                     wintypes.DWORD, wintypes.LPCWSTR]
-
-        path_buf = wintypes.create_unicode_buffer(wintypes.MAX_PATH)
-        return path_buf.value
-
-    def set_win32_cert_path(self):
-        """In order to use tornado.httpclient with the packaged .exe on Windows we
-        need to override the default ceritifcate location which is based on the path
-        to tornado and will give something like "C:\path\to\program.exe\tornado/cert-file".
-        """
-        if hasattr(sys, 'frozen'):
-            # we're frozen - from py2exe
-            prog_path = os.path.dirname(sys.executable)
-            crt_path = os.path.join(prog_path, 'ca-certificates.crt')
-        else:
-            cur_path = os.path.dirname(__file__)
-            crt_path = os.path.join(cur_path, 'packaging', 'monasca-agent', 'win32',
-                                    'install_files', 'ca-certificates.crt')
-        import tornado.simple_httpclient
-        log.info("Windows certificate path: %s" % crt_path)
-        tornado.simple_httpclient._DEFAULT_CA_CERTS = crt_path
 
 
 def plural(count):

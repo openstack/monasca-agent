@@ -29,7 +29,6 @@ import tornado.options
 import tornado.web
 
 # agent import
-import monasca_agent.common.check_status as check_status
 import monasca_agent.common.config as cfg
 import monasca_agent.common.metrics as metrics
 import monasca_agent.common.util as util
@@ -222,18 +221,12 @@ def main():
     # If we don't have any arguments, run the server.
     if not args:
         app = init_forwarder(skip_ssl_validation, use_simple_http_client=use_simple_http_client)
-        try:
-            app.run()
-        finally:
-            check_status.ForwarderStatus.remove_latest_status()
+        app.run()
 
     else:
         usage = "%s [help|info]. Run with no commands to start the server" % (sys.argv[0])
         command = args[0]
-        if command == 'info':
-            logging.getLogger().setLevel(logging.ERROR)
-            return check_status.ForwarderStatus.print_latest_status()
-        elif command == 'help':
+        if command == 'help':
             print(usage)
         else:
             print("Unknown command: %s" % command)

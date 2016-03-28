@@ -82,7 +82,7 @@ class GUnicornCheck(AgentCheck):
             try:
                 cpu_time_by_pid[proc.pid] = sum(proc.get_cpu_times())
             except psutil.NoSuchProcess:
-                self.warning('Process %s disappeared while scanning' % proc.name)
+                self.log.warn('Process %s disappeared while scanning' % proc.name)
                 continue
 
         # Let them do a little bit more work.

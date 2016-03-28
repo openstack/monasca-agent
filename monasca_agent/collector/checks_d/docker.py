@@ -125,15 +125,14 @@ class Docker(AgentCheck):
         dimensions = self._set_dimensions(None, instance)
         containers = self._get_containers(instance)
         if not containers:
-            self.warning("No containers are running.")
+            self.log.warn("No containers are running.")
 
         max_containers = instance.get('max_containers', DEFAULT_MAX_CONTAINERS)
 
         if not instance.get("exclude") or not instance.get("include"):
             if len(containers) > max_containers:
-                self.warning(
-                    "Too many containers to collect. Please refine the containers to collect by editing the configuration file. Truncating to %s containers" %
-                    max_containers)
+                self.log.warn("Too many containers to collect. Please refine the containers to collect by editing the "
+                              "configuration file. Truncating to %s containers" % max_containers)
                 containers = containers[:max_containers]
 
         collected_containers = 0
@@ -148,8 +147,8 @@ class Docker(AgentCheck):
 
             collected_containers += 1
             if collected_containers > max_containers:
-                self.warning(
-                    "Too many containers are matching the current configuration. Some containers will not be collected. Please refine your configuration")
+                self.log.warn("Too many containers are matching the current configuration. Some containers will not "
+                              "be collected. Please refine your configuration")
                 break
 
             for key, (dd_key, metric_type) in DOCKER_METRICS.items():

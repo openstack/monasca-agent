@@ -106,7 +106,7 @@ class SQLServer(AgentCheck):
                     self._fetch_all_instances(metric, cursor, custom_dimensions)
                 except Exception:
                     self.log.exception('Unable to fetch metric: %s' % mname)
-                    self.warning('Unable to fetch metric: %s' % mname)
+                    self.log.warn('Unable to fetch metric: %s' % mname)
             else:
                 try:
                     cursor.execute("""
@@ -118,7 +118,7 @@ class SQLServer(AgentCheck):
                     (value,) = cursor.fetchone()
                 except Exception:
                     self.log.exception('Unable to fetch metric: %s' % mname)
-                    self.warning('Unable to fetch metric: %s' % mname)
+                    self.log.warn('Unable to fetch metric: %s' % mname)
                     continue
 
                 # Save the metric

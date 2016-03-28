@@ -6,7 +6,6 @@ import socket
 import threading
 import time
 
-import monasca_agent.common.check_status as check_status
 import monasca_agent.common.metrics as metrics
 import monasca_agent.common.util as util
 
@@ -49,25 +48,14 @@ class Collector(util.Dimensions):
     def _emit(self, payload):
         """Send the payload via the emitter.
         """
-        statuses = []
         # Don't try to send to an emitter if we're stopping/
         if self.continue_running:
-            name = self.emitter.__name__
-            emitter_status = check_status.EmitterStatus(name)
             try:
                 self.emitter(payload, log, self.agent_config['forwarder_url'])
-            except Exception as e:
+            except Exception:
                 log.exception("Error running emitter: %s" % self.emitter.__name__)
-                emitter_status = check_status.EmitterStatus(name, e)
-            statuses.append(emitter_status)
-        return statuses
 
-    def _set_status(self, check_statuses, emitter_statuses, collect_duration):
-        try:
-            check_status.CollectorStatus(check_statuses, emitter_statuses).persist()
-        except Exception:
-            log.exception("Error persisting collector status")
-
+    def _set_status(self, collect_duration):
         if self.run_count <= FLUSH_LOGGING_INITIAL or self.run_count % FLUSH_LOGGING_PERIOD == 0:
             log.info("Finished run #%s. Collection time: %.2fs." %
                      (self.run_count, round(collect_duration, 2)))
@@ -103,7 +91,7 @@ class Collector(util.Dimensions):
         log.debug("Starting collection run #%s" % self.run_count)
 
         # checks_d checks
-        num_metrics, emitter_statuses, checks_statuses = self.run_checks_d()
+        num_metrics = self.run_checks_d()
 
         collect_duration = timer.step()
 
@@ -116,44 +104,37 @@ class Collector(util.Dimensions):
                                                      value,
                                                      self._set_dimensions(dimensions),
                                                      None))
-        emitter_statuses.append(self._emit(collect_stats))
+        self._emit(collect_stats)
 
         # Persist the status of the collection run.
-        self._set_status(checks_statuses, emitter_statuses, collect_duration)
+        self._set_status(collect_duration)
 
     def run_checks_d(self):
         """Run defined checks_d checks.
 
-        returns a list of Measurements and a list of check statuses.
+        returns a list of Measurements.
         """
         sub_timer = util.Timer()
         measurements = 0
-        check_statuses = []
-        emitter_statuses = []
         for check in self.initialized_checks_d:
             if not self.continue_running:
                 return
             log.debug("Running check %s" % check.name)
-            instance_statuses = []
-            metric_count = 0
             try:
                 # Run the check.
-                instance_statuses = check.run()
+                check.run()
 
                 current_check_metrics = check.get_metrics()
 
                 # Emit the metrics after each check
-                emitter_statuses.append(self._emit(current_check_metrics))
+                self._emit(current_check_metrics)
 
                 # Save the status of the check.
-                metric_count = len(current_check_metrics)
-                measurements += metric_count
+                measurements += len(current_check_metrics)
+
             except Exception:
                 log.exception("Error running check %s" % check.name)
 
-            status_check = check_status.CheckStatus(check.name, instance_statuses, metric_count,
-                                                    library_versions=check.get_library_info())
-            check_statuses.append(status_check)
             sub_collect_duration = sub_timer.step()
             sub_collect_duration_mills = sub_collect_duration * 1000
             log.debug("Finished run check %s. Collection time: %.2fms." % (
@@ -162,15 +143,7 @@ class Collector(util.Dimensions):
                 log.warn("Collection time for check %s is high: %.2fs." % (
                     check.name, round(sub_collect_duration, 2)))
 
-        for check_name, info in self.init_failed_checks_d.iteritems():
-            if not self.continue_running:
-                return
-            status_check = check_status.CheckStatus(check_name, None, None,
-                                                    init_failed_error=info['error'],
-                                                    init_failed_traceback=info['traceback'])
-            check_statuses.append(status_check)
-
-        return measurements, emitter_statuses, check_statuses
+        return measurements
 
     def stop(self):
         """Tell the collector to stop at the next logical point.
