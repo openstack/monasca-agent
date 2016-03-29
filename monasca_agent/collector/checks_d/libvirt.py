@@ -143,7 +143,7 @@ class LibvirtCheck(AgentCheck):
                 # Find all active fixed IPs for this VM, fetch each subnet_id
                 for net in instance.addresses:
                     for ip in instance.addresses[net]:
-                        if ip['OS-EXT-IPS:type'] == 'fixed':
+                        if ip['OS-EXT-IPS:type'] == 'fixed' and ip['version'] == 4:
                             subnet_id = None
                             nsuuid = None
                             for port in port_cache:
