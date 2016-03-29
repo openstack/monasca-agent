@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 
 import ast
 import logging
@@ -25,8 +25,6 @@ class HttpCheck(monasca_setup.detection.ArgsPlugin):
         """Build the config as a Plugins object and return.
         """
         config = monasca_setup.agent_config.Plugins()
-        log.info("\tEnabling the http_check plugin for {url}".format(**self.args))
-
         # No support for setting headers at this time
         instance = self._build_instance(['url', 'timeout', 'username', 'password',
                                          'match_pattern', 'disable_ssl_validation',
