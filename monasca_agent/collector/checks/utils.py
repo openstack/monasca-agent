@@ -38,18 +38,18 @@ class DynamicCheckHelper:
         result = {}
         for dim, spec in config.get('dimensions', {}).iteritems():
             if isinstance(spec, dict):
-                label = spec.get('source_label', dim)
+                label = spec.get('source_key', dim)
                 regex = spec.get('regex', '(.*)')
                 cregex = re.compile(regex)
-                mapf = lambda x: AgentCheck.normalize(cregex.match(x).group(1))
+                mapf = lambda x: cregex.match(x).group(1)
             else:
                 label = spec
                 regex = '(.*)'
-                mapf = lambda x: AgentCheck.normalize(x)
+                mapf = lambda x: x
 
             # note: source keys can be mapped to multiple dimensions
             arr = result.get(label, [])
-            arr.append({'dimension': dim, 'regex:': regex, 'mapf': mapf})
+            arr.append({'dimension': dim, 'regex': regex, 'mapf': mapf})
             result[label] = arr
 
         return result
@@ -114,15 +114,41 @@ class DynamicCheckHelper:
                     self._grp_metric_map[iname] = {}
                     self._grp_metric_cache[iname] = {}
                     self._grp_dimension_map[iname] = {}
-                    for grp, gspec in groups:
+                    for grp, gspec in groups.iteritems():
                         self._grp_metric_map[iname][grp] = DynamicCheckHelper._build_metric_map(gspec)
                         self._grp_metric_cache[iname][grp] = {}
                         self._grp_dimension_map[iname][grp] = DynamicCheckHelper._build_dimension_map(gspec)
 
-    def push_metric(self, instance, metric, value, labels, group=None, timestamp=None, fixed_dimensions={}, default_dimensions={}):
+    def _fetch_metric_spec(self, instance, metric, group=None):
+        """
+        check whether a metric is enabled by the instance configuration
+
+        :param instance: instance containing the check configuration
+        :param metric: metric as reported from metric data source (before mapping)
+        :param group: optional metric group, will be used as dot-separated prefix
+        """
+
+        instance_name = instance['name']
+
+        # filter and classify the metric
+        if group:
+            metric_cache = self._grp_metric_cache[instance_name][group]
+            metric_map = self._grp_metric_map[instance_name][group]
+        else:
+            metric_cache = self._metric_cache[instance_name]
+            metric_map = self._metric_map[instance_name]
+
+        return DynamicCheckHelper._lookup_metric(metric, metric_cache, metric_map)
+
+    def is_enabled_metric(self, instance, metric, group=None):
+        type, _ = self._fetch_metric_spec(instance, metric, group)
+        return type != SKIP
+
+    def push_metric(self, instance, metric, value, labels={}, group=None, timestamp=None, fixed_dimensions={}, default_dimensions={}):
         """
         push a meter using the configured mapping information to determine type and map the name and dimensions
 
+        :param instance: instance containing the check configuration
         :param value: metric value (float)
         :param metric: metric as reported from metric data source (before mapping)
         :param labels: labels/tags as reported from the metric data source (before mapping)
@@ -132,24 +158,15 @@ class DynamicCheckHelper:
         :param default_dimensions:
         """
 
-        instance_name = instance['name']
-        metric_prefix = self._prefix + '.'
-
-        # filter and classify the metric
-        if group:
-            metric_cache = self._grp_metric_cache[instance_name][group]
-            metric_map = self._grp_metric_map[instance_name][group]
-            metric_prefix += group + '.'
-        else:
-            metric_cache = self._metric_cache[instance_name]
-            metric_map = self._metric_map[instance_name]
-
-        metric_type, metric_name = DynamicCheckHelper._lookup_metric(metric, metric_cache, metric_map)
-
+        metric_type, metric_name = self._fetch_metric_spec(instance, metric, group)
         if metric_type == SKIP:
-            return
+            return False
 
-        dims = self._map_dimensions(default_dimensions, group, instance_name, labels)
+        metric_prefix = self._prefix + '.'
+        if group:
+            metric_prefix += group + '.'
+        metric_name = metric_prefix + metric
+        dims = self._map_dimensions(default_dimensions, group, instance['name'], labels)
         dims.update(fixed_dimensions)
 
         log.debug('push %s %s = %s {%s}', metric_type, metric_name, dims)
@@ -159,10 +176,12 @@ class DynamicCheckHelper:
         elif metric_type == GAUGE:
             self._check.gauge(metric_name, float(value), timestamp=timestamp, dimensions=dims)
 
+        return True
+
     def _map_dimensions(self, default_dimensions, group, instance_name, labels):
-        dims = default_dimensions
+        dims = default_dimensions.copy()
         #  map all specified dimension all keys
-        for labelname, labelvalue in labels:
+        for labelname, labelvalue in labels.iteritems():
             # obtain mappings
             mapping_arr = None
             # check group-specific ones first
@@ -198,7 +217,6 @@ class DynamicCheckHelper:
             all_rates_re = metric_map.get('rates', [])
             for rx in all_rates_re:
                 if re.match(rx, metric):
-                    # TODO: convert also first character
                     metric_entry = { 'type': RATE, 'name': re.sub('(?!^)([A-Z]+)', r'_\1',metric).lower() }
                     metric_cache[metric] = metric_entry
                     return metric_entry['type'], metric_entry['name']
