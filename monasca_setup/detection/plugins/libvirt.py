@@ -1,17 +1,20 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (c) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 
 import ConfigParser
 import grp
 import logging
 import os
 import psutil
+import pwd
 import subprocess
+import sys
 
 import monasca_setup.agent_config
 from monasca_setup.detection import Plugin
 from monasca_setup.detection.utils import find_process_name
 
 from distutils.version import LooseVersion
+from shutil import copy
 
 log = logging.getLogger(__name__)
 
@@ -21,6 +24,10 @@ cache_dir = "/dev/shm"
 nova_refresh = 60 * 60 * 4  # Four hours
 # Probation period before metrics are gathered for a VM (in seconds)
 vm_probation = 60 * 5  # Five minutes
+# List of instance metadata keys to be sent as dimensions
+# By default 'scale_group' metadata is used here for supporting auto
+# scaling in Heat.
+metadata = ['scale_group']
 # List 'ping' commands (paths and parameters) in order of preference.
 # The plugin will use the first fuctional command. 127.0.0.1 will be appended.
 ping_options = [["/usr/bin/fping", "-n", "-c1", "-t250", "-q"],
@@ -58,7 +65,7 @@ class Libvirt(Plugin):
                         nova_conf = cmd[param].split('=')[1]
                     else:
                         nova_conf = cmd[param]
-            except IOError:
+            except (IOError, psutil.NoSuchProcess):
                 # Process has already terminated, ignore
                 continue
         if (nova_conf is not None and os.path.isfile(nova_conf)):
@@ -92,7 +99,8 @@ class Libvirt(Plugin):
             # Start with plugin-specific configuration parameters
             init_config = {'cache_dir': cache_dir,
                            'nova_refresh': nova_refresh,
-                           'vm_probation': vm_probation}
+                           'vm_probation': vm_probation,
+                           'metadata': metadata}
 
             for option in cfg_needed:
                 init_config[option] = nova_cfg.get(cfg_section, cfg_needed[option])
@@ -110,24 +118,37 @@ class Libvirt(Plugin):
             else:
                 try:
                     from neutronclient.v2_0 import client
-                    # See if self.agent_user can exec commands in namespaces (sudo)
-                    sudo_cmd = ["sudo", "-u", self.agent_user,
-                                "sudo", "-ln", ip_cmd]
-                    with open(os.devnull, "w") as fnull:
-                        if subprocess.call(sudo_cmd, stdout=fnull, stderr=fnull) == 0:
-                            for ping_cmd in ping_options:
-                                if os.path.isfile(ping_cmd[0]):
-                                    init_config['ping_check'] = "sudo -n {0} netns exec NAMESPACE {1}".format(ip_cmd,
-                                                                                                              ' '.join(ping_cmd))
-                                    log.info("\tEnabling ping checks using {0}".format(ping_cmd[0]))
-                                    break
-                            if init_config['ping_check'] is False:
-                                log.warn("\tUnable to find suitable ping command, disabling ping checks.")
-                        else:
-                            log.warn("\t{0} cannot run {1} as sudo, required for ping checks.".format(self.agent_user,
-                                                                                                      ip_cmd))
+
+                    # Copy system 'ip' command to local directory
+                    copy(ip_cmd, sys.path[0])
+                    # Restrict permissions on the local 'ip' command
+                    os.chown("{0}/ip".format(sys.path[0]), pwd.getpwnam(self.agent_user).pw_uid, 0)
+                    os.chmod("{0}/ip".format(sys.path[0]), 0o700)
+                    # Set capabilities on 'ip' which will allow
+                    # self.agent_user to exec commands in namespaces
+                    setcap_cmd = ['/sbin/setcap', 'cap_sys_admin+ep',
+                                  "{0}/ip".format(sys.path[0])]
+                    subprocess.Popen(setcap_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    # Verify that the capabilities were set
+                    setcap_cmd.extend(['-v', '-q'])
+                    subprocess.check_call(setcap_cmd)
+                    # Look for the best ping command
+                    for ping_cmd in ping_options:
+                        if os.path.isfile(ping_cmd[0]):
+                            init_config['ping_check'] = "{0}/ip netns exec NAMESPACE {1}".format(sys.path[0],
+                                                                                                 ' '.join(ping_cmd))
+                            log.info("\tEnabling ping checks using {0}".format(ping_cmd[0]))
+                            break
+                    if init_config['ping_check'] is False:
+                        log.warn("\tUnable to find suitable ping command, disabling ping checks.")
                 except ImportError:
                     log.warn("\tneutronclient module missing, required for ping checks.")
+                    pass
+                except IOError:
+                    log.warn("\tUnable to copy {0}, ping checks disabled.".format(ip_cmd))
+                    pass
+                except (subprocess.CalledProcessError, OSError):
+                    log.warn("\tUnable to set up ping checks, setcap failed ({0})".format(' '.join(setcap_cmd)))
                     pass
 
             # Handle monasca-setup detection arguments, which take precedence

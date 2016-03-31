@@ -6,12 +6,13 @@ import urllib2
 import monasca_setup.agent_config
 import monasca_setup.detection
 
+from monasca_setup.detection.utils import service_api_check
 
 log = logging.getLogger(__name__)
 
 # Defaults
 rabbit_conf = '/root/.rabbitmq.cnf'
-rabbitmq_api_url = 'http://localhost:15672/api'
+rabbitmq_api_url = 'http://localhost:15672/api/'
 
 
 class RabbitMQ(monasca_setup.detection.Plugin):
@@ -120,11 +121,23 @@ class RabbitMQ(monasca_setup.detection.Plugin):
         """
         config = monasca_setup.agent_config.Plugins()
         # First watch the process
-        config.merge(monasca_setup.detection.watch_process(['rabbitmq-server'], 'rabbitmq'))
+        config.merge(monasca_setup.detection.watch_process(['rabbitmq-server'], 'rabbitmq', detailed=False))
         log.info("\tWatching the rabbitmq-server process.")
+        config.merge(monasca_setup.detection.watch_process_by_username('rabbitmq', 'rabbitmq', 'rabbitmq'))
+        log.info("\tWatching all processes owned by the rabbitmq user.")
 
         try:
             self._get_config()
+            # Then watch the http status check
+            service_name = 'rabbitmq'
+            # Setup an active http_status check on the API
+            log.info("\tConfiguring an http_check for the {0} API.".format(
+                service_name))
+            config.merge(service_api_check(service_name,
+                                           self.api_url,
+                                           '.*RabbitMQ.*',
+                                           use_keystone=False,
+                                           service=service_name))
             if self._login_test():
                 instance_config = {'name': self.api_url,
                                    'rabbitmq_api_url': self.api_url,

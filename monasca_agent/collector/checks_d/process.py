@@ -1,23 +1,23 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 """Gather metrics on specific processes.
 
 """
 from collections import defaultdict
+from collections import namedtuple
 import monasca_agent.collector.checks as checks
+
+ProcessStruct = namedtuple("Process", "name pid username cmdline")
 
 
 class ProcessCheck(checks.AgentCheck):
     PROCESS_GAUGE = ('process.thread_count',
                      'process.cpu_perc',
                      'process.mem.rss_mbytes',
-                     'process.mem.real_mbytes',
                      'process.open_file_descriptors',
                      'process.io.read_count',
                      'process.io.write_count',
                      'process.io.read_kbytes',
-                     'process.io.write_kbytes',
-                     'process.voluntary_ctx_switches',
-                     'process.involuntary_ctx_switches')
+                     'process.io.write_kbytes')
 
     def __init__(self, name, init_config, agent_config, instances=None):
         super(ProcessCheck, self).__init__(name, init_config, agent_config,
@@ -40,33 +40,23 @@ class ProcessCheck(checks.AgentCheck):
         Search for search_string
         """
         found_process_list = []
-        for proc in self._current_process_list:
-            try:
-                if username is not None:
-                    if proc.username() == username:
-                        found_process_list.append(proc.pid)
-
+        if username:
+            found_process_list = \
+                [proc.pid for proc in self._current_process_list if
+                 proc.username == username]
+        else:
+            for string in search_string:
+                if string == 'All':
+                    found_process_list = [proc.pid for proc in
+                                          self._current_process_list]
+                elif exact_match:
+                    found_process_list = \
+                        [proc.pid for proc in self._current_process_list
+                         if proc.name == string]
                 else:
-                    for string in search_string:
-                        if exact_match:
-                            if proc.name() == string:
-                                found_process_list.append(proc.pid)
-                        else:
-                            cmdline = proc.cmdline()
-                            if string in ' '.join(cmdline):
-                                found_process_list.append(proc.pid)
-
-                        if string == 'All':
-                            found_process_list.append(proc.pid)
-                            break
-            except psutil.NoSuchProcess:
-                # No way to log useful information here so just move on
-                pass
-            except psutil.AccessDenied as e:
-                self.log.error('Access denied to process')
-                self.log.error('Error: %s' % e)
-                raise
-
+                    found_process_list = \
+                        [proc.pid for proc in self._current_process_list
+                         if string in proc.cmdline]
         return set(found_process_list)
 
     def get_process_metrics(self, pids, psutil, name):
@@ -80,14 +70,11 @@ class ProcessCheck(checks.AgentCheck):
         total_thr = 0
         total_cpu = None
         total_rss = 0
-        total_real = 0
         total_open_file_descriptors = 0
         total_read_count = 0
         total_write_count = 0
         total_read_kbytes = 0
         total_write_kbytes = 0
-        total_voluntary_ctx_switches = 0
-        total_involuntary_ctx_switches = 0
 
         for pid in set(pids):
             try:
@@ -100,18 +87,8 @@ class ProcessCheck(checks.AgentCheck):
                     p = self._cached_processes[name][pid]
 
                 mem = p.memory_info_ex()
-                total_real += float((mem.rss - mem.shared) / 1048576)
                 total_rss += float(mem.rss / 1048576)
                 total_thr += p.num_threads()
-
-                try:
-                    ctx_switches = p.num_ctx_switches()
-                    total_voluntary_ctx_switches += ctx_switches.voluntary
-                    total_involuntary_ctx_switches += ctx_switches.involuntary
-                except NotImplementedError:
-                    # Handle old Kernels which don't provide this info.
-                    total_voluntary_ctx_switches = None
-                    total_involuntary_ctx_switches = None
 
                 try:
                     total_open_file_descriptors += float(p.num_fds())
@@ -136,7 +113,7 @@ class ProcessCheck(checks.AgentCheck):
                         total_read_kbytes += float(io_counters.read_bytes / 1024)
                         total_write_kbytes += float(io_counters.write_bytes / 1024)
                     except psutil.AccessDenied:
-                        self.log.debug('monasca-agent user does not have ' +
+                        self.log.error('monasca-agent user does not have ' +
                                        'access to I/O counters for process' +
                                        ' %d: %s'
                                        % (pid, p.name))
@@ -156,9 +133,8 @@ class ProcessCheck(checks.AgentCheck):
                          "when trying to get the number of file descriptors")
 
         return dict(zip(ProcessCheck.PROCESS_GAUGE,
-                        (total_thr, total_cpu, total_rss, total_real, total_open_file_descriptors,
-                         total_read_count, total_write_count, total_read_kbytes, total_write_kbytes,
-                         total_voluntary_ctx_switches, total_involuntary_ctx_switches)))
+                        (total_thr, total_cpu, total_rss, total_open_file_descriptors, total_read_count,
+                         total_write_count, total_read_kbytes, total_write_kbytes)))
 
     def prepare_run(self):
         """Collect the list of processes once before each run"""
@@ -167,7 +143,21 @@ class ProcessCheck(checks.AgentCheck):
         except ImportError:
             raise Exception('You need the "psutil" package to run this check')
 
-        self._current_process_list = [process for process in psutil.process_iter()]
+        self._current_process_list = []
+
+        for process in psutil.process_iter():
+            try:
+                p = ProcessStruct(name=process.name(),
+                                  pid=process.pid,
+                                  username=process.username(),
+                                  cmdline=' '.join(process.cmdline()))
+                self._current_process_list.append(p)
+            except psutil.NoSuchProcess:
+                # No way to log useful information here so just move on
+                pass
+            except psutil.AccessDenied as e:
+                self.log.info('Access denied to process {0}: {1}'.format(
+                    process.name(), e))
 
     def check(self, instance):
         try:

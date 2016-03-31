@@ -30,7 +30,7 @@ class TestDynamicCheckHelper(unittest.TestCase):
                                                                   }
                                                                   # dimensions should be inherited from above
                                                               }}}]}
-        self.check = load_check('process', self._config)
+        self.check = load_check('process', self._config)  # TODO mock check
         self.helper = DynamicCheckHelper(self.check, 'dynhelper')
 
     def run_check(self):

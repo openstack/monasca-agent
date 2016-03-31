@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 
 import logging
 
@@ -38,6 +38,7 @@ class MySQL(monasca_setup.detection.Plugin):
         config.merge(monasca_setup.detection.watch_process(['mysqld'], component='mysql'))
         log.info("\tWatching the mysqld process.")
 
+        configured_mysql = False
         # Attempt login, requires either an empty root password from localhost
         # or relying on a configured /root/.my.cnf
         if self.dependencies_installed():  # ensures MySQLdb is available
@@ -45,9 +46,6 @@ class MySQL(monasca_setup.detection.Plugin):
             import MySQLdb
             try:
                 MySQLdb.connect(read_default_file=mysql_conf)
-            except _mysql_exceptions.MySQLError:
-                pass
-            else:
                 log.info(
                     "\tUsing client credentials from {:s}".format(mysql_conf))
                 # Read the mysql config file to extract the needed variables.
@@ -74,25 +72,37 @@ class MySQL(monasca_setup.detection.Plugin):
                     config['mysql'] = {'init_config': None, 'instances':
                                        [{'name': 'localhost', 'server': 'localhost', 'port': 3306,
                                          'user': my_user, 'pass': my_pass}]}
+                    configured_mysql = True
                 except IOError:
                     log.error("\tI/O error reading {:s}".format(mysql_conf))
                     pass
+            except _mysql_exceptions.MySQLError:
+                log.warn("\tCould not connect to mysql using credentials from {:s}".format(mysql_conf))
+                pass
 
             # Try logging in as 'root' with an empty password
-            if 'mysql' not in config:
+            if not configured_mysql:
                 try:
                     MySQLdb.connect(host='localhost', port=3306, user='root')
-                except _mysql_exceptions.MySQLError:
-                    pass
-                else:
                     log.info("\tConfiguring plugin to connect with user root.")
                     config['mysql'] = {'init_config': None, 'instances':
                                        [{'name': 'localhost', 'server': 'localhost', 'user': 'root',
                                          'port': 3306}]}
+                    configured_mysql = True
+                except _mysql_exceptions.MySQLError:
+                    log.warn("\tCould not connect to mysql using root user")
+                    pass
+        else:
+            exception_msg = 'The mysql dependency MySQLdb is not installed;' \
+                            ' the mysql plugin is not configured'
+            log.error(exception_msg)
+            raise Exception(exception_msg)
 
-        if 'mysql' not in config:
-            log.warn('Unable to log into the mysql database;' +
-                     ' the mysql plugin is not configured.')
+        if not configured_mysql:
+            exception_msg = 'Unable to log into the mysql database;' \
+                            ' the mysql plugin is not configured.'
+            log.error(exception_msg)
+            raise Exception(exception_msg)
 
         return config
 

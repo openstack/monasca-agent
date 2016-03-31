@@ -14,8 +14,30 @@ import monasca_setup.detection
 from monasca_setup.detection import find_process_cmdline
 from monasca_setup.detection import find_process_name
 from monasca_setup.detection import watch_process
+from monasca_setup.detection import watch_process_by_username
 
 log = logging.getLogger(__name__)
+
+
+class MonAgent(monasca_setup.detection.Plugin):
+    """Detect the Monsaca agent engine and setup some simple checks."""
+    def _detect(self):
+        """Run detection, set self.available True if the service is detected."""
+        self.available = True
+        agent_process_list = ['monasca-collector', 'monasca-forwarder', 'monasca-statsd']
+        for process in agent_process_list:
+            if find_process_cmdline(process) is None:
+                self.available = False
+                return
+
+    def build_config(self):
+        """Build the config as a Plugins object and return."""
+        log.info("\tEnabling the Monasca Agent process check")
+        return watch_process_by_username('mon-agent', 'monasca-agent', 'monitoring',
+                                         'monasca-agent')
+
+    def dependencies_installed(self):
+        return True
 
 
 class MonAPI(monasca_setup.detection.Plugin):
@@ -120,7 +142,8 @@ class MonNotification(monasca_setup.detection.Plugin):
     def build_config(self):
         """Build the config as a Plugins object and return."""
         log.info("\tEnabling the Monasca Notification healthcheck")
-        return watch_process(['monasca-notification'], 'monitoring', 'monasca-notification', exact_match=False)
+        return watch_process_by_username('mon-notification', 'monasca-notification', 'monitoring',
+                                         'monasca-notification')
 
     def dependencies_installed(self):
         return True
@@ -241,7 +264,8 @@ class MonThresh(monasca_setup.detection.Plugin):
         config = monasca_setup.agent_config.Plugins()
         for process in ['backtype.storm.daemon.nimbus', 'backtype.storm.daemon.supervisor', 'backtype.storm.daemon.worker']:
             if find_process_cmdline(process) is not None:
-                config.merge(watch_process([process], 'monitoring', 'apache-storm', exact_match=False))
+                config.merge(watch_process([process], 'monitoring', 'apache-storm', exact_match=False, detailed=False))
+        config.merge(watch_process_by_username('storm', 'monasca-thresh', 'monitoring', 'apache-storm'))
         return config
 
     def dependencies_installed(self):
@@ -270,26 +294,3 @@ def dropwizard_metrics(service, component, url, whitelist):
                                              'dimensions': {'service': service, 'component': component},
                                              'whitelist': whitelist}]}
     return config
-
-
-class MonVertica(monasca_setup.detection.Plugin):
-    """Detect Vertica and setup some simple checks."""
-
-    def _detect(self):
-        """Run detection, set self.available True if the service is detected.
-        """
-        if (find_process_name('vertica') is not None and find_process_name(
-                'spread') is not None):
-            self.available = True
-
-    def build_config(self):
-        """Build the config as a Plugins object and return."""
-        log.info("\tEnabling the Monasca Vertica check")
-        config = monasca_setup.agent_config.Plugins()
-        for process in ['vertica', 'spread']:
-            config.merge(watch_process([process], 'monitoring', process,
-                                       exact_match=False))
-        return config
-
-    def dependencies_installed(self):
-        return True

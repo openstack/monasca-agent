@@ -1,6 +1,7 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 """ Aggregation classes used by the collector and statsd to batch messages sent to the forwarder.
 """
+import json
 import logging
 import re
 from time import time
@@ -17,6 +18,9 @@ log = logging.getLogger(__name__)
 # does not support submitting values for the past, and all values get
 # submitted for the timestamp passed into the flush() function.
 RECENT_POINT_THRESHOLD_DEFAULT = 3600
+VALUE_META_MAX_NUMBER = 16
+VALUE_META_VALUE_MAX_LENGTH = 2048
+VALUE_META_NAME_MAX_LENGTH = 255
 
 invalid_chars = "<>={}(),\"\\\\;&"
 restricted_dimension_chars = re.compile('[' + invalid_chars + ']')
@@ -36,6 +40,10 @@ class InvalidDimensionValue(Exception):
 
 
 class InvalidValue(Exception):
+    pass
+
+
+class InvalidValueMeta(Exception):
     pass
 
 
@@ -148,6 +156,32 @@ class MetricsAggregator(object):
             return 0
         return round(float(self.count) / interval, 2)
 
+    def _valid_value_meta(self, value_meta, name, dimensions):
+        if len(value_meta) > VALUE_META_MAX_NUMBER:
+            msg = "Too many valueMeta entries {0}, limit is {1}: {2} -> {3} valueMeta {4}"
+            log.error(msg.format(len(value_meta), VALUE_META_MAX_NUMBER, name, dimensions, value_meta))
+            return False
+        for key, value in value_meta.iteritems():
+            if not key:
+                log.error("valueMeta name cannot be empty: {0} -> {1}".format(name, dimensions))
+                return False
+            if len(key) > VALUE_META_NAME_MAX_LENGTH:
+                msg = "valueMeta name {0} must be {1} characters or less: {2} -> {3}"
+                log.error(msg.format(key, VALUE_META_NAME_MAX_LENGTH, name, dimensions))
+                return False
+
+        try:
+            value_meta_json = json.dumps(value_meta)
+            if len(value_meta_json) > VALUE_META_VALUE_MAX_LENGTH:
+                msg = "valueMeta name value combinations must be {0} characters or less: {1} -> {2} valueMeta {3}"
+                log.error(msg.format(VALUE_META_VALUE_MAX_LENGTH, name, dimensions, value_meta))
+                return False
+        except Exception:
+                log.error("Unable to serialize valueMeta into JSON: {2} -> {3}".format(name, dimensions))
+                return False
+
+        return True
+
     def submit_metric(self, name, value, metric_class, dimensions=None,
                       delegated_tenant=None, hostname=None, device_name=None,
                       value_meta=None, timestamp=None, sample_rate=1):
@@ -191,6 +225,8 @@ class MetricsAggregator(object):
             raise InvalidValue
 
         if value_meta:
+            if not self._valid_value_meta(value_meta, name, dimensions):
+                raise InvalidValueMeta
             meta = tuple(value_meta.items())
         else:
             meta = None

@@ -1,5 +1,6 @@
 # (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 
+import datetime
 import glob
 import hashlib
 import imp
@@ -10,6 +11,7 @@ import optparse
 import os
 import platform
 import re
+import signal
 import socket
 import subprocess
 import sys
@@ -355,6 +357,21 @@ def get_uuid():
     # Note that this is not foolproof but we can reconcile servers
     # on the back-end if need be, based on mac addresses.
     return uuid.uuid5(uuid.NAMESPACE_DNS, platform.node() + str(uuid.getnode())).hex
+
+
+def timeout_command(command, timeout):
+    # call shell-command with timeout (in seconds).
+    # returns None if timeout or the command output.
+    start = datetime.datetime.now()
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    while process.poll() is None:
+        time.sleep(0.1)
+        now = datetime.datetime.now()
+        if (now - start).seconds > timeout:
+            os.kill(process.pid, signal.SIGKILL)
+            os.waitpid(-1, os.WNOHANG)
+            return None
+    return process.stdout.read()
 
 
 def get_os():

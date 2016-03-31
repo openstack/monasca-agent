@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 """
 This module contains classes which are used to occasionally persist the status
 of checks.
@@ -266,7 +266,7 @@ class InstanceStatus(object):
 class CheckStatus(object):
 
     def __init__(self, check_name, instance_statuses, metric_count,
-                 event_count, init_failed_error=None,
+                 event_count=None, init_failed_error=None,
                  init_failed_traceback=None, library_versions=None):
         self.name = check_name
         self.instance_statuses = instance_statuses

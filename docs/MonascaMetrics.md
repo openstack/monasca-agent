@@ -32,7 +32,7 @@ Optionally, a measurement may also contain extra data about the value, which is 
 Although metric names in the Monasca API can be any string the Monasca Agent uses several naming conventions as follows:
 
 * All lowercase characters.
-* '.' is used to hierarchially group. This is done for compatibility with Graphite as Graphite assumes a '.' as a delimiter.
+* '.' is used to hierarchically group. This is done for compatibility with Graphite as Graphite assumes a '.' as a delimiter.
 * '_' is used to separate words in long names that are not meant to be hierarchical.
 
 ### System Dimensions
@@ -140,7 +140,8 @@ statsd.timing('pipeline', 2468.34)      # Pipeline took 2468.34 ms to execute
 statsd.gauge('gaugething', 3.14159265)  # 'gauge' would be the preferred metric type for Monitoring
 ```
 
-The [monasca-statsd](https://github.com/openstack/monasca-statsd library provides a python based implementation of a statsd client but also adds the ability to add dimensions to the the statsd metrics for the client.
+The [monasca-statsd](https://github.com/openstack/monasca-statsd library provides a python based implementation 
+of a statsd client but also adds the ability to add dimensions to the statsd metrics for the client.
 
 Here are some examples of how code can be instrumented using calls to monasca-statsd.
 ```

@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 
 # Core modules
 import logging
@@ -9,7 +9,6 @@ import time
 import monasca_agent.common.check_status as check_status
 import monasca_agent.common.metrics as metrics
 import monasca_agent.common.util as util
-import system.win32 as w32
 
 
 log = logging.getLogger(__name__)
@@ -40,17 +39,6 @@ class Collector(util.Dimensions):
         self.continue_running = True
         self.initialized_checks_d = []
         self.init_failed_checks_d = []
-
-        # add windows system checks
-        if self.os == 'windows':
-            self._checks = [w32.Disk(log),
-                            w32.IO(log),
-                            w32.Processes(log),
-                            w32.Memory(log),
-                            w32.Network(log),
-                            w32.Cpu(log)]
-        else:
-            self._checks = []
 
         if checksd:
             # is of type {check_name: check}
@@ -91,7 +79,7 @@ class Collector(util.Dimensions):
             log.debug("Finished run #%s. Collection time: %.2fs." %
                       (self.run_count, round(collect_duration, 2),))
 
-    def collector_stats(self, num_metrics, num_events, collection_time):
+    def collector_stats(self, num_metrics, collection_time):
         metrics = {}
         thread_count = threading.active_count()
         metrics['monasca.thread_count'] = thread_count
@@ -100,8 +88,8 @@ class Collector(util.Dimensions):
 
         metrics['monasca.collection_time_sec'] = collection_time
         if collection_time > MAX_COLLECTION_TIME:
-            log.info("Collection time (s) is high: %.1f, metrics count: %d, events count: %d" %
-                     (collection_time, num_metrics, num_events))
+            log.info("Collection time (s) is high: %.1f, metrics count: %d" %
+                     (collection_time, num_metrics))
 
         return metrics
 
@@ -114,44 +102,21 @@ class Collector(util.Dimensions):
         self.run_count += 1
         log.debug("Starting collection run #%s" % self.run_count)
 
-        metrics_list = []
-
-        timestamp = time.time()
-        events = {}
-
-        if self.os == 'windows':  # Windows uses old style checks.
-            for check_type in self._checks:
-                try:
-                    for name, value in check_type.check().iteritems():
-                        metrics_list.append(metrics.Measurement(name,
-                                                                timestamp,
-                                                                value,
-                                                                self._set_dimensions(None),
-                                                                None))
-                except Exception:
-                    log.exception('Error running check.')
-        else:
-            for check_type in self._checks:
-                metrics_list.extend(check_type.check())
-
         # checks_d checks
-        checks_d_metrics, checks_d_events, checks_statuses = self.run_checks_d()
-        metrics_list.extend(checks_d_metrics)
-        events.update(checks_d_events)
+        num_metrics, emitter_statuses, checks_statuses = self.run_checks_d()
 
-        # Store the metrics and events in the payload.
         collect_duration = timer.step()
 
+        collect_stats = []
         dimensions = {'component': 'monasca-agent', 'service': 'monitoring'}
         # Add in metrics on the collector run
-        for name, value in self.collector_stats(len(metrics_list), len(events),
-                                                collect_duration).iteritems():
-            metrics_list.append(metrics.Measurement(name,
-                                                    timestamp,
-                                                    value,
-                                                    self._set_dimensions(dimensions),
-                                                    None))
-        emitter_statuses = self._emit(metrics_list)
+        for name, value in self.collector_stats(num_metrics, collect_duration).iteritems():
+            collect_stats.append(metrics.Measurement(name,
+                                                     time.time(),
+                                                     value,
+                                                     self._set_dimensions(dimensions),
+                                                     None))
+        emitter_statuses.append(self._emit(collect_stats))
 
         # Persist the status of the collection run.
         self._set_status(checks_statuses, emitter_statuses, collect_duration)
@@ -159,42 +124,34 @@ class Collector(util.Dimensions):
     def run_checks_d(self):
         """Run defined checks_d checks.
 
-        returns a list of Measurements, a dictionary of events and a list of check statuses.
+        returns a list of Measurements and a list of check statuses.
         """
         sub_timer = util.Timer()
-        measurements = []
-        events = {}
+        measurements = 0
         check_statuses = []
+        emitter_statuses = []
         for check in self.initialized_checks_d:
             if not self.continue_running:
                 return
             log.debug("Running check %s" % check.name)
             instance_statuses = []
             metric_count = 0
-            event_count = 0
             try:
                 # Run the check.
                 instance_statuses = check.run()
 
-                # Collect the metrics and events.
                 current_check_metrics = check.get_metrics()
-                current_check_events = check.get_events()
 
-                # Save them for the payload.
-                measurements.extend(current_check_metrics)
-                if current_check_events:
-                    if check.name not in events:
-                        events[check.name] = current_check_events
-                    else:
-                        events[check.name] += current_check_events
+                # Emit the metrics after each check
+                emitter_statuses.append(self._emit(current_check_metrics))
 
                 # Save the status of the check.
                 metric_count = len(current_check_metrics)
-                event_count = len(current_check_events)
+                measurements += metric_count
             except Exception:
                 log.exception("Error running check %s" % check.name)
 
-            status_check = check_status.CheckStatus(check.name, instance_statuses, metric_count, event_count,
+            status_check = check_status.CheckStatus(check.name, instance_statuses, metric_count,
                                                     library_versions=check.get_library_info())
             check_statuses.append(status_check)
             sub_collect_duration = sub_timer.step()
@@ -208,12 +165,12 @@ class Collector(util.Dimensions):
         for check_name, info in self.init_failed_checks_d.iteritems():
             if not self.continue_running:
                 return
-            status_check = check_status.CheckStatus(check_name, None, None, None,
+            status_check = check_status.CheckStatus(check_name, None, None,
                                                     init_failed_error=info['error'],
                                                     init_failed_traceback=info['traceback'])
             check_statuses.append(status_check)
 
-        return measurements, events, check_statuses
+        return measurements, emitter_statuses, check_statuses
 
     def stop(self):
         """Tell the collector to stop at the next logical point.

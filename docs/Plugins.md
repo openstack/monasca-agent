@@ -19,10 +19,13 @@
     - [MK Livestatus](#mk-livestatus)
   - [Host Alive Checks](#host-alive-checks)
   - [Process Checks](#process-checks)
+  - [File Size Checks](#file-size-checks)
+  - [Directory Checks](#directory-checks)
   - [Http Endpoint Checks](#http-endpoint-checks)
   - [Http Metrics](#http-metrics)
   - [InfluxDB Checks](#influxdb-checks)
   - [MySQL Checks](#mysql-checks)
+  - [Vertica Checks](#vertica-checks)
   - [Elasticsearch Checks](#elasticsearch-checks)
   - [ZooKeeper Checks](#zookeeper-checks)
   - [Kafka Checks](#kafka-checks)
@@ -158,6 +161,7 @@ The following plugins are delivered via setup as part of the standard plugin che
 | disk | | |
 | docker | | |
 | elastic | | |
+| file_size | | |
 | gearmand | | |
 | glance | | OpenStack component |
 | gunicorn | | |
@@ -177,6 +181,7 @@ The following plugins are delivered via setup as part of the standard plugin che
 | memory | | |
 | mongo | | |
 | mysql | /root/.my.cnf | |
+| vertica | /root/.vertica.cnf | |
 | nagios_wrapper | | |
 | network | | |
 | neutron | | OpenStack component |
@@ -247,6 +252,7 @@ The following plugin groups are detected by setup with the default command line 
 | MonPersister | |
 | MonThresh | Monasca API, Persister, Threshold Engine |
 | MySQL | |
+| Vertica | |
 | Neutron | |
 | Nova | |
 | Ntp | |
@@ -518,6 +524,7 @@ The host alive checks return the following metrics
 
 Also in the case of an error the value_meta contains an error message.
 
+
 ## Process Checks
 Process checks can be performed to both verify that a set of named processes are running on the local system and collect/send system level metrics on those processes. The YAML file `process.yaml` contains the list of processes that are checked.
 
@@ -564,6 +571,65 @@ The process checks return the following metrics ( if detailed is set to true, ot
 | process.involuntary_ctx_switches  | process_name, service, component | Number of involuntary context switches for a process
 | process.voluntary_ctx_switches  | process_name, service, component | Number of voluntary context switches for a process
 | process.pid_count  | process_name, service, component | Number of processes that exist with this process name
+
+
+## File Size Checks
+This section describes the file size check that can be performed by the Agent. File size checks are used for gathering the size of individual files or the size of each file under a specific directory. The agent supports additional functionality through the use of Python scripts. A YAML file (file_size.yaml) contains the list of file directory names and file names to check. A Python script (file_size.py) runs checks each host in turn to gather stats. 
+
+Similar to other checks, the configuration is done in YAML, and consists of two keys: init_config and instances. The former is not used by file_size, while the later contains one or more sets of file directory name and file names to check, plus optional parameter recursive. When recursive is true and file_name is set to '*', file_size check will take all the files under the given directory recursively. 
+
+Sample config:
+
+```
+init_config: null
+instances:
+- built_by: FileSize
+  directory_name: /var/log/monasca/agent/
+  file_names:
+  - '*'
+  recursive: false
+- built_by: FileSize
+  directory_name: /var/log/monasca/api
+  file_names:
+  - monasca-api.log
+  - request.log
+  recursive: false
+- built_by: FileSize
+  directory_name: /var/log/monasca/notification
+  file_names:
+  - notification.log
+  recursive: false
+```
+
+The file_size checks return the following metrics:
+
+| Metric Name | Dimensions |
+| ----------- | ---------- |
+| file.size_bytes  | file_name, directory_name, hostname, service |
+
+
+## Directory Checks
+This section describes the directory check that can be performed by the Agent. Directory checks are used for gathering the total size of all the files under a specific directory. A YAML file (directory.yaml) contains the list of directory names to check. A Python script (directory.py) runs checks each host in turn to gather stats. Note: for sparse file, directory check is using its resident size instead of the actual size.
+
+Similar to other checks, the configuration is done in YAML, and consists of two keys: init_config and instances. The former is not used by directory check, while the later contains one or more sets of directory names to check on. Directory check will sum the size of all the files under the given directory recursively.
+
+Sample config:
+
+```
+init_config: null
+instances:
+- built_by: Directory
+  directory: /var/log/monasca/agent
+- built_by: Directory
+  directory: /etc/monasca/agent
+```
+
+The directory checks return the following metrics:
+
+| Metric Name | Dimensions |
+| ----------- | ---------- |
+| directory.size_bytes  | path, hostname, service |
+| directory.files_count  | path, hostname, service |
 
 
 ## Http Endpoint Checks
@@ -842,6 +908,26 @@ The mySQL checks return the following metrics:
 | mysql.innodb.buffer_pool_free | hostname, mode, service=mysql | The number of free pages, in bytes. This value is calculated by multiplying "Innodb_buffer_pool_pages_free" and "Innodb_page_size" of the server status variable. |
 | mysql.net.max_connections | hostname, mode, service=mysql | Corresponding to "Max_used_connections" of the server status variable. |
 | mysql.net.connections | hostname, mode, service=mysql | Corresponding to "Connections" of the server status variable. |
+
+
+## Vertica Checks
+This section describes the vertica check that can be performed by the Agent.  The vertica check requires a configuration file called vertica.yaml to be available in the agent conf.d configuration directory.
+
+Sample config:
+
+```
+init_config:
+
+instances:
+	user: mon_api
+	password: password
+	service: monasca (optional, defaults to vertica)
+	timeout: 3 (optional, defaults to 3 seconds)
+```
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| vertica.db.connection_status | hostname, service=vertica | Value of DB connection status (0=Healthy).
 
 
 ## Elasticsearch Checks
@@ -1315,6 +1401,8 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 
 `nova_refresh` specifies the number of seconds between calls to the Nova API to refresh the instance cache.  This is helpful for updating VM hostname and pruning deleted instances from the cache.  By default, it is set to 14,400 seconds (four hours).  Set to 0 to refresh every time the Collector runs, or to None to disable regular refreshes entirely (though the instance cache will still be refreshed if a new instance is detected).
 
+'metadata' specifies the list of instance metadata keys to be sent as dimensions. This is helpful to give more information about an instance. By default 'scale_group' metadata is used for supporting auto scaling in Heat.
+
 `vm_probation` specifies a period of time (in seconds) in which to suspend metrics from a newly-created VM.  This is to prevent quickly-obsolete metrics in an environment with a high amount of instance churn (VMs created and destroyed in rapid succession).  The default probation length is 300 seconds (five minutes).  Setting to 0 disables VM probation, and metrics will be recorded as soon as possible after a VM is created.
 
 `ping_check` includes the entire command line (sans the IP address, which is automatically appended) used to perform a ping check against instances, with a keyword `NAMESPACE` automatically replaced with the appropriate network namespace for the VM being monitored.  Set to False (or omit altogether) to disable ping checks.  This is automatically populated during `monasca-setup` from a list of possible `ping` command lines.  Generally, `fping` is preferred over `ping` because it can return a failure with sub-second resolution, but if `fping` does not exist on the system, `ping` will be used instead.
@@ -1322,13 +1410,11 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 Ping checks require:
 1. Neutron networking in DVR mode (legacy mode is supported on single-node installations, such as devstack)
 2. The `python-neutronclient` library and its dependencies installed and available to the Monasca Agent
-3. The ability for the Monasca Agent user (default: 'mon-agent') to run `/sbin/ip` under sudo without a password.  One possible implementation would be to create a file, `/etc/sudoers.d/mon-agent`, containing the following line:
-```
-mon-agent ALL=(root) NOPASSWD: /sbin/ip
-```
-4. A security rule for the guest VM which allows ICMP from the appropriate Neutron router IP address
+3. A security rule for the guest VM which allows ICMP from the appropriate Neutron router IP address
 
 To limit false negatives, ping checks will not be peformed if the above requirements are not met.
+
+Executing the ping command inside a namespace requires enhanced privileges.  To accomplish this, the `monasca-setup` process will copy `/sbin/ip` to a local directory (`sys.path[0]`), lock down the ownership and permissions, and use `setcap` to apply `cap_sys_admin`, thus letting the 'mon-agent' user execute a ping command within a separate network namespace, without the need for `sudo`.
 
 `alive_only` will suppress all per-VM metrics aside from `host_alive_status` and `vm.host_alive_status`, including all I/O, network, memory, ping, and CPU metrics.  [Aggregate Metrics](#aggregate-metrics), however, would still be enabled if `alive_only` is true.  By default, `alive_only` is false.
 
@@ -1342,8 +1428,11 @@ init_config:
     region_name: 'region1'
     cache_dir: /dev/shm
     nova_refresh: 14400
+    metadata:
+    - scale_group
     vm_probation: 300
-    ping_check: sudo -n /sbin/ip exec NAMESPACE /usr/bin/fping -n -c1 -t250 -q
+    ping_check: /opt/stack/venv/monasca_agent-20160224T213950Z/bin/ip netns exec NAMESPACE
+      /bin/ping -n -c1 -w1 -q
     alive_only: false
 instances:
     - {}
@@ -1376,6 +1465,7 @@ Example cache:
       "disk" : 1,
       "tenant_id" : "7d8e24a1e0cb4f8c8dedfb2010992b62",
       "zone" : "nova",
+      "scale_group": "a1207522-c5fb-4621-a839-c00b638cfb47",
       "vcpus" : 1,
       "hostname" : "vm01",
       "ram" : 512
@@ -1413,6 +1503,7 @@ Example cache (excerpt, see next section for complete list of available metrics)
 | mem.free_perc        | Percent of memory free                 |                        |
 | mem.swap_used_mb     | Used swap space in Mbytes              |                        |
 | ping_status          | 0 for ping success, 1 for ping failure |                        |
+| cpu.time_ms          | Cumulative CPU time (in ms), an Operations-only metric |        |
 
 #### host_alive_status Codes
 | Code | Description                          | value_meta 'detail'                    |

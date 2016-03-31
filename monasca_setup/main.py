@@ -219,8 +219,6 @@ def parse_arguments(parser):
                                             "Useful for load testing; not for production use.", default=0)
     parser.add_argument('-v', '--verbose', help="Verbose Output", action="store_true")
     parser.add_argument('--dry_run', help="Make no changes just report on changes", action="store_true")
-    parser.add_argument('--sub_collection_warn', help="Threshold value for warning on collection time of each check (in second)", type=int, default=5)
-    parser.add_argument('--collector_restart_interval', help="Collector restart interval (in hour)", type=int, default=24)
     return parser.parse_args()
 
 

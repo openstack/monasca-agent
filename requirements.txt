@@ -7,6 +7,7 @@ oslo.log
 oslo.middleware
 oslo.serialization
 oslo.utils
+oslo.vmware
 
 PyYAML
 gearman>=2.0.2,<2.1

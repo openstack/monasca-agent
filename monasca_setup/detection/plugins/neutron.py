@@ -23,7 +23,8 @@ class Neutron(monasca_setup.detection.ServicePlugin):
                               'bin/neutron-lbaas-agent',
                               'neutron-lbaasv2-agent',
                               'neutron-l2gateway-agent',
-                              'infoblox-ipam-agent'],
+                              'infoblox-ipam-agent',
+                              'ipsec/charon'],
             'service_api_url': 'http://localhost:9696',
             'search_pattern': '.*v2.0.*'
         }

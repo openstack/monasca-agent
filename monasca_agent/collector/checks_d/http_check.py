@@ -4,8 +4,10 @@
 
 """
 
+import os
 import re
 import socket
+import sys
 import time
 
 from httplib2 import Http
@@ -48,6 +50,7 @@ class HTTPCheck(services_checks.ServicesCheck):
         password = instance.get('password', None)
         timeout = int(instance.get('timeout', 10))
         headers = instance.get('headers', {})
+        headers.setdefault('User-Agent', os.path.basename(sys.argv[0]))
         use_keystone = instance.get('use_keystone', False)
         keystone_config = instance.get('keystone_config', None)
         url = instance.get('url', None)
