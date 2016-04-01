@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 
 import collections
 import logging
@@ -72,7 +72,11 @@ class KafkaCheck(checks.AgentCheck):
             for topic in topics:
                 kafka_consumer = None
                 try:
-                    kafka_consumer = consumer.SimpleConsumer(kafka_conn, consumer_group, topic)
+                    kafka_consumer = consumer.SimpleConsumer(kafka_conn,
+                                                             consumer_group,
+                                                             topic,
+                                                             auto_commit=False)
+
                     partitions = kafka_consumer.offsets.keys()
                 except Exception:
                     self.log.error('Error fetching partition list for topic {0}'.format(topic))
