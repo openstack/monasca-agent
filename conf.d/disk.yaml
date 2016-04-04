@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 
 init_config:
 
@@ -23,5 +23,5 @@ instances:
       # device_blacklist_re: .*\/dev\/mapper\/lxc-box.*
 
       # For disk metrics it is also possible to ignore entire filesystem types
-      ignore_filesystem_types: cgroup,configfs,debugfs,devpts,devtmpfs,fusectl,hugetlbfs,proc,pstore,rpc_pipefs,securityfs,sysfs,tmpfs,udevfs,iso9660
+      ignore_filesystem_types: cgroup,configfs,debugfs,devpts,devtmpfs,fusectl,hugetlbfs,proc,pstore,rpc_pipefs,securityfs,sysfs,tmpfs,udevfs,iso9660,nsfs
       device_blacklist_re: .*freezer_backup_snap.*
