@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 
 import logging
 import os
@@ -13,7 +13,15 @@ import monasca_agent.collector.checks as checks
 class Disk(checks.AgentCheck):
 
     def __init__(self, name, init_config, agent_config):
+        self._partition_error = set()
+
         super(Disk, self).__init__(name, init_config, agent_config)
+
+    def _log_once_per_day(self, message):
+        if message in self._partition_error:
+            return
+        self._partition_error.add(message)
+        log.exception(message)
 
     def check(self, instance):
         """Capture disk stats
@@ -46,11 +54,19 @@ class Disk(checks.AgentCheck):
             if partition.fstype not in fs_types_to_ignore \
                 and (not device_blacklist_re
                      or not device_blacklist_re.match(partition.device)):
-                    device_name = self._get_device_name(partition.device)
-                    disk_usage = psutil.disk_usage(partition.mountpoint)
-                    total_capacity += disk_usage.total
-                    total_used += disk_usage.used
-                    st = os.statvfs(partition.mountpoint)
+                    try:
+                        device_name = self._get_device_name(partition.device)
+                        disk_usage = psutil.disk_usage(partition.mountpoint)
+                        total_capacity += disk_usage.total
+                        total_used += disk_usage.used
+                        st = os.statvfs(partition.mountpoint)
+                    except Exception as ex:
+                        exception_name = ex.__class__.__name__
+                        self._log_once_per_day('Unable to access partition {} '
+                                               'with error: {}'.format(partition,
+                                                                       exception_name))
+                        continue
+
                     if use_mount:
                         dimensions.update({'mount_point': partition.mountpoint})
                     self.gauge("disk.space_used_perc",
