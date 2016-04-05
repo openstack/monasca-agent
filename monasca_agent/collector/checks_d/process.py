@@ -47,16 +47,17 @@ class ProcessCheck(checks.AgentCheck):
         else:
             for string in search_string:
                 if string == 'All':
-                    found_process_list = [proc.pid for proc in
-                                          self._current_process_list]
+                    found_process_list.extend(
+                        [proc.pid for proc in self._current_process_list])
                 elif exact_match:
-                    found_process_list = \
+                    found_process_list.extend(
                         [proc.pid for proc in self._current_process_list
-                         if proc.name == string]
+                         if proc.name == string])
                 else:
-                    found_process_list = \
+                    found_process_list.extend(
                         [proc.pid for proc in self._current_process_list
-                         if string in proc.cmdline]
+                         if string in proc.cmdline])
+
         return set(found_process_list)
 
     def get_process_metrics(self, pids, psutil, name):
