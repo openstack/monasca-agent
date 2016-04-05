@@ -50,7 +50,7 @@ class Config(object):
                                  'skip_ssl_validation': False,
                                  'autorestart': True,
                                  'non_local_traffic': False,
-                                 'sub_collection_warn': 5,
+                                 'sub_collection_warn': 6,
                                  'collector_restart_interval': 24},
                         'Api': {'is_enabled': False,
                                 'url': '',

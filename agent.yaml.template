@@ -73,7 +73,7 @@ Main:
   check_freq: {args.check_frequency}
 
   # Threshold value for warning on collection time of each check (in seconds)
-  sub_collection_warn: 5
+  sub_collection_warn: 6
 
   # Collector restart interval (in hours)
   collector_restart_interval: 24
