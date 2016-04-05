@@ -133,11 +133,15 @@ class InfluxDB(services_checks.ServicesCheck):
         for mod, met_list in metricdef.iteritems():
             if whitelist is None and mod not in whitelist:
                 continue
+
             dims = dimensions.copy()
             for met, met_def in met_list.iteritems():
                 if met == DIMENSIONS_KEY:  # map tags to appropriate dimensions
                     for k, v in met_def.iteritems():
-                        dims[k] = trans[mod][DIMENSIONS_KEY][v]
+                        if v in trans[mod][DIMENSIONS_KEY]:
+                            dims[k] = trans[mod][DIMENSIONS_KEY][v]
+                        else:
+                            self.log.warning("InfluxDB did not report label %s for stats module %s (check mapping)", v, mod)
                 else:
                     met_type = met_def[TYPE_KEY]
                     met_iname = met_def.get(INFLUXDB_NAME_KEY, met)
