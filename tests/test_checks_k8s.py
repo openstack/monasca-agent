@@ -26,7 +26,7 @@ class TestDynamicCheckHelper(unittest.TestCase):
                                                               },
                                                               'groups': {
                                                                   'testgroup': {
-                                                                      'rates': ['.*\.Responses.*']
+                                                                      'rates': ['.*\.Responses.*', 'sec_auth#[0-9]*_.*']
                                                                   }
                                                                   # dimensions should be inherited from above
                                                               }}}]}
@@ -35,6 +35,10 @@ class TestDynamicCheckHelper(unittest.TestCase):
 
     def run_check(self):
         self.check.run()
+        metric_dict = {"sec": {"auth": [{"total": 10}]}}
+        self.helper.push_metric_dict(self._config['instances'][0], metric_dict, group="testgroup",
+                                     labels={'simple_label': 'simple_label_test',
+                                             'complex_label': 'k8s_monasca-api-a8109321_postfix'}, max_depth=3)
         self.helper.push_metric(self._config['instances'][0], metric='req.ResponsesOk', value=10.0, group="testgroup",
                                 labels={'simple_label': 'simple_label_test',
                                         'complex_label': 'k8s_monasca-api-a8109321_postfix'})
@@ -43,6 +47,9 @@ class TestDynamicCheckHelper(unittest.TestCase):
                                         'complex_label': 'k8s_monasca-api-a8109321_postfix'})
         self.helper.push_metric(self._config['instances'][0], metric='MessagesTotal', value=1)
         time.sleep(1)
+        self.helper.push_metric_dict(self._config['instances'][0], metric_dict, group="testgroup",
+                                     labels={'simple_label': 'simple_label_test',
+                                             'complex_label': 'k8s_monasca-api-a8109321_postfix'}, max_depth=3)
         self.helper.push_metric(self._config['instances'][0], metric='req.ResponsesOk', value=15.0, group="testgroup",
                                 labels={'simple_label': 'simple_label_test',
                                         'complex_label': 'k8s_monasca-api-a8109321_postfix'})
@@ -58,6 +65,7 @@ class TestDynamicCheckHelper(unittest.TestCase):
         metric1 = filter(lambda m: m.name == 'dynhelper.messages_avg', metrics)
         metric2 = filter(lambda m: m.name == 'dynhelper.messages_total', metrics)
         metric3 = filter(lambda m: m.name == 'dynhelper.testgroup.req_responses_ok', metrics)
+        metric4 = filter(lambda m: m.name == 'dynhelper.testgroup.sec_auth#0_total', metrics)
         self.assertTrue(len(metric1) > 0,
                         'gauge dynhelper.messages_avg missing in metric list {0}'.format(repr(metrics)))
         self.assertEquals(metric1[0].dimensions,
@@ -70,5 +78,10 @@ class TestDynamicCheckHelper(unittest.TestCase):
         self.assertTrue(len(metric3) > 0,
                         'rate dynhelper.testgroup.req_responses_ok missing in metric list {0}'.format(repr(metrics)))
         self.assertEquals(metric3[0].dimensions,
+                          {'simple_dimension': 'simple_label_test', 'complex_dimension': 'monasca-api-a8109321',
+                           'hostname': metric3[0].dimensions.get('hostname')})
+        self.assertTrue(len(metric4) > 0,
+                        'rate dynhelper.testgroup.sec_auth#0_total missing in metric list {0}'.format(repr(metrics)))
+        self.assertEquals(metric4[0].dimensions,
                           {'simple_dimension': 'simple_label_test', 'complex_dimension': 'monasca-api-a8109321',
                            'hostname': metric3[0].dimensions.get('hostname')})

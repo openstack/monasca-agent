@@ -500,7 +500,7 @@ class LibvirtCheck(AgentCheck):
             if self.init_config.get('ping_check') and 'network' in instance_cache.get(inst_name):
                 for net in instance_cache.get(inst_name)['network']:
 
-                    ping_cmd = self.init_config.get('ping_check').replace('NAMESPACE',
+                    ping_cmd = self.init_config.get('ping_check').replace('KUBERNETES_PREFIX',
                                                                           net['namespace']).split()
                     ping_cmd.append(net['ip'])
                     dims_customer_ip = dims_customer.copy()

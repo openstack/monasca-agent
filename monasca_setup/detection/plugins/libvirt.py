@@ -135,7 +135,7 @@ class Libvirt(Plugin):
                     # Look for the best ping command
                     for ping_cmd in ping_options:
                         if os.path.isfile(ping_cmd[0]):
-                            init_config['ping_check'] = "{0}/ip netns exec NAMESPACE {1}".format(sys.path[0],
+                            init_config['ping_check'] = "{0}/ip netns exec KUBERNETES_PREFIX {1}".format(sys.path[0],
                                                                                                  ' '.join(ping_cmd))
                             log.info("\tEnabling ping checks using {0}".format(ping_cmd[0]))
                             break

@@ -65,7 +65,7 @@ def get_kube_labels():
         labels = metadata.get("labels")
         if name and labels and namespace:
             key = "%s/%s" % (namespace, name)
-            kube_labels[key] = ["kube_%s:%s" % (k, v) for k, v in labels.iteritems()]
+            kube_labels[key] = labels
 
     return kube_labels
 

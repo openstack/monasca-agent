@@ -3,6 +3,7 @@
 import base64
 import logging
 import re
+from numbers import Number
 
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.collector.checks.check import Check
@@ -166,6 +167,21 @@ class DynamicCheckHelper:
     def is_enabled_metric(self, instance, metric, group=None):
         type, _ = self._fetch_metric_spec(instance, metric, group)
         return type != SKIP
+
+    def push_metric_dict(self, instance, metric_dict, labels={}, group=None, timestamp=None, fixed_dimensions={}, default_dimensions={}, max_depth=0, curr_depth=0, prefix=''):
+        for element, child in metric_dict.iteritems():
+            if isinstance(child, dict) and curr_depth < max_depth:
+                self.push_metric_dict(instance, child, labels, group, timestamp, fixed_dimensions, default_dimensions, max_depth, curr_depth+1, prefix+element+'_')
+            elif isinstance(child, Number):
+                self.push_metric(instance, prefix+element, float(child), labels, group, timestamp, fixed_dimensions, default_dimensions)
+            elif isinstance(child, list):
+                for i, child_element in enumerate(child):
+                    if isinstance(child_element, dict) and curr_depth < max_depth:
+                        self.push_metric_dict(instance, child_element, labels, group, timestamp, fixed_dimensions, default_dimensions, max_depth, curr_depth+1, prefix+element+'#'+str(i)+'_')
+                    elif isinstance(child_element, Number):
+                        self.push_metric(instance, prefix+element+'#'+str(i), float(child_element), labels, group, timestamp, fixed_dimensions, default_dimensions)
+                    else:
+                        log.debug('nested arrays are not supported for configurable extraction of element %s', element)
 
     def push_metric(self, instance, metric, value, labels={}, group=None, timestamp=None, fixed_dimensions={}, default_dimensions={}):
         """
