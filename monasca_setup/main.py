@@ -222,7 +222,7 @@ def parse_arguments(parser):
     return parser.parse_args()
 
 
-def plugin_detection(plugins, template_dir, detection_args, skip_failed=True):
+def plugin_detection(plugins, template_dir, detection_args, skip_failed=True, remove=False):
     """Runs the detection step for each plugin in the list and returns the complete detected agent config.
     :param plugins: A list of detection plugin classes
     :param template_dir: Location of plugin configuration templates
@@ -235,8 +235,9 @@ def plugin_detection(plugins, template_dir, detection_args, skip_failed=True):
         # todo add option to install dependencies
         detect = detect_class(template_dir, False, detection_args)
         if detect.available:
-            log.info('Configuring {0}'.format(detect.name))
             new_config = detect.build_config_with_name()
+            if not remove:
+                log.info('Configuring {0}'.format(detect.name))
             if new_config is not None:
                 plugin_config.merge(new_config)
         elif not skip_failed:
@@ -256,29 +257,36 @@ def remove_config(args, plugin_names):
     """
     changes = False
     existing_config_files = glob(os.path.join(args.config_dir, 'conf.d', '*.yaml'))
+    detected_plugins = utils.discover_plugins(CUSTOM_PLUGIN_PATH)
+    plugins = utils.select_plugins(args.detection_plugins, detected_plugins)
+
+    if args.detection_args is not None:
+        detected_config = plugin_detection(
+            plugins, args.template_dir, args.detection_args,
+            skip_failed=(args.detection_plugins is None), remove=True)
+
     for file_path in existing_config_files:
         deletes = False
         plugin_name = os.path.splitext(os.path.basename(file_path))[0]
         config = agent_config.read_plugin_config_from_disk(args.config_dir, plugin_name)
-        new_instances = []  # To avoid odd issues from iterating over a list you delete from build a new instead
-        for i in range(len(config['instances'])):
-            inst = config['instances'][i]
-            if 'built_by' in inst and inst['built_by'] in plugin_names:
-                changes = True
-                deletes = True
-                continue
-            new_instances.append(inst)
-        config['instances'] = new_instances
+        new_instances = []  # To avoid odd issues from iterating over a list you delete from, build a new instead
+        if args.detection_args is None:
+            for inst in config['instances']:
+                if 'built_by' in inst and inst['built_by'] in plugin_names:
+                    changes = True
+                    deletes = True
+                    continue
+                new_instances.append(inst)
+            config['instances'] = new_instances
+        else:
+            for detected_key in detected_config.keys():
+                for inst in detected_config[detected_key]['instances']:
+                    if inst in config['instances']:
+                        changes = True
+                        deletes = True
+                        config['instances'].remove(inst)
         if deletes:
-            if args.dry_run:
-                log.info("Changes would be made to the config file {0}".format(file_path))
-            else:
-                if len(config['instances']) == 0:
-                    log.info("Removing configuration file {0} it is no longer needed.".format(file_path))
-                    os.remove(file_path)
-                else:
-                    log.info("Saving changes to configuration file {0}.".format(file_path))
-                    agent_config.save_plugin_config(args.config_dir, plugin_name, args.user, config)
+            agent_config.delete_from_config(args, config, file_path, plugin_name)
     return changes
 if __name__ == "__main__":
     sys.exit(main())

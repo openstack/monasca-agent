@@ -3,9 +3,12 @@
 """Classes to aid in configuration of the agent."""
 
 import collections
+import logging
 import os
 import pwd
 import yaml
+
+log = logging.getLogger(__name__)
 
 
 class Plugins(collections.defaultdict):
@@ -105,3 +108,16 @@ def check_endpoint_changes(value, config):
                 config['instances'][i]['name'] = new_url
             config['instances'][i]['url'] = new_url
     return value, config
+
+
+def delete_from_config(args, config, file_path, plugin_name):
+    if args.dry_run:
+        info_msg = ("Changes would be made to the config file {0}".format(file_path))
+    else:
+        if len(config['instances']) == 0:
+            info_msg = ("Removing configuration file {0} it is no longer needed.".format(file_path))
+            os.remove(file_path)
+        else:
+            info_msg = ("Saving changes to configuration file {0}.".format(file_path))
+            save_plugin_config(args.config_dir, plugin_name, args.user, config)
+    log.info(info_msg)
