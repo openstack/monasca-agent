@@ -76,7 +76,7 @@ class Kubernetes(services_checks.ServicesCheck):
             raise Exception('Kubernetes check only supports one configured instance.')
         super(Kubernetes, self).__init__(name, init_config, agent_config, instances)
         self._kube_settings = set_kube_settings(instances[0])
-        self._publisher = utils.DynamicCheckHelper(self, 'kubernetes')
+        self._publisher = utils.DynamicCheckHelper(self, 'kubernetes', DEFAULT_MAPPING)
 
     def _check(self, instance):
         kube_settings = get_kube_settings()
