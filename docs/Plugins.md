@@ -1549,5 +1549,62 @@ Below are the list of metrics collected by this plugin from the configured clust
     "id": <cluster-name>-<vcenter-ip or fqdn>
 ```
 
+
+## HTTPS Certificate Expiration
+An extension to the Agent provides the ability to determine the expiration date of the certificate for the URL. The metric is days until the certificate expires
+
+ default dimensions:
+    url: url
+
+A YAML file (cert_check.yaml) contains the list of urls to check. It also contains
+
+The configuration of the certicate expiration check is done in YAML, and consists of two keys:
+
+* init_config
+* instances
+
+The init_config section lists the global configuration settings, such as the Certificate Authority Certificate file, the ciphers to use, the period at which to output the metric and the url connection timeout (in seconds, floating-point number)
+
+```
+ls -l `which ping` -rwsr-xr-x 1 root root 35712 Nov 8 2011 /bin/ping
+```
+
+```
+init_config:
+  ca_certs: /etc/ssl/certs/ca-certificates.crt
+  ciphers: HIGH:-aNULL:-eNULL:-PSK:RC4-SHA:RC4-MD5
+  collect_period: 3600
+  timeout: 1.0
+```
+
+The instances section contains the urls to check.
+
+```
+instances:
+- built_by: CertificateCheck
+  url: https://somehost.somedomain.net:8333
+- built_by: CertificateCheck
+  url: https://somehost.somedomain.net:9696
+```
+
+The certicate expiration checks return the following metrics
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| https.cert_expire_days | url=supplied url being checked | The number of days until the certificate expires
+
+
+There is a detection plugin that should be used to configure this extension. It is invoked as:
+
+monasca-setup -d CertificateCheck -a urls=https://somehost.somedomain.net:8333,https://somehost.somedomain.net:9696
+
+The urls option is a comma separated list of urls to check.
+
+These options can be set if desired:
+* ca_certs: file containing the certificates for Certificate Authorities. The default is /etc/ssl/certs/ca-certificates.crt
+* ciphers: list of ciphers to use.  default is HIGH:-aNULL:-eNULL:-PSK:RC4-SHA:RC4-MD5
+* collect_period: Integer time in seconds between outputting the metric.  Since the metric is in days, it makes sense to output it at a slower rate. The default is 3600, once per hour
+* timeout: Float time in seconds before timing out the connect to the url.  Increase if needed for very slow servers, but making this too long will increase the time this plugin takes to run if the server for the url is down. The default is 1.0 seconds
+
 # License
 (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
