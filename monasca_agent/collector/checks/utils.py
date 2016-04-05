@@ -179,8 +179,9 @@ class DynamicCheckHelper:
                 self.push_metric(instance, prefix+element, float(child), labels, group, timestamp, fixed_dimensions, default_dimensions)
             elif isinstance(child, list):
                 for i, child_element in enumerate(child):
-                    if isinstance(child_element, dict) and curr_depth < max_depth:
-                        self.push_metric_dict(instance, child_element, labels, group, timestamp, fixed_dimensions, default_dimensions, max_depth, curr_depth+1, prefix+element+'#'+str(i)+'_')
+                    if isinstance(child_element, dict):
+                        if curr_depth < max_depth:
+                            self.push_metric_dict(instance, child_element, labels, group, timestamp, fixed_dimensions, default_dimensions, max_depth, curr_depth+1, prefix+element+'#'+str(i)+'_')
                     elif isinstance(child_element, Number):
                         self.push_metric(instance, prefix+element+'#'+str(i), float(child_element), labels, group, timestamp, fixed_dimensions, default_dimensions)
                     else:
