@@ -33,7 +33,7 @@ def get_kube_settings():
 def set_kube_settings(instance):
     global _kube_settings
 
-    host = instance.get("host") or _get_default_router()
+    host = instance.get("host") or _get_node_name()
     cadvisor_port = instance.get('port', DEFAULT_CADVISOR_PORT)
     method = instance.get('method', DEFAULT_METHOD)
     metrics_url = urljoin('%s://%s:%d' % (method, host, cadvisor_port), METRICS_PATH)
@@ -70,14 +70,17 @@ def get_kube_labels():
     return kube_labels
 
 
-def _get_default_router():
+def _get_node_name():
     try:
-        with open('/proc/net/route') as f:
-            for line in f.readlines():
-                fields = line.strip().split()
-                if fields[1] == '00000000':
-                    return socket.inet_ntoa(struct.pack('<L', int(fields[2], 16)))
-    except IOError, e:
+        # TODO: use K8S API to get hostname of port (we should have some simple wrapper for the API here)
+        """
+        KUBE_TOKEN=$(</var/run/secrets/kubernetes.io/serviceaccount/token)
+        export KUBE_NODE=`unset https_proxy; unset http_proxy; unset all_proxy; curl -sSk -H "Authorization: Bearer $KUBE_TOKEN" \
+        https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/$KUBE_NAMESPACE/pods/$HOSTNAME| grep  "nodeName"| awk -F: '{ print $2}'|sed 's/\"//g'`
+        """
+        raise IOError('_get_node_name() not implemented')
+
+    except IOError as e:
         log.error('Unable to open /proc/net/route: %s', e)
 
     return None

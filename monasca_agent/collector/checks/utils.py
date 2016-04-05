@@ -5,6 +5,7 @@ import logging
 import re
 
 from monasca_agent.collector.checks import AgentCheck
+from monasca_agent.collector.checks.check import Check
 
 log = logging.getLogger(__name__)
 
@@ -54,11 +55,33 @@ class DynamicCheckHelper:
 
         return result
 
-    def __init__(self, check, prefix):
+    def __init__(self, check, prefix, default_mapping=None):
         """
-        :param check: Target check instance to decorate
+        :param check: Target check instance to filter and map metrics from a separate data source. The mapping
+        procedure involves a filtering, renaming and classification of metrics and filtering and mapping of
+        labels to dimensions.
 
-        For an instance to support mapped dimensions an element 'mapped_dimensions' needs to be added. For each dimension, an
+        For metrics the filtering and renaming stage is identical. The metric filter is specified as regular
+        expression with zero or more match groups. If match groups are specified, the match group values are
+        concatenated with '_'. If no match group is specified, the name is taken as is. The resulting name is
+        normalized according to Monasca naming standards for metrics. This implies that dots are replaced by underscores
+        and *CamelCase* is transformed into *lower_case*. Special characters are eliminated, too.
+
+        a) Simple mapping:
+
+           rates: [ 'FilesystemUsage' ]             # map metric 'FileystemUsage' to 'filesystem_usage'
+
+        b) Mapping with simple regular expression
+
+           rates: [ '.*Usage' ]                     # map metrics ending with 'Usage' to '..._usage'
+
+        b) Mapping with regular expression and match-groups
+
+           rates: [ '(.*Usage)\.stats\.(total)' ]   # map metrics ending with 'Usage.stats.total' to '..._usage_total'
+
+        For an instance to support mapped dimensions an element 'mapping' needs to be added.
+
+        Mapping of labels to dimensions is a little more complex. For each dimension, an
         entry of the following format is required:
 
         a) Simple mapping
@@ -101,7 +124,7 @@ class DynamicCheckHelper:
         self._grp_metric_cache = {}
         for inst in self._check.instances:
             iname = inst['name']
-            mappings = inst.get('mapping')
+            mappings = inst.get('mapping', default_mapping)
             if mappings:
                 # build global name filter and rate/gauge assignment
                 self._metric_map[iname] = DynamicCheckHelper._build_metric_map(mappings)
@@ -165,7 +188,7 @@ class DynamicCheckHelper:
         metric_prefix = self._prefix + '.'
         if group:
             metric_prefix += group + '.'
-        metric_name = metric_prefix + metric
+        metric_name = metric_prefix + metric_name
         dims = self._map_dimensions(default_dimensions, group, instance['name'], labels)
         dims.update(fixed_dimensions)
 
@@ -210,18 +233,27 @@ class DynamicCheckHelper:
         if metric_entry is None:
             all_gauges_re = metric_map.get('gauges', [])
             for rx in all_gauges_re:
-                if re.match(rx, metric):
-                    metric_entry = { 'type': GAUGE, 'name': re.sub('(?!^)([A-Z]+)', r'_\1',metric).lower() }
+                groups = re.match(rx, metric)
+                if groups:
+                    metric_entry = { 'type': GAUGE, 'name': DynamicCheckHelper._normalize_metricname(metric, groups)}
                     metric_cache[metric] = metric_entry
                     return metric_entry['type'], metric_entry['name']
             all_rates_re = metric_map.get('rates', [])
             for rx in all_rates_re:
-                if re.match(rx, metric):
-                    metric_entry = { 'type': RATE, 'name': re.sub('(?!^)([A-Z]+)', r'_\1',metric).lower() }
+                groups = re.match(rx, metric)
+                if groups:
+                    metric_entry = { 'type': RATE, 'name': DynamicCheckHelper._normalize_metricname(metric, groups)}
                     metric_cache[metric] = metric_entry
                     return metric_entry['type'], metric_entry['name']
-            metric_entry = { 'type': SKIP, 'name': re.sub('(?!^)([A-Z]+)', r'_\1',metric).lower() }
+            metric_entry = { 'type': SKIP, 'name': DynamicCheckHelper._normalize_metricname(metric, groups)}
             metric_cache[metric] = metric_entry
             return SKIP, metric
         else:
             return metric_entry['type'], metric_entry['name']
+
+    @staticmethod
+    def _normalize_metricname(metric, groups):
+        # map metric name first
+        if groups and groups.lastindex > 0:
+            metric = '_'.join(groups.groups())
+        return Check.normalize(re.sub('(?!^)([A-Z]+)', r'_\1', metric.replace('.', '_')).lower())
