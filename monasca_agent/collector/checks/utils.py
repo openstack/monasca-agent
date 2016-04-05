@@ -62,6 +62,9 @@ class DynamicCheckHelper:
         procedure involves a filtering, renaming and classification of metrics and filtering and mapping of
         labels to dimensions.
 
+        To support all these capabilities, an element 'mapping' needs to be added to the instance config or a default
+        has to be supplied.
+
         For metrics the filtering and renaming stage is identical. The metric filter is specified as regular
         expression with zero or more match groups. If match groups are specified, the match group values are
         concatenated with '_'. If no match group is specified, the name is taken as is. The resulting name is
@@ -79,8 +82,6 @@ class DynamicCheckHelper:
         b) Mapping with regular expression and match-groups
 
            rates: [ '(.*Usage)\.stats\.(total)' ]   # map metrics ending with 'Usage.stats.total' to '..._usage_total'
-
-        For an instance to support mapped dimensions an element 'mapping' needs to be added.
 
         Mapping of labels to dimensions is a little more complex. For each dimension, an
         entry of the following format is required:
@@ -142,6 +143,8 @@ class DynamicCheckHelper:
                         self._grp_metric_map[iname][grp] = DynamicCheckHelper._build_metric_map(gspec)
                         self._grp_metric_cache[iname][grp] = {}
                         self._grp_dimension_map[iname][grp] = DynamicCheckHelper._build_dimension_map(gspec)
+            else:
+                log.error('instance %s is not supported: no element "mapping" found!', iname)
 
     def _fetch_metric_spec(self, instance, metric, group=None):
         """

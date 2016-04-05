@@ -102,7 +102,7 @@ class Kubernetes(services_checks.ServicesCheck):
     def _update_container_metrics(self, instance, subcontainer, kube_labels):
         dims = instance.get('dimensions', {})  # add support for custom dims
         klabels = {}
-        for alias, i in subcontainer.get('aliases', []):
+        for i, alias in enumerate(subcontainer.get('aliases', [])):
             klabels['alias#'+i] = alias
         kspec = subcontainer['spec']
         klabels.update(kspec.get('labels', {}))
