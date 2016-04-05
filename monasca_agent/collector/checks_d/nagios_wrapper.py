@@ -15,6 +15,8 @@ import time
 from monasca_agent.collector.checks.services_checks import ServicesCheck
 from monasca_agent.collector.checks.services_checks import Status
 
+DETAIL_MAX_LEN = 2034  # The 2048 value_meta limit - the 14 characters used in the detail wrapper: len('{"detail": ""}')
+
 
 class WrapNagios(ServicesCheck):
 
@@ -116,7 +118,7 @@ class WrapNagios(ServicesCheck):
         if detail:
             self.gauge(metric_name, status_code,
                        dimensions=dimensions,
-                       value_meta={'detail': detail[0:2047]})
+                       value_meta={'detail': detail[0:DETAIL_MAX_LEN]})
         else:
             self.gauge(metric_name, status_code, dimensions=dimensions)
         # Return DOWN on critical, UP otherwise
