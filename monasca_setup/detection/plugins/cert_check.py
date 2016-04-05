@@ -74,7 +74,7 @@ class CertificateCheck(monasca_setup.detection.ArgsPlugin):
                 continue
             log.info("\tAdding SSL Certificate expiration check for {}".format(url))
             instance = self._build_instance([])
-            instance.update({'url': url})
+            instance.update({'url': url, 'name': url})
             instances.append(instance)
 
         config['cert_check'] = {'init_config': init_config,
