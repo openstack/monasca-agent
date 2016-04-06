@@ -140,7 +140,5 @@ class Kubernetes(services_checks.ServicesCheck):
         for subcontainer in metrics:
             try:
                 self._update_container_metrics(instance, subcontainer, kube_labels)
-            except Exception, e:
-                self.log.error("Unable to collect metrics for container: {0} ({1}".format(
-                    subcontainer.get('name'), e))
-            traceback.print_exc()
+            except Exception as e:
+                self.log.exception("Unable to collect metrics for container: %s - %s", subcontainer.get('name'), repr(e))
