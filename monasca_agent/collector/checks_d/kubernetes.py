@@ -60,7 +60,8 @@ DEFAULT_MAPPING = {
           },
           'network': {
               'rates': [ '.._bytes', '.._errors', '.._dropped' ]
-          }
+          },
+          'task_stats': [ 'nr_.*' ]
           # dimensions should be inherited from above
       }
 }

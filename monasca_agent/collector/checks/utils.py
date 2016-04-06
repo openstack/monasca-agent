@@ -159,7 +159,9 @@ class DynamicCheckHelper:
 
         # filter and classify the metric
         if group:
-            metric_cache = self._grp_metric_cache[instance_name][group]
+            metric_cache = self._grp_metric_cache[instance_name].get(group)
+            if not metric_cache:
+                return SKIP, metric
             metric_map = self._grp_metric_map[instance_name][group]
         else:
             metric_cache = self._metric_cache[instance_name]
