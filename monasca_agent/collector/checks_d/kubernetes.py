@@ -35,15 +35,16 @@ DEFAULT_MAX_DEPTH = 10
 DEFAULT_PUBLISH_ALIASES = False
 DEFAULT_MAPPING = {
       'dimensions': {
-          'namespace': {
+          'k8s_namespace': {
               'source_key': 'io.kubernetes.pod.name',
               'regex': '.*/(.*)'
           },
-          'pod': {
+          'k8s_pod': {
               'source_key': 'io.kubernetes.pod.name',
               'regex': '(.*)/.*'
           },
-          'container': 'io.kubernetes.container.name',
+          'k8s_container': 'io.kubernetes.container.name',
+          'k8s_subcontainer': 'io.kubernetes.subcontainer.name'
       },
       'groups': {
           'diskio': {
@@ -91,11 +92,6 @@ class Kubernetes(services_checks.ServicesCheck):
         self._update_metrics(instance, kube_settings)
 
     @staticmethod
-    def _shorten_name(name):
-        # shorten docker image id
-        return re.sub('([0-9a-fA-F]{64,})', lambda x: x.group(1)[0:12], name)
-
-    @staticmethod
     def _convert_timestamp(timestamp):
         # convert from string '2016-03-16T16:48:59.900524303Z' to a float monasca can handle 164859.900524
         # conversion using strptime() works only for 6 digits in microseconds so the timestamp is limited to 26 characters
@@ -104,7 +100,7 @@ class Kubernetes(services_checks.ServicesCheck):
 
     def _update_container_metrics(self, instance, subcontainer, kube_labels):
         dims = instance.get('dimensions', {})  # add support for custom dims
-        klabels = {}
+        klabels = { 'io.kubernetes.subcontainer.name': subcontainer['name'] }
         for i, alias in enumerate(subcontainer.get('aliases', [])):
             klabels['alias#'+str(i)] = alias
         kspec = subcontainer['spec']
