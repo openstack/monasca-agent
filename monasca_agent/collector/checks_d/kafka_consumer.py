@@ -76,6 +76,7 @@ class KafkaCheck(checks.AgentCheck):
                                                              consumer_group,
                                                              topic,
                                                              auto_commit=False)
+                    kafka_consumer.fetch_last_known_offsets()
 
                     partitions = kafka_consumer.offsets.keys()
                 except Exception:
