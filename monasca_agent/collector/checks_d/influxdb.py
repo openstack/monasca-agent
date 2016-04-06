@@ -123,7 +123,7 @@ class InfluxDB(services_checks.ServicesCheck):
         for results in content['results']:
             for ser in results['series']:
                 mod = ser['name']
-                if whitelist is None or mod in whitelist:  # pre-filter by module
+                if not whitelist or mod in whitelist:  # pre-filter by module
                     trans[mod] = {}
                     for i, col in enumerate(ser['columns']):
                         trans[mod][col] = ser['values'][0][i]
@@ -138,7 +138,7 @@ class InfluxDB(services_checks.ServicesCheck):
             for met, met_def in met_list.iteritems():
                 if met == DIMENSIONS_KEY:  # map tags to appropriate dimensions
                     for k, v in met_def.iteritems():
-                        if v in trans[mod][DIMENSIONS_KEY]:
+                        if mod in trans and v in trans[mod][DIMENSIONS_KEY]:
                             dims[k] = trans[mod][DIMENSIONS_KEY][v]
                         else:
                             self.log.warning("InfluxDB did not report label %s for stats module %s (check mapping)", v, mod)
