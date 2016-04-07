@@ -15,7 +15,9 @@ def retrieve_json(url):
 # project
 
 DEFAULT_METHOD = 'http'
-METRICS_PATH = '/api/v1.3/subcontainers/'
+MACHINE_PATH = '/api/v1.3/subcontainers/'
+SUBCONTAINERS_PATH = '/api/v1.3/subcontainers/'
+MACHINE_PATH = '/api/v1.3/machine/'
 CONTAINERS_PATH = '/api/v1.3/containers/'
 DEFAULT_CADVISOR_PORT = 4194
 DEFAULT_KUBELET_PORT = 10255
@@ -36,7 +38,9 @@ def set_kube_settings(instance):
     host = instance.get("host") or _get_node_name()
     cadvisor_port = instance.get('port', DEFAULT_CADVISOR_PORT)
     method = instance.get('method', DEFAULT_METHOD)
-    metrics_url = urljoin('%s://%s:%d' % (method, host, cadvisor_port), METRICS_PATH)
+    subcontainers_url = urljoin('%s://%s:%d' % (method, host, cadvisor_port), SUBCONTAINERS_PATH)
+    containers_url = urljoin('%s://%s:%d' % (method, host, cadvisor_port), CONTAINERS_PATH)
+    machine_url = urljoin('%s://%s:%d' % (method, host, cadvisor_port), MACHINE_PATH)
     kubelet_port = instance.get('kubelet_port', DEFAULT_KUBELET_PORT)
     master_port = instance.get('master_port', DEFAULT_MASTER_PORT)
     master_host = instance.get('master_host', host)
@@ -44,9 +48,11 @@ def set_kube_settings(instance):
     _kube_settings = {
         "host": host,
         "method": method,
-        "metrics_url": metrics_url,
+        "subcontainers_url": subcontainers_url,
+        "containers_url": containers_url,
+        "machine_url": machine_url,
         "cadvisor_port": cadvisor_port,
-        "labels_url": '%s://%s:%d/pods' % (method, host, kubelet_port),
+        "kubelet_url": '%s://%s:%d/pods' % (method, host, kubelet_port),
         "master_url_nodes": '%s://%s:%d/api/v1/nodes' % (method, master_host, master_port),
         "kube_health_url": '%s://%s:%d/healthz' % (method, host, kubelet_port)
     }
@@ -56,7 +62,7 @@ def set_kube_settings(instance):
 
 def get_kube_labels():
     global _kube_settings
-    pods = retrieve_json(_kube_settings["labels_url"])
+    pods = retrieve_json(_kube_settings["kubelet_url"])
     kube_labels = {}
     for pod in pods["items"]:
         metadata = pod.get("metadata", {})

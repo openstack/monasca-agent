@@ -18,6 +18,7 @@ class TestDynamicCheckHelper(unittest.TestCase):
                                                               'gauges': ['stats.(MessagesAvg)'],
                                                               'rates': ['MessagesTotal'],
                                                               'dimensions': {
+                                                                  'index': 'index',
                                                                   'simple_dimension': 'simple_label',
                                                                   'complex_dimension': {
                                                                       'source_key': 'complex_label',
@@ -26,7 +27,10 @@ class TestDynamicCheckHelper(unittest.TestCase):
                                                               },
                                                               'groups': {
                                                                   'testgroup': {
-                                                                      'rates': ['.*\.Responses.*', 'sec_auth#[0-9]*_.*']
+                                                                      'dimensions': {
+                                                                        'user': 'user'
+                                                                      },
+                                                                      'rates': ['.*\.Responses.*', 'sec_auth_.*']
                                                                   }
                                                                   # dimensions should be inherited from above
                                                               }}}]}
@@ -35,7 +39,7 @@ class TestDynamicCheckHelper(unittest.TestCase):
 
     def run_check(self):
         self.check.run()
-        metric_dict = {"sec": {"auth": [{"total": 10}]}}
+        metric_dict = {"sec": {"auth": [{"user": "me", "total": 10}, {"user": "you", "total": 15}]}}
         self.helper.push_metric_dict(self._config['instances'][0], metric_dict, group="testgroup",
                                      labels={'simple_label': 'simple_label_test',
                                              'complex_label': 'k8s_monasca-api-a8109321_postfix'}, max_depth=3)
@@ -65,7 +69,7 @@ class TestDynamicCheckHelper(unittest.TestCase):
         metric1 = filter(lambda m: m.name == 'dynhelper.messages_avg', metrics)
         metric2 = filter(lambda m: m.name == 'dynhelper.messages_total', metrics)
         metric3 = filter(lambda m: m.name == 'dynhelper.testgroup.req_responses_ok', metrics)
-        metric4 = filter(lambda m: m.name == 'dynhelper.testgroup.sec_auth#0_total', metrics)
+        metric4 = filter(lambda m: m.name == 'dynhelper.testgroup.sec_auth_total', metrics)
         self.assertTrue(len(metric1) > 0,
                         'gauge dynhelper.messages_avg missing in metric list {0}'.format(repr(metrics)))
         self.assertEquals(metric1[0].dimensions,
@@ -80,8 +84,11 @@ class TestDynamicCheckHelper(unittest.TestCase):
         self.assertEquals(metric3[0].dimensions,
                           {'simple_dimension': 'simple_label_test', 'complex_dimension': 'monasca-api-a8109321',
                            'hostname': metric3[0].dimensions.get('hostname')})
-        self.assertTrue(len(metric4) > 0,
-                        'rate dynhelper.testgroup.sec_auth#0_total missing in metric list {0}'.format(repr(metrics)))
+        self.assertTrue(len(metric4) == 2 ,
+                        'rate dynhelper.testgroup.sec_auth_total missing in metric list {0}'.format(repr(metrics)))
         self.assertEquals(metric4[0].dimensions,
                           {'simple_dimension': 'simple_label_test', 'complex_dimension': 'monasca-api-a8109321',
-                           'hostname': metric3[0].dimensions.get('hostname')})
+                           'user': 'you', 'hostname': metric4[0].dimensions.get('hostname')})
+        self.assertEquals(metric4[1].dimensions,
+                          {'simple_dimension': 'simple_label_test', 'complex_dimension': 'monasca-api-a8109321',
+                           'user': 'me', 'hostname': metric4[0].dimensions.get('hostname')})

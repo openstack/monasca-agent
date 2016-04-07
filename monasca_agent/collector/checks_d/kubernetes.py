@@ -35,20 +35,21 @@ DEFAULT_MAX_DEPTH = 10
 DEFAULT_PUBLISH_ALIASES = False
 DEFAULT_MAPPING = {
       'dimensions': {
+          'index': 'index',
           'k8s_namespace': {
               'source_key': 'io.kubernetes.pod.name',
-              'regex': '.*/(.*)'
+              'regex': '(.*)/.*'
           },
           'k8s_pod': {
               'source_key': 'io.kubernetes.pod.name',
-              'regex': '(.*)/.*'
+              'regex': '.*/(.*)'
           },
           'k8s_container': 'io.kubernetes.container.name',
           'k8s_subcontainer_id': 'io.kubernetes.subcontainer.name'
       },
       'groups': {
           'diskio': {
-              'rates': [ '(io_service_bytes)#0._stats_total' ]
+              'rates': [ '(io_service_bytes)_stats_total' ]
           },
           'cpu': {
               'rates': [ '(.*)_total' ]
@@ -64,6 +65,15 @@ DEFAULT_MAPPING = {
           },
           'task_stats': {
               'gauges': [ 'nr_.*' ]
+          },
+          'machine': {
+              'k8s_machine_id': 'machine_id',
+              'k8s_boot_id': 'boot_id',
+              'mac_address': 'mac_address',
+              'device': 'device',
+              'name': 'name',
+              'type': 'type',
+              'gauges': [ 'size', 'capacity', 'memory' ]
           }
           # dimensions should be inherited from above
       }
@@ -100,6 +110,7 @@ class Kubernetes(services_checks.ServicesCheck):
 
     def _update_container_metrics(self, instance, subcontainer, kube_labels):
         dims = instance.get('dimensions', {})  # add support for custom dims
+        dims['hostname'] = get_kube_settings()['host']
         klabels = { 'io.kubernetes.subcontainer.name': subcontainer['name'] }
         for i, alias in enumerate(subcontainer.get('aliases', [])):
             klabels['alias#'+str(i)] = alias
@@ -131,13 +142,29 @@ class Kubernetes(services_checks.ServicesCheck):
         return get_kube_labels()
 
     def _update_metrics(self, instance, kube_settings):
-        metrics = self._retrieve_metrics(kube_settings["metrics_url"])
         kube_labels = self._retrieve_kube_labels
-        if not metrics:
-            raise Exception('No metrics retrieved cmd=%s' % self.metrics_cmd)
 
-        for subcontainer in metrics:
+        subcontainers = self._retrieve_metrics(get_kube_settings()["subcontainers_url"])
+        if not subcontainers:
+            raise Exception('No metrics retrieved from URL %s' % get_kube_settings()["subcontainers_url"])
+
+        for subcontainer in subcontainers:
             try:
                 self._update_container_metrics(instance, subcontainer, kube_labels)
             except Exception as e:
                 self.log.exception("Unable to collect metrics for container: %s - %s", subcontainer.get('name'), repr(e))
+
+        machine = self._retrieve_metrics(get_kube_settings()["machine_url"])
+        if not machine:
+            raise Exception('No metrics retrieved from URL %s' % kube_settings["metrics_url"])
+
+        try:
+            dims = instance.get('dimensions', {})  # add support for custom dims
+            dims['hostname'] = get_kube_settings()['host']
+            klabels = {
+                'machine_id': machine['machine_id'],
+                'boot_id': machine['boot_id']
+            }
+            self._publisher.push_metric_dict(instance, machine, klabels, group='machine', fixed_dimensions=dims, max_depth=3)
+        except Exception as e:
+            self.log.exception("Unable to collect metrics for container: %s - %s", subcontainer.get('name'), repr(e))

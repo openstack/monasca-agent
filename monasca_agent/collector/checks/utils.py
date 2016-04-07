@@ -184,21 +184,51 @@ class DynamicCheckHelper:
         type, _ = self._fetch_metric_spec(instance, metric, group)
         return type != SKIP
 
-    def push_metric_dict(self, instance, metric_dict, labels={}, group=None, timestamp=None, fixed_dimensions={}, default_dimensions={}, max_depth=0, curr_depth=0, prefix=''):
+    def push_metric_dict(self, instance, metric_dict, labels={}, group=None, timestamp=None, fixed_dimensions={}, default_dimensions={}, max_depth=0, curr_depth=0, prefix='', index=-1):
+        if index != -1:
+            ext_labels = self.extract_dist_labels(instance['name'], group, metric_dict, labels, index)
+            if not ext_labels:
+                log.debug("skipping array due to lack of mapped dimensions for group %s (at least 'index' should be supported)", group if group else '<root>')
+                return
+
+        else:
+            ext_labels = labels
+
         for element, child in metric_dict.iteritems():
             if isinstance(child, dict) and curr_depth < max_depth:
-                self.push_metric_dict(instance, child, labels, group, timestamp, fixed_dimensions, default_dimensions, max_depth, curr_depth+1, prefix+element+'_')
+                self.push_metric_dict(instance, child, ext_labels, group, timestamp, fixed_dimensions, default_dimensions, max_depth, curr_depth+1, prefix+element+'_')
             elif isinstance(child, Number):
-                self.push_metric(instance, prefix+element, float(child), labels, group, timestamp, fixed_dimensions, default_dimensions)
+                self.push_metric(instance, prefix+element, float(child), ext_labels, group, timestamp, fixed_dimensions, default_dimensions)
             elif isinstance(child, list):
                 for i, child_element in enumerate(child):
                     if isinstance(child_element, dict):
                         if curr_depth < max_depth:
-                            self.push_metric_dict(instance, child_element, labels, group, timestamp, fixed_dimensions, default_dimensions, max_depth, curr_depth+1, prefix+element+'#'+str(i)+'_')
+                            self.push_metric_dict(instance, child_element, ext_labels, group, timestamp, fixed_dimensions, default_dimensions, max_depth, curr_depth+1, prefix+element+'_', index=i)
                     elif isinstance(child_element, Number):
-                        self.push_metric(instance, prefix+element+'#'+str(i), float(child_element), labels, group, timestamp, fixed_dimensions, default_dimensions)
+                        if len(self._get_mappings(instance['name'], group, 'index')) > 0:
+                            idx_labels=ext_labels.copy()
+                            idx_labels['index'] = str(i)
+                            self.push_metric(instance, prefix+element, float(child_element), idx_labels, group, timestamp, fixed_dimensions, default_dimensions)
+                        else:
+                           log.debug("skipping array due to lack of mapped 'index' dimensions for group %s", group if group else '<root>')
                     else:
                         log.debug('nested arrays are not supported for configurable extraction of element %s', element)
+
+    def extract_dist_labels(self, instance_name, group, metric_dict, labels, index):
+        ext_labels = None
+        # collect additional dimensions first from non-metrics
+        for element, child in metric_dict.iteritems():
+            if isinstance(child, str) and len(self._get_mappings(instance_name, group, element)) > 0:
+                if not ext_labels:
+                    ext_labels = labels.copy()
+                ext_labels[element] = child
+        # if no additional labels supplied just take the index (if it is mapped)
+        if not ext_labels and len(self._get_mappings(instance_name, group, 'index')) > 0:
+            if not ext_labels:
+                ext_labels = labels.copy()
+            ext_labels['index'] = str(index)
+
+        return ext_labels
 
     def push_metric(self, instance, metric, value, labels={}, group=None, timestamp=None, fixed_dimensions={}, default_dimensions={}):
         """
@@ -238,14 +268,7 @@ class DynamicCheckHelper:
         dims = default_dimensions.copy()
         #  map all specified dimension all keys
         for labelname, labelvalue in labels.iteritems():
-            # obtain mappings
-            # check group-specific ones first
-            if group:
-                mapping_arr = self._grp_dimension_map[instance_name].get(group, {}).get(labelname, [])
-            else:
-                mapping_arr = []
-            # fall-back to global ones
-            mapping_arr.extend(self._dimension_map[instance_name].get(labelname, []))
+            mapping_arr = self._get_mappings(instance_name, group, labelname)
 
             target_dim = None
             for map_spec in mapping_arr:
@@ -259,7 +282,19 @@ class DynamicCheckHelper:
                     log.exception(
                         'dimension %s value could not be mapped from %s: regex for mapped dimension %s does not match %s',
                         target_dim, labelvalue, labelname, map_spec['regex'])
+
         return dims
+
+    def _get_mappings(self, instance_name, group, labelname):
+        # obtain mappings
+        # check group-specific ones first
+        if group:
+            mapping_arr = self._grp_dimension_map[instance_name].get(group, {}).get(labelname, [])
+        else:
+            mapping_arr = []
+        # fall-back to global ones
+        mapping_arr.extend(self._dimension_map[instance_name].get(labelname, []))
+        return mapping_arr
 
     @staticmethod
     def _lookup_metric(metric, metric_cache, metric_map):
