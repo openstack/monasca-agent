@@ -7,9 +7,10 @@ from numbers import Number
 
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.collector.checks.check import Check
+from monasca_agent.common.exceptions import CheckException
 
 log = logging.getLogger(__name__)
-
+normalizer_re = re.sub
 GAUGE = 1
 RATE = 2
 SKIP = 0
@@ -36,6 +37,18 @@ class DynamicCheckHelper:
                 'gauges': config.get('gauges', [])}
 
     @staticmethod
+    def _normalize_dim_value(value):
+        """
+        :param value:
+        :return:
+        Replace \\x?? values with _
+        Replace the following characters with _: > < = { } ( ) , ' " \ ; &
+        Truncate to 255 chars
+        """
+
+        return re.sub(r'["\']', '|', re.sub(r'[(}]', ']', re.sub(r'[({]', '[', re.sub(r'[\><=,;&]', '-', value.replace(r'\x2d', '-').replace(r'\x7e', '~')))))[:255]
+
+    @staticmethod
     def _build_dimension_map(config):
         result = {}
         for dim, spec in config.get('dimensions', {}).iteritems():
@@ -43,11 +56,11 @@ class DynamicCheckHelper:
                 label = spec.get('source_key', dim)
                 regex = spec.get('regex', '(.*)')
                 cregex = re.compile(regex)
-                mapf = lambda x: cregex.match(x).group(1)
+                mapf = lambda x: DynamicCheckHelper._normalize_dim_value(cregex.match(x).group(1))
             else:
                 label = spec
                 regex = '(.*)'
-                mapf = lambda x: x
+                mapf = lambda x: DynamicCheckHelper._normalize_dim_value(x)
 
             # note: source keys can be mapped to multiple dimensions
             arr = result.get(label, [])
@@ -144,7 +157,7 @@ class DynamicCheckHelper:
                         self._grp_metric_cache[iname][grp] = {}
                         self._grp_dimension_map[iname][grp] = DynamicCheckHelper._build_dimension_map(gspec)
             else:
-                log.error('instance %s is not supported: no element "mapping" found!', iname)
+                raise CheckException('instance %s is not supported: no element "mapping" found!', iname)
 
     def _fetch_metric_spec(self, instance, metric, group=None):
         """
@@ -226,13 +239,13 @@ class DynamicCheckHelper:
         #  map all specified dimension all keys
         for labelname, labelvalue in labels.iteritems():
             # obtain mappings
-            mapping_arr = None
             # check group-specific ones first
             if group:
-                mapping_arr = self._grp_dimension_map[instance_name].get(group)
-            # fall-back to global ones afterwards
-            if not mapping_arr:
-                mapping_arr = self._dimension_map.get(instance_name, {}).get(labelname, [])
+                mapping_arr = self._grp_dimension_map[instance_name].get(group, {}).get(labelname, [])
+            else:
+                mapping_arr = []
+            # fall-back to global ones
+            mapping_arr.extend(self._dimension_map[instance_name].get(labelname, []))
 
             target_dim = None
             for map_spec in mapping_arr:
@@ -240,7 +253,8 @@ class DynamicCheckHelper:
                     # map the dimension name
                     target_dim = map_spec.get('dimension')
                     # apply the mapping function to the value
-                    dims[target_dim] = map_spec['mapf'](labelvalue)
+                    if not target_dim in dims:      # do not overwrite
+                        dims[target_dim] = map_spec['mapf'](labelvalue)
                 except (IndexError, AttributeError):  # probably the regex was faulty
                     log.exception(
                         'dimension %s value could not be mapped from %s: regex for mapped dimension %s does not match %s',

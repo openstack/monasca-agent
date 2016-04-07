@@ -44,7 +44,7 @@ DEFAULT_MAPPING = {
               'regex': '(.*)/.*'
           },
           'k8s_container': 'io.kubernetes.container.name',
-          'k8s_subcontainer': 'io.kubernetes.subcontainer.name'
+          'k8s_subcontainer_id': 'io.kubernetes.subcontainer.name'
       },
       'groups': {
           'diskio': {
