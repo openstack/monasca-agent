@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 
 import monasca_setup.detection
 
@@ -19,7 +19,6 @@ class Neutron(monasca_setup.detection.ServicePlugin):
                               'neutron-rootwrap', 'neutron-dhcp-agent',
                               'neutron-vpn-agent', 'neutron-metadata-agent',
                               'neutron-metering-agent', 'neutron-l3-agent',
-                              'neutron-ns-metadata-proxy',
                               'bin/neutron-lbaas-agent',
                               'neutron-lbaasv2-agent',
                               'neutron-l2gateway-agent',

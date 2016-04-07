@@ -72,10 +72,10 @@ class LibvirtCheck(AgentCheck):
                 if ((secgroup['tenant_id'] == instance.tenant_id and
                      secgroup['name'] == instance_secgroup['name'])):
                     for rule in secgroup['security_group_rules']:
-                        if ((rule['remote_ip_prefix'] and
-                             rule['protocol'] == 'icmp' and
-                             all_matching_cidrs(source_ip,
-                                                [rule['remote_ip_prefix']]))):
+                        if rule['protocol'] == 'icmp':
+                            if ((not rule['remote_ip_prefix'] or
+                                 all_matching_cidrs(source_ip,
+                                                    [rule['remote_ip_prefix']]))):
                                 return True
 
     def _update_instance_cache(self):
@@ -143,7 +143,7 @@ class LibvirtCheck(AgentCheck):
                 # Find all active fixed IPs for this VM, fetch each subnet_id
                 for net in instance.addresses:
                     for ip in instance.addresses[net]:
-                        if ip['OS-EXT-IPS:type'] == 'fixed':
+                        if ip['OS-EXT-IPS:type'] == 'fixed' and ip['version'] == 4:
                             subnet_id = None
                             nsuuid = None
                             for port in port_cache:

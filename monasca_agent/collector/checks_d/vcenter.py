@@ -444,8 +444,6 @@ class VCenterCheck(AgentCheck):
             self.gauge(key, data.get(key), dimensions=dimensions)
             self.log.debug("Post metric data for %s,  %s: %d" %
                            (managed_cluster, key, data.get(key)))
-        # Additional metric for passive monitoring of ESX cluster
-        self.gauge("monasca.emit_time_sec", 0, dimensions=dimensions)
 
     def _get_dims(self, cluster, mor_id):
         return {

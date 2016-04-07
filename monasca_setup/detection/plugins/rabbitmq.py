@@ -36,6 +36,9 @@ class RabbitMQ(monasca_setup.detection.Plugin):
             nodes=rabbit@localhost, rabbit2@domain
             exchanges=nova, cinder, neutron
     """
+    def __init__(self, *args, **kwargs):
+        super(RabbitMQ, self).__init__(*args, **kwargs)
+        self._watch_api = self.args.pop('watch_api', False)
 
     def _detect(self):
         """Run detection, set self.available True if the service is detected.
@@ -126,10 +129,14 @@ class RabbitMQ(monasca_setup.detection.Plugin):
         config.merge(monasca_setup.detection.watch_process_by_username('rabbitmq', 'rabbitmq', 'rabbitmq'))
         log.info("\tWatching all processes owned by the rabbitmq user.")
 
+        if not self._watch_api:
+            return config
+
         try:
             self._get_config()
             # Then watch the http status check
             service_name = 'rabbitmq'
+
             # Setup an active http_status check on the API
             log.info("\tConfiguring an http_check for the {0} API.".format(
                 service_name))
