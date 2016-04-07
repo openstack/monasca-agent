@@ -63,12 +63,12 @@ class Cacti(AgentCheck):
 
         # Try importing MySQL
         try:
-            import MySQLdb
+            import pymysql
         except ImportError:
             raise Exception(
-                "Cannot import MySQLdb module. This module is required for the cacti plugin to work correctly")
+                "Cannot import PyMySQL module. This module is required for the cacti plugin to work correctly")
 
-        connection = MySQLdb.connect(config.host, config.user, config.password, config.db)
+        connection = pymysql.connect(config.host, config.user, config.password, config.db)
 
         self.log.debug("Connected to MySQL to fetch Cacti metadata")
 

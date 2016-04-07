@@ -56,14 +56,14 @@ class MySql(checks.AgentCheck):
     @staticmethod
     def get_library_versions():
         try:
-            import MySQLdb
-            version = MySQLdb.__version__
+            import pymysql
+            version = pymysql.__version__
         except ImportError:
             version = "Not Found"
         except AttributeError:
             version = "Unknown"
 
-        return {"MySQLdb": version}
+        return {"PyMySQL": version}
 
     def check(self, instance):
         host, port, user, password, mysql_sock, defaults_file, options = self._get_config(
@@ -94,25 +94,25 @@ class MySql(checks.AgentCheck):
 
     def _connect(self, host, port, mysql_sock, user, password, defaults_file):
         try:
-            import MySQLdb
+            import pymysql
         except ImportError:
             raise Exception(
-                "Cannot import MySQLdb module. Check the instructions "
-                "to install this module at https://app.datadoghq.com/account/settings#integrations/mysql")
+                "Cannot import PyMySQl module. Check the instructions "
+                "to install this module at https://pypi.python.org/pypi/PyMySQL")
 
         if defaults_file != '':
-            db = MySQLdb.connect(read_default_file=defaults_file)
+            db = pymysql.connect(read_default_file=defaults_file)
         elif mysql_sock != '':
-            db = MySQLdb.connect(unix_socket=mysql_sock,
+            db = pymysql.connect(unix_socket=mysql_sock,
                                  user=user,
                                  passwd=password)
         elif port:
-            db = MySQLdb.connect(host=host,
+            db = pymysql.connect(host=host,
                                  port=port,
                                  user=user,
                                  passwd=password)
         else:
-            db = MySQLdb.connect(host=host,
+            db = pymysql.connect(host=host,
                                  user=user,
                                  passwd=password)
         self.log.debug("Connected to MySQL")
