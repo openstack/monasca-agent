@@ -448,4 +448,4 @@ class DynamicCheckHelper:
         # map metric name first
         if groups and groups.lastindex > 0:
             metric = '_'.join(groups.groups())
-        return Check.normalize(re.sub('(?!^)([A-Z]+)', r'_\1', metric.replace('.', '_')).lower())
+        return Check.normalize(re.sub('(?!^)([A-Z]+)', r'_\1', metric.replace('.', '_')).replace('__', '_').lower())
