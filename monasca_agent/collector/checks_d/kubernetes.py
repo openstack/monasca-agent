@@ -14,7 +14,7 @@ import monasca_agent.collector.checks.services_checks as services_checks
 from monasca_agent.collector.checks.kubeutil import set_kube_settings, get_kube_settings, get_kube_labels
 
 
-def retrieve_json(url, params=None):
+def _retrieve_json(url, params=None):
     r = requests.get(url, params)
     r.raise_for_status()
     return r.json()
