@@ -185,6 +185,56 @@ class DynamicCheckHelper:
         return type != SKIP
 
     def push_metric_dict(self, instance, metric_dict, labels={}, group=None, timestamp=None, fixed_dimensions={}, default_dimensions={}, max_depth=0, curr_depth=0, prefix='', index=-1):
+        """
+        This will extract metrics and dimensions from a dictionary.
+
+        The following mappings are applied:
+
+        {
+            'server': {
+                'requests': 12
+            }
+        }
+
+        => server_requests=12
+
+        {
+            'server': [
+                {
+                    'role': 'master,
+                    'node_name': 'server0',
+                    'requests': 1500
+                },
+                {
+                    'role': 'slave',
+                    'node_name': 'server1',
+                    'requests': 1000
+                },
+                {
+                    'role': 'slave',
+                    'node_name': 'server2',
+                    'requests': 500
+                }
+            }
+        }
+
+        =>  server_requests{role=slave,node_name=server0} = 1500.0
+            server_requests{role=slave,node_name=server0} = 1000.0
+            server_requests{role=slave,node_name=server0} = 500.0
+
+        :param instance:
+        :param metric_dict:
+        :param labels:
+        :param group:
+        :param timestamp:
+        :param fixed_dimensions:
+        :param default_dimensions:
+        :param max_depth:
+        :param curr_depth:
+        :param prefix:
+        :param index:
+        :return:
+        """
         if index != -1:
             ext_labels = self.extract_dist_labels(instance['name'], group, metric_dict, labels, index)
             if not ext_labels:

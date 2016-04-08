@@ -185,7 +185,7 @@ class Kubernetes(services_checks.ServicesCheck):
         params = {
             'subcontainers': 'true',
             'all_events': 'true',
-            'start_time': self._last_ts['instance_name']
+            'start_time': self._last_ts[instance_name]
         }
         events = _retrieve_json(get_kube_settings()["events_url"], params)
         if not events:
