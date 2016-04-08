@@ -56,15 +56,17 @@ class DynamicCheckHelper:
                 label = spec.get('source_key', dim)
                 regex = spec.get('regex', '(.*)')
                 cregex = re.compile(regex)
-                mapf = lambda x: DynamicCheckHelper._normalize_dim_value(cregex.match(x).group(1))
             else:
                 label = spec
                 regex = '(.*)'
-                mapf = lambda x: DynamicCheckHelper._normalize_dim_value(x)
+                cregex = None
 
             # note: source keys can be mapped to multiple dimensions
             arr = result.get(label, [])
-            arr.append({'dimension': dim, 'regex': regex, 'mapf': mapf})
+            mapping = {'dimension': dim, 'regex': regex}
+            if cregex:
+                mapping['cregex'] = cregex
+            arr.append(mapping)
             result[label] = arr
 
         return result
@@ -400,7 +402,11 @@ class DynamicCheckHelper:
                     target_dim = map_spec.get('dimension')
                     # apply the mapping function to the value
                     if not target_dim in dims:      # do not overwrite
-                        dims[target_dim] = map_spec['mapf'](labelvalue)
+                        cregex = map_spec.get('cregex')
+                        if cregex:
+                            dims[target_dim] = DynamicCheckHelper._normalize_dim_value(cregex.match(labelvalue).group(1))
+                        else:
+                            dims[target_dim] = DynamicCheckHelper._normalize_dim_value(labelvalue)
                 except (IndexError, AttributeError):  # probably the regex was faulty
                     log.exception(
                         'dimension %s value could not be mapped from %s: regex for mapped dimension %s does not match %s',

@@ -23,6 +23,10 @@ class TestDynamicCheckHelper(unittest.TestCase):
                                                                   'complex_dimension': {
                                                                       'source_key': 'complex_label',
                                                                       'regex': 'k8s_([._\-a-zA-Z0-9]*)_postfix'
+                                                                  },
+                                                                  'complex_dimension_rest': {
+                                                                      'source_key': 'complex_label',
+                                                                      'regex': 'k8s_([._\-a-zA-Z0-9]*_postfix)'
                                                                   }
                                                               },
                                                               'groups': {
@@ -73,7 +77,7 @@ class TestDynamicCheckHelper(unittest.TestCase):
         self.assertTrue(len(metric1) > 0,
                         'gauge dynhelper.messages_avg missing in metric list {0}'.format(repr(metrics)))
         self.assertEquals(metric1[0].dimensions,
-                          {'simple_dimension': 'simple_label_test', 'complex_dimension': 'monasca-api-a8109321',
+                          {'simple_dimension': 'simple_label_test', 'complex_dimension': 'monasca-api-a8109321', 'complex_dimension_rest': 'monasca-api-a8109321_postfix',
                            'hostname': metric1[0].dimensions.get('hostname')})
         self.assertTrue(len(metric2) > 0,
                         'rate dynhelper.messages_total missing in metric list {0}'.format(repr(metrics)))
@@ -82,13 +86,13 @@ class TestDynamicCheckHelper(unittest.TestCase):
         self.assertTrue(len(metric3) > 0,
                         'rate dynhelper.testgroup.req_responses_ok missing in metric list {0}'.format(repr(metrics)))
         self.assertEquals(metric3[0].dimensions,
-                          {'simple_dimension': 'simple_label_test', 'complex_dimension': 'monasca-api-a8109321',
+                          {'simple_dimension': 'simple_label_test', 'complex_dimension': 'monasca-api-a8109321', 'complex_dimension_rest': 'monasca-api-a8109321_postfix',
                            'hostname': metric3[0].dimensions.get('hostname')})
         self.assertTrue(len(metric4) == 2 ,
                         'rate dynhelper.testgroup.sec_auth_total missing in metric list {0}'.format(repr(metrics)))
         self.assertEquals(metric4[0].dimensions,
-                          {'simple_dimension': 'simple_label_test', 'complex_dimension': 'monasca-api-a8109321',
+                          {'simple_dimension': 'simple_label_test', 'complex_dimension': 'monasca-api-a8109321', 'complex_dimension_rest': 'monasca-api-a8109321_postfix',
                            'user': 'you', 'hostname': metric4[0].dimensions.get('hostname')})
         self.assertEquals(metric4[1].dimensions,
-                          {'simple_dimension': 'simple_label_test', 'complex_dimension': 'monasca-api-a8109321',
+                          {'simple_dimension': 'simple_label_test', 'complex_dimension': 'monasca-api-a8109321', 'complex_dimension_rest': 'monasca-api-a8109321_postfix',
                            'user': 'me', 'hostname': metric4[0].dimensions.get('hostname')})
