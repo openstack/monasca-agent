@@ -178,7 +178,6 @@ class Kubernetes(services_checks.ServicesCheck):
                                              max_depth=3)
         except Exception as e:
             self.log.exception("Unable to collect metrics from cAdvisor machine endpoint - %s", repr(e))
-            traceback.print_exc()
 
         instance_name = instance['name']
         if self._last_ts.get(instance_name) is None:
@@ -196,11 +195,11 @@ class Kubernetes(services_checks.ServicesCheck):
         try:
             # push event count first
             aggr = {}
-            for i, event in events:
-                key = event['event_type'] + event['container_name']
+            for e in events:
+                key = e['event_type'] + e['container_name']
                 if not key in aggr:
                     aggr[key] = []
-                aggr[key].append(event)
+                aggr[key].append(e)
             for key, aggr_events in aggr.iteritems():
                 count = len(aggr_events)
                 # take event_type as metric name (form element 0)
@@ -208,7 +207,6 @@ class Kubernetes(services_checks.ServicesCheck):
                                                  fixed_dimensions=dims)
         except Exception as e:
             self.log.exception("Unable to collect metrics from cAdvisor events endpoint - %s", repr(e))
-            traceback.print_exc()
 
     def _update_last_ts(self, instance_name):
         utc_now = datetime.utcnow()
