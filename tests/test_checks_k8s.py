@@ -30,7 +30,7 @@ class TestDynamicCheckHelper(unittest.TestCase):
                                                                       'dimensions': {
                                                                         'user': 'user'
                                                                       },
-                                                                      'rates': ['.*\.Responses.*', 'sec_auth_.*']
+                                                                      'rates': ['.*\.Responses.*', '(sec_auth_.*).stats']
                                                                   }
                                                                   # dimensions should be inherited from above
                                                               }}}]}
@@ -39,7 +39,7 @@ class TestDynamicCheckHelper(unittest.TestCase):
 
     def run_check(self):
         self.check.run()
-        metric_dict = {"sec": {"auth": [{"user": "me", "total": 10}, {"user": "you", "total": 15}]}}
+        metric_dict = {"sec": {"auth": [{"user": "me", "total.stats": 10}, {"user": "you", "total.stats": 15}]}}
         self.helper.push_metric_dict(self._config['instances'][0], metric_dict, group="testgroup",
                                      labels={'simple_label': 'simple_label_test',
                                              'complex_label': 'k8s_monasca-api-a8109321_postfix'}, max_depth=3)

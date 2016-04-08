@@ -72,7 +72,7 @@ DEFAULT_MAPPING = {
             'name': 'name',
             'type': 'type',
             'gauges': ['size', 'capacity', 'memory']
-        }
+        },
         'events': {
             'dimensions': {
                 'k8s_container_id': 'container_name',
@@ -202,7 +202,7 @@ class Kubernetes(services_checks.ServicesCheck):
             for key, aggr_events in aggr:
                 count = len(aggr[key])
                 # take event_type as metric name (form element 0)
-                self._publisher.push_metric_dict(instance, 'created', count, aggr[key][0], group='events',
+                self._publisher.push_metric(instance, 'created', count, aggr[key][0], group='events',
                                                  fixed_dimensions=dims)
         except Exception as e:
             self.log.exception("Unable to collect metrics from cAdvisor events endpoint - %s", repr(e))
