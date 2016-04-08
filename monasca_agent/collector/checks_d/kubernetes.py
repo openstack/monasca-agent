@@ -57,7 +57,7 @@ DEFAULT_MAPPING = {
             'dimensions': {
                 'device': 'device'
             },
-            'gauges': [ 'capacity', 'available', 'usage', '.*_time', '.*_in_progress' ]
+            'gauges': [ 'capacity', 'available', 'usage', '.*_time', '.*_in_progress' ],
             'rates': [ '.*' ]
         },
         'memory': {
