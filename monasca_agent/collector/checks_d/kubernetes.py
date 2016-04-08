@@ -153,7 +153,7 @@ class Kubernetes(services_checks.ServicesCheck):
         dims = instance.get('dimensions', {})  # add support for custom dims
         dims['hostname'] = get_kube_settings()['host']
 
-        subcontainers = self._retrieve_json(get_kube_settings()["subcontainers_url"])
+        subcontainers = _retrieve_json(get_kube_settings()["subcontainers_url"])
         if not subcontainers:
             raise Exception('No metrics retrieved from URL %s' % get_kube_settings()["subcontainers_url"])
 
@@ -164,7 +164,7 @@ class Kubernetes(services_checks.ServicesCheck):
                 self.log.exception("Unable to collect metrics for container: %s - %s", subcontainer.get('name'),
                                    repr(e))
 
-        machine = self._retrieve_json(get_kube_settings()["machine_url"])
+        machine = _retrieve_json(get_kube_settings()["machine_url"])
         if not machine:
             raise Exception('No metrics retrieved from URL %s' % kube_settings["metrics_url"])
 
@@ -187,7 +187,7 @@ class Kubernetes(services_checks.ServicesCheck):
             'all_events': 'true',
             'start_time': self._last_ts['instance_name']
         }
-        events = self._retrieve_json(get_kube_settings()["events_url"], params)
+        events = _retrieve_json(get_kube_settings()["events_url"], params)
         if not events:
             raise Exception('No metrics retrieved from URL %s' % kube_settings["events_url"])
 
