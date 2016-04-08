@@ -54,13 +54,20 @@ DEFAULT_MAPPING = {
             'rates': ['(.*)_total']
         },
         'filesystem': {
-            'gauges': ['usage']
+            'dimensions': {
+                'device': 'device'
+            },
+            'gauges': [ 'capacity', 'available', 'usage', '.*_time', '.*_in_progress' ]
+            'rates': [ '.*' ]
         },
         'memory': {
-            'gauges': ['usage']
+            'gauges': ['usage', 'working_set' ]
         },
         'network': {
-            'rates': ['.._bytes', '.._errors', '.._dropped']
+            'dimensions': {
+                'interface_name': 'name'
+            },
+            'rates': ['.*_bytes', '.*_errors', '.*_dropped']
         },
         'task_stats': {
             'gauges': ['nr_.*']
