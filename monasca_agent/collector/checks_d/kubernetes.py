@@ -203,7 +203,7 @@ class Kubernetes(services_checks.ServicesCheck):
             for key, aggr_events in aggr.iteritems():
                 count = len(aggr_events)
                 # take event_type as metric name (form element 0)
-                self._publisher.push_metric(instance, 'created', count, aggr_events[0], group='events',
+                self._publisher.push_metric(instance, 'created', float(count), aggr_events[0], group='events',
                                                  fixed_dimensions=dims)
         except Exception as e:
             self.log.exception("Unable to collect metrics from cAdvisor events endpoint - %s", repr(e))
