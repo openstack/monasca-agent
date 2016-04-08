@@ -73,12 +73,14 @@ DEFAULT_MAPPING = {
             'gauges': ['nr_.*']
         },
         'machine': {
-            'k8s_machine_id': 'machine_id',
-            'k8s_boot_id': 'boot_id',
-            'mac_address': 'mac_address',
-            'device': 'device',
-            'machine_name': 'name',
-            'cache_type': 'type',
+            'dimensions': {
+                'k8s_machine_id': 'machine_id',
+                'k8s_boot_id': 'boot_id',
+                'mac_address': 'mac_address',
+                'device': 'device',
+                'machine_name': 'name',
+                'cache_type': 'type'
+            },
             'gauges': ['.*size', '.*capacity', '.*memory']
         },
         'events': {
