@@ -199,7 +199,7 @@ class Kubernetes(services_checks.ServicesCheck):
                 if not key in aggr:
                     aggr[key] = []
                 aggr[key].append(event)
-            for key, aggr_events in aggr:
+            for key, aggr_events in aggr.iteritems():
                 count = len(aggr[key])
                 # take event_type as metric name (form element 0)
                 self._publisher.push_metric(instance, 'created', count, aggr[key][0], group='events',

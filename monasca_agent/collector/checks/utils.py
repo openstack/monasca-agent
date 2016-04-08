@@ -190,37 +190,100 @@ class DynamicCheckHelper:
 
         The following mappings are applied:
 
-        {
-            'server': {
-                'requests': 12
-            }
-        }
+        Simple recursive composition of metric names:
 
-        => server_requests=12
+            Input:
 
-        {
-            'server': [
                 {
-                    'role': 'master,
-                    'node_name': 'server0',
-                    'requests': 1500
-                },
-                {
-                    'role': 'slave',
-                    'node_name': 'server1',
-                    'requests': 1000
-                },
-                {
-                    'role': 'slave',
-                    'node_name': 'server2',
-                    'requests': 500
+                    'server': {
+                        'requests': 12
+                    }
+                }
+
+            Configuration:
+
+                mapping:
+                    rates:
+                        - server_requests
+
+            Output:
+
+                server_requests=12
+
+        Mapping of textual values to dimensions to distinguish array elements. Make sure that tests attributes
+        are sufficient to distinguish the array elements. If not use the build-in 'index' dimension.
+
+            Input:
+
+            {
+                'server': [
+                    {
+                        'role': 'master,
+                        'node_name': 'server0',
+                        'requests': 1500
+                    },
+                    {
+                        'role': 'slave',
+                        'node_name': 'server1',
+                        'requests': 1000
+                    },
+                    {
+                        'role': 'slave',
+                        'node_name': 'server2',
+                        'requests': 500
+                    }
                 }
             }
-        }
 
-        =>  server_requests{role=slave,node_name=server0} = 1500.0
-            server_requests{role=slave,node_name=server0} = 1000.0
-            server_requests{role=slave,node_name=server0} = 500.0
+            Configuration:
+
+                mapping:
+                    dimensions:
+                        server_role: role
+                        node_name: node_name
+                    rates:
+                        - requests
+
+            Output:
+
+                server_requests{server_role=master, node_name=server0} = 1500.0
+                server_requests{server_role=slave, node_name=server1} = 1000.0
+                server_requests{server_role=slave, node_name=server2} = 500.0
+
+
+        Distinguish array elements where no textual attribute are available or no mapping has been configured for them.
+        In that case an 'index' dimension will be attached to the metric which has to be mapped properly.
+
+            Input:
+
+                {
+                    'server': [
+                        {
+                            'requests': 1500
+                        },
+                        {
+                            'requests': 1000
+                        },
+                        {
+                            'requests': 500
+                        }
+                    }
+                }
+
+            Configuration:
+
+                mapping:
+                    dimensions:
+                        server_no: index          # index is a predefined label
+                    rates:
+                        - server_requests
+
+            Result:
+
+                server_requests{server_no=0} = 1500.0
+                server_requests{server_no=1} = 1000.0
+                server_requests{server_no=2} = 500.0
+
 
         :param instance:
         :param metric_dict:
