@@ -215,6 +215,16 @@ class DynamicCheckHelper:
                         log.debug('nested arrays are not supported for configurable extraction of element %s', element)
 
     def extract_dist_labels(self, instance_name, group, metric_dict, labels, index):
+        """
+
+        :param instance_name: instance to be used
+        :param group: metric group or None for root group
+        :param metric_dict: dictionary with metrics and labels
+        :param labels: labels dictionary to extend
+        :param index: index value to be used as fallback if no labels can be derived from string-valued attributes
+            or the derived labels are not mapped in the config.
+        :return:
+        """
         ext_labels = None
         # collect additional dimensions first from non-metrics
         for element, child in metric_dict.iteritems():

@@ -15,10 +15,11 @@ def retrieve_json(url):
 # project
 
 DEFAULT_METHOD = 'http'
-MACHINE_PATH = '/api/v1.3/subcontainers/'
 SUBCONTAINERS_PATH = '/api/v1.3/subcontainers/'
 MACHINE_PATH = '/api/v1.3/machine/'
 CONTAINERS_PATH = '/api/v1.3/containers/'
+EVENTS_PATH = '/api/v1.3/events/'
+DOCKER_PATH = '/api/v1.3/docker/'
 DEFAULT_CADVISOR_PORT = 4194
 DEFAULT_KUBELET_PORT = 10255
 DEFAULT_MASTER_PORT = 8080
@@ -41,6 +42,7 @@ def set_kube_settings(instance):
     subcontainers_url = urljoin('%s://%s:%d' % (method, host, cadvisor_port), SUBCONTAINERS_PATH)
     containers_url = urljoin('%s://%s:%d' % (method, host, cadvisor_port), CONTAINERS_PATH)
     machine_url = urljoin('%s://%s:%d' % (method, host, cadvisor_port), MACHINE_PATH)
+    events_url = urljoin('%s://%s:%d' % (method, host, cadvisor_port), EVENTS_PATH)
     kubelet_port = instance.get('kubelet_port', DEFAULT_KUBELET_PORT)
     master_port = instance.get('master_port', DEFAULT_MASTER_PORT)
     master_host = instance.get('master_host', host)
@@ -51,6 +53,7 @@ def set_kube_settings(instance):
         "subcontainers_url": subcontainers_url,
         "containers_url": containers_url,
         "machine_url": machine_url,
+        "events_url": events_url,
         "cadvisor_port": cadvisor_port,
         "kubelet_url": '%s://%s:%d/pods' % (method, host, kubelet_port),
         "master_url_nodes": '%s://%s:%d/api/v1/nodes' % (method, master_host, master_port),
