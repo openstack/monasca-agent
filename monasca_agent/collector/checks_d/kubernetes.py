@@ -70,9 +70,9 @@ DEFAULT_MAPPING = {
             'k8s_boot_id': 'boot_id',
             'mac_address': 'mac_address',
             'device': 'device',
-            'name': 'name',
-            'type': 'type',
-            'gauges': ['size', 'capacity', 'memory']
+            'machine_name': 'name',
+            'cache_type': 'type',
+            'gauges': ['.*size', '.*capacity', '.*memory']
         },
         'events': {
             'dimensions': {
