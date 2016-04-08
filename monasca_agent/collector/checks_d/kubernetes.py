@@ -2,6 +2,7 @@
 Collects metrics from cAdvisor instance
 """
 # stdlib
+import traceback
 from datetime import datetime
 import calendar
 import monasca_agent.collector.checks.utils as utils
@@ -177,6 +178,7 @@ class Kubernetes(services_checks.ServicesCheck):
                                              max_depth=3)
         except Exception as e:
             self.log.exception("Unable to collect metrics from cAdvisor machine endpoint - %s", repr(e))
+            traceback.print_exc()
 
         instance_name = instance['name']
         if self._last_ts.get(instance_name) is None:
@@ -189,7 +191,7 @@ class Kubernetes(services_checks.ServicesCheck):
         }
         events = _retrieve_json(get_kube_settings()["events_url"], params)
         if not events:
-            raise Exception('No metrics retrieved from URL %s' % kube_settings["events_url"])
+            raise Exception('No events retrieved from URL %s' % kube_settings["events_url"])
 
         try:
             # push event count first
@@ -200,12 +202,13 @@ class Kubernetes(services_checks.ServicesCheck):
                     aggr[key] = []
                 aggr[key].append(event)
             for key, aggr_events in aggr.iteritems():
-                count = len(aggr[key])
+                count = len(aggr_events)
                 # take event_type as metric name (form element 0)
-                self._publisher.push_metric(instance, 'created', count, aggr[key][0], group='events',
+                self._publisher.push_metric(instance, 'created', count, aggr_events[0], group='events',
                                                  fixed_dimensions=dims)
         except Exception as e:
             self.log.exception("Unable to collect metrics from cAdvisor events endpoint - %s", repr(e))
+            traceback.print_exc()
 
     def _update_last_ts(self, instance_name):
         utc_now = datetime.utcnow()
