@@ -48,7 +48,7 @@ DEFAULT_MAPPING = {
     },
     'groups': {
         'diskio': {
-            'rates': ['(io_service_bytes)_stats_total']
+            'rates': ['(io_service_bytes)_stats_Total']
         },
         'cpu': {
             'rates': ['(.*)_total']
