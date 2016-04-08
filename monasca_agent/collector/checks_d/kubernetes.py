@@ -86,7 +86,7 @@ DEFAULT_MAPPING = {
                 'k8s_container_id': 'container_name',
                 'k8s_event_type': 'event_type',
             },
-            'rates': ['created']
+            'gauge': ['created']
         }
         # dimensions should be inherited from above
     }
