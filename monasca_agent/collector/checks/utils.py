@@ -429,6 +429,7 @@ class DynamicCheckHelper:
     def _lookup_metric(metric, metric_cache, metric_map):
         metric_entry = metric_cache.get(metric)
         if metric_entry is None:
+            groups = None
             all_gauges_re = metric_map.get('gauges', [])
             for rx in all_gauges_re:
                 groups = re.match(rx, metric)
