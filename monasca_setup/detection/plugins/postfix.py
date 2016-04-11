@@ -1,5 +1,6 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (c) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 
+import grp
 import logging
 import os
 import yaml
@@ -17,10 +18,15 @@ class Postfix(monasca_setup.detection.Plugin):
         """Run detection, set self.available True if the service is detected.
 
         """
+        # Detect Agent's OS username by getting the group owner of confg file
+        try:
+            gid = os.stat('/etc/monasca/agent/agent.yaml').st_gid
+            agent_user = grp.getgrgid(gid)[0]
+        except OSError:
+            agent_user = None
         if monasca_setup.detection.find_process_cmdline('postfix') is not None:
             # Test for sudo access
-            # TODO(craig): don't hardcode the user. Need to get it from the arguments to monasca_setup
-            test_sudo = os.system('sudo -l -U mon-agent find /var/spool/postfix/incoming -type f > /dev/null')
+            test_sudo = os.system('sudo -l -U {0} find /var/spool/postfix/incoming -type f > /dev/null'.format(agent_user))
             if test_sudo != 0:
                 log.info("Postfix found but the required sudo access is not configured.\n\t" +
                          "Refer to plugin documentation for more detail")
