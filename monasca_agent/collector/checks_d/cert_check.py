@@ -33,7 +33,7 @@ class CertificateCheck(AgentCheck):
         time_since_last = datetime.now() - self._last_collect_time
         if time_since_last.seconds < self._collection_period:
             self.log.debug('Skipping collection for %d seconds' %
-                           self._collection_period - time_since_last.seconds)
+                           (self._collection_period - time_since_last.seconds))
             self._skip_collection = True
             return
         self._skip_collection = False
