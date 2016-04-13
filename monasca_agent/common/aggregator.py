@@ -132,6 +132,11 @@ class MetricsAggregator(object):
 
         return events
 
+    def get_hostname_to_post(self, hostname):
+        if 'SUPPRESS' == hostname:
+            return None
+        return hostname or self.hostname
+
     @staticmethod
     def formatter(metric, value, timestamp, dimensions, hostname, delegated_tenant=None,
                   device_name=None, metric_type=None, value_meta=None):
@@ -231,14 +236,15 @@ class MetricsAggregator(object):
         else:
             meta = None
 
+        hostname_to_post = self.get_hostname_to_post(hostname)
         context = (name, tuple(dimensions.items()), meta, delegated_tenant,
-                   hostname, device_name)
+                   hostname_to_post, device_name)
 
         if context not in self.metrics:
             self.metrics[context] = metric_class(self.formatter,
                                                  name,
                                                  dimensions,
-                                                 hostname or self.hostname,
+                                                 hostname_to_post,
                                                  device_name,
                                                  delegated_tenant,
                                                  value_meta)

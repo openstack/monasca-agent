@@ -50,6 +50,7 @@
   - [Kafka Checks](#kafka-checks)
   - [KyotoTycoon](#kyototycoon)
   - [Libvirt VM Monitoring](#libvirt-vm-monitoring)
+  - [Open vSwitch Neutron Router Monitoring](#open-vswitch-neutron-router-monitoring)
   - [Lighttpd](#lighttpd)
   - [Mcache](#mcache)
   - [MK Livestatus](#mk-livestatus)
@@ -941,6 +942,10 @@ See [the example configuration](https://github.com/openstack/monasca-agent/blob/
 ## Libvirt VM Monitoring
 
 Complete documentation of the Libvirt VM monitoring plugin can be found in [the Libvirt.md document](https://github.com/openstack/monasca-agent/blob/master/docs/Libvirt.md).
+
+## Open vSwitch Neutron Router Monitoring
+
+Complete documentation of the Open vSwitch Neutron Router monitoring plugin can be found in [the Ovs.md document](https://github.com/openstack/monasca-agent/blob/master/docs/Ovs.md).
 
 ## Lighttpd
 See [the example configuration](https://github.com/openstack/monasca-agent/blob/master/conf.d/lighttpd.yaml.example) for how to configure the Lighttpd plugin.
