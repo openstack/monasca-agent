@@ -59,7 +59,7 @@ The order of precedence for all dimensions is:
 | Name | Description |
 | ---- | ----------- | 
 | hostname | The FQDN of the host being measured. |
-| observer_hostname | The FQDN of the host that runs a check against another host. |
+| observer_host | The FQDN of the host that runs a check against another host. |
 | url | In the case of the http endpoint check the url of the http endpoint being checked. |
 | device | The device name |
 | service | The service name that owns this metric |
