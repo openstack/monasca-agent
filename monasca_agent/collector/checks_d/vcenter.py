@@ -310,6 +310,8 @@ class VCenterCheck(AgentCheck):
                     self.log.warn("No clusters configured to monitor")
                     return
                 self.session = self._get_api_session()
+                self.vc_uuid = (self.session.vim.service_content.
+                                about.instanceUuid)
                 self._ops = VcenterOperations(self.session,
                                               self._max_objects,
                                               self.log)
@@ -446,12 +448,10 @@ class VCenterCheck(AgentCheck):
                            (managed_cluster, key, data.get(key)))
 
     def _get_dims(self, cluster, mor_id):
+        cluster_id = mor_id + "." + self.vc_uuid
         return {
             "vcenter_ip": self.vcenter_ip,
-            "cluster": cluster,
-            "host_type": "compute_node",
-            "role": "esx",
-            "id": cluster + "-" + self.vcenter_ip
+            "esx_cluster_id": cluster_id
         }
 
     @staticmethod
