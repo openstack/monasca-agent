@@ -54,11 +54,11 @@ class Gearman(AgentCheck):
         port = instance.get('port', None)
 
         if host is None:
-            self.warning("Host not set, assuming 127.0.0.1")
+            self.log.warn("Host not set, assuming 127.0.0.1")
             host = "127.0.0.1"
 
         if port is None:
-            self.warning("Port is not set, assuming 4730")
+            self.log.warn("Port is not set, assuming 4730")
             port = 4730
 
         dimensions = self._set_dimensions(None, instance)

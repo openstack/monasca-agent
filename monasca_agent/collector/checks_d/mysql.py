@@ -196,8 +196,7 @@ class MySql(checks.AgentCheck):
                 greater_502 = True
 
         except Exception as exception:
-            self.warning("Cannot compute mysql version, assuming older than 5.0.2: %s" %
-                         str(exception))
+            self.log.warn("Cannot compute mysql version, assuming older than 5.0.2: %s" % str(exception))
 
         self.greater_502[host] = greater_502
 
@@ -271,7 +270,7 @@ class MySql(checks.AgentCheck):
             cursor.close()
             del cursor
         except Exception:
-            self.warning("Error while running %s\n%s" % (query, traceback.format_exc()))
+            self.log.warn("Error while running %s\n%s" % (query, traceback.format_exc()))
             self.log.exception("Error while running %s" % query)
 
     def _collect_system_metrics(self, host, db, dimensions):
@@ -303,8 +302,8 @@ class MySql(checks.AgentCheck):
                 self.rate("mysql.performance.kernel_time", int(
                     (float(kcpu) / float(clk_tck)) * 100), dimensions=dimensions)
             except Exception:
-                self.warning("Error while reading mysql (pid: %s) procfs data\n%s" %
-                             (pid, traceback.format_exc()))
+                self.log.warn("Error while reading mysql (pid: %s) procfs data\n%s" %
+                              (pid, traceback.format_exc()))
 
     def _get_server_pid(self, db):
         pid = None
@@ -318,7 +317,7 @@ class MySql(checks.AgentCheck):
             cursor.close()
             del cursor
         except Exception:
-            self.warning("Error while fetching pid_file variable of MySQL.")
+            self.log.warn("Error while fetching pid_file variable of MySQL.")
 
         if pid_file is not None:
             self.log.debug("pid file: %s" % str(pid_file))

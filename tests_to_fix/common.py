@@ -5,23 +5,13 @@ import signal
 
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.common.util import Paths
-from monasca_agent.common.util import get_os
 
 
 def kill_subprocess(process_obj):
     try:
         process_obj.terminate()
     except AttributeError:
-        # py < 2.6 doesn't support process.terminate()
-        if get_os() == 'windows':
-            import ctypes
-            PROCESS_TERMINATE = 1
-            handle = ctypes.windll.kernel32.OpenProcess(PROCESS_TERMINATE, False,
-                                                        process_obj.pid)
-            ctypes.windll.kernel32.TerminateProcess(handle, -1)
-            ctypes.windll.kernel32.CloseHandle(handle)
-        else:
-            os.kill(process_obj.pid, signal.SIGKILL)
+        os.kill(process_obj.pid, signal.SIGKILL)
 
 
 def get_check(name, config_str):

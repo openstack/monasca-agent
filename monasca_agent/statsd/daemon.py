@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 
 """
 A Python Statsd implementation with dimensions added
@@ -23,7 +23,6 @@ import sys
 
 # project
 import monasca_agent.common.aggregator as agg
-import monasca_agent.common.check_status as check_status
 
 log = logging.getLogger('statsd')
 
@@ -91,12 +90,7 @@ def main():
     parser = argparse.ArgumentParser(description='Monasca statsd - statsd server supporting metric dimensions')
     parser.add_argument('--config', '-c',
                         help="Location for an alternate config rather than using the default config location.")
-    parser.add_argument('--info', action='store_true', help="Output info about the running Monasca Statsd")
     args = parser.parse_args()
-
-    if args.info:
-        logging.getLogger().setLevel(logging.ERROR)
-        return check_status.MonascaStatsdStatus.print_latest_status()
 
     monasca_statsd = MonascaStatsd(args.config)
     monasca_statsd.run()
