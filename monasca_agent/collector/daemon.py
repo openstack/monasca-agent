@@ -13,7 +13,6 @@ import time
 import checks.collector
 import checks.services_checks as status_checks
 import jmxfetch
-import monasca_agent.common.check_status
 import monasca_agent.common.config as cfg
 import monasca_agent.common.daemon
 import monasca_agent.common.emitter
