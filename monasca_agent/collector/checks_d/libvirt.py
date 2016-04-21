@@ -279,6 +279,9 @@ class LibvirtCheck(AgentCheck):
                     # Rename "tx" to "out" and "rx" to "in"
                     rate_name = rate_name.replace("tx", "out")
                     rate_name = rate_name.replace("rx", "in")
+                    if self.init_config.get('network_use_bits'):
+                        val_diff = val_diff * 8
+                        rate_name.replace("bytes", "bits")
                     # Customer
                     this_dimensions = vnic_dimensions.copy()
                     this_dimensions.update(dims_customer)

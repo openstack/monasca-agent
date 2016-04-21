@@ -5,6 +5,7 @@
 - [System Checks](#system-checks)
   - [System Metrics](#system-metrics)
       - [Limiting System Metrics](#limiting-system-metrics)
+  - [Network Checks](#network-checks)
 - [Standard Plugins](#standard-plugins)
   - [Dot File Configuration](#dot-file-configuration)
   - [Default Plugin Detection](#default-plugin-detection)
@@ -137,6 +138,9 @@ These parameters may added to `instances` in the plugin `.yaml` configuration fi
 monasca-setup -d system -a 'cpu_idle_only=true net_bytes_only=true send_io_stats=false' --overwrite
 ```
 By default, all metrics are enabled.
+
+## Network Checks
+The network check can be configured to submit its metrics in either bytes/sec or bits/sec.  The default behavior is to submit bytes.  To submit `net.in_bits_sec` and `net.out_bits_sec` rather than `net.in_bytes_sec` and `net.out_bytes_sec`, set the config option `use_bits` to true for the instance you want to configure.
 
 # Standard Plugins
 Plugins are the way to extend the Monasca Agent.  Plugins add additional functionality that allow the agent to perform checks on other applications, servers or services.  This section describes the standard plugins that are delivered by default.
@@ -1250,6 +1254,8 @@ To limit false negatives, ping checks will not be peformed if the above requirem
 Executing the ping command inside a namespace requires enhanced privileges.  To accomplish this, the `monasca-setup` process will copy `/sbin/ip` to a local directory (`sys.path[0]`), lock down the ownership and permissions, and use `setcap` to apply `cap_sys_admin`, thus letting the 'mon-agent' user execute a ping command within a separate network namespace, without the need for `sudo`.
 
 `alive_only` will suppress all per-VM metrics aside from `host_alive_status` and `vm.host_alive_status`, including all I/O, network, memory, ping, and CPU metrics.  [Aggregate Metrics](#aggregate-metrics), however, would still be enabled if `alive_only` is true.  By default, `alive_only` is false.
+
+`network_use_bits` will submit network metrics in bits rather than bytes.  This will stop submitting the metrics `net.in_bytes_sec` and `net.out_bytes_sec`, and instead submit `net.in_bits_sec` and `net.out_bits_sec`.
 
 Example config:
 ```
