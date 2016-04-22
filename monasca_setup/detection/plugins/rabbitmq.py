@@ -38,7 +38,12 @@ class RabbitMQ(monasca_setup.detection.Plugin):
     """
     def __init__(self, *args, **kwargs):
         super(RabbitMQ, self).__init__(*args, **kwargs)
-        self._watch_api = self.args.pop('watch_api', False)
+        if self.args is None:
+            self._watch_api = False
+        else:
+            self._watch_api = self.args.pop('watch_api', False)
+        if type(self._watch_api) is str:
+            self._watch_api = (self._watch_api.lower() == 'true')
 
     def _detect(self):
         """Run detection, set self.available True if the service is detected.
