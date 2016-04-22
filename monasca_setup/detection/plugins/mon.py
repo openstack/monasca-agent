@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 
 """Classes for monitoring the monitoring server stack.
 
@@ -278,7 +278,7 @@ def dropwizard_health_check(service, component, url):
     config['http_check'] = {'init_config': None,
                             'instances': [{'name': "{0}-{1} healthcheck".format(service, component),
                                            'url': url,
-                                           'timeout': 1,
+                                           'timeout': 5,
                                            'include_content': False,
                                            'dimensions': {'service': service, 'component': component}}]}
     return config
@@ -290,7 +290,7 @@ def dropwizard_metrics(service, component, url, whitelist):
     config['http_metrics'] = {'init_config': None,
                               'instances': [{'name': "{0}-{1} metrics".format(service, component),
                                              'url': url,
-                                             'timeout': 1,
+                                             'timeout': 5,
                                              'dimensions': {'service': service, 'component': component},
                                              'whitelist': whitelist}]}
     return config
