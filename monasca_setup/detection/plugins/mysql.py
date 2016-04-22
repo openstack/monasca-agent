@@ -41,11 +41,10 @@ class MySQL(monasca_setup.detection.Plugin):
         configured_mysql = False
         # Attempt login, requires either an empty root password from localhost
         # or relying on a configured /root/.my.cnf
-        if self.dependencies_installed():  # ensures MySQLdb is available
-            import _mysql_exceptions
-            import MySQLdb
+        if self.dependencies_installed():  # ensures PyMySQL is available
+            import pymysql
             try:
-                MySQLdb.connect(read_default_file=mysql_conf)
+                pymysql.connect(read_default_file=mysql_conf)
                 log.info(
                     "\tUsing client credentials from {:s}".format(mysql_conf))
                 # Read the mysql config file to extract the needed variables.
@@ -76,24 +75,24 @@ class MySQL(monasca_setup.detection.Plugin):
                 except IOError:
                     log.error("\tI/O error reading {:s}".format(mysql_conf))
                     pass
-            except _mysql_exceptions.MySQLError:
+            except pymysql.MySQLError:
                 log.warn("\tCould not connect to mysql using credentials from {:s}".format(mysql_conf))
                 pass
 
             # Try logging in as 'root' with an empty password
             if not configured_mysql:
                 try:
-                    MySQLdb.connect(host='localhost', port=3306, user='root')
+                    pymysql.connect(host='localhost', port=3306, user='root')
                     log.info("\tConfiguring plugin to connect with user root.")
                     config['mysql'] = {'init_config': None, 'instances':
                                        [{'name': 'localhost', 'server': 'localhost', 'user': 'root',
                                          'port': 3306}]}
                     configured_mysql = True
-                except _mysql_exceptions.MySQLError:
+                except pymysql.MySQLError:
                     log.warn("\tCould not connect to mysql using root user")
                     pass
         else:
-            exception_msg = 'The mysql dependency MySQLdb is not installed;' \
+            exception_msg = 'The mysql dependency PyMySQL is not installed;' \
                             ' the mysql plugin is not configured'
             log.error(exception_msg)
             raise Exception(exception_msg)
@@ -108,7 +107,7 @@ class MySQL(monasca_setup.detection.Plugin):
 
     def dependencies_installed(self):
         try:
-            import MySQLdb
+            import pymysql
         except ImportError:
             return False
 
