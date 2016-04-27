@@ -1238,7 +1238,9 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 
 `nova_refresh` specifies the number of seconds between calls to the Nova API to refresh the instance cache.  This is helpful for updating VM hostname and pruning deleted instances from the cache.  By default, it is set to 14,400 seconds (four hours).  Set to 0 to refresh every time the Collector runs, or to None to disable regular refreshes entirely (though the instance cache will still be refreshed if a new instance is detected).
 
-'metadata' specifies the list of instance metadata keys to be sent as dimensions. This is helpful to give more information about an instance. By default 'scale_group' metadata is used for supporting auto scaling in Heat.
+`metadata` specifies the list of instance metadata keys to be included as dimensions with the cross-tenant metrics for the operations project. This is helpful to give more information about an instance. When using the agent setup scripts, by default `scale_group` metadata is enabled for supporting auto scaling in Heat.
+
+`customer_metadata` specifies the list of instance metadata keys to be included as dimensions with customer metrics. This is helpful to give more information about an instance.
 
 `vm_probation` specifies a period of time (in seconds) in which to suspend metrics from a newly-created VM.  This is to prevent quickly-obsolete metrics in an environment with a high amount of instance churn (VMs created and destroyed in rapid succession).  The default probation length is 300 seconds (five minutes).  Setting to 0 disables VM probation, and metrics will be recorded as soon as possible after a VM is created.
 

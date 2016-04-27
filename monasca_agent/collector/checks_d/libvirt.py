@@ -130,56 +130,19 @@ class LibvirtCheck(AgentCheck):
                                    'ram': inst_flavor.ram,
                                    'disk': inst_flavor.disk}
 
-            if self.init_config.get('metadata'):
-                for metadata in self.init_config.get('metadata'):
-                    if instance.metadata.get(metadata):
-                        id_cache[inst_name][metadata] = (instance.metadata.
-                                                         get(metadata))
+            for config_var in ['metadata', 'customer_metadata']:
+                if self.init_config.get(config_var):
+                    for metadata in self.init_config.get(config_var):
+                        if instance.metadata.get(metadata):
+                            id_cache[inst_name][metadata] = (instance.metadata.
+                                                             get(metadata))
 
             # Build a list of pingable IP addresses attached to this VM and the
             # appropriate namespace, for use in ping tests
             if netns:
                 secgroup_cache = nu.list_security_groups()['security_groups']
-                # Find all active fixed IPs for this VM, fetch each subnet_id
-                for net in instance.addresses:
-                    for ip in instance.addresses[net]:
-                        if ip['OS-EXT-IPS:type'] == 'fixed' and ip['version'] == 4:
-                            subnet_id = None
-                            nsuuid = None
-                            for port in port_cache:
-                                if ((port['mac_address'] == ip['OS-EXT-IPS-MAC:mac_addr']
-                                     and port['tenant_id'] == instance.tenant_id
-                                     and port['status'] == 'ACTIVE')):
-                                    for fixed in port['fixed_ips']:
-                                        if fixed['ip_address'] == ip['addr']:
-                                            subnet_id = fixed['subnet_id']
-                                            break
-                            # Use the subnet_id to find the router
-                            ping_allowed = False
-                            if subnet_id is not None:
-                                for port in port_cache:
-                                    if ((port['device_owner'].startswith('network:router_interface')
-                                         and port['tenant_id'] == instance.tenant_id
-                                         and port['status'] == 'ACTIVE')):
-                                        nsuuid = port['device_id']
-                                        for fixed in port['fixed_ips']:
-                                            if fixed['subnet_id'] == subnet_id:
-                                                # Validate security group
-                                                if self._validate_secgroup(secgroup_cache,
-                                                                           instance,
-                                                                           fixed['ip_address']):
-                                                    ping_allowed = True
-                                                    break
-                                    if nsuuid is not None:
-                                        break
-                            if nsuuid is not None and ping_allowed:
-                                if 'network' not in id_cache[inst_name]:
-                                    id_cache[inst_name]['network'] = []
-                                id_cache[inst_name]['network'].append({'namespace': "qrouter-{0}".format(nsuuid),
-                                                                       'ip': ip['addr']})
-                            elif ping_allowed is False:
-                                self.log.debug("ICMP disallowed for {0} on {1}".format(inst_name,
-                                                                                       ip['addr']))
+                self._build_ip_list(instance, inst_name,
+                                    secgroup_cache, port_cache, id_cache)
 
         id_cache['last_update'] = int(time.time())
 
@@ -193,6 +156,48 @@ class LibvirtCheck(AgentCheck):
             self.log.error("Cannot write to {0}: {1}".format(self.instance_cache_file, e))
 
         return id_cache
+
+    def _build_ip_list(self, instance, inst_name, secgroup_cache, port_cache, id_cache):
+        # Find all active fixed IPs for this VM, fetch each subnet_id
+        for net in instance.addresses:
+            for ip in instance.addresses[net]:
+                if ip['OS-EXT-IPS:type'] == 'fixed' and ip['version'] == 4:
+                    subnet_id = None
+                    nsuuid = None
+                    for port in port_cache:
+                        if ((port['mac_address'] == ip['OS-EXT-IPS-MAC:mac_addr']
+                             and port['tenant_id'] == instance.tenant_id
+                             and port['status'] == 'ACTIVE')):
+                            for fixed in port['fixed_ips']:
+                                if fixed['ip_address'] == ip['addr']:
+                                    subnet_id = fixed['subnet_id']
+                                    break
+                    # Use the subnet_id to find the router
+                    ping_allowed = False
+                    if subnet_id is not None:
+                        for port in port_cache:
+                            if ((port['device_owner'].startswith('network:router_interface')
+                                 and port['tenant_id'] == instance.tenant_id
+                                 and port['status'] == 'ACTIVE')):
+                                nsuuid = port['device_id']
+                                for fixed in port['fixed_ips']:
+                                    if fixed['subnet_id'] == subnet_id:
+                                        # Validate security group
+                                        if self._validate_secgroup(secgroup_cache,
+                                                                   instance,
+                                                                   fixed['ip_address']):
+                                            ping_allowed = True
+                                            break
+                            if nsuuid is not None:
+                                break
+                    if nsuuid is not None and ping_allowed:
+                        if 'network' not in id_cache[inst_name]:
+                            id_cache[inst_name]['network'] = []
+                        id_cache[inst_name]['network'].append({'namespace': "qrouter-{0}".format(nsuuid),
+                                                               'ip': ip['addr']})
+                    elif ping_allowed is False:
+                        self.log.debug("ICMP disallowed for {0} on {1}".format(inst_name,
+                                                                               ip['addr']))
 
     def _load_instance_cache(self):
         """Load the cache map of instance names to Nova data.
@@ -445,6 +450,12 @@ class LibvirtCheck(AgentCheck):
                                           get(metadata))
                         if metadata_value:
                             dims_operations[metadata] = metadata_value
+                if self.init_config.get('customer_metadata'):
+                    for metadata in self.init_config.get('customer_metadata'):
+                        metadata_value = (instance_cache.get(inst_name).
+                                          get(metadata))
+                        if metadata_value:
+                            dims_customer[metadata] = metadata_value
                 # Remove customer 'hostname' dimension, this will be replaced by the VM name
                 del(dims_customer['hostname'])
             except TypeError:
