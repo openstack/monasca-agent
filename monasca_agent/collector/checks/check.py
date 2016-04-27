@@ -257,7 +257,7 @@ class AgentCheck(util.Dimensions):
 
     @staticmethod
     def stop():
-        """To be executed when the agent is being stopped to clean ressources.
+        """To be executed when the agent is being stopped to clean resources.
         """
         pass
 
