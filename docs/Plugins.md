@@ -108,6 +108,8 @@ This section documents the system metrics that are sent by the Agent.  This sect
 | mem.swap_used_mb | | Mbytes of total swap memory used
 | mem.total_mb | | Total Mbytes of memory
 | mem.usable_mb | | Total Mbytes of usable memory
+| mem.used_mb | | Mbytes of used memory
+| mem.used_real_mb | | Mbytes of used memory, excluding buffers and cached.  This metric is only submitted if both buffers and cached usage is available.
 | mem.usable_perc | | Percentage of total memory that is usable
 | mem.used_buffers | | Number of buffers in Mbytes being used by the kernel for block io
 | mem.used_cached | | Mbytes of memory used for the page cache

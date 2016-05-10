@@ -31,6 +31,9 @@ class Memory(checks.AgentCheck):
         self.gauge('mem.usable_mb',
                    int(mem_info.available / 1048576),
                    dimensions=dimensions)
+        self.gauge('mem.used_mb',
+                   int(mem_info.used / 1048576),
+                   dimensions=dimensions)
         self.gauge('mem.usable_perc',
                    float(100 - mem_info.percent),
                    dimensions=dimensions)
@@ -47,7 +50,7 @@ class Memory(checks.AgentCheck):
                    float(100 - swap_info.percent),
                    dimensions=dimensions)
 
-        count = 8
+        count = 9
         if hasattr(mem_info, 'buffers') and mem_info.buffers:
             self.gauge('mem.used_buffers',
                        int(mem_info.buffers / 1048576),
@@ -57,6 +60,13 @@ class Memory(checks.AgentCheck):
         if hasattr(mem_info, 'cached') and mem_info.cached:
             self.gauge('mem.used_cache',
                        int(mem_info.cached / 1048576),
+                       dimensions=dimensions)
+            count += 1
+
+        if (hasattr(mem_info, 'buffers') and mem_info.buffers and
+           hasattr(mem_info, 'cached') and mem_info.cached):
+            self.gauge('mem.used_real_mb',
+                       int((mem_info.used - mem_info.buffers - mem_info.cached) / 1048576),
                        dimensions=dimensions)
             count += 1
 
