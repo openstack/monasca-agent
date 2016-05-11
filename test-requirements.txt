@@ -1,5 +1,5 @@
 extras==0.0.3
-funcsigs==1.0.0
+funcsigs==1.0.2
 flake8==2.2.4
 mccabe==0.2.1
 pyflakes==0.8.1
