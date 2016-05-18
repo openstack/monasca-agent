@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (c) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 
 import os
 
@@ -64,4 +64,4 @@ class PostfixCheck(AgentCheck):
 
             # emit an individually tagged metric
             dimensions.update({'queue': queue, 'instance': os.path.basename(directory)})
-            self.gauge('postfix.queue_size', count, dimensions=dimensions)
+            self.gauge('postfix.queue_size', int(count), dimensions=dimensions)
