@@ -236,6 +236,14 @@ A plugin config is specified something like this:
              env: stage
              newDim: test
 
+monasca-collector service can receive a `--config-file` argument, which represents an alternate agent configuration file, instead of the default /etc/monasca/agent.yaml.
+
+example:
+
+```
+monasca-collector --config-file="/path/to/monasca_agent.yaml"
+```
+
 # Running
 The monasca-setup command will create an appropriate startup script for the agent and so the agent can be run by using the standard daemon control tool for your operating system. If you have configured manually the startup script templates can be found in the code under the packaging directory.
 

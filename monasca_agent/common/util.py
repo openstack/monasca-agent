@@ -444,6 +444,9 @@ def get_parsed_args():
     parser.add_option('-c', '--clean', action='store_true', default=False, dest='clean')
     parser.add_option('-v', '--verbose', action='store_true', default=False, dest='verbose',
                       help='Print out stacktraces for errors in checks')
+    parser.add_option('-f', '--config-file', default=None, dest='config_file',
+                      help='Location for an alternate config rather than '
+                           'using the default config location.')
 
     try:
         options, args = parser.parse_args()
