@@ -1,0 +1,30 @@
+# (C) Copyright 2016 Hewlett Packard Enterprise Development Company LP
+init_config:
+    # These are Neutron credentials, [keystone_authtoken] in /etc/neutron/neutron.conf
+    admin_password: password
+    admin_tenant_name: services
+    admin_user: neutron
+    identity_uri: 'http://192.168.10.5:35357/v2.0'
+    # Number of seconds to wait before updating the neutron router cache file.
+    neutron_refresh: 14400
+    # The region name in /etc/neutron/neutron.conf
+    region_name: 'region1'
+    # Location of temporary files maintained by the plugin. Ramdisk preferred.
+    cache_dir: /dev/shm
+    # Specfies network metrics in bitslog.
+    network_use_bits: false
+    # If set, will submit raw counters from ovs-vsctl command output for the given
+    # network interface
+    use_absolute_metrics: true
+    # Installations that don't allow usage of sudo should copy the `ovs-vsctl`
+    # command to another location and use the `setcap` command to allow the
+    # monasca-agent to run that command. The new location of the `ovs-vsctl`
+    # command should be what is set in the config file for `ovs_cmd`.
+    ovs_cmd: 'sudo /usr/bin/ovs-vsctl'
+    # Regular expression for the interfaces type
+    included_interface_re: tap.*|qr.*|qg.*|vhu.*
+
+instances:
+    # Instances are not used and should be empty in `ovs.yaml` because like the
+    # ovs plugin it runs against all routers hosted on the node at once.
+    - {}
