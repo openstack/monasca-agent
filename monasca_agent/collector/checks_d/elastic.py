@@ -1,5 +1,6 @@
 # (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
 
+from collections import defaultdict
 import json
 import socket
 import subprocess
@@ -114,6 +115,39 @@ class ElasticSearch(AgentCheck):
         "jvm.mem.non_heap_used": ("gauge", "jvm.mem.non_heap_used_in_bytes"),
         "jvm.threads.count": ("gauge", "jvm.threads.count"),
         "jvm.threads.peak_count": ("gauge", "jvm.threads.peak_count"),
+<<<<<<< HEAD
+=======
+        "elasticsearch.fs.total.total_in_bytes": ("gauge", "fs.total.total_in_bytes"),
+        "elasticsearch.fs.total.free_in_bytes": ("gauge", "fs.total.free_in_bytes"),
+        "elasticsearch.fs.total.available_in_bytes": ("gauge", "fs.total.available_in_bytes"),
+        "elasticsearch.pending_tasks_total": ("gauge", "pending_task_total"),
+        "elasticsearch.pending_tasks_priority_high": ("gauge", "pending_tasks_priority_high"),
+        "elasticsearch.pending_tasks_priority_urgent": ("gauge", "pending_tasks_priority_urgent"),        
+   }
+    PRIMARY_SHARD_METRICS = {
+        "elasticsearch.primaries.docs.count": ("gauge", "_all.primaries.docs.count"),
+        "elasticsearch.primaries.docs.deleted": ("gauge", "_all.primaries.docs.deleted"),
+        "elasticsearch.primaries.store.size": ("gauge", "_all.primaries.store.size_in_bytes"),
+        "elasticsearch.primaries.indexing.index.total": ("gauge", "_all.primaries.indexing.index_total"),
+        "elasticsearch.primaries.indexing.index.time": ("gauge", "_all.primaries.indexing.index_time_in_millis", lambda v: float(v)/1000),
+        "elasticsearch.primaries.indexing.index.current": ("gauge", "_all.primaries.indexing.index_current"),
+        "elasticsearch.primaries.indexing.delete.total": ("gauge", "_all.primaries.indexing.delete_total"),
+        "elasticsearch.primaries.indexing.delete.time": ("gauge", "_all.primaries.indexing.delete_time_in_millis", lambda v: float(v)/1000),
+        "elasticsearch.primaries.indexing.delete.current": ("gauge", "_all.primaries.indexing.delete_current"),
+        "elasticsearch.primaries.get.total": ("gauge", "_all.primaries.get.total"),
+        "elasticsearch.primaries.get.time": ("gauge", "_all.primaries.get.time_in_millis", lambda v: float(v)/1000),
+        "elasticsearch.primaries.get.current": ("gauge", "_all.primaries.get.current"),
+        "elasticsearch.primaries.get.exists.total": ("gauge", "_all.primaries.get.exists_total"),
+        "elasticsearch.primaries.get.exists.time": ("gauge", "_all.primaries.get.exists_time_in_millis", lambda v: float(v)/1000),
+        "elasticsearch.primaries.get.missing.total": ("gauge", "_all.primaries.get.missing_total"),
+        "elasticsearch.primaries.get.missing.time": ("gauge", "_all.primaries.get.missing_time_in_millis", lambda v: float(v)/1000),
+        "elasticsearch.primaries.search.query.total": ("gauge", "_all.primaries.search.query_total"),
+        "elasticsearch.primaries.search.query.time": ("gauge", "_all.primaries.search.query_time_in_millis", lambda v: float(v)/1000),
+        "elasticsearch.primaries.search.query.current": ("gauge", "_all.primaries.search.query_current"),
+        "elasticsearch.primaries.search.fetch.total": ("gauge", "_all.primaries.search.fetch_total"),
+        "elasticsearch.primaries.search.fetch.time": ("gauge", "_all.primaries.search.fetch_time_in_millis", lambda v: float(v)/1000),
+        "elasticsearch.primaries.search.fetch.current": ("gauge", "_all.primaries.search.fetch_current"),
+>>>>>>> 0e536a7... support for elasticsearch on kubernetes and later elasticsearch versions
         "elasticsearch.number_of_nodes": ("gauge", "number_of_nodes"),
         "elasticsearch.number_of_data_nodes": ("gauge", "number_of_data_nodes"),
         "elasticsearch.active_primary_shards": ("gauge", "active_primary_shards"),
@@ -124,6 +158,95 @@ class ElasticSearch(AgentCheck):
         "elasticsearch.cluster_status": ("gauge", "status", lambda v: {"red": 0, "yellow": 1, "green": 2}.get(v, -1)),
     }
 
+<<<<<<< HEAD
+=======
+    PRIMARY_SHARD_METRICS_POST_1_0 = {
+        "elasticsearch.primaries.merges.current": ("gauge", "_all.primaries.merges.current"),
+        "elasticsearch.primaries.merges.current.docs": ("gauge", "_all.primaries.merges.current_docs"),
+        "elasticsearch.primaries.merges.current.size": ("gauge", "_all.primaries.merges.current_size_in_bytes"),
+        "elasticsearch.primaries.merges.total": ("gauge", "_all.primaries.merges.total"),
+        "elasticsearch.primaries.merges.total.time": ("gauge", "_all.primaries.merges.total_time_in_millis", lambda v: float(v)/1000),
+        "elasticsearch.primaries.merges.total.docs": ("gauge", "_all.primaries.merges.total_docs"),
+        "elasticsearch.primaries.merges.total.size": ("gauge", "_all.primaries.merges.total_size_in_bytes"),
+        "elasticsearch.primaries.refresh.total": ("gauge", "_all.primaries.refresh.total"),
+        "elasticsearch.primaries.refresh.total.time": ("gauge", "_all.primaries.refresh.total_time_in_millis", lambda v: float(v)/1000),
+        "elasticsearch.primaries.flush.total": ("gauge", "_all.primaries.flush.total"),
+        "elasticsearch.primaries.flush.total.time": ("gauge", "_all.primaries.flush.total_time_in_millis", lambda v: float(v)/1000),
+    }
+
+    JVM_METRICS_POST_0_90_10 = {
+        "jvm.gc.collectors.young.count": ("gauge", "jvm.gc.collectors.young.collection_count"),
+        "jvm.gc.collectors.young.collection_time": ("gauge", "jvm.gc.collectors.young.collection_time_in_millis", lambda v: float(v)/1000),
+        "jvm.gc.collectors.old.count": ("gauge", "jvm.gc.collectors.old.collection_count"),
+        "jvm.gc.collectors.old.collection_time": ("gauge", "jvm.gc.collectors.old.collection_time_in_millis", lambda v: float(v)/1000),
+    }
+
+    JVM_METRICS_PRE_0_90_10 = {
+        "jvm.gc.concurrent_mark_sweep.count": ("gauge", "jvm.gc.collectors.ConcurrentMarkSweep.collection_count"),
+        "jvm.gc.concurrent_mark_sweep.collection_time": ("gauge", "jvm.gc.collectors.ConcurrentMarkSweep.collection_time_in_millis", lambda v: float(v)/1000),
+        "jvm.gc.par_new.count": ("gauge", "jvm.gc.collectors.ParNew.collection_count"),
+        "jvm.gc.par_new.collection_time": ("gauge", "jvm.gc.collectors.ParNew.collection_time_in_millis", lambda v: float(v)/1000),
+        "jvm.gc.collection_count": ("gauge", "jvm.gc.collection_count"),
+       "jvm.gc.collection_time": ("gauge", "jvm.gc.collection_time_in_millis", lambda v: float(v)/1000),
+    }
+
+    ADDITIONAL_METRICS_POST_0_90_5 = {
+        "elasticsearch.search.fetch.open_contexts": ("gauge", "indices.search.open_contexts"),
+        "elasticsearch.fielddata.size": ("gauge", "indices.fielddata.memory_size_in_bytes"),
+        "elasticsearch.fielddata.evictions": ("gauge", "indices.fielddata.evictions"),
+    }
+
+    ADDITIONAL_METRICS_POST_0_90_5_PRE_2_0 = {
+        "elasticsearch.cache.filter.evictions": ("gauge", "indices.filter_cache.evictions"),
+        "elasticsearch.cache.filter.size": ("gauge", "indices.filter_cache.memory_size_in_bytes"),
+        "elasticsearch.id_cache.size": ("gauge", "indices.id_cache.memory_size_in_bytes"),
+    }
+
+    ADDITIONAL_METRICS_PRE_0_90_5 = {
+        "elasticsearch.cache.field.evictions": ("gauge", "indices.cache.field_evictions"),
+        "elasticsearch.cache.field.size": ("gauge", "indices.cache.field_size_in_bytes"),
+        "elasticsearch.cache.filter.count": ("gauge", "indices.cache.filter_count"),
+        "elasticsearch.cache.filter.evictions": ("gauge", "indices.cache.filter_evictions"),
+        "elasticsearch.cache.filter.size": ("gauge", "indices.cache.filter_size_in_bytes"),
+    }
+
+    ADDITIONAL_METRICS_POST_1_0_0 = {
+        "elasticsearch.indices.translog.size_in_bytes": ("gauge", "indices.translog.size_in_bytes"),
+        "elasticsearch.indices.translog.operations": ("gauge", "indices.translog.operations"),
+    }
+
+    ADDITIONAL_METRICS_1_x = {  # Stats are only valid for v1.x
+        "elasticsearch.fs.total.disk_reads": ("rate", "fs.total.disk_reads"),
+        "elasticsearch.fs.total.disk_writes": ("rate", "fs.total.disk_writes"),
+        "elasticsearch.fs.total.disk_io_op": ("rate", "fs.total.disk_io_op"),
+        "elasticsearch.fs.total.disk_read_size_in_bytes": ("gauge", "fs.total.disk_read_size_in_bytes"),
+        "elasticsearch.fs.total.disk_write_size_in_bytes": ("gauge", "fs.total.disk_write_size_in_bytes"),
+        "elasticsearch.fs.total.disk_io_size_in_bytes": ("gauge", "fs.total.disk_io_size_in_bytes"),
+    }
+
+    ADDITIONAL_METRICS_POST_1_3_0 = {
+        "elasticsearch.indices.segments.index_writer_memory_in_bytes": ("gauge", "indices.segments.index_writer_memory_in_bytes"),
+        "elasticsearch.indices.segments.version_map_memory_in_bytes": ("gauge", "indices.segments.version_map_memory_in_bytes"),
+    }
+
+    ADDITIONAL_METRICS_POST_1_4_0 = {
+        "elasticsearch.indices.segments.index_writer_max_memory_in_bytes": ("gauge", "indices.segments.index_writer_max_memory_in_bytes"),
+        "elasticsearch.indices.segments.fixed_bit_set_memory_in_bytes": ("gauge", "indices.segments.fixed_bit_set_memory_in_bytes"),
+    }
+
+    ADDITIONAL_METRICS_PRE_2_0 = {
+        "elasticsearch.thread_pool.merge.active": ("gauge", "thread_pool.merge.active"),
+        "elasticsearch.thread_pool.merge.threads": ("gauge", "thread_pool.merge.threads"),
+        "elasticsearch.thread_pool.merge.queue": ("gauge", "thread_pool.merge.queue"),
+    }
+
+    CLUSTER_PENDING_TASKS = {
+        "elasticsearch.pending_tasks_total": ("gauge", "pending_task_total"),
+        "elasticsearch.pending_tasks_priority_high": ("gauge", "pending_tasks_priority_high"),
+        "elasticsearch.pending_tasks_priority_urgent": ("gauge", "pending_tasks_priority_urgent")
+    }
+
+>>>>>>> 0e536a7... support for elasticsearch on kubernetes and later elasticsearch versions
     def __init__(self, name, init_config, agent_config):
         AgentCheck.__init__(self, name, init_config, agent_config)
 
@@ -165,6 +288,12 @@ class ElasticSearch(AgentCheck):
         health_data = self._get_data(url, auth)
         self._process_health_data(config_url, health_data, dimensions=dimensions)
 
+        # Load the task data.
+        url = urlparse.urljoin(config_url, self.TASK_URL)
+        task_data = self._get_data(url, auth)
+#        self.log.debug("task_data: %s" % task_data)
+        self._process_task_data(task_data, dimensions=dimensions)
+
     def _get_es_version(self, config_url, auth=None):
         """Get the running version of Elastic Search.
 
@@ -192,6 +321,7 @@ class ElasticSearch(AgentCheck):
             self.HEALTH_URL = "/_cluster/health?pretty=true"
             self.STATS_URL = "/_nodes/stats?all=true"
             self.NODES_URL = "/_nodes?network=true"
+            self.TASK_URL = "/_cluster/pending_tasks?pretty=true"
 
             additional_metrics = {
                 "elasticsearch.search.fetch.open_contexts": ("gauge", "indices.search.open_contexts"),
@@ -208,6 +338,7 @@ class ElasticSearch(AgentCheck):
             self.STATS_URL = "/_cluster/nodes/stats?all=true"
             self.NODES_URL = "/_cluster/nodes?network=true"
 
+<<<<<<< HEAD
             additional_metrics = {
                 "elasticsearch.cache.field.evictions": ("gauge", "indices.cache.field_evictions"),
                 "elasticsearch.cache.field.size": ("gauge", "indices.cache.field_size_in_bytes"),
@@ -225,6 +356,47 @@ class ElasticSearch(AgentCheck):
             }
 
         self.METRICS.update(additional_metrics)
+=======
+        additional_metrics = self.JVM_METRICS_PRE_0_90_10
+
+
+        if version >= [0, 90, 5]:
+           # ES versions 0.90.5 and above
+           additional_metrics = self.ADDITIONAL_METRICS_POST_0_90_5
+        else:
+            # ES version 0.90.4 and below
+            additional_metrics = self.ADDITIONAL_METRICS_PRE_0_90_5
+
+        self.METRICS.update(additional_metrics)
+
+        if version >= [1, 0, 0]:
+            self.METRICS.update(self.ADDITIONAL_METRICS_POST_1_0_0)
+
+        if version < [2, 0, 0]:
+            self.METRICS.update(self.ADDITIONAL_METRICS_PRE_2_0)
+            if version >= [0, 90, 5]:
+                self.METRICS.update(self.ADDITIONAL_METRICS_POST_0_90_5_PRE_2_0)
+            if version >= [1, 0, 0]:
+                self.METRICS.update(self.ADDITIONAL_METRICS_1_x)
+
+        if version >= [1, 3, 0]:
+            self.METRICS.update(self.ADDITIONAL_METRICS_POST_1_3_0)
+
+        if version >= [1, 4, 0]:
+            # ES versions 1.4 and above
+            additional_metrics = self.ADDITIONAL_METRICS_POST_1_4_0
+            self.METRICS.update(additional_metrics)
+
+        # Version specific stats metrics about the primary shards
+        additional_metrics = self.PRIMARY_SHARD_METRICS
+        self.METRICS.update(additional_metrics)
+
+        if version >= [1, 0, 0]:
+            additional_metrics = self.PRIMARY_SHARD_METRICS_POST_1_0
+            self.METRICS.update(additional_metrics)
+
+#        self.log.debug("METRICS: %s" % self.METRICS)
+>>>>>>> 0e536a7... support for elasticsearch on kubernetes and later elasticsearch versions
 
     def _get_data(self, url, auth=None):
         """Hit a given URL and return the parsed json
@@ -254,7 +426,12 @@ class ElasticSearch(AgentCheck):
                 hostnames = (
                     self.hostname.decode('utf-8'),
                     socket.gethostname().decode('utf-8'),
+<<<<<<< HEAD
                     socket.getfqdn().decode('utf-8')
+=======
+                    socket.getfqdn().decode('utf-8'),
+                    socket.gethostbyname(socket.gethostname())
+>>>>>>> 0e536a7... support for elasticsearch on kubernetes and later elasticsearch versions
                 )
                 if node_hostname.decode('utf-8') in hostnames:
                     for metric in self.METRICS:
@@ -375,6 +552,29 @@ class ElasticSearch(AgentCheck):
 
     def _metric_not_found(self, metric, path):
         self.log.debug("Metric not found: %s -> %s", path, metric)
+
+    def _process_task_data(self, data, dimensions=None):
+        p_tasks = defaultdict(int)
+
+        for task in data.get('tasks', []):
+            p_tasks[task.get('priority')] += 1
+
+        node_data = {
+            'pending_task_total':               sum(p_tasks.values()),
+            'pending_tasks_priority_high':      p_tasks['high'],
+            'pending_tasks_priority_urgent':    p_tasks['urgent'],
+        }
+
+        def process_metric(metric, xtype, path, xform=None):
+            # closure over data
+            self._process_metric(node_data, metric, path, dimensions=dimensions)
+
+        for metric in self.CLUSTER_PENDING_TASKS:
+            # metric description
+            desc = self.CLUSTER_PENDING_TASKS[metric]
+            process_metric(metric, *desc)
+
+#--------------------------------
 
     def _create_event(self, status):
         hostname = self.hostname.decode('utf-8')
