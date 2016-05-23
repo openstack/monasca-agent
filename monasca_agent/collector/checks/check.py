@@ -448,9 +448,9 @@ class AgentCheck(util.Dimensions):
                 "dimensions": (optional) a dictionary of dimensions to associate with this event
             }
         """
-        if event.get('api_key') is None:
-            event['api_key'] = self.agent_config['api_key']
-        self.events.append(event)
+#        if event.get('api_key') is None:
+#            event['api_key'] = self.agent_config['api_key']
+#        self.events.append(event)
 
     def has_events(self):
         """Check whether the check has saved any events
