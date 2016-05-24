@@ -1,11 +1,6 @@
 requests
 
 oslo.config
-oslo.concurrency
-oslo.i18n
-oslo.log
-oslo.middleware
-oslo.serialization
 oslo.utils
 oslo.vmware
 
