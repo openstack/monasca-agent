@@ -27,6 +27,7 @@ class SwiftRecon(checks.AgentCheck):
         "container_replication.age",
         "account_replication.duration",
         "account_replication.age",
+        "drive_audit.errors",
         "quarantined.objects",
         "quarantined.containers",
         "quarantined.accounts",
@@ -108,10 +109,8 @@ class SwiftRecon(checks.AgentCheck):
 
     def get_updater_sweeps(self, server_type):
         data = self.swift_recon_json(server_type, "--updater")
-        result = {}
-        for hostname in data:
-            result[hostname] = data[hostname][server_type + "_updater_sweep"]
-        return result
+        key = server_type + "_updater_sweep"
+        return { hostname: data[hostname][key] for hostname in data }
 
     def get_replication(self, server_type):
         if server_type in self.replication_times:
@@ -133,6 +132,10 @@ class SwiftRecon(checks.AgentCheck):
 
         self.replication_times[server_type] = result
         return result
+
+    def get_drive_audit_errors(self):
+        data = self.swift_recon_json("--driveaudit")
+        return { hostname: data[hostname]['drive_audit_errors'] for hostname in data }
 
     def get_quarantined(self):
         if not self.quarantined_things:
@@ -234,7 +237,10 @@ class SwiftRecon(checks.AgentCheck):
     def account_replication_age(self):
         return self.replication("account", "age")
 
-    # cluster health: quarantine
+    # cluster health
+
+    def drive_audit_errors(self):
+        return self.get_drive_audit_errors()
 
     def quarantined_objects(self):
         return self.quarantined("objects")
