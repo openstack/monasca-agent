@@ -5,8 +5,11 @@ import Queue
 import threading
 import time
 
+from gevent import monkey
+from gevent import Timeout
+from multiprocessing.dummy import Pool as ThreadPool
+
 import monasca_agent.collector.checks
-import monasca_agent.collector.checks.libs.thread_pool
 
 
 DEFAULT_TIMEOUT = 180
@@ -18,6 +21,7 @@ FAILURE = "FAILURE"
 up_down = collections.namedtuple('up_down', ['UP', 'DOWN'])
 Status = up_down('UP', 'DOWN')
 EventType = up_down("servicecheck.state_change.up", "servicecheck.state_change.down")
+monkey.patch_all()
 
 
 class ServicesCheck(monasca_agent.collector.checks.AgentCheck):
@@ -25,7 +29,7 @@ class ServicesCheck(monasca_agent.collector.checks.AgentCheck):
 
     """Services checks inherits from this class.
 
-    This class should never be directly instanciated.
+    This class should never be directly instantiated.
 
     Work flow:
         The main agent loop will call the check function for each instance for
@@ -47,82 +51,71 @@ class ServicesCheck(monasca_agent.collector.checks.AgentCheck):
         # A dictionary to keep track of service statuses
         self.statuses = {}
         self.notified = {}
+        self.resultsq = Queue.Queue()
         self.nb_failures = 0
-        self.pool_started = False
+        self.pool = None
 
-    def stop(self):
-        self.stop_pool()
-        self.pool_started = False
-
-    def start_pool(self):
         # The pool size should be the minimum between the number of instances
         # and the DEFAULT_SIZE_POOL. It can also be overridden by the 'threads_count'
         # parameter in the init_config of the check
-        self.log.info("Starting Thread Pool")
         default_size = min(self.instance_count(), DEFAULT_SIZE_POOL)
         self.pool_size = int(self.init_config.get('threads_count', default_size))
         self.timeout = int(self.agent_config.get('timeout', DEFAULT_TIMEOUT))
 
-        self.pool = monasca_agent.collector.checks.libs.thread_pool.Pool(self.pool_size)
-
-        self.resultsq = Queue.Queue()
-        self.jobs_status = {}
-        self.pool_started = True
+    def start_pool(self):
+        self.log.info("Starting Thread Pool")
+        self.pool = ThreadPool(self.pool_size)
+        if threading.activeCount() > MAX_ALLOWED_THREADS:
+            self.log.error("Thread count ({0}) exceeds maximum ({1})".format(threading.activeCount(),
+                                                                             MAX_ALLOWED_THREADS))
+        self.running_jobs = set()
 
     def stop_pool(self):
         self.log.info("Stopping Thread Pool")
-        if self.pool_started:
-            self.pool.terminate()
+        if self.pool:
+            self.pool.close()
             self.pool.join()
-            self.jobs_status.clear()
-            assert self.pool.get_nworkers() == 0
+            self.pool = None
 
     def restart_pool(self):
         self.stop_pool()
         self.start_pool()
 
     def check(self, instance):
-        if not self.pool_started:
+        if not self.pool:
             self.start_pool()
-        if threading.activeCount() > MAX_ALLOWED_THREADS:
-            exception = "Thread number ({0}) exceeds maximum ({1}). Skipping this check.".format(threading.activeCount(),
-                                                                                                 MAX_ALLOWED_THREADS)
-            if self.pool_size >= MAX_ALLOWED_THREADS:
-                exception += " threads_count is set too high in the {0} plugin config.".format(self.name)
-            else:
-                exception += "  Another plugin may have threads_count set too high."
-            raise Exception(exception)
         self._process_results()
-        self._clean()
         name = instance.get('name', None)
         if name is None:
             self.log.error('Each service check must have a name')
             return
 
-        if name not in self.jobs_status:
+        if name not in self.running_jobs:
             # A given instance should be processed one at a time
-            self.jobs_status[name] = time.time()
+            self.running_jobs.add(name)
             self.pool.apply_async(self._process, args=(instance,))
         else:
             self.log.info("Instance: %s skipped because it's already running." % name)
 
     def _process(self, instance):
         name = instance.get('name', None)
-
         try:
-            return_value = self._check(instance)
+            with Timeout(self.timeout):
+                return_value = self._check(instance)
             if not return_value:
-                del self.jobs_status[name]
                 return
             status, msg = return_value
             result = (status, msg, name, instance)
             # We put the results in the result queue
             self.resultsq.put(result)
-
+        except Timeout:
+            self.log.error('ServiceCheck {0} timed out'.format(name))
         except Exception:
             self.log.exception('Failure in ServiceCheck {0}'.format(name))
             result = (FAILURE, FAILURE, FAILURE, FAILURE)
             self.resultsq.put(result)
+        finally:
+            self.running_jobs.remove(name)
 
     def _process_results(self):
         for i in range(MAX_LOOP_ITERATIONS):
@@ -171,18 +164,8 @@ class ServicesCheck(monasca_agent.collector.checks.AgentCheck):
             if event is not None:
                 self.events.append(event)
 
-            # The job is finished here, this instance can be re processed
-            del self.jobs_status[name]
-
     def _check(self, instance):
         """This function should be implemented by inherited classes.
 
         """
         raise NotImplementedError
-
-    def _clean(self):
-        now = time.time()
-        for name, start_time in self.jobs_status.items():
-            if now - start_time > self.timeout:
-                self.log.critical("Restarting Pool. One check is stuck.")
-                self.restart_pool()
