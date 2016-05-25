@@ -27,12 +27,16 @@ class SwiftRecon(checks.AgentCheck):
         "container_replication.age",
         "account_replication.duration",
         "account_replication.age",
+        "quarantined.objects",
+        "quarantined.containers",
+        "quarantined.accounts",
     ]
 
     def prepare(self):
         self.diskusage = {}
         self.md5 = {}
         self.replication_times = {}
+        self.quarantined_things = {}
 
     def swift_recon(self, *params):
         executable = 'swift-recon'
@@ -130,6 +134,14 @@ class SwiftRecon(checks.AgentCheck):
         self.replication_times[server_type] = result
         return result
 
+    def get_quarantined(self):
+        if not self.quarantined_things:
+            data = self.swift_recon_json("--quarantined")
+            for hostname in data:
+                for key in data[hostname]:
+                    self.quarantined_things.setdefault(key, {})[hostname] = data[hostname][key]
+        return self.quarantined_things
+
     ############################################################################
     # helpers for accessing parsed output of swift-recon
 
@@ -146,6 +158,11 @@ class SwiftRecon(checks.AgentCheck):
 
     def replication(self, server_type, value):
         data = self.get_replication(server_type)
+        if value in data:
+            return data[value]
+
+    def quarantined(self, value):
+        data = self.get_quarantined()
         if value in data:
             return data[value]
 
@@ -216,6 +233,17 @@ class SwiftRecon(checks.AgentCheck):
 
     def account_replication_age(self):
         return self.replication("account", "age")
+
+    # cluster health: quarantine
+
+    def quarantined_objects(self):
+        return self.quarantined("objects")
+
+    def quarantined_containers(self):
+        return self.quarantined("containers")
+
+    def quarantined_accounts(self):
+        return self.quarantined("accounts")
 
     ############################################################################
     # collect metrics
