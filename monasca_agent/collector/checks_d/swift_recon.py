@@ -28,6 +28,7 @@ class SwiftRecon(checks.AgentCheck):
         "account_replication.duration",
         "account_replication.age",
         "drive_audit.errors",
+        "drives.unmounted",
         "quarantined.objects",
         "quarantined.containers",
         "quarantined.accounts",
@@ -61,6 +62,8 @@ class SwiftRecon(checks.AgentCheck):
             m = re.match(r'^-> https?://([a-zA-Z0-9-.]+)\S*\s(.*)', line)
             if m:
                 hostname, json_str = m.group(1), m.group(2).replace("'", '"')
+                json_str = json_str.replace(": False", ": false")
+                json_str = json_str.replace(": True", ": true")
                 result[hostname] = json.loads(json_str)
         return result
 
@@ -132,6 +135,10 @@ class SwiftRecon(checks.AgentCheck):
 
         self.replication_times[server_type] = result
         return result
+
+    def get_unmounted_drives(self):
+        data = self.swift_recon_json("--unmounted")
+        return { hostname: len(data[hostname]) for hostname in data }
 
     def get_drive_audit_errors(self):
         data = self.swift_recon_json("--driveaudit")
@@ -238,6 +245,9 @@ class SwiftRecon(checks.AgentCheck):
         return self.replication("account", "age")
 
     # cluster health
+
+    def drives_unmounted(self):
+        return self.get_unmounted_drives()
 
     def drive_audit_errors(self):
         return self.get_drive_audit_errors()
