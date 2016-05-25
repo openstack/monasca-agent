@@ -92,7 +92,7 @@ class HTTPCheck(services_checks.ServicesCheck):
             try:
                 self.log.debug("Connecting to %s" % addr)
                 if disable_ssl_validation:
-                    self.log.warn("Skipping SSL certificate validation for %s based on configuration" % addr)
+                    self.log.info("Skipping SSL certificate validation for %s based on configuration" % addr)
                 h = Http(timeout=timeout, disable_ssl_certificate_validation=disable_ssl_validation)
                 if username is not None and password is not None:
                     h.add_credentials(username, password)
