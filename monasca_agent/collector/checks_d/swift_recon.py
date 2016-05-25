@@ -1,8 +1,4 @@
-import logging
-import json
-import re
-import subprocess
-import types
+import logging, re, subprocess, json, time, types
 
 import monasca_agent.collector.checks as checks
 
@@ -25,11 +21,18 @@ class SwiftRecon(checks.AgentCheck):
         "md5.swiftconf.all",
         "container_updater.sweep_time",
         "object_updater.sweep_time",
+        "object_replication.duration",
+        "object_replication.age",
+        "container_replication.duration",
+        "container_replication.age",
+        "account_replication.duration",
+        "account_replication.age",
     ]
 
     def prepare(self):
         self.diskusage = {}
         self.md5 = {}
+        self.replication_times = {}
 
     def swift_recon(self, *params):
         executable = 'swift-recon'
@@ -106,6 +109,27 @@ class SwiftRecon(checks.AgentCheck):
             result[hostname] = data[hostname][server_type + "_updater_sweep"]
         return result
 
+    def get_replication(self, server_type):
+        if server_type in self.replication_times:
+            return self.replication_times[server_type]
+
+        # https://twitter.com/stefanmajewsky/status/654660805607096322
+        if server_type == "object":
+            duration_key, last_key = "object_replication_time", "object_replication_last"
+        else:
+            duration_key, last_key = "replication_time", "replication_last"
+
+        current_timestamp = time.time()
+        data = self.swift_recon_json(server_type, "--replication")
+        result = { "duration": {}, "age": {} }
+        for hostname in data:
+            result["duration"][hostname] = data[hostname][duration_key]
+            # convert timestamp of last completion into an age
+            result["age"][hostname] = current_timestamp - data[hostname][last_key]
+
+        self.replication_times[server_type] = result
+        return result
+
     ############################################################################
     # helpers for accessing parsed output of swift-recon
 
@@ -119,6 +143,11 @@ class SwiftRecon(checks.AgentCheck):
         if kind in self.md5:
             if value in self.md5[kind]:
                 return self.md5[kind][value]
+
+    def replication(self, server_type, value):
+        data = self.get_replication(server_type)
+        if value in data:
+            return data[value]
 
     ############################################################################
     # one method for each exposed metric
@@ -167,6 +196,26 @@ class SwiftRecon(checks.AgentCheck):
 
     def object_updater_sweep_time(self):
         return self.get_updater_sweeps('object')
+
+    # eventual consistency 2: replication timings
+
+    def object_replication_duration(self):
+        return self.replication("object", "duration")
+
+    def object_replication_age(self):
+        return self.replication("object", "age")
+
+    def container_replication_duration(self):
+        return self.replication("container", "duration")
+
+    def container_replication_age(self):
+        return self.replication("container", "age")
+
+    def account_replication_duration(self):
+        return self.replication("account", "duration")
+
+    def account_replication_age(self):
+        return self.replication("account", "age")
 
     ############################################################################
     # collect metrics
