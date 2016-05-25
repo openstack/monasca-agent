@@ -19,19 +19,19 @@ class SwiftRecon(checks.AgentCheck):
         "md5.swiftconf.not_matched",
         "md5.swiftconf.errors",
         "md5.swiftconf.all",
-        "container_updater.sweep_time",
-        "object_updater.sweep_time",
-        "object_replication.duration",
-        "object_replication.age",
-        "container_replication.duration",
-        "container_replication.age",
-        "account_replication.duration",
-        "account_replication.age",
-        "drive_audit.errors",
+        "containers.updater_sweep_time",
+        "objects.updater_sweep_time",
+        "objects.replication.duration",
+        "objects.replication.age",
+        "containers.replication.duration",
+        "containers.replication.age",
+        "accounts.replication.duration",
+        "accounts.replication.age",
+        "drives.audit.errors",
         "drives.unmounted",
-        "quarantined.objects",
-        "quarantined.containers",
-        "quarantined.accounts",
+        "objects.quarantined",
+        "containers.quarantined",
+        "accounts.quarantined",
     ]
 
     def prepare(self):
@@ -218,30 +218,30 @@ class SwiftRecon(checks.AgentCheck):
 
     # eventual consistency 1: updater sweep timings
 
-    def container_updater_sweep_time(self):
+    def containers_updater_sweep_time(self):
         return self.get_updater_sweeps('container')
 
-    def object_updater_sweep_time(self):
+    def objects_updater_sweep_time(self):
         return self.get_updater_sweeps('object')
 
     # eventual consistency 2: replication timings
 
-    def object_replication_duration(self):
+    def objects_replication_duration(self):
         return self.replication("object", "duration")
 
-    def object_replication_age(self):
+    def objects_replication_age(self):
         return self.replication("object", "age")
 
-    def container_replication_duration(self):
+    def containers_replication_duration(self):
         return self.replication("container", "duration")
 
-    def container_replication_age(self):
+    def containers_replication_age(self):
         return self.replication("container", "age")
 
-    def account_replication_duration(self):
+    def accounts_replication_duration(self):
         return self.replication("account", "duration")
 
-    def account_replication_age(self):
+    def accounts_replication_age(self):
         return self.replication("account", "age")
 
     # cluster health
@@ -249,16 +249,16 @@ class SwiftRecon(checks.AgentCheck):
     def drives_unmounted(self):
         return self.get_unmounted_drives()
 
-    def drive_audit_errors(self):
+    def drives_audit_errors(self):
         return self.get_drive_audit_errors()
 
-    def quarantined_objects(self):
+    def objects_quarantined(self):
         return self.quarantined("objects")
 
-    def quarantined_containers(self):
+    def containers_quarantined(self):
         return self.quarantined("containers")
 
-    def quarantined_accounts(self):
+    def accounts_quarantined(self):
         return self.quarantined("accounts")
 
     ############################################################################
