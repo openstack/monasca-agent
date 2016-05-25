@@ -1,4 +1,5 @@
 import logging
+import json
 import re
 import subprocess
 import types
@@ -22,22 +23,41 @@ class SwiftRecon(checks.AgentCheck):
         "md5.swiftconf.not_matched",
         "md5.swiftconf.errors",
         "md5.swiftconf.all",
+        "container_updater.sweep_time",
+        "object_updater.sweep_time",
     ]
 
     def prepare(self):
         self.diskusage = {}
         self.md5 = {}
 
-    def swift_recon(self, params):
+    def swift_recon(self, *params):
         executable = 'swift-recon'
         if 'swift_recon' in self.init_config:
             executable = self.init_config['swift_recon']
 
-        cmd = " ".join((executable, params))
+        cmd = " ".join((executable, " ".join(params)))
         pipe = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
                                 universal_newlines=True)
         out = "".join(pipe.stdout.readlines())
         return out
+
+    def swift_recon_json(self, *params):
+        # call swift-recon in verbose mode
+        output = self.swift_recon("-v", *params)
+
+        # look for verbose output containing the raw JSON documents received
+        # from the storage nodes
+        result = {}
+        for line in output.splitlines():
+            m = re.match(r'^-> https?://([a-zA-Z0-9-.]+)\S*\s(.*)', line)
+            if m:
+                hostname, json_str = m.group(1), m.group(2).replace("'", '"')
+                result[hostname] = json.loads(json_str)
+        return result
+
+    ############################################################################
+    # helpers for parsing output of swift-recon
 
     def get_diskusage(self):
         if not self.diskusage:
@@ -79,6 +99,16 @@ class SwiftRecon(checks.AgentCheck):
                     continue
         return self.md5
 
+    def get_updater_sweeps(self, server_type):
+        data = self.swift_recon_json(server_type, "--updater")
+        result = {}
+        for hostname in data:
+            result[hostname] = data[hostname][server_type + "_updater_sweep"]
+        return result
+
+    ############################################################################
+    # helpers for accessing parsed output of swift-recon
+
     def storage(self, value):
         self.get_diskusage()
         if value in self.diskusage:
@@ -90,6 +120,11 @@ class SwiftRecon(checks.AgentCheck):
             if value in self.md5[kind]:
                 return self.md5[kind][value]
 
+    ############################################################################
+    # one method for each exposed metric
+
+    # storage capacity
+
     def storage_free(self):
         return self.storage('free')
 
@@ -98,6 +133,8 @@ class SwiftRecon(checks.AgentCheck):
 
     def storage_capacity(self):
         return self.storage('capacity')
+
+    # configuration consistency
 
     def md5_ring_matched(self):
         return self.consistency('ring', 'matched')
@@ -123,6 +160,17 @@ class SwiftRecon(checks.AgentCheck):
     def md5_swiftconf_all(self):
         return self.consistency('swiftconf', 'all')
 
+    # eventual consistency 1: updater sweep timings
+
+    def container_updater_sweep_time(self):
+        return self.get_updater_sweeps('container')
+
+    def object_updater_sweep_time(self):
+        return self.get_updater_sweeps('object')
+
+    ############################################################################
+    # collect metrics
+
     def check(self, instance):
         self.prepare()
         dimensions = self._set_dimensions(None, instance)
@@ -132,12 +180,27 @@ class SwiftRecon(checks.AgentCheck):
 
             value = eval("self." + metric.replace(".", "_") + "()")
 
-            assert(type(value) in (types.IntType, types.LongType,
-                                   types.FloatType))
-
             if metric.startswith('storage'):
                 metric = metric + '_bytes'
-
             metric = self.normalize(metric.lower(), 'swift.cluster')
+
+            # value may be a dictionary with values by storage node...
+            if isinstance(value, dict):
+                for hostname in value:
+                    self.submit_gauge(metric, hostname, value[hostname], dimensions)
+            else:
+                self.submit_gauge(metric, None, value, dimensions)
+
+    def submit_gauge(self, metric, hostname, value, dimensions):
+        assert(type(value) in (types.IntType, types.LongType,
+                               types.FloatType))
+
+        if hostname:
+            dim = dimensions.copy()
+            dim["storage_node"] = hostname
+            log.debug("Sending {0}={1} for storage node {2}".format(metric, value, hostname))
+        else:
+            dim = dimensions
             log.debug("Sending {0}={1}".format(metric, value))
-            self.gauge(metric, value, dimensions=dimensions)
+
+        self.gauge(metric, value, dimensions=dim)
