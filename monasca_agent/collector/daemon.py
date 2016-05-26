@@ -60,6 +60,7 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
         if self.collector:
             self.collector.stop()
         log.debug("Collector is stopped.")
+        sys.exit(0)
 
     def _handle_sigusr1(self, signum, frame):
         self._handle_sigterm(signum, frame)
