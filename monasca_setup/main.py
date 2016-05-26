@@ -62,8 +62,8 @@ def main(argv=None):
         plugins = [System]
     elif args.detection_plugins is not None:
         plugins = utils.select_plugins(args.detection_plugins, detected_plugins)
-    elif args.skip_plugins is not None:
-        plugins = utils.select_plugins(args.skip_plugins, detected_plugins, skip=True)
+    elif args.skip_detection_plugins is not None:
+        plugins = utils.select_plugins(args.skip_detection_plugins, detected_plugins, skip=True)
     else:
         plugins = detected_plugins
     plugin_names = [p.__name__ for p in plugins]
@@ -186,7 +186,7 @@ def parse_arguments(parser):
     parser.add_argument('-d', '--detection_plugins', nargs='*',
                         help="Skip base config and service setup and only configure this space separated list. " +
                              "This assumes the base config has already run.")
-    parser.add_argument('--skip_plugins', nargs='*',
+    parser.add_argument('--skip_detection_plugins', nargs='*',
                         help="Skip detection for all plugins in this space separated list.")
     parser.add_argument('-a', '--detection_args', help="A string of arguments that will be passed to detection " +
                                                        "plugins. Only certain detection plugins use arguments.")
