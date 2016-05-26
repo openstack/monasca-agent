@@ -114,6 +114,7 @@ class LibvirtCheck(AgentCheck):
                               "Either no VMs are present, or routing is centralized.")
 
         for instance in instances:
+            instance_ports = []
             inst_name = instance.__getattr__('OS-EXT-SRV-ATTR:instance_name')
             inst_az = instance.__getattr__('OS-EXT-AZ:availability_zone')
             if instance.flavor['id'] in flavor_cache:
@@ -121,6 +122,7 @@ class LibvirtCheck(AgentCheck):
             else:
                 inst_flavor = nova_client.flavors.get(instance.flavor['id'])
                 flavor_cache[instance.flavor['id']] = inst_flavor
+            instance_ports = [p['id'] for p in port_cache if p['device_id'] == instance.id]
             id_cache[inst_name] = {'instance_uuid': instance.id,
                                    'hostname': instance.name,
                                    'zone': inst_az,
@@ -128,7 +130,8 @@ class LibvirtCheck(AgentCheck):
                                    'tenant_id': instance.tenant_id,
                                    'vcpus': inst_flavor.vcpus,
                                    'ram': inst_flavor.ram,
-                                   'disk': inst_flavor.disk}
+                                   'disk': inst_flavor.disk,
+                                   'instance_ports': instance_ports}
 
             for config_var in ['metadata', 'customer_metadata']:
                 if self.init_config.get(config_var):
@@ -165,9 +168,9 @@ class LibvirtCheck(AgentCheck):
                     subnet_id = None
                     nsuuid = None
                     for port in port_cache:
-                        if ((port['mac_address'] == ip['OS-EXT-IPS-MAC:mac_addr']
-                             and port['tenant_id'] == instance.tenant_id
-                             and port['status'] == 'ACTIVE')):
+                        if ((port['mac_address'] == ip['OS-EXT-IPS-MAC:mac_addr'] and
+                             port['tenant_id'] == instance.tenant_id and
+                             port['status'] == 'ACTIVE')):
                             for fixed in port['fixed_ips']:
                                 if fixed['ip_address'] == ip['addr']:
                                     subnet_id = fixed['subnet_id']
@@ -176,9 +179,9 @@ class LibvirtCheck(AgentCheck):
                     ping_allowed = False
                     if subnet_id is not None:
                         for port in port_cache:
-                            if ((port['device_owner'].startswith('network:router_interface')
-                                 and port['tenant_id'] == instance.tenant_id
-                                 and port['status'] == 'ACTIVE')):
+                            if ((port['device_owner'].startswith('network:router_interface') and
+                                 port['tenant_id'] == instance.tenant_id and
+                                 port['status'] == 'ACTIVE')):
                                 nsuuid = port['device_id']
                                 for fixed in port['fixed_ips']:
                                     if fixed['subnet_id'] == subnet_id:
@@ -260,6 +263,13 @@ class LibvirtCheck(AgentCheck):
         for vnic in insp.inspect_vnics(inst):
             sample_time = time.time()
             vnic_dimensions = {'device': vnic[0].name}
+            instance_ports = instance_cache.get(inst_name)['instance_ports']
+            partial_port_id = vnic[0].name.split('tap')[1]
+            # Multiple networked guest
+            for port in instance_ports:
+                if partial_port_id == port[:11]:
+                    vnic_dimensions['port_id'] = port
+                    break
             for metric in vnic[1]._fields:
                 metric_name = "net.{0}".format(metric)
                 if metric_name not in metric_cache[inst_name]:

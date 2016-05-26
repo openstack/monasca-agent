@@ -315,6 +315,7 @@ All metrics include `resource_id` and `zone` (availability zone) dimensions.  Be
 | service        | "compute"                 | "compute"               |
 | component      | "vm"                      | "vm"                    |
 | device         | name of net or disk dev   | name of net or disk dev |
+| port_id        | port ID of the VM port    | port ID of the VM port  |
 | tenant_id      | (N/A)                     | owner of VM             |
 
 ## Aggregate Metrics
