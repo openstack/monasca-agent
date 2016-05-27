@@ -183,6 +183,9 @@ password=pass
 [client]
 user=root
 password=pass
+host=server
+socket=/var/run/mysqld/mysqld.sock
+ssl_ca=/etc/ssl/certs/ca-certificates.crt
 ```
 
 > **rabbitmq**
@@ -1022,14 +1025,35 @@ See [the example configuration](https://github.com/openstack/monasca-agent/blob/
 This section describes the mySQL check that can be performed by the Agent.  The mySQL check also supports MariaDB.  The mySQL check requires a configuration file called mysql.yaml to be available in the agent conf.d configuration directory.
 
 Sample config:
+defaults_file: /root/.my.cnf
+	host=padawan-ccp-c1-m1-mgmt
+	user=root
+	password=pass
+
+Instance variables can be passed via command line arguments
+to the monasca-setup -d mysql command.
+The instance config files are built by the detection plugin.
 
 ```
 init_config:
-
+Example clear connect:
 instances:
-	defaults_file: /root/.my.cnf
-	server: localhost
-	user: root
+- built_by: MySQL
+  name: padawan-ccp-c1-m1-mgmt
+  pass: secretpass
+  port: 3306
+  server: padawan-ccp-c1-m1-mgmt
+  user: root
+  
+Example ssl connect:
+instances:
+- built_by: MySQL
+  name: padawan-ccp-c1-m1-mgmt
+  pass: secretpass
+  port: 3306
+  server: padawan-ccp-c1-m1-mgmt
+  ssl_ca: /etc/ssl/certs/ca-certificates.crt
+  user: root
 ```
 
 Almost metrics show the server status variables in MySQL or MariaDB.  The others are calculated by the server status variables of MySQL or MariaDB.  For details of the server status variables, please refer the documents of MySQL or MariaDB.

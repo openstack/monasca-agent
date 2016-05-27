@@ -9,17 +9,28 @@ from monasca_setup.detection.utils import find_process_name
 log = logging.getLogger(__name__)
 
 mysql_conf = '/root/.my.cnf'
+HOST = 'localhost'
+PORT = 3306
+SOCKET = '/var/run/mysqld/mysqld.sock'
 
 
 class MySQL(monasca_setup.detection.Plugin):
 
     """Detect MySQL daemons and setup configuration to monitor them.
 
-        This plugin needs user/pass infor for mysql setup, this is
+        This plugin needs user/password info for mysql setup.
+        It needs either the host ip or socket if using
+        the default localhost hostname.  You cannot use
+        the localhost name if using ssl.  This plugin
+        accepts arguments, and if none are input it will
+        try to read the default config file which is
         best placed in /root/.my.cnf in a format such as
         [client]
-            user = root
-            password = yourpassword
+            user=root
+            password=yourpassword
+            host=padawan-ccp-c1-m1-mgmt
+            ssl_ca=/etc/ssl/certs/ca-certificates.crt
+
     """
 
     def _detect(self):
@@ -28,6 +39,68 @@ class MySQL(monasca_setup.detection.Plugin):
         """
         if find_process_name('mysqld') is not None:
             self.available = True
+
+    def _get_config(self):
+        """Set the configuration to be used for connecting to mysql
+        :return:
+        """
+        self.ssl_options = {}
+        # reads default config file if no input parameters
+        if self.args is None:
+            self._read_config(mysql_conf)
+        else:
+            self.host = self.args.get('host', HOST)
+            self.port = self.args.get('port', PORT)
+            self.user = self.args.get('user', 'root')
+            self.password = self.args.get('password', None)
+            self.socket = self.args.get('socket', None)
+            self.ssl_ca = self.args.get('ssl_ca', None)
+            self.ssl_key = self.args.get('ssl_key', None)
+            self.ssl_cert = self.args.get('ssl_cert', None)
+        if self.ssl_ca is not None:
+            self.ssl_options['ca'] = self.ssl_ca
+        if self.ssl_key is not None:
+            self.ssl_options['key'] = self.ssl_key
+        if self.ssl_cert is not None:
+            self.ssl_options['cert'] = self.ssl_cert
+        if self.socket is None and (self.host == 'localhost' or self.host == '127.0.0.1'):
+            self.socket = SOCKET
+
+    def _read_config(self, config_file):
+        """Read the configuration setting member variables as appropriate.
+        :param config_file: The filename of the configuration to read and parse
+        """
+        log.info("\tUsing client credentials from {}".format(config_file))
+        client_section = False
+        self.user = None
+        self.password = None
+        self.host = HOST
+        self.port = PORT
+        self.socket = None
+        self.ssl_ca = None
+        self.ssl_key = None
+        self.ssl_cert = None
+        with open(mysql_conf, "r") as confFile:
+            for row in confFile:
+                if client_section:
+                    if "user=" in row:
+                        self.user = row.split("=")[1].strip()
+                    if "password=" in row:
+                        self.password = row.split("=")[1].strip()
+                    if "port=" in row:
+                        self.port = row.split("=")[1].strip()
+                    if "host=" in row:
+                        self.host = row.split("=")[1].strip()
+                    if "socket=" in row:
+                        self.host = row.split("=")[1].strip()
+                    if "ssl_ca=" in row:
+                        self.ssl_ca = row.split("=")[1].strip()
+                    if "ssl_key=" in row:
+                        self.ssl_key = row.split("=")[1].strip()
+                    if "ssl_cert=" in row:
+                        self.ssl_cert = row.split("=")[1].strip()
+                if "[client]" in row:
+                    client_section = True
 
     def build_config(self):
         """Build the config as a Plugins object and return.
@@ -38,77 +111,28 @@ class MySQL(monasca_setup.detection.Plugin):
         config.merge(monasca_setup.detection.watch_process(['mysqld'], 'mysql'))
         log.info("\tWatching the mysqld process.")
 
-        configured_mysql = False
-        # Attempt login, requires either an empty root password from localhost
-        # or relying on a configured /root/.my.cnf
-        if self.dependencies_installed():  # ensures PyMySQL is available
+        try:
+            self._get_config()
             import pymysql
-            try:
-                pymysql.connect(read_default_file=mysql_conf)
-                log.info(
-                    "\tUsing client credentials from {:s}".format(mysql_conf))
-                # Read the mysql config file to extract the needed variables.
-                # While the agent mysql.conf file has the ability to read the
-                # /root/.my.cnf file directly as 'defaults_file,' the agent
-                # user would likely not have permission to do so.
-                client_section = False
-                my_user = None
-                my_pass = None
-                try:
-                    with open(mysql_conf, "r") as confFile:
-                        for row in confFile:
-                            # If there are any spaces in confFile, remove them
-                            row = row.replace(" ", "")
-                            if client_section:
-                                if "[" in row:
-                                    break
-                                if "user=" in row:
-                                    my_user = row.split("=")[1].rstrip()
-                                if "password=" in row:
-                                    my_pass = row.split("=")[1].rstrip().strip("'")
-                            if "[client]" in row:
-                                client_section = True
-                    config['mysql'] = {'init_config': None, 'instances':
-                                       [{'name': 'localhost', 'server': 'localhost', 'port': 3306,
-                                         'user': my_user, 'pass': my_pass}]}
-                    configured_mysql = True
-                except IOError:
-                    log.error("\tI/O error reading {:s}".format(mysql_conf))
-                    pass
-            except pymysql.MySQLError:
-                log.warn("\tCould not connect to mysql using credentials from {:s}".format(mysql_conf))
-                pass
+            # connection test
+            pymysql.connect(host=self.host, user=self.user, passwd=self.password,
+                            port=self.port, unix_socket=self.socket, ssl=self.ssl_options)
 
-            # Try logging in as 'root' with an empty password
-            if not configured_mysql:
-                try:
-                    pymysql.connect(host='localhost', port=3306, user='root')
-                    log.info("\tConfiguring plugin to connect with user root.")
-                    config['mysql'] = {'init_config': None, 'instances':
-                                       [{'name': 'localhost', 'server': 'localhost', 'user': 'root',
-                                         'port': 3306}]}
-                    configured_mysql = True
-                except pymysql.MySQLError:
-                    log.warn("\tCould not connect to mysql using root user")
-                    pass
-        else:
-            exception_msg = 'The mysql dependency PyMySQL is not installed;' \
-                            ' the mysql plugin is not configured'
-            log.error(exception_msg)
+            log.info("\tConnection test success.")
+            config['mysql'] = {
+                'init_config': None, 'instances':
+                [{'name': self.host, 'server': self.host, 'port': self.port,
+                  'user': self.user, 'pass': self.password,
+                  'sock': self.socket, 'ssl_ca': self.ssl_ca,
+                  'ssl_key': self.ssl_key, 'ssl_cert': self.ssl_cert}]}
+
+        except pymysql.MySQLError as e:
+            exception_msg = 'Could not connect to mysql. {}'.format(e)
+            log.exception(exception_msg)
             raise Exception(exception_msg)
-
-        if not configured_mysql:
-            exception_msg = 'Unable to log into the mysql database;' \
-                            ' the mysql plugin is not configured.'
-            log.error(exception_msg)
+        except Exception as e:
+            exception_msg = 'Error configuring the mysql check plugin. {}'.format(e)
+            log.exception(exception_msg)
             raise Exception(exception_msg)
 
         return config
-
-    def dependencies_installed(self):
-        try:
-            import pymysql
-        except ImportError:
-            return False
-
-        return True
