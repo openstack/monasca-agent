@@ -11,6 +11,8 @@ requirements_installed=$(echo "import openstack_requirements" | python 2>/dev/nu
 
 set -e
 
+git config --global url.https://git.openstack.org/.insteadOf git://git.openstack.org/
+
 CONSTRAINTS_FILE=$1
 shift
 
