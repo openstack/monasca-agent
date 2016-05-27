@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 
 import os
 import re
@@ -66,9 +66,15 @@ class MySql(checks.AgentCheck):
         return {"PyMySQL": version}
 
     def check(self, instance):
-        host, port, user, password, mysql_sock, defaults_file, options = self._get_config(
+        host, port, user, password, mysql_sock, ssl_ca, ssl_key, ssl_cert, defaults_file, options = self._get_config(
             instance)
-
+        self.ssl_options = {}
+        if ssl_ca is not None:
+            self.ssl_options['ca'] = ssl_ca
+        if ssl_key is not None:
+            self.ssl_options['key'] = ssl_key
+        if ssl_cert is not None:
+            self.ssl_options['cert'] = ssl_cert
         dimensions = self._set_dimensions({'component': 'mysql', 'service': 'mysql'}, instance)
 
         if (not host or not user) and not defaults_file:
@@ -87,10 +93,13 @@ class MySql(checks.AgentCheck):
         port = int(instance.get('port', 0))
         password = instance.get('pass', '')
         mysql_sock = instance.get('sock', '')
+        ssl_ca = instance.get('ssl_ca', None)
+        ssl_key = instance.get('ssl_key', None)
+        ssl_cert = instance.get('ssl_cert', None)
         defaults_file = instance.get('defaults_file', '')
         options = instance.get('options', {})
 
-        return host, port, user, password, mysql_sock, defaults_file, options
+        return host, port, user, password, mysql_sock, ssl_ca, ssl_key, ssl_cert, defaults_file, options
 
     def _connect(self, host, port, mysql_sock, user, password, defaults_file):
         try:
@@ -103,18 +112,22 @@ class MySql(checks.AgentCheck):
         if defaults_file != '':
             db = pymysql.connect(read_default_file=defaults_file)
         elif mysql_sock != '':
-            db = pymysql.connect(unix_socket=mysql_sock,
+            db = pymysql.connect(host=host,
+                                 unix_socket=mysql_sock,
                                  user=user,
-                                 passwd=password)
+                                 passwd=password,
+                                 ssl=self.ssl_options)
         elif port:
             db = pymysql.connect(host=host,
                                  port=port,
                                  user=user,
-                                 passwd=password)
+                                 passwd=password,
+                                 ssl=self.ssl_options)
         else:
             db = pymysql.connect(host=host,
                                  user=user,
-                                 passwd=password)
+                                 passwd=password,
+                                 ssl=self.ssl_options)
         self.log.debug("Connected to MySQL")
 
         return db
