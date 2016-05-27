@@ -255,14 +255,15 @@ class MonThresh(monasca_setup.detection.Plugin):
     """Detect the running mon-thresh and monitor."""
     def _detect(self):
         """Run detection, set self.available True if the service is detected."""
-        if find_process_cmdline('backtype.storm.daemon') is not None:
-            self.available = True
+        # The node will be running either nimbus or supervisor or both
+        self.available = (find_process_cmdline('storm.daemon.nimbus') is not None or
+                          find_process_cmdline('storm.daemon.supervisor') is not None)
 
     def build_config(self):
         """Build the config as a Plugins object and return."""
         log.info("\tWatching the mon-thresh process.")
         config = monasca_setup.agent_config.Plugins()
-        for process in ['backtype.storm.daemon.nimbus', 'backtype.storm.daemon.supervisor', 'backtype.storm.daemon.worker']:
+        for process in ['storm.daemon.nimbus', 'storm.daemon.supervisor', 'storm.daemon.worker']:
             if find_process_cmdline(process) is not None:
                 config.merge(watch_process([process], 'monitoring', 'apache-storm', exact_match=False, detailed=False))
         config.merge(watch_process_by_username('storm', 'monasca-thresh', 'monitoring', 'apache-storm'))
