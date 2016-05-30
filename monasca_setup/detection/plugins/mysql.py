@@ -88,11 +88,11 @@ class MySQL(monasca_setup.detection.Plugin):
                     if "password=" in row:
                         self.password = row.split("=")[1].strip()
                     if "port=" in row:
-                        self.port = row.split("=")[1].strip()
+                        self.port = int(row.split("=")[1].strip())
                     if "host=" in row:
                         self.host = row.split("=")[1].strip()
                     if "socket=" in row:
-                        self.host = row.split("=")[1].strip()
+                        self.socket = row.split("=")[1].strip()
                     if "ssl_ca=" in row:
                         self.ssl_ca = row.split("=")[1].strip()
                     if "ssl_key=" in row:
@@ -112,8 +112,8 @@ class MySQL(monasca_setup.detection.Plugin):
         log.info("\tWatching the mysqld process.")
 
         try:
-            self._get_config()
             import pymysql
+            self._get_config()
             # connection test
             pymysql.connect(host=self.host, user=self.user, passwd=self.password,
                             port=self.port, unix_socket=self.socket, ssl=self.ssl_options)
@@ -125,7 +125,11 @@ class MySQL(monasca_setup.detection.Plugin):
                   'user': self.user, 'pass': self.password,
                   'sock': self.socket, 'ssl_ca': self.ssl_ca,
                   'ssl_key': self.ssl_key, 'ssl_cert': self.ssl_cert}]}
-
+        except ImportError as e:
+            exception_msg = ('The mysql dependency PyMySQL is not '
+                             'installed. {}'.format(e))
+            log.exception(exception_msg)
+            raise Exception(exception_msg)
         except pymysql.MySQLError as e:
             exception_msg = 'Could not connect to mysql. {}'.format(e)
             log.exception(exception_msg)
