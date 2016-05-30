@@ -6,6 +6,7 @@ import psutil
 
 import monasca_setup.agent_config
 from monasca_setup.detection import Plugin
+from monasca_setup.detection.utils import find_process_name
 
 log = logging.getLogger(__name__)
 
@@ -19,6 +20,23 @@ class VCenter(Plugin):
         configure the plugin, else the args are used to configure.
         """
         # Find the nova compute process and locate its conf
+        process_exist = find_process_name('nova-compute') is not None
+        # for cases where this plugin and nova-compute service runs separately
+        # we will configure the plugin with given args.
+        # so, we have to set these below variables
+        self.nova_conf = self.get_nova_config_file() if process_exist else None
+        has_config_file_or_args = (self.nova_conf is not None or
+                                   self.args is not None)
+        self.available = process_exist and has_config_file_or_args
+        if not self.available:
+            if not process_exist:
+                log.error('Nova-compute process does not exist.')
+            elif not has_config_file_or_args:
+                log.error(('Nova-compute process exists but '
+                           'the configuration file was not detected and no '
+                           'arguments were given.'))
+
+    def get_nova_config_file(self):
         nova_conf = None
         for proc in psutil.process_iter():
             try:
@@ -32,11 +50,7 @@ class VCenter(Plugin):
             except IOError:
                 # Process has already terminated, ignore
                 continue
-        # for cases where this plugin and nova-compute service runs separately
-        # we will configure the plugin with given args.
-        # so, we have to set these below variables
-        self.nova_conf = nova_conf
-        self.available = True
+        return nova_conf
 
     def build_config(self):
         """Build the config as a Plugins object and return back.
@@ -47,7 +61,7 @@ class VCenter(Plugin):
             nova_cfg = ConfigParser.SafeConfigParser()
             instance = {}
             if self.nova_conf is None:
-                log.warn("No nova compute service found.")
+                log.warn("Nova compute configuration file was not found.")
                 if self.args:
                     # read from arg list
                     instance = self._read_from_args(instance)
