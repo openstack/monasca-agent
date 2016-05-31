@@ -22,6 +22,12 @@ import monasca_agent.common.keystone as keystone
 class HTTPCheck(services_checks.ServicesCheck):
 
     def __init__(self, name, init_config, agent_config, instances=None):
+        self._socket_errors = set()
+        self._response_not_ready = set()
+        self._general_exception = set()
+        self._invalid_token = set()
+        self._warning_msg = set()
+
         super(HTTPCheck, self).__init__(name, init_config, agent_config,
                                         instances)
         # init the keystone client if instance has use_keystone
@@ -100,9 +106,11 @@ class HTTPCheck(services_checks.ServicesCheck):
 
             except (socket.timeout, HttpLib2Error, socket.error) as e:
                 length = int((time.time() - start) * 1000)
-                warn_string = '{0} is DOWN, error: {1}. Connection failed ' \
+                warn_string = '{0} is DOWN, error: {1}. Connection failed' \
                               'after {2} ms'.format(addr, repr(e), length)
-                self.log.warn(warn_string)
+                if addr not in self._socket_errors:
+                    self._socket_errors.add(addr)
+                    self.log.warn(warn_string)
                 return False, warn_string
 
             except httplib.ResponseNotReady as e:
@@ -110,13 +118,17 @@ class HTTPCheck(services_checks.ServicesCheck):
                 warn_string = '{0} is DOWN, error: {1}. Network is not ' \
                               'routable after {2} ms'.format(addr, repr(e),
                                                              length)
-                self.log.warn(warn_string)
+                if addr not in self._response_not_ready:
+                    self._response_not_ready.add(addr)
+                    self.log.warn(warn_string)
                 return False, warn_string
 
             except Exception as e:
                 length = int((time.time() - start) * 1000)
                 error_string = '{0} is DOWN, error: {1}. Connection failed after {2} ms'.format(addr, repr(e), length)
-                self.log.error(error_string)
+                if addr not in self._general_exception:
+                    self._general_exception.add(addr)
+                    self.log.error(error_string)
                 return False, error_string
 
             if response_time:
@@ -128,7 +140,9 @@ class HTTPCheck(services_checks.ServicesCheck):
                 if use_keystone and int(resp.status) == 401:
                     if retry:
                         error_string = '{0} is DOWN, unable to get a valid token to connect with'.format(addr)
-                        self.log.error(error_string)
+                        if addr not in self._invalid_token:
+                            self._invalid_token.add(addr)
+                            self.log.error(error_string)
                         return False, error_string
                     else:
                         # Get a new token and retry
@@ -139,8 +153,17 @@ class HTTPCheck(services_checks.ServicesCheck):
                 else:
                     warn_string = '{0} is DOWN, error code: {1}'.\
                         format(addr, str(resp.status))
-                    self.log.warn(warn_string)
+                    if addr not in self._warning_msg:
+                        self._warning_msg.add(addr)
+                        self.log.warn(warn_string)
                     return False, warn_string
+
+            self._socket_errors.discard(addr)
+            self._invalid_token.discard(addr)
+            self._response_not_ready.discard(addr)
+            self._general_exception.discard(addr)
+            self._warning_msg.discard(addr)
+
             done = True
             return True, content
 
@@ -152,9 +175,13 @@ class HTTPCheck(services_checks.ServicesCheck):
 
         success, result_string = self._http_check(instance)
         if not success:
+            # maximum length of value_meta including {'error':''} is 2048
+            # Cutting it down to 1024 here so we don't clutter the
+            # database too much.
             self.gauge('http_status',
                        1,
-                       dimensions=dimensions)
+                       dimensions=dimensions,
+                       value_meta={'error': result_string[:1024]})
             return services_checks.Status.DOWN, result_string
 
         if pattern is not None:
@@ -163,10 +190,13 @@ class HTTPCheck(services_checks.ServicesCheck):
             else:
                 error_string = 'Pattern match failed! "{0}" not in "{1}"'.format(pattern, result_string)
                 self.log.info(error_string)
+                # maximum length of value_meta including {'error':''} is 2048
+                # Cutting it down to 1024 here so we don't clutter the
+                # database too much.
                 self.gauge('http_status',
                            1,
                            dimensions=dimensions,
-                           value_meta={'error': error_string[:2048]})
+                           value_meta={'error': error_string[:1024]})
                 return services_checks.Status.DOWN, error_string
 
         success_string = '{0} is UP'.format(addr)
