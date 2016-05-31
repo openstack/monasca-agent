@@ -151,17 +151,20 @@ class ProcessCheck(checks.AgentCheck):
 
         for process in psutil.process_iter():
             try:
-                p = ProcessStruct(name=process.name(),
-                                  pid=process.pid,
-                                  username=process.username(),
-                                  cmdline=' '.join(process.cmdline()))
+                process_dict = process.as_dict(
+                    attrs=['name', 'pid', 'username', 'cmdline'])
+                p = ProcessStruct(name=process_dict['name'],
+                                  pid=process_dict['pid'],
+                                  username=process_dict['username'],
+                                  cmdline=' '.join(process_dict['cmdline']))
                 self._current_process_list.append(p)
             except psutil.NoSuchProcess:
                 # No way to log useful information here so just move on
                 pass
             except psutil.AccessDenied as e:
+                process_dict = process.as_dict(attrs=['name'])
                 self.log.info('Access denied to process {0}: {1}'.format(
-                    process.name(), e))
+                    process_dict['name'], e))
 
     def check(self, instance):
         try:
