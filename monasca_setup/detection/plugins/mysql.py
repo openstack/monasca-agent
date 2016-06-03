@@ -1,6 +1,7 @@
 # (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 
 import logging
+import os
 
 import monasca_setup.agent_config
 import monasca_setup.detection
@@ -37,8 +38,22 @@ class MySQL(monasca_setup.detection.Plugin):
         """Run detection, set self.available True if the service is detected.
 
         """
-        if find_process_name('mysqld') is not None:
-            self.available = True
+        process_exist = find_process_name('mysqld') is not None
+        has_dependencies = self.dependencies_installed()
+        has_args_or_config_file = (self.args is not None or
+                                   os.path.isfile(mysql_conf))
+        self.available = (process_exist and has_args_or_config_file and
+                          has_dependencies)
+        if not self.available:
+            if not process_exist:
+                log.error('MySQL process does not exist.')
+            elif not has_args_or_config_file:
+                log.error(('MySQL process exists but '
+                           'configuration file was not found and '
+                           'no arguments were given.'))
+            elif not has_dependencies:
+                log.error(('MySQL process exists but required dependence '
+                           'PyMySQL is not installed.'))
 
     def _get_config(self):
         """Set the configuration to be used for connecting to mysql
@@ -115,8 +130,9 @@ class MySQL(monasca_setup.detection.Plugin):
             import pymysql
             self._get_config()
             # connection test
-            pymysql.connect(host=self.host, user=self.user, passwd=self.password,
-                            port=self.port, unix_socket=self.socket, ssl=self.ssl_options)
+            pymysql.connect(host=self.host, user=self.user,
+                            passwd=self.password, port=self.port,
+                            unix_socket=self.socket, ssl=self.ssl_options)
 
             log.info("\tConnection test success.")
             config['mysql'] = {
@@ -140,3 +156,10 @@ class MySQL(monasca_setup.detection.Plugin):
             raise Exception(exception_msg)
 
         return config
+
+    def dependencies_installed(self):
+        try:
+            import pymysql
+        except ImportError:
+            return False
+        return True
