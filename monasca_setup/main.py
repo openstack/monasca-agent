@@ -101,7 +101,11 @@ def base_configuration(args):
     :param args: Arguments from the command line
     :return: None
     """
-    gid = pwd.getpwnam(args.user).pw_gid
+    stat = pwd.getpwnam(args.user)
+
+    uid = stat.pw_uid
+    gid = stat.pw_gid
+
     # Write the main agent.yaml - Note this is always overwritten
     log.info('Configuring base Agent settings.')
     dimensions = {}
@@ -115,14 +119,16 @@ def base_configuration(args):
     write_template(os.path.join(args.template_dir, 'agent.yaml.template'),
                    os.path.join(args.config_dir, 'agent.yaml'),
                    {'args': args, 'hostname': socket.getfqdn()},
-                   gid,
+                   group=gid,
+                   user=uid,
                    is_yaml=True)
 
     # Write the supervisor.conf
     write_template(os.path.join(args.template_dir, 'supervisor.conf.template'),
                    os.path.join(args.config_dir, 'supervisor.conf'),
                    {'prefix': PREFIX_DIR, 'log_dir': args.log_dir, 'monasca_user': args.user},
-                   gid)
+                   user=uid,
+                   group=gid)
 
 
 def modify_config(args, detected_config):

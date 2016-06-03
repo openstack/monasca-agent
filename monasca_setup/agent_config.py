@@ -92,9 +92,13 @@ def save_plugin_config(config_dir, plugin_name, user, conf):
                                          encoding='utf-8',
                                          allow_unicode=True,
                                          default_flow_style=False))
-    gid = pwd.getpwnam(user).pw_gid
+    stat = pwd.getpwnam(user)
+
+    gid = stat.pw_gid
+    uid = stat.pw_uid
+
     os.chmod(config_path, 0o640)
-    os.chown(config_path, 0, gid)
+    os.chown(config_path, uid, gid)
 
 
 def check_endpoint_changes(value, config):
