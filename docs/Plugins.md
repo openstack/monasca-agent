@@ -1432,7 +1432,20 @@ instances:
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
-| vertica.db.connection_status | hostname, service=vertica | Value of DB connection status (0=Healthy).
+| vertica.connection_status | hostname, node_name, service=vertica | Value of DB connection status (0=Healthy). |
+| vertica.node_status | hostname, node_name, service=vertica| Status of node connection (0=UP). |
+| vertica.projection.ros_count | hostname, node_name, projection_name, service=vertica| 	The number of ROS containers in the projection. |
+| vertica.projection.tuple_mover_mergeouts | hostname, node_name, projection_name, service=vertica | Number of current tuple mover mergeouts on this projection. |
+| vertica.projection.tuple_mover_moveouts | hostname, node_name, projection_name, service=vertica | Number of current tuple mover moveout on this projection. |
+| vertica.projection.wos_used_bytes | hostname, node_name, projection_name, service=vertica | The number of WOS bytes in the projection.). |
+| vertica.resource.disk_space_rejections | hostname, node_name, service=vertica | The number of rejected disk write requests. |
+| vertica.resource.pool.memory_inuse_kb | hostname, node_name, resource_pool, service=vertica | Amount of memory, in kilobytes, acquired by requests running against this pool. |
+| vertica.resource.pool.memory_size_actual_kb | hostname, node_name, resource_pool, service=vertica | Current amount of memory, in kilobytes, allocated to the pool by the resource manager. |
+| vertica.resource.pool.rejection_count | hostname, node_name, resource_pool, service=vertica | Number of resource rejections for this pool |
+| vertica.resource.pool.running_query_count | hostname, node_name, resource_pool, service=vertica | Number of queries actually running using this pool. |
+| vertica.resource.request_queue_depth | hostname, node_name, service=vertica | The cumulative number of requests for threads, file handles, and memory. |
+| vertica.resource.resource_rejections | hostname, node_name, service=vertica | The number of rejected plan requests. |
+| vertica.resource.wos_used_bytes | hostname, node_name, service=vertica | The size of the WOS in bytes. |
 
 ## Win32 Event Log
 
