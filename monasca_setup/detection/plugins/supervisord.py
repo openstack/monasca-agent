@@ -13,6 +13,7 @@
 #    under the License.
 
 import logging
+import os
 
 import monasca_setup.agent_config
 import monasca_setup.detection
@@ -51,8 +52,14 @@ class Supervisord(monasca_setup.detection.Plugin):
     def _detect(self):
         """Run detection, set self.available True if the service is detected.
         """
-        if monasca_setup.detection.find_process_cmdline('supervisord') is not None:
-            self.available = True
+        found_process = (monasca_setup.detection.
+                         find_process_cmdline('supervisord'))
+        has_args_or_conf_file = (self.args is not None or
+                                 os.path.isfile(supervisord_conf))
+        self.available = found_process is not None and has_args_or_conf_file
+        if not self.available:
+            log.error(('Supervisord configuration is not detected. '
+                      'Plugin for Supervisord will not be configured.'))
 
     def _get_config(self):
         """Set the configuration to be used for connecting to supervisord
