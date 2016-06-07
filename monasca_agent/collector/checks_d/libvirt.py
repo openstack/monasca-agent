@@ -26,7 +26,6 @@ import time
 from calendar import timegm
 from copy import deepcopy
 from datetime import datetime
-from distutils.version import LooseVersion
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.collector.virt import inspector
 from netaddr import all_matching_cidrs
@@ -320,26 +319,35 @@ class LibvirtCheck(AgentCheck):
         inst_name = inst.name()
         sample_time = float("{:9f}".format(time.time()))
         if 'cpu.time' in metric_cache[inst_name]:
-            # I have a prior value, so calculate the rate & push the metric
-            cpu_diff = insp.inspect_cpus(inst).time - metric_cache[inst_name]['cpu.time']['value']
+            cpu_info = insp.inspect_cpus(inst)
+            # I have a prior value, so calculate the raw_perc & push the metric
+            cpu_diff = cpu_info.time - metric_cache[inst_name]['cpu.time']['value']
             time_diff = sample_time - float(metric_cache[inst_name]['cpu.time']['timestamp'])
             # Convert time_diff to nanoseconds, and calculate percentage
-            rate = (cpu_diff / (time_diff * 1000000000)) * 100
-            if rate < 0:
+            raw_perc = (cpu_diff / (time_diff * 1000000000)) * 100
+            # Divide by the number of cores to normalize the percentage
+            normalized_perc = (raw_perc / cpu_info.number)
+            if raw_perc < 0:
                 # Bad value, save current reading and skip
                 self.log.warn("Ignoring negative CPU sample for: "
                               "{0} new cpu time: {1} old cpu time: {2}"
                               .format(inst_name, insp.inspect_cpus(inst).time,
                                       metric_cache[inst_name]['cpu.time']['value']))
                 metric_cache[inst_name]['cpu.time'] = {'timestamp': sample_time,
-                                                       'value': insp.inspect_cpus(inst).time}
+                                                       'value': cpu_info.time}
                 return
 
-            self.gauge('cpu.utilization_perc', int(round(rate, 0)),
+            self.gauge('cpu.utilization_perc', int(round(raw_perc, 0)),
                        dimensions=dims_customer,
                        delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
                        hostname=instance_cache.get(inst_name)['hostname'])
-            self.gauge('vm.cpu.utilization_perc', int(round(rate, 0)),
+            self.gauge('cpu.utilization_norm_perc', int(round(normalized_perc, 0)),
+                       dimensions=dims_customer,
+                       delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                       hostname=instance_cache.get(inst_name)['hostname'])
+            self.gauge('vm.cpu.utilization_perc', int(round(raw_perc, 0)),
+                       dimensions=dims_operations)
+            self.gauge('vm.cpu.utilization_norm_perc', int(round(normalized_perc, 0)),
                        dimensions=dims_operations)
             self.gauge('vm.cpu.time_ms', insp.inspect_cpus(inst).time,
                        dimensions=dims_operations)
