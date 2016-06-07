@@ -309,6 +309,12 @@ This section documents the system metrics that are sent by the Agent.
 | cpu.system_perc |  | Percentage of time the CPU is used at the system level |
 | cpu.user_perc  |  | Percentage of time the CPU is used at the user level |
 | cpu.total_logical_cores  |  | Total number of logical cores available for an entire node (Includes hyper threading).  **NOTE: This is an optional metric that is only sent when send_rollup_stats is set to true.** |
+| cpu.percent  |  | Percentage of time the CPU is used in total |
+| cpu.idle_time  |  | Time the CPU is idle when no I/O requests are in progress |
+| cpu.wait_time  |  | Time the CPU is idle AND there is at least one I/O request in progress |
+| cpu.user_time  |  | Time the CPU is used at the user level |
+| cpu.system_time  |  | Time the CPU is used at the system level |
+| cpu.frequency_mhz |  | Maximum MHz value for the cpu frequency. **NOTE: This value is dynamic, and driven by CPU governor depending on current resource need .** |
 
 ### Load
 | Metric Name | Dimensions | Semantics |
