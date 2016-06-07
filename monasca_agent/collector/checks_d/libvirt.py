@@ -50,6 +50,7 @@ class LibvirtCheck(AgentCheck):
                                                     'libvirt_instances.json')
         self.metric_cache_file = "{0}/{1}".format(self.init_config.get('cache_dir'),
                                                   'libvirt_metrics.json')
+        self.use_bits = self.init_config.get('network_use_bits')
 
     def _test_vm_probation(self, created):
         """Test to see if a VM was created within the probation period.
@@ -62,6 +63,20 @@ class LibvirtCheck(AgentCheck):
         created_sec = (time.time() - timegm(dt.timetuple()))
         probation_time = self.init_config.get('vm_probation', 300) - created_sec
         return int(probation_time)
+
+    def _get_metric_name(self, orig_name):
+        # Rename "tx" to "out" and "rx" to "in"
+        metric_name = orig_name.replace("tx", "out").replace("rx", "in")
+        if self.use_bits:
+            metric_name = metric_name.replace("bytes", "bits")
+        return metric_name
+
+    @staticmethod
+    def _get_metric_rate_name(metric_name):
+        """Change the metric name to a rate, i.e. "net.rx_bytes"
+        gets converted to "net.rx_bytes_sec"
+        """
+        return "{0}_sec".format(metric_name)
 
     @staticmethod
     def _validate_secgroup(cache, instance, source_ip):
@@ -289,15 +304,10 @@ class LibvirtCheck(AgentCheck):
                             'timestamp': sample_time,
                             'value': value}
                         continue
-                    # Change the metric name to a rate, ie. "net.rx_bytes"
-                    # gets converted to "net.rx_bytes_sec"
-                    rate_name = "{0}_sec".format(metric_name)
-                    # Rename "tx" to "out" and "rx" to "in"
-                    rate_name = rate_name.replace("tx", "out")
-                    rate_name = rate_name.replace("rx", "in")
-                    if self.init_config.get('network_use_bits'):
-                        val_diff = val_diff * 8
-                        rate_name = rate_name.replace("bytes", "bits")
+                    rate_name = self._get_metric_rate_name(metric_name)
+                    rate_name = self._get_metric_name(rate_name)
+                    if self.use_bits:
+                        val_diff *= 8
                     # Customer
                     this_dimensions = vnic_dimensions.copy()
                     this_dimensions.update(dims_customer)
@@ -310,6 +320,23 @@ class LibvirtCheck(AgentCheck):
                     this_dimensions.update(dims_operations)
                     self.gauge("vm.{0}".format(rate_name), val_diff,
                                dimensions=this_dimensions)
+                # Report raw counters.
+                mapped_name = self._get_metric_name(metric_name)
+                weighted_value = value
+                if self.use_bits:
+                    weighted_value = value * 8
+                # Customer
+                this_dimensions = vnic_dimensions.copy()
+                this_dimensions.update(dims_customer)
+                self.gauge(mapped_name, weighted_value,
+                           dimensions=this_dimensions,
+                           delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                           hostname=instance_cache.get(inst_name)['hostname'])
+                # Operations (metric name prefixed with "vm.")
+                this_dimensions = vnic_dimensions.copy()
+                this_dimensions.update(dims_operations)
+                self.gauge("vm.{0}".format(mapped_name),
+                           weighted_value, dimensions=this_dimensions)
                 # Save this metric to the cache
                 metric_cache[inst_name][metric_name][vnic[0].name] = {
                     'timestamp': sample_time,
