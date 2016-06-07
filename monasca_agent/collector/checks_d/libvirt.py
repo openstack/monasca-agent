@@ -26,6 +26,8 @@ import time
 from calendar import timegm
 from copy import deepcopy
 from datetime import datetime
+from datetime import timedelta
+from distutils.version import LooseVersion
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.collector.virt import inspector
 from netaddr import all_matching_cidrs
@@ -50,6 +52,12 @@ class LibvirtCheck(AgentCheck):
         self.metric_cache_file = "{0}/{1}".format(self.init_config.get('cache_dir'),
                                                   'libvirt_metrics.json')
         self.use_bits = self.init_config.get('network_use_bits')
+        if self.init_config.get('disk_collection_period'):
+            self._disk_collection_period = int(self.init_config.get('disk_collection_period'))
+            self._last_disk_collect_time = datetime.fromordinal(1)
+        else:
+            self._disk_collection_period = 0
+        self._skip_disk_collection = False
 
     def _test_vm_probation(self, created):
         """Test to see if a VM was created within the probation period.
@@ -520,6 +528,23 @@ class LibvirtCheck(AgentCheck):
 
         return dom_status
 
+    def prepare_run(self):
+        """Check if it is time for the disk measurements to be collected"""
+        # A separate disk collection period is optional
+        if self._disk_collection_period <= 0:
+            return
+
+        time_since_last = datetime.now() - self._last_disk_collect_time
+        # Handle times that are really close to the disk collection period
+        period_with_fudge_factor = timedelta(0, self._disk_collection_period - 1,
+                                             500000)
+        if time_since_last < period_with_fudge_factor:
+            self.log.debug('Skipping disk collection for %d seconds' %
+                           (self._disk_collection_period - time_since_last.seconds))
+            self._skip_disk_collection = True
+        else:
+            self._skip_disk_collection = False
+
     def check(self, instance):
         """Gather VM metrics for each instance"""
 
@@ -611,12 +636,16 @@ class LibvirtCheck(AgentCheck):
 
             if self.init_config.get('vm_cpu_check_enable'):
                 self._inspect_cpu(insp, inst, instance_cache, metric_cache, dims_customer, dims_operations)
-            if self.init_config.get('vm_disks_check_enable'):
-                self._inspect_disks(insp, inst, instance_cache, metric_cache, dims_customer, dims_operations)
+            if not self._skip_disk_collection:
+                self._last_disk_collect_time = datetime.now()
+                if self.init_config.get('vm_disks_check_enable'):
+                    self._inspect_disks(insp, inst, instance_cache, metric_cache, dims_customer,
+                                        dims_operations)
+                if self.init_config.get('vm_extended_disks_check_enable'):
+                    self._inspect_disk_info(insp, inst, instance_cache, metric_cache, dims_customer,
+                                            dims_operations)
             if self.init_config.get('vm_network_check_enable'):
                 self._inspect_network(insp, inst, instance_cache, metric_cache, dims_customer, dims_operations)
-            if self.init_config.get('vm_extended_disks_check_enable'):
-                self._inspect_disk_info(insp, inst, instance_cache, metric_cache, dims_customer, dims_operations)
 
             # Memory utilizaion
             # (req. balloon driver; Linux kernel param CONFIG_VIRTIO_BALLOON)

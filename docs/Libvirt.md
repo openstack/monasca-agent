@@ -50,6 +50,8 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 
 `network_use_bits` will submit network metrics in bits rather than bytes.  This will stop submitting the metrics `net.in_bytes_sec` and `net.out_bytes_sec`, and instead submit `net.in_bits_sec` and `net.out_bits_sec`.
 
+`disk_collection_period` will cause disk metrics to be output at a minimum `disk_collection_period` second interval. This can be optionally set to have disk metrics be outputted less often to reduce metric load on the system. If this is less than the agent collection period, it will be ignored. The default value is 0.
+
 `vm_cpu_check_enable` enables collecting of VM CPU metrics. (Default True)
 
 `vm_disks_check_enable` enables collecting of VM Disk metrics. (Default True)
