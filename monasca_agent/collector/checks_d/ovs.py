@@ -116,13 +116,27 @@ class OvsCheck(AgentCheck):
         # Done collecting current rates and updating the cache file,
         # let's publish.
         #
+        tried_one_update = False
         for ifx, value in ifx_deltas.iteritems():
 
             port_uuid = value['port_uuid']
-            if port_uuid not in rtr_cache:
+            if port_uuid not in rtr_cache and not tried_one_update:
+                #
+                # Only attempt to update router cache
+                # file for a missing port uuid once per wakeup.
+                #
+                tried_one_update = True
+                log_msg = "port_uuid {0} not in router cache -- updating."
+                self.log.info(log_msg.format(port_uuid))
                 rtr_cache = self._update_router_cache()
 
             router_info = rtr_cache.get(port_uuid)
+
+            if not router_info:
+                log_msg = "port_uuid {0} not known to neutron -- ghost port?"
+                self.log.error(log_msg.format(port_uuid))
+                continue
+
             router_uuid = router_info['router_uuid']
             router_name = router_info['router_name']
             tenant_id = router_info['tenant_id']
@@ -211,11 +225,13 @@ class OvsCheck(AgentCheck):
         password = self.init_config.get('admin_password')
         tenant_name = self.init_config.get('admin_tenant_name')
         auth_url = self.init_config.get('identity_uri')
+        region_name = self.init_config.get('region_name')
 
         return neutron_client.Client(username=username,
                                      password=password,
                                      tenant_name=tenant_name,
                                      auth_url=auth_url,
+                                     region_name=region_name,
                                      endpoint_type='internalURL')
 
     def _run_command(self, command, input=None):
