@@ -58,8 +58,12 @@ class Supervisord(monasca_setup.detection.Plugin):
                                  os.path.isfile(supervisord_conf))
         self.available = found_process is not None and has_args_or_conf_file
         if not self.available:
-            log.error(('Supervisord configuration is not detected. '
-                      'Plugin for Supervisord will not be configured.'))
+            if not found_process:
+                log.error('Supervisord process does not exist.')
+            elif not has_args_or_conf_file:
+                log.error(('Supervisord process exists but'
+                           'configuration file was not found and'
+                           'no arguments were given.'))
 
     def _get_config(self):
         """Set the configuration to be used for connecting to supervisord
