@@ -122,7 +122,8 @@ class LibvirtCheck(AgentCheck):
             else:
                 inst_flavor = nova_client.flavors.get(instance.flavor['id'])
                 flavor_cache[instance.flavor['id']] = inst_flavor
-            instance_ports = [p['id'] for p in port_cache if p['device_id'] == instance.id]
+            if port_cache:
+                instance_ports = [p['id'] for p in port_cache if p['device_id'] == instance.id]
             id_cache[inst_name] = {'instance_uuid': instance.id,
                                    'hostname': instance.name,
                                    'zone': inst_az,
