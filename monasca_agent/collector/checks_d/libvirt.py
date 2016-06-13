@@ -518,6 +518,8 @@ class LibvirtCheck(AgentCheck):
                                hostname=instance_cache.get(inst_name)['hostname'])
                     self.gauge("vm.{0}".format(name), mem_metrics[name],
                                dimensions=dims_operations)
+                memory_info = insp.inspect_memory_resident(inst)
+                self.gauge('vm.mem.resident_mb', float(memory_info.resident), dimensions=dims_operations)
             except KeyError:
                 self.log.debug("Balloon driver not active/available on guest {0} ({1})".format(inst_name,
                                                                                                instance_cache.get(inst_name)['hostname']))
