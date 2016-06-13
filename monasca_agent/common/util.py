@@ -1,6 +1,5 @@
 # (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 
-import datetime
 import glob
 import hashlib
 import imp
@@ -11,11 +10,11 @@ import optparse
 import os
 import platform
 import re
-import signal
 import socket
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import traceback
 import uuid
@@ -294,19 +293,18 @@ def get_uuid():
     return uuid.uuid5(uuid.NAMESPACE_DNS, platform.node() + str(uuid.getnode())).hex
 
 
-def timeout_command(command, timeout):
-    # call shell-command with timeout (in seconds).
+def timeout_command(command, timeout, command_input=None):
+    # call shell-command with timeout (in seconds) and stdinput for the command (optional)
     # returns None if timeout or the command output.
-    start = datetime.datetime.now()
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    while process.poll() is None:
-        time.sleep(0.1)
-        now = datetime.datetime.now()
-        if (now - start).seconds > timeout:
-            os.kill(process.pid, signal.SIGKILL)
-            os.waitpid(-1, os.WNOHANG)
-            return None
-    return process.stdout.read()
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    command_timer = threading.Timer(timeout, process.kill)
+    try:
+        command_timer.start()
+        stdout, stderr = process.communicate(input=command_input.encode() if command_input else None)
+        return_code = process.returncode
+        return stdout, stderr, return_code
+    finally:
+        command_timer.cancel()
 
 
 def get_os():

@@ -6,5 +6,6 @@ instances:
 #  - name: localhost
 #    user: username
 #    password: my_password
+#    node_name: v_mon_node0001
 #    service: monasca # Optional
 #    timeout: 3       # Optional (secs)

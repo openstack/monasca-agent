@@ -10,30 +10,22 @@ from monasca_setup.detection.utils import watch_process_by_username
 
 log = logging.getLogger(__name__)
 
-VERTICA_CONF = '/root/.vertica.cnf'
-VSQL_PATH = '/opt/vertica/bin/vsql'
 VERTICA_SERVICE = 'vertica'
 CONNECTION_TIMEOUT = 3
+SERVICE = 'vertica'
+USER = 'monitor'
+USER_PASSWORD = 'password'
 
 
 class Vertica(monasca_setup.detection.Plugin):
 
     """Detect Vertica process running and DB connection status
 
-        This plugin needs the Vertica username, password.
-        The other arguments are optional.
-        There are two ways to provide this, either by a file placed in
-        /root/.vertica.cnf or by passing the following arguments:
-            - user
-            - password
-            - service   (optional)
-            - timeout   (optional - timeout for connection attempt in seconds)
-        /root/.vertica.cnf in a format such as
-        [client]
-            user = user1
-            password = yourpassword
-            service = monitoring
-            timeout = 3
+        This plugin has the following options (each optional) that you can pass in via command line:
+            - user      (optional - user to connect with) - Defaults to monitor user
+            - password  (optional - password to use when connecting) - Defaults to password
+            - service   (optional - dimensions service to be set for the metrics coming out of the plugin)
+            - timeout   (optional - timeout for vertica connection in seconds) - Defaults to 3 second
     """
 
     def _detect(self):
@@ -50,57 +42,32 @@ class Vertica(monasca_setup.detection.Plugin):
         """
         # Set defaults and read config or use arguments
         if self.args is None:
-            self.user = 'mon_api'
-            self.password = 'password'
+            self.user = USER
+            self.password = USER_PASSWORD
             self.service = VERTICA_SERVICE
             self.timeout = CONNECTION_TIMEOUT
-
-            self._read_config(VERTICA_CONF)
         else:
-            self.user = self.args.get('user', 'mon_api')
-            self.password = self.args.get('password', 'password')
+            self.user = self.args.get('user', USER)
+            self.password = self.args.get('password', USER_PASSWORD)
             self.service = self.args.get('service', VERTICA_SERVICE)
-            self.timeout = self.args.get('timeout', CONNECTION_TIMEOUT)
+            self.timeout = int(self.args.get('timeout', CONNECTION_TIMEOUT))
 
     def _connection_test(self):
         """Attempt to connect to Vertica DB to verify credentials.
         :return: bool status of the test
         """
         log.info("\tVertica connection test.")
-        output = timeout_command(
-            [VSQL_PATH, "-U", self.user, "-w", self.password, "-c", "select version();"], self.timeout)
-        if (output is not None) and ('Vertica Analytic Database' in output):
+        stdout, stderr, return_code = timeout_command(
+            ["/opt/vertica/bin/vsql", "-U", self.user, "-w", self.password, "-t", "-A", "-c",
+             "SELECT node_name FROM current_session"], self.timeout)
+        # remove trailing newline
+        stdout = stdout.rstrip()
+        if return_code == 0:
+            self.node_name = stdout
             return True
         else:
+            log.error("Error querying vertica with return code of {0} and the error {1}".format(return_code, stderr))
             return False
-
-    def _read_config(self, config_file):
-        """Read the configuration setting member variables as appropriate.
-        :param config_file: The filename of the configuration to read and parse
-        """
-        # Read the Vertica config file to extract the needed variables.
-        client_section = False
-        try:
-            with open(config_file, "r") as conf:
-                for row in conf:
-                    if "[client]" in row:
-                        client_section = True
-                        log.info("\tUsing client credentials from {:s}".format(config_file))
-                        continue
-                    if client_section:
-                        if "user" in row:
-                            self.user = row.split("=")[1].strip()
-                        if "password" in row:
-                            self.password = row.split("=")[1].strip()
-                        if "vsql_path" in row:
-                            self.vsql_path = row.split("=")[1].strip()
-                        if "service" in row:
-                            self.service = row.split("=")[1].strip()
-                        if "timeout" in row:
-                            self.timeout = int(row.split("=")[1].strip())
-        except IOError:
-            log.warn('Unable to open Vertica config file {0}. '
-                     'Using default credentials to try to connect.'.format(VERTICA_CONF))
 
     def build_config(self):
         """Build the config as a Plugins object and return.
@@ -117,6 +84,7 @@ class Vertica(monasca_setup.detection.Plugin):
                                    'user': self.user,
                                    'password': self.password,
                                    'service': self.service,
+                                   'node_name': self.node_name,
                                    'timeout': self.timeout}
                 config['vertica'] = {'init_config': None, 'instances': [instance_config]}
             else:
@@ -125,12 +93,9 @@ class Vertica(monasca_setup.detection.Plugin):
                                 'Please correct and re-run monasca-setup.'
                 log.error(exception_msg)
                 raise Exception(exception_msg)
-        except Exception:
-            exception_msg = 'Error configuring the Vertica check plugin'
+        except Exception as e:
+            exception_msg = 'Error configuring the Vertica check plugin - {0}'.format(e)
             log.error(exception_msg)
             raise Exception(exception_msg)
 
         return config
-
-    def dependencies_installed(self):
-        return True
