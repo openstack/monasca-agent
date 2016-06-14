@@ -40,11 +40,15 @@ configured using the configuration file example below.
 
 `network_use_bits` will submit network metrics in bits rather than bytes.  This will stop submitting the metrics `router.in_bytes_sec` and `router.out_bytes_sec`, and instead submit `router.in_bits_sec` and `router.out_bits_sec`.
 
+`use_absolute_metrics` will submit the raw counters from ovs-vsctl command output for the given network interface. If this flag is disabled then default rate metrics will get collected for the enabled network interfaces.
+
 `check_router_ha` will check router HA status if set to true.  This should be set to false if not configuring routers for HA, as setting this to true will cause the plugin to make additional neutron calls.
 
 `ovs_cmd` is the location of the open vswitch command.  Installations that allow sudo should set this to `sudo /usr/bin/ovs-vsctl` and add `mon-agent ALL=(ALL) NOPASSWD:/usr/bin/ovs-vsctl` to the `/etc/sudoers` file.  Installations that don't allow usage of sudo should copy the `ovs-vsctl` command to another location and use the `setcap` command to allow the monasca-agent to run that command.  The new location of the `ovs-vsctl` command should be what is set in the config file for `ovs_cmd`.
 
 `instances` are not used and should be empty in `ovs.yaml` because like the ovs plugin it runs against all routers hosted on the node at once.
+
+`included_interface_re` will include network interfaces for collecting the ovs statistics matching the given regex. By default qg, vhu(dpdk) and sg interfaces will be enabled by detection plugin.
 
 Example config (`ovs.yaml`):
 ```
@@ -58,13 +62,15 @@ init_config:
   region_name: 'region1'
   cache_dir: /dev/shm
   network_use_bits: true
-  ovs_cmd: 'sudo /usr/bin/ovs-vsctl'
+  use_absolute_metrics: true
+  ovs_cmd: 'sudo /usr/bin/ovs-vsctl' 
+  included_interface_re: tap.*|qr.*|qg.*
 
 instances:
  - {}
 ```
 
-## Per-Router Metrics
+## Per-Router Rate Metrics
 
 | Name                        | Description                                                                |
 | --------------------------- | -------------------------------------------------------------------------- |
@@ -79,6 +85,52 @@ instances:
 | vrouter.in_errors_sec        | Number of incoming errors per second for the router                        |
 | vrouter.out_errors_sec       | Number of outgoing errors per second for the router                        |
 
+## Per-Router Metrics
+
+| Name                     | Description                                                     |
+| -------------------------|-----------------------------------------------------------------|
+| vrouter.in_bytes         |Inbound bytes for the router (if `network_use_bits` is false)    |
+| vrouter.out_bytes        | Outgoing bytes for the router  (if `network_use_bits` is false) |
+| vrouter.in_bits          | Inbound bits for the router  (if `network_use_bits` is true)    |
+| vrouter.out_bits         | Outgoing bits for the router  (if `network_use_bits` is true)   |
+| vrouter.in_packets       | Incoming packets for the router                                 |
+| vrouter.out_packets      | Outgoing packets for the router                                 |
+| vrouter.in_dropped       | Incoming dropped packets for the router                         |
+| vrouter.out_dropped      | Outgoing dropped packets for the router                         |
+| vrouter.in_errors        | Number of incoming errors for the router                        |
+| vrouter.out_errors       | Number of outgoing errors for the router                        |
+
+## Per-DHCP port Metrics
+
+| Name                     | Description
+| -------------------------|---------------------------------------------------------------------|
+| vswitch.in_bytes         |Inbound bytes for the DHCP port (if `network_use_bits` is false)     |
+| vswitch.out_bytes        | Outgoing bytes for the DHCP port  (if `network_use_bits` is false)  |
+| vswitch.in_bits          | Inbound bits for the DHCP port  (if `network_use_bits` is true)     |
+| vswitch.out_bits         | Outgoing bits for the DHCP port  (if `network_use_bits` is true)    |
+| vswitch.out_packets      | Outgoing packets for the  DHCP port                                 |
+| vswitch.in_packets       | Incoming packets for the DHCP port                                  |
+| vswitch.out_dropped      | Incoming dropped packets for the DHCP port                          |
+| vswitch.in_dropped       | Outgoing dropped packets for the DHCP port                          |
+| vswitch.out_error        | Errors transmitted for the DHCP port                                |
+| vswitch.in_error         | Errors received for the DHCP port                                   |
+
+## Per-DHCP Rate Metrics
+
+| Name                       | Description
+| ---------------------------|---------------------------------------------------------------------------|
+| vswitch.out_bytes_sec      | Outgoing Bytes per second on DHCP port(if `network_use_bits` is false)    |
+| vswitch.in_bytes_sec       | Incoming Bytes per second on DHCP port(if `network_use_bits` is false)    |
+| vswitch.out_bits_sec       | Outgoing Bits per second on DHCP port(if `network_use_bits` is true)      |
+| vswitch.in_bits_sec        | Incoming Bits per second on DHCP port(if `network_use_bits` is true)      |
+| vswitch.out_packets_sec    | Outgoing packets per second for the  DHCP port                            |
+| vswitch.in_packets_sec     | Incoming packets per second for the DHCP port                             |
+| vswitch.out_dropped_sec    | Outgoing dropped packets per second for the DHCP port                     |
+| vswitch.in_dropped_sec     | Incoming dropped per second for the DHCP port                             |
+| vswitch.out_error_sec      | Outgoing errors per second for the DHCP port                              |
+| vswitch.in_error_sec       | Incoming errors per second for the DHCP port                              |
+
+
 ## Router Metric Dimensions
 
 | Dimension Name | Customer Value             | Operations Value            |
@@ -89,6 +141,15 @@ instances:
 | component      | "ovs"                      | "ovs"                       |
 | router_name    | name of the virtual router | name of the virtual router  |
 | tenant_id      | (N/A)                      | project owner of the router |
+
+## OVS Port Metric Dimensions
+| Dimension Name | Customer Value             | Operations Value            |
+| -------------- | -------------------------- | --------------------------- |
+| hostname       | (N/A)                      | hostname hosting the ports  |
+| resource_id    | resource ID of port        | resource id of the port     |
+| service        | "networking"               | "networking"                |
+| component      | "ovs"                      | "ovs"                       |
+| tenant_id      | (N/A)                      | project owner of the port   |
 
 
 # License
