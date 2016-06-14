@@ -201,7 +201,8 @@ Example cache (pretty-printed excerpt, see next section for complete list of ava
 | Name                 | Description                            | Associated Dimensions  |
 | -------------------- | -------------------------------------- | ---------------------- |
 | cpu.utilization_perc | Overall CPU utilization (percentage)   |                        |
-| host_alive_status    | See [host_alive_status Codes](#host_alive_status-codes) below |  |
+| cpu.utilization_norm_perc | Normalized CPU utilization (percentage) |                  |
+| host_alive_status    | See [host_alive_status Codes](#host_alive_status-codes) below | |
 | io.read_ops_sec      | Disk I/O read operations per second    | 'device' (ie, 'hdd')   |
 | io.write_ops_sec     | Disk I/O write operations per second   | 'device' (ie, 'hdd')   |
 | io.read_bytes_sec    | Disk I/O read bytes per second         | 'device' (ie, 'hdd')   |
