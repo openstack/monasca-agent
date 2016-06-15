@@ -543,10 +543,17 @@ class LibvirtCheck(AgentCheck):
             agg_values[gauge] = 0
 
         insp = inspector.get_hypervisor_inspector()
+        updated_cache_this_time = False
         for inst in insp._get_connection().listAllDomains():
             # Verify that this instance exists in the cache.  Add if necessary.
             inst_name = inst.name()
-            if inst_name not in instance_cache:
+            if inst_name not in instance_cache and not updated_cache_this_time:
+                #
+                # If we have multiple ghost VMs, we'll needlessly
+                # update the instance cache.  Let's limit the cache
+                # update to once per agent wakeup.
+                #
+                updated_cache_this_time = True
                 instance_cache = self._update_instance_cache()
 
             # Build customer dimensions
