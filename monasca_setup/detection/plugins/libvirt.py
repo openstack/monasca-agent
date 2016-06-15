@@ -102,6 +102,13 @@ class Libvirt(Plugin):
                            'vm_probation': vm_probation,
                            'metadata': metadata}
 
+            # Set default parameters for included checks
+            init_config['vm_cpu_check_enable'] = self.literal_eval('True')
+            init_config['vm_disks_check_enable'] = self.literal_eval('True')
+            init_config['vm_network_check_enable'] = self.literal_eval('True')
+            init_config['vm_ping_check_enable'] = self.literal_eval('True')
+            init_config['vm_extended_disks_check_enable'] = self.literal_eval('False')
+
             for option in cfg_needed:
                 init_config[option] = nova_cfg.get(cfg_section, cfg_needed[option])
 

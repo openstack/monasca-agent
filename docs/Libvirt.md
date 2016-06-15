@@ -50,6 +50,16 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 
 `network_use_bits` will submit network metrics in bits rather than bytes.  This will stop submitting the metrics `net.in_bytes_sec` and `net.out_bytes_sec`, and instead submit `net.in_bits_sec` and `net.out_bits_sec`.
 
+`vm_cpu_check_enable` enables collecting of VM CPU metrics. (Default True)
+
+`vm_disks_check_enable` enables collecting of VM Disk metrics. (Default True)
+
+`vm_network_check_enable` enables collecting of VM Network metrics. (Default True)
+
+`vm_ping_check_enable` enable host alive ping check. (Default True)
+
+`vm_extended_disks_check_enable` enable collecting of extended Disk metrics. (Default False)
+
 Example config:
 ```
 init_config:

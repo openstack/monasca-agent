@@ -575,9 +575,14 @@ class LibvirtCheck(AgentCheck):
             if inst_name not in metric_cache:
                 metric_cache[inst_name] = {}
 
-            self._inspect_cpu(insp, inst, instance_cache, metric_cache, dims_customer, dims_operations)
-            self._inspect_disks(insp, inst, instance_cache, metric_cache, dims_customer, dims_operations)
-            self._inspect_network(insp, inst, instance_cache, metric_cache, dims_customer, dims_operations)
+            if self.init_config.get('vm_cpu_check_enable'):
+                self._inspect_cpu(insp, inst, instance_cache, metric_cache, dims_customer, dims_operations)
+            if self.init_config.get('vm_disks_check_enable'):
+                self._inspect_disks(insp, inst, instance_cache, metric_cache, dims_customer, dims_operations)
+            if self.init_config.get('vm_network_check_enable'):
+                self._inspect_network(insp, inst, instance_cache, metric_cache, dims_customer, dims_operations)
+            if self.init_config.get('vm_extended_disks_check_enable'):
+                self._inspect_disk_info(insp, inst, instance_cache, metric_cache, dims_customer, dims_operations)
 
             # Memory utilizaion
             # (req. balloon driver; Linux kernel param CONFIG_VIRTIO_BALLOON)
@@ -599,7 +604,7 @@ class LibvirtCheck(AgentCheck):
                 self.log.debug("Balloon driver not active/available on guest {0} ({1})".format(inst_name,
                                                                                                instance_cache.get(inst_name)['hostname']))
             # Test instance's remote responsiveness (ping check) if possible
-            if self.init_config.get('ping_check') and 'network' in instance_cache.get(inst_name):
+            if (self.init_config.get('vm_ping_check_enable')) and self.init_config.get('ping_check') and 'network' in instance_cache.get(inst_name):
                 for net in instance_cache.get(inst_name)['network']:
 
                     ping_cmd = self.init_config.get('ping_check').replace('NAMESPACE',
