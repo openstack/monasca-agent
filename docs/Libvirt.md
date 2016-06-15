@@ -230,6 +230,10 @@ Example cache (pretty-printed excerpt, see next section for complete list of ava
 | net.out_packets_sec  | Network transmitted packets per second | 'device' (ie, 'vnet0') |
 | net.in_bytes_sec     | Network received bytes per second      | 'device' (ie, 'vnet0') |
 | net.out_bytes_sec    | Network transmitted bytes per second   | 'device' (ie, 'vnet0') |
+| net.in_packets       | Network received total packets         | 'device' (ie, 'vnet0') |
+| net.out_packets      | Network transmitted total packets      | 'device' (ie, 'vnet0') |
+| net.in_bytes         | Network received total bytes           | 'device' (ie, 'vnet0') |
+| net.out_bytes        | Network transmitted total bytes        | 'device' (ie, 'vnet0') |
 | mem.free_mb          | Free memory in Mbytes                  |                        |
 | mem.total_mb         | Total memory in Mbytes                 |                        |
 | mem.used_mb          | Used memory in Mbytes                  |                        |
