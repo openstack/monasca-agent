@@ -360,23 +360,27 @@ class LibvirtCheck(AgentCheck):
         """Inspect disk metrics for an instance"""
 
         inst_name = inst.name()
+        metric_aggregate = {}
         for disk in insp.inspect_disks(inst):
             sample_time = time.time()
             disk_dimensions = {'device': disk[0].device}
             for metric in disk[1]._fields:
-                metric_name = "io.{0}".format(metric)
+                metric_name = "io.{0}".format(metric.replace('requests', 'ops'))
                 if metric_name not in metric_cache[inst_name]:
                     metric_cache[inst_name][metric_name] = {}
 
                 value = int(disk[1].__getattribute__(metric))
+                metric_aggregate[metric_name] = metric_aggregate.get(
+                    metric_name, 0) + value
                 if disk[0].device in metric_cache[inst_name][metric_name]:
-                    val_diff = value - metric_cache[inst_name][metric_name][disk[0].device]['value']
+                    cached_val = metric_cache[inst_name][metric_name][disk[
+                        0].device]['value']
+                    val_diff = value - cached_val
                     if val_diff < 0:
                         # Bad value, save current reading and skip
                         self.log.warn("Ignoring negative disk sample for: "
                                       "{0} new value: {1} old value: {2}"
-                                      .format(inst_name, value,
-                                              metric_cache[inst_name][metric_name][disk[0].device]['value']))
+                                      .format(inst_name, value, cached_val))
                         metric_cache[inst_name][metric_name][disk[0].device] = {
                             'timestamp': sample_time,
                             'value': value}
@@ -395,10 +399,73 @@ class LibvirtCheck(AgentCheck):
                     this_dimensions.update(dims_operations)
                     self.gauge("vm.{0}".format(rate_name), val_diff,
                                dimensions=this_dimensions)
+                    self.gauge("vm.{0}".format(metric_name), value,
+                               dimensions=this_dimensions)
                 # Save this metric to the cache
                 metric_cache[inst_name][metric_name][disk[0].device] = {
                     'timestamp': sample_time,
                     'value': value}
+
+        this_dimensions = dict()
+        this_dimensions.update(dims_customer)
+        this_dimensions.update(dims_operations)
+        for metric in metric_aggregate:
+            sample_time = time.time()
+            rate_name = "vm.{0}_total_sec".format(metric)
+            if rate_name not in metric_cache[inst_name]:
+                metric_cache[inst_name][rate_name] = {}
+            else:
+                val_diff = metric_aggregate[metric] - metric_cache[inst_name][
+                    rate_name]['value']
+                if val_diff < 0:
+                    # Bad value, save current reading and skip
+                    self.log.warn("Ignoring negative disk sample for: "
+                                  "{0} new value: {1} old value: {2}"
+                                  .format(inst_name, metric_aggregate[metric],
+                                          metric_cache[inst_name][rate_name][
+                                              'value']))
+                    metric_cache[inst_name][rate_name] = {
+                        'timestamp': sample_time,
+                        'value': metric_aggregate[metric]}
+                self.gauge(rate_name, val_diff,
+                           dimensions=this_dimensions)
+            self.gauge("vm.{0}_total".format(metric), metric_aggregate[
+                metric], dimensions=this_dimensions)
+            # Save this metric to the cache
+            metric_cache[inst_name][rate_name] = {
+                'timestamp': sample_time,
+                'value': metric_aggregate[metric]}
+
+    def _inspect_disk_info(self, insp, inst, instance_cache, metric_cache,
+                           dims_customer, dims_operations):
+        """Inspect disk metrics for an instance"""
+
+        inst_name = inst.name()
+        metric_aggregate = {}
+        for disk in insp.inspect_disk_info(inst):
+            disk_dimensions = {'device': disk[0].device}
+            for metric in disk[1]._fields:
+                metric_name = "disk.{0}".format(metric)
+                value = int(disk[1].__getattribute__(metric))
+                metric_aggregate[metric_name] = metric_aggregate.get(
+                    metric_name, 0) + value
+                this_dimensions = disk_dimensions.copy()
+                this_dimensions.update(dims_customer)
+                self.gauge(metric_name, value, dimensions=this_dimensions,
+                           delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                           hostname=instance_cache.get(inst_name)['hostname'])
+                # Operations (metric name prefixed with "vm."
+                this_dimensions = disk_dimensions.copy()
+                this_dimensions.update(dims_operations)
+                self.gauge("vm.{0}".format(metric_name), value,
+                           dimensions=this_dimensions)
+
+        this_dimensions = dict()
+        this_dimensions.update(dims_customer)
+        this_dimensions.update(dims_operations)
+        for metric in metric_aggregate:
+            self.gauge("vm.{0}_total".format(metric), metric_aggregate[
+                metric], dimensions=this_dimensions)
 
     def _inspect_state(self, insp, inst, instance_cache, dims_customer, dims_operations):
         """Look at the state of the instance, publish a metric using a
