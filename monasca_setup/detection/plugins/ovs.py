@@ -15,15 +15,13 @@ log = logging.getLogger(__name__)
 neutron_refresh = 60 * 60 * 4  # Four hours
 # Directory to use for metric caches
 cache_dir = "/dev/shm"
-# Installations that don't allow usage of sudo should copy the `ovs-vsctl`
-# command to another location and use the `setcap` command to allow the
-# monasca-agent to run that command. The new location of the `ovs-vsctl`
-# command should be what is set in the config file for `ovs_cmd`.
+# ovs-vsctl command needs sudo privileges to connect to
+# /var/run/openvswitch/db.sock which is created by ovsdb-server.
 ovs_cmd = "sudo /usr/bin/ovs-vsctl"
 # If set, will submit network metrics in bits
 network_use_bits = False
 # Regular expression for interface types
-included_interface_re = 'tap.*|qr.*|qg.*|vhu.*'
+included_interface_re = 'qg.*|vhu.*|sg.*'
 # If set, will submit raw counters from ovs-vsctl command output for the given
 # network interface
 use_absolute_metrics = True

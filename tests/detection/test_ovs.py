@@ -29,10 +29,12 @@ class TestOvs(unittest.TestCase):
 
     def setUp(self):
         unittest.TestCase.setUp(self)
-        self.ovs_obj = Ovs('temp_dir')
-        self.has_option = [True, True, True, False, False, True]
-        self.get_value = [MagicMock(), MagicMock(), MagicMock(),
-                          'http://10.10.10.10', 'region1']
+        with patch.object(Ovs, '_detect') as mock_detect:
+            self.ovs_obj = Ovs('temp_dir')
+            self.has_option = [True, True, True, False, False, True]
+            self.get_value = [MagicMock(), MagicMock(), MagicMock(),
+                              'http://10.10.10.10', 'region1']
+            self.assertTrue(mock_detect.called)
 
     def _detect(self, ovs_obj):
         ovs_obj.neutron_conf = None
@@ -109,7 +111,7 @@ class TestOvs(unittest.TestCase):
         self.assertEqual(result['ovs']['init_config']['ovs_cmd'],
                          "sudo /usr/bin/ovs-vsctl")
         self.assertEqual(result['ovs']['init_config']['included_interface_re'],
-                         'tap.*|qr.*|qg.*|vhu.*')
+                         'qg.*|vhu.*|sg.*')
         self.assertIsInstance(result['ovs']['init_config']['admin_user'],
                               MagicMock)
         self.assertIsInstance(result['ovs']['init_config']['admin_password'],
@@ -167,7 +169,7 @@ class TestOvs(unittest.TestCase):
             self.assertTrue(mock_log_warn.called)
             self.assertEqual(mock_log_warn.call_count, 5)
             self.assertEqual(result['ovs']['init_config']['included_interface_re'],
-                             'tap.*|qr.*|qg.*|vhu.*')
+                             'qg.*|vhu.*|sg.*')
 
     def test_build_config_dependencies_not_installed(self):
         self.ovs_obj.neutron_conf = 'neutron-conf'
@@ -189,7 +191,7 @@ class TestOvs(unittest.TestCase):
             self.assertTrue(mock_log_warn.called)
             self.assertEqual(mock_log_warn.call_count, 6)
             self.assertEqual(result['ovs']['init_config']['included_interface_re'],
-                             'tap.*|qr.*|qg.*|vhu.*')
+                             'qg.*|vhu.*|sg.*')
 
     def test_build_config_if_auth_version(self):
         self.ovs_obj.neutron_conf = 'neutron-conf'
