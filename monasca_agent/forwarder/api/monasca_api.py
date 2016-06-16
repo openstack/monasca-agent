@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 
 import collections
 import copy
@@ -150,12 +150,10 @@ class MonascaAPI(object):
                 self._resume_time = time.time() + wait_time
                 log.info("Invalid token detected. Waiting %d seconds before getting new token.", wait_time)
             else:
-                log.error("Error sending message to monasca-api. Error is {0}."
-                          .format(str(ex.message)))
+                log.exception("HTTPException: error sending message to monasca-api.")
                 self._failure_reason = 'Error sending message to the Monasca API: {0}'.format(str(ex.message))
-        except Exception as ex:
-            log.error("Error sending message to Monasca API. Error is {0}."
-                      .format(str(ex.message)))
+        except Exception:
+            log.exception("Error sending message to Monasca API.")
             self._failure_reason = 'The Monasca API is DOWN or unreachable'
 
         return False
