@@ -62,7 +62,9 @@ SERVER_TAG = 'supervisord_server'
 
 PROCESS_TAG = 'supervisord_process'
 
-FORMAT_TIME = lambda x: time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(x))
+
+def _format_time(x):
+    return time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(x))
 
 SERVER_SERVICE_CHECK = 'supervisord.can_connect'
 PROCESS_SERVICE_CHECK = 'supervisord.process.status'
@@ -215,9 +217,9 @@ class Supervisord(checks.AgentCheck):
     @staticmethod
     def _build_message(proc):
         start, stop, now = int(proc['start']), int(proc['stop']), int(proc['now'])
-        proc['now_str'] = FORMAT_TIME(now)
-        proc['start_str'] = FORMAT_TIME(start)
-        proc['stop_str'] = '' if stop == 0 else FORMAT_TIME(stop)
+        proc['now_str'] = _format_time(now)
+        proc['start_str'] = _format_time(start)
+        proc['stop_str'] = '' if stop == 0 else _format_time(stop)
 
         return """Current time: %(now_str)s
 Process name: %(name)s
