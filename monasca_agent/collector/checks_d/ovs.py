@@ -21,6 +21,7 @@ OVS_CMD = """\
 %s --columns=name,external_ids,statistics,options \
 --format=json --data=json list Interface\
 """
+DPDK_PORT_PREFIX = 'vhu'
 
 """Monasca Agent interface for ovs router port and dhcp metrics"""
 
@@ -53,6 +54,7 @@ class OvsCheck(AgentCheck):
         time_start = time.time()
         interface_data = self._get_ovs_data()
         sample_time = float("{:9f}".format(time.time()))
+        measure = self._get_measure()
 
         if not interface_data:
             #
@@ -76,8 +78,10 @@ class OvsCheck(AgentCheck):
 
             if ifx not in ctr_cache:
                 ctr_cache[ifx] = {}
-            for metric_name, idx in self._get_metrics_map().iteritems():
-                value = interface_data[ifx]['statistics'][idx]
+            for metric_name, idx in self._get_metrics_map(measure).iteritems():
+                interface_stats_key = self._get_interface_stats_key(idx, metric_name, measure, ifx)
+                statistics_dict = interface_data[ifx]['statistics']
+                value = statistics_dict[interface_stats_key] if interface_stats_key in statistics_dict else 0
                 if metric_name in ctr_cache[ifx]:
                     cache_time = ctr_cache[ifx][metric_name]['timestamp']
                     time_diff = sample_time - float(cache_time)
@@ -108,10 +112,10 @@ class OvsCheck(AgentCheck):
                         uuid = interface_data[ifx]['external_ids']['iface-id']
                         ifx_deltas.update({ifx: {'port_uuid': uuid}})
 
-                    if self.use_bits and 'bytes' in idx:
+                    if self.use_bits and 'bytes' in interface_stats_key:
                         val_diff = val_diff * 8
 
-                    ifx_deltas[ifx][idx] = val_diff
+                    ifx_deltas[ifx][interface_stats_key] = val_diff
 
                 #
                 # Save the current counter for this metric to the cache
@@ -165,8 +169,9 @@ class OvsCheck(AgentCheck):
 
             this_dimensions = dims_base.copy()
             this_dimensions.update(ifx_dimensions)
-            for metric_name, idx in self._get_metrics_map().iteritems():
+            for metric_name, idx in self._get_metrics_map(measure).iteritems():
                 # POST to customer project
+                interface_stats_key = self._get_interface_stats_key(idx, metric_name, measure, ifx)
                 customer_dimensions = this_dimensions.copy()
                 del customer_dimensions['hostname']
                 if is_router_port:
@@ -175,19 +180,19 @@ class OvsCheck(AgentCheck):
                 else:
                     metric_name_rate = "vswitch.{0}_sec".format(metric_name)
                     metric_name_abs = "vswitch.{0}".format(metric_name)
-                self.gauge(metric_name_rate, value[idx],
+                self.gauge(metric_name_rate, value[interface_stats_key],
                            dimensions=customer_dimensions,
                            delegated_tenant=tenant_id,
                            hostname='SUPPRESS')
                 # POST to operations project with "ovs." prefix
                 ops_dimensions = this_dimensions.copy()
                 ops_dimensions.update({'tenant_id': tenant_id})
-                self.gauge("ovs.{0}".format(metric_name_rate), value[idx],
+                self.gauge("ovs.{0}".format(metric_name_rate), value[interface_stats_key],
                            dimensions=ops_dimensions)
                 if self.use_absolute_metrics:
-                    self.log.debug("Posting absolute metrics..")
-                    abs_value = interface_data[ifx]['statistics'][idx]
-                    if self.use_bits and 'bytes' in idx:
+                    statistics_dict = interface_data[ifx]['statistics']
+                    abs_value = statistics_dict[interface_stats_key] if interface_stats_key in statistics_dict else 0
+                    if self.use_bits and 'bytes' in interface_stats_key:
                         abs_value = abs_value * 8
                     # POST to customer
                     self.gauge(metric_name_abs, abs_value,
@@ -198,7 +203,7 @@ class OvsCheck(AgentCheck):
                     self.gauge("ovs.{0}".format(metric_name_abs), abs_value,
                                dimensions=ops_dimensions)
         self._update_counter_cache(ctr_cache,
-                                   math.ceil(time.time() - time_start))
+                                   math.ceil(time.time() - time_start), measure)
 
     def _get_ovs_data(self):
 
@@ -322,14 +327,14 @@ class OvsCheck(AgentCheck):
 
         return ctr_cache
 
-    def _update_counter_cache(self, ctr_cache, run_time):
+    def _update_counter_cache(self, ctr_cache, run_time, measure):
         # Remove migrated or deleted ports from the counter cache
         write_ctr_cache = deepcopy(ctr_cache)
 
         #
         # Grab the first metric name and see if it's in the cache.
         #
-        metric_name = self._get_metrics_map().keys()[0]
+        metric_name = self._get_metrics_map(measure).keys()[0]
 
         for ifx in ctr_cache:
             if metric_name not in ctr_cache[ifx]:
@@ -344,12 +349,7 @@ class OvsCheck(AgentCheck):
             self.log.error("Cannot write to {0}: {1}".
                            format(self.ctr_cache_file, e))
 
-    def _get_metrics_map(self):
-        if self.use_bits:
-            measure = 'bits'
-        else:
-            measure = 'bytes'
-
+    def _get_metrics_map(self, measure):
         metrics_map = {"out_%s" % measure: "tx_bytes",
                        "in_%s" % measure: "rx_bytes",
                        "in_packets": "rx_packets",
@@ -476,3 +476,35 @@ class OvsCheck(AgentCheck):
             return False
 
         return True
+
+    def _get_interface_stats_key_for_dpdk(self, metric_name, measure):
+        """"Get the interface statistics keys value based on type of port."""
+        # The reason for swapping the metric_map value is in DPDK the tx counters
+        # given by ovs-vsctl is actually rx counter and vice-versa.
+        metrics_map = {"out_%s" % measure: "rx_bytes",
+                       "in_%s" % measure: "tx_bytes",
+                       "in_packets": "tx_packets",
+                       "out_packets": "rx_packets",
+                       "out_dropped": "tx_dropped",
+                       "in_dropped": "rx_dropped",
+                       "out_errors": "tx_errors",
+                       "in_errors": "rx_errors"}
+        return metrics_map[metric_name]
+
+    def _get_measure(self):
+        if self.use_bits:
+            measure = 'bits'
+        else:
+            measure = 'bytes'
+        return measure
+
+    def _get_interface_stats_key(self, idx, metric_name, measure, interface):
+        """Get the interface statistics key based on the interface."""
+        if re.match(r"^" + DPDK_PORT_PREFIX, interface):
+            # ovs-vsctl  does not give rx_dropped and tx_error statistics for DPDK ports
+            # This check is for DPDK ports.
+            return self._get_interface_stats_key_for_dpdk(metric_name,
+                                                          measure)
+        else:
+            # For non DPDK ports return the same idx value.
+            return idx
