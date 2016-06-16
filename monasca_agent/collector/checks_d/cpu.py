@@ -66,7 +66,7 @@ class Cpu(checks.AgentCheck):
             lscpu_command = subprocess.Popen('lscpu', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             lscpu_output = lscpu_command.communicate()[0].decode(
                 encoding='UTF-8')
-            cpu_freq_output = re.search("(CPU MHz:.*?(\d+\.\d+)\nB)", lscpu_output)
+            cpu_freq_output = re.search("(CPU MHz:.*?(\d+\.\d+)\n)", lscpu_output)
             cpu_freq = float(cpu_freq_output.group(2))
             data['cpu.frequency_mhz'] = cpu_freq
         except Exception:
