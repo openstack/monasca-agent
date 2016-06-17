@@ -60,7 +60,7 @@ class CertificateCheck(monasca_setup.detection.ArgsPlugin):
         if 'timeout' in self.args:
             timeout = float(self.args['timeout'])
             if timeout <= 0.0:
-                log.error('Invalid timeout value {}, ignoring' %
+                log.error('Invalid timeout value %s, ignoring' %
                           self.args['timeout'])
             else:
                 init_config['timeout'] = timeout
