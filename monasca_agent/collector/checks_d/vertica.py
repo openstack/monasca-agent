@@ -109,6 +109,10 @@ class Vertica(checks.AgentCheck):
         for result in results:
             projection_dimensions = dimensions.copy()
             projection_dimensions['projection_name'] = result['projection_name']
+            # when nothing has been written, wos_used_bytes is empty.
+            # Needs to convert it to zero.
+            if not result['wos_used_bytes']:
+                result['wos_used_bytes'] = '0'
             self.gauge(projection_metric_name + 'wos_used_bytes', int(result['wos_used_bytes']),
                        dimensions=projection_dimensions)
             self.gauge(projection_metric_name + 'ros_count', int(result['ros_count']), dimensions=projection_dimensions)
@@ -125,6 +129,10 @@ class Vertica(checks.AgentCheck):
             if metric_name in ['resource_rejections', 'disk_space_rejections']:
                 self.rate(resource_metric_name + metric_name, int(metric_value), dimensions=dimensions)
             else:
+                if metric_name == 'wos_used_bytes' and not metric_value:
+                    # when nothing has been written, wos_used_bytes is empty.
+                    # Needs to convert it to zero.
+                    metric_value = '0'
                 self.gauge(resource_metric_name + metric_name, int(metric_value), dimensions=dimensions)
 
     def _report_resource_pool_metrics(self, results, dimensions):
