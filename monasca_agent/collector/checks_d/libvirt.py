@@ -385,7 +385,7 @@ class LibvirtCheck(AgentCheck):
                        dimensions=dims_operations)
             self.gauge('vm.cpu.utilization_norm_perc', int(round(normalized_perc, 0)),
                        dimensions=dims_operations)
-            self.gauge('vm.cpu.time_ms', insp.inspect_cpus(inst).time,
+            self.gauge('vm.cpu.time_ns', insp.inspect_cpus(inst).time,
                        dimensions=dims_operations)
 
         metric_cache[inst_name]['cpu.time'] = {'timestamp': sample_time,
