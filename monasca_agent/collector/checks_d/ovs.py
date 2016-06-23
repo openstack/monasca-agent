@@ -22,6 +22,7 @@ OVS_CMD = """\
 --format=json --data=json list Interface\
 """
 DPDK_PORT_PREFIX = 'vhu'
+HEALTH_METRICS = ['tx_errors', 'rx_errors', 'tx_dropped', 'rx_dropped']
 
 """Monasca Agent interface for ovs router port and dhcp metrics"""
 
@@ -44,6 +45,8 @@ class OvsCheck(AgentCheck):
         self.ovs_cmd = OVS_CMD % self.init_config.get('ovs_cmd')
         include_re = self.init_config.get('included_interface_re', None)
         self.use_absolute_metrics = self.init_config.get('use_absolute_metrics')
+        self.use_rate_metrics = self.init_config.get('use_rate_metrics')
+        self.use_health_metrics = self.init_config.get('use_health_metrics')
         if include_re is None:
             include_re = 'qg.*'
         else:
@@ -180,15 +183,18 @@ class OvsCheck(AgentCheck):
                 else:
                     metric_name_rate = "vswitch.{0}_sec".format(metric_name)
                     metric_name_abs = "vswitch.{0}".format(metric_name)
-                self.gauge(metric_name_rate, value[interface_stats_key],
-                           dimensions=customer_dimensions,
-                           delegated_tenant=tenant_id,
-                           hostname='SUPPRESS')
-                # POST to operations project with "ovs." prefix
+                if not self.use_health_metrics and interface_stats_key in HEALTH_METRICS:
+                        continue
                 ops_dimensions = this_dimensions.copy()
                 ops_dimensions.update({'tenant_id': tenant_id})
-                self.gauge("ovs.{0}".format(metric_name_rate), value[interface_stats_key],
-                           dimensions=ops_dimensions)
+                if self.use_rate_metrics:
+                    self.gauge(metric_name_rate, value[interface_stats_key],
+                               dimensions=customer_dimensions,
+                               delegated_tenant=tenant_id,
+                               hostname='SUPPRESS')
+                    # POST to operations project with "ovs." prefix
+                    self.gauge("ovs.{0}".format(metric_name_rate), value[interface_stats_key],
+                               dimensions=ops_dimensions)
                 if self.use_absolute_metrics:
                     statistics_dict = interface_data[ifx]['statistics']
                     abs_value = statistics_dict[interface_stats_key] if interface_stats_key in statistics_dict else 0

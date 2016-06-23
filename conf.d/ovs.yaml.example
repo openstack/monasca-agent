@@ -22,7 +22,13 @@ init_config:
     # command should be what is set in the config file for `ovs_cmd`.
     ovs_cmd: 'sudo /usr/bin/ovs-vsctl'
     # Regular expression for the interfaces type
-    included_interface_re: tap.*|qr.*|qg.*|vhu.*
+    included_interface_re: qg.*|vhu.*|sg.*
+    # If set, will submit the rate metrics derived from ovs-vsctl command
+    # output for the given network interface.
+    use_rate_metrics = true
+    # If set, will submit the health related metrics from ovs-vsctl command
+    # output for the given network interface.
+    use_health_metrics = true
 
 instances:
     # Instances are not used and should be empty in `ovs.yaml` because like the

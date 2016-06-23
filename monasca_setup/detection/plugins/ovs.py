@@ -25,11 +25,16 @@ included_interface_re = 'qg.*|vhu.*|sg.*'
 # If set, will submit raw counters from ovs-vsctl command output for the given
 # network interface
 use_absolute_metrics = True
+# If set, will submit the rate metrics
+use_rate_metrics = True
+# If set, will submit the health metrics
+use_health_metrics = True
 # Acceptable arguments
 acceptable_args = ['admin_user', 'admin_password', 'admin_tenant_name',
                    'identity_uri', 'cache_dir', 'neutron_refresh', 'ovs_cmd',
                    'network_use_bits', 'check_router_ha', 'region_name',
-                   'included_interface_re', 'conf_file_path', 'use_absolute_metrics']
+                   'included_interface_re', 'conf_file_path', 'use_absolute_metrics',
+                   'use_rate_metrics', 'use_health_metrics']
 # Arguments which must be ignored if provided
 ignorable_args = ['admin_user', 'admin_password', 'admin_tenant_name',
                   'identity_uri', 'region_name', 'conf_file_path']
@@ -102,7 +107,9 @@ class Ovs(monasca_setup.detection.Plugin):
                            'ovs_cmd': ovs_cmd,
                            'network_use_bits': network_use_bits,
                            'included_interface_re': included_interface_re,
-                           'use_absolute_metrics': use_absolute_metrics}
+                           'use_absolute_metrics': use_absolute_metrics,
+                           'use_rate_metrics': use_rate_metrics,
+                           'use_health_metrics': use_health_metrics}
 
             for option in cfg_needed:
                 init_config[option] = neutron_cfg.get(cfg_section, cfg_needed[option])
