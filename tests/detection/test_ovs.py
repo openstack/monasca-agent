@@ -19,10 +19,17 @@ LOG = logging.getLogger('monasca_setup.detection.plugins.ovs')
 
 class ps_util_get_proc:
     cmdLine = ['/etc/neutron/neutron.conf']
-
+    detect_warning = False
     def as_dict(self):
         return {'name': 'neutron-openvsw',
                 'cmdline': ps_util_get_proc.cmdLine}
+
+    def cmdline(self):
+        if not ps_util_get_proc.detect_warning:
+            return ['neutron-openvsw',
+                    ps_util_get_proc.cmdLine[0]]
+        else:
+            return ['/opt/fake.txt']
 
 
 class TestOvs(unittest.TestCase):
@@ -42,8 +49,10 @@ class TestOvs(unittest.TestCase):
         with contextlib.nested(
                 patch.object(psutil, 'process_iter',
                              return_value=[ps_util_get_proc()]),
-                patch.object(os.path, 'isfile', return_value=True)) as (
-                    mock_process_iter, mock_isfile):
+                patch.object(os.path, 'isfile', return_value=True),
+                patch.object(ovs_obj, 'dependencies_installed',
+                             return_value=True)) as (
+                mock_process_iter, mock_isfile, dependencies):
             ovs_obj._detect()
             self.assertTrue(mock_process_iter.called)
             if not ps_util_get_proc.cmdLine:
@@ -53,17 +62,13 @@ class TestOvs(unittest.TestCase):
         with patch.object(ConfigParser, 'SafeConfigParser') as mock_config_parser:
             config_parser_obj = mock_config_parser.return_value
             with contextlib.nested(
-                    patch.object(Ovs, 'dependencies_installed',
-                                 return_value=dependencies_installed),
                     patch.object(LOG, 'info'),
                     patch.object(config_parser_obj, 'has_option',
                                  side_effect=self.has_option),
                     patch.object(config_parser_obj, 'get',
                                  side_effect=self.get_value)) as (
-                        mock_dependencies_installed, mock_log_info,
-                        mock_has_option, mock_get):
+                         mock_log_info, mock_has_option, mock_get):
                 result = ovs_obj.build_config()
-                self.assertTrue(mock_dependencies_installed.called)
                 if dependencies_installed:
                     self.assertTrue(mock_log_info.called)
                     self.assertTrue(mock_has_option.called)
@@ -74,9 +79,6 @@ class TestOvs(unittest.TestCase):
                     else:
                         self.assertIn(str(('service_auth', 'region')),
                                       str(mock_get.call_args_list[-1]))
-                else:
-                    self.assertFalse(mock_log_info.called)
-                    self.assertFalse(mock_has_option.called)
                 return result
 
     def _build_config_with_arg(self, ovs_obj):
@@ -139,7 +141,7 @@ class TestOvs(unittest.TestCase):
 
     def test_detect_warning(self):
         with patch.object(LOG, 'error') as mock_log_warn:
-            ps_util_get_proc.cmdLine = ['/opt/fake.txt']
+            ps_util_get_proc.detect_warning = True
             self._detect(self.ovs_obj)
             self.assertFalse(self.ovs_obj.available)
             self.assertEqual(self.ovs_obj.neutron_conf, None)
@@ -148,7 +150,13 @@ class TestOvs(unittest.TestCase):
     def test_detect_conf_file_path_given(self):
         self.ovs_obj.neutron_conf = None
         self.ovs_obj.args = {'conf_file_path': '/opt/stack/neutron.conf'}
-        with patch.object(os.path, 'isfile', return_value=True) as mock_isfile:
+        with contextlib.nested(
+                patch.object(psutil, 'process_iter',
+                             return_value=[ps_util_get_proc()]),
+                patch.object(os.path, 'isfile', return_value=True),
+                patch.object(self.ovs_obj, 'dependencies_installed',
+                             return_value=True)) as (
+                mock_process_iter, mock_isfile, dependencies):
             self.ovs_obj._detect()
             self.assertTrue(mock_isfile.called)
             self.assertTrue(self.ovs_obj.available)
@@ -175,10 +183,9 @@ class TestOvs(unittest.TestCase):
             self.assertEqual(result['ovs']['init_config']['included_interface_re'],
                              'qg.*|vhu.*|sg.*')
 
-    def test_build_config_dependencies_not_installed(self):
-        self.ovs_obj.neutron_conf = 'neutron-conf'
-        result = self._build_config(self.ovs_obj, False)
-        self.assertEqual(result, {})
+    def test_dependencies_not_installed(self):
+        result = self.ovs_obj.dependencies_installed()
+        self.assertEqual(result, False)
 
     def test_build_config_invalid_arg_warning(self):
         with patch.object(LOG, 'warn') as mock_log_warn:
