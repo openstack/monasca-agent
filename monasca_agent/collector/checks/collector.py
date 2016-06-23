@@ -1,4 +1,4 @@
-# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development LP
 
 # Core modules
 import logging
@@ -111,11 +111,10 @@ class Collector(util.Dimensions):
         dimensions = {'component': 'monasca-agent', 'service': 'monitoring'}
         # Add in metrics on the collector run
         for name, value in self.collection_metrics.iteritems():
-            collect_stats.append(metrics.Measurement(name,
-                                                     time.time(),
-                                                     value,
-                                                     self._set_dimensions(dimensions),
-                                                     None))
+            metric = metrics.Metric(name,
+                                    self._set_dimensions(dimensions),
+                                    tenant=None)
+            collect_stats.append(metric.measurement(value, time.time()))
         self.collection_metrics.clear()
         self._emit(collect_stats)
 

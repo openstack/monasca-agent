@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development LP
 """
     Licensed under Simplified BSD License (see LICENSE)
     (C) Boxed Ice 2010 all rights reserved
@@ -57,7 +57,7 @@ class AgentInputHandler(tornado.web.RequestHandler):
 
         msg = tornado.escape.json_decode(self.request.body)
         try:
-            message_batch.extend([metrics.Measurement(**m) for m in msg])
+            message_batch.extend(msg)
         except Exception:
             log.exception('Error parsing body of Agent Input')
             raise tornado.web.HTTPError(500)

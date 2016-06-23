@@ -33,7 +33,7 @@ class TestSimpleProcess(unittest.TestCase):
         metrics = self.check.get_metrics()
 
         self.assertEqual(1, len(metrics))
-        self.assertEqual('process.pid_count', metrics[0].name)
+        self.assertEqual('process.pid_count', metrics[0]['measurement']['name'])
 
 
 class TestDetailedProcess(unittest.TestCase):
@@ -83,7 +83,7 @@ class TestDetailedProcess(unittest.TestCase):
         self.check.run()
         metrics = self.check.get_metrics()
 
-        measurement_names = [metric.name for metric in metrics]
+        measurement_names = [metric['measurement']['name'] for metric in metrics]
 
         measurement_names.sort()
         return measurement_names

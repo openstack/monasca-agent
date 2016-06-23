@@ -1,4 +1,4 @@
-# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development LP
 """Base class for Checks.
 
 If you are writing your own checks you should subclass the AgentCheck class.
@@ -188,27 +188,27 @@ class AgentCheck(util.Dimensions):
         metrics = self.aggregator.flush()
         if prettyprint:
             for metric in metrics:
-                print(" Timestamp:  {0}".format(metric.timestamp))
-                print(" Name:       {0}".format(metric.name))
-                print(" Value:      {0}".format(metric.value))
-                if (metric.delegated_tenant):
-                    print(" Delegate ID: {0}".format(metric.delegated_tenant))
-
+                measurement = metric['measurement']
+                print(" Timestamp: {0}".format(measurement['timestamp']))
+                print(" Name:       {0}".format(measurement['name']))
+                print(" Value:      {0}".format(measurement['value']))
                 print(" Dimensions: ", end='')
                 line = 0
-                for name in metric.dimensions:
+                dimensions = measurement['dimensions']
+                for name in dimensions:
                     if line != 0:
                         print(" " * 13, end='')
-                    print("{0}={1}".format(name, metric.dimensions[name]))
+                    print("{0}={1}".format(name, dimensions[name]))
                     line += 1
 
                 print(" Value Meta: ", end='')
-                if metric.value_meta:
+                value_meta = measurement['value_meta']
+                if value_meta:
                     line = 0
-                    for name in metric.value_meta:
+                    for name in value_meta:
                         if line != 0:
                             print(" " * 13, end='')
-                        print("{0}={1}".format(name, metric.value_meta[name]))
+                        print("{0}={1}".format(name, value_meta[name]))
                         line += 1
                 else:
                     print('None')
