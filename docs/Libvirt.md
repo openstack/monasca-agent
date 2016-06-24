@@ -252,7 +252,7 @@ Example cache (pretty-printed excerpt, see next section for complete list of ava
 | mem.free_perc        | Percent of memory free                 |                        |
 | mem.swap_used_mb     | Used swap space in Mbytes              |                        |
 | ping_status          | 0 for ping success, 1 for ping failure |                        |
-| cpu.time_ms          | Cumulative CPU time (in ms), an Operations-only metric |        |
+| cpu.time_ns          | Cumulative CPU time (in ns), an Operations-only metric |        |
 | mem.resident_mb      | Total memory used on host, an Operations-only metric |          |
 
 ### host_alive_status Codes
