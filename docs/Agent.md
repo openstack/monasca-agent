@@ -80,6 +80,8 @@ sudo monasca-setup --username KEYSTONE_USERNAME --password KEYSTONE_PASSWORD --p
 It is also possible to skip most detection plugins in monasca-setup with the `--system_only` flag. You can then come back later and run individual detection plugins without additional arguments,
 for example `monasca-setup -d mysql`. This allows a base install to setup the agent and required credentials then later easily add additional services and monitoring.
 
+Alternatively you can disable selected detection plugins with the `--skip_detection_plugins` parameter.
+
 ### Explanation of primary monasca-setup command-line parameters:
 All parameters require a '--' before the parameter such as '--verbose'. Run `monasca-setup --help` for a full listing of options.
 
@@ -104,6 +106,7 @@ All parameters require a '--' before the parameter such as '--verbose'. Run `mon
 | service | Service this node is associated with, added as a dimension. | |
 | system_only | This optional parameter if set true will cause only the basic system checks to be configured all other detection will be skipped. Basic system checks include cpu, disk, load, memory, network. | |
 | detection_plugins | Skip base config and service setup and only configure provided space separated list of plugins. This assumes the base config has already run.| kafka ntp|
+| skip_detection_plugins | Skip provided space separated list of detection plugins. | system |
 | overwrite | This is an optional parameter to overwrite the plugin configuration.  Use this if you don't want to keep the original configuration.  If this parameter is not specified, the configuration will be appended to the existing configuration, possibly creating duplicate checks.  **NOTE:** The agent config file, agent.yaml, will always be overwritten, even if this parameter is not specified. | |
 | detection_args | Some detection plugins can be passed arguments. This is a string that will be passed to the detection plugins. | "hostname=ping.me" |
 

@@ -45,18 +45,20 @@ def discover_plugins(custom_path):
     return plugins
 
 
-def select_plugins(plugin_names, plugin_list):
+def select_plugins(plugin_names, plugin_list, skip=False):
     """:param plugin_names: A list of names
        :param plugin_list: A list of detection plugins classes
+       :param skip: Inverts the behaviour by selecting only those plugins not in plugin_names
        :return: Returns a list of plugins from plugin_list that match plugin_names
     """
     lower_plugins = [p.lower() for p in plugin_names]
     plugins = []
     for plugin in plugin_list:
-        if plugin.__name__.lower() in lower_plugins:
+        selected = (plugin.__name__.lower() in lower_plugins)
+        if selected != skip:
             plugins.append(plugin)
 
-    if len(plugins) != len(plugin_names):
+    if len(plugins) != len(plugin_names) and not skip:
         pnames = [p.__name__ for p in plugin_list]
         log.warn("Not all plugins found, discovered plugins {0}\nAvailable plugins{1}".format(plugins,
                                                                                               pnames))
