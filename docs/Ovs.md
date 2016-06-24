@@ -141,6 +141,7 @@ instances:
 | component      | "ovs"                      | "ovs"                       |
 | router_name    | name of the virtual router | name of the virtual router  |
 | tenant_id      | (N/A)                      | project owner of the router |
+| port_id        | port ID of the router      | port ID of the router       |
 
 ## OVS Port Metric Dimensions
 | Dimension Name | Customer Value             | Operations Value            |
@@ -150,7 +151,7 @@ instances:
 | service        | "networking"               | "networking"                |
 | component      | "ovs"                      | "ovs"                       |
 | tenant_id      | (N/A)                      | project owner of the port   |
-
+| port_id        | port ID of VM              | port  ID of VM              |
 
 # License
 (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
