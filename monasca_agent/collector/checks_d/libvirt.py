@@ -27,7 +27,6 @@ from calendar import timegm
 from copy import deepcopy
 from datetime import datetime
 from datetime import timedelta
-from distutils.version import LooseVersion
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.collector.virt import inspector
 from netaddr import all_matching_cidrs
@@ -279,9 +278,8 @@ class LibvirtCheck(AgentCheck):
         except IOError as e:
             self.log.error("Cannot write to {0}: {1}".format(self.metric_cache_file, e))
 
-    def _inspect_network(self, insp, inst, instance_cache, metric_cache, dims_customer, dims_operations):
+    def _inspect_network(self, insp, inst, inst_name, instance_cache, metric_cache, dims_customer, dims_operations):
         """Inspect network metrics for an instance"""
-        inst_name = inst.name()
         for vnic in insp.inspect_vnics(inst):
             sample_time = time.time()
             vnic_dimensions = {'device': vnic[0].name}
@@ -352,10 +350,9 @@ class LibvirtCheck(AgentCheck):
                     'timestamp': sample_time,
                     'value': value}
 
-    def _inspect_cpu(self, insp, inst, instance_cache, metric_cache, dims_customer, dims_operations):
+    def _inspect_cpu(self, insp, inst, inst_name, instance_cache, metric_cache, dims_customer, dims_operations):
         """Inspect cpu metrics for an instance"""
 
-        inst_name = inst.name()
         sample_time = float("{:9f}".format(time.time()))
         if 'cpu.time' in metric_cache[inst_name]:
             cpu_info = insp.inspect_cpus(inst)
@@ -370,7 +367,7 @@ class LibvirtCheck(AgentCheck):
                 # Bad value, save current reading and skip
                 self.log.warn("Ignoring negative CPU sample for: "
                               "{0} new cpu time: {1} old cpu time: {2}"
-                              .format(inst_name, insp.inspect_cpus(inst).time,
+                              .format(inst_name, cpu_info.time,
                                       metric_cache[inst_name]['cpu.time']['value']))
                 metric_cache[inst_name]['cpu.time'] = {'timestamp': sample_time,
                                                        'value': cpu_info.time}
@@ -388,16 +385,15 @@ class LibvirtCheck(AgentCheck):
                        dimensions=dims_operations)
             self.gauge('vm.cpu.utilization_norm_perc', int(round(normalized_perc, 0)),
                        dimensions=dims_operations)
-            self.gauge('vm.cpu.time_ns', insp.inspect_cpus(inst).time,
+            self.gauge('vm.cpu.time_ns', cpu_info.time,
                        dimensions=dims_operations)
 
         metric_cache[inst_name]['cpu.time'] = {'timestamp': sample_time,
-                                               'value': insp.inspect_cpus(inst).time}
+                                               'value': cpu_info.time}
 
-    def _inspect_disks(self, insp, inst, instance_cache, metric_cache, dims_customer, dims_operations):
+    def _inspect_disks(self, insp, inst, inst_name, instance_cache, metric_cache, dims_customer, dims_operations):
         """Inspect disk metrics for an instance"""
 
-        inst_name = inst.name()
         metric_aggregate = {}
         for disk in insp.inspect_disks(inst):
             sample_time = time.time()
@@ -482,11 +478,10 @@ class LibvirtCheck(AgentCheck):
                 'timestamp': sample_time,
                 'value': metric_aggregate[metric]}
 
-    def _inspect_disk_info(self, insp, inst, instance_cache, metric_cache,
+    def _inspect_disk_info(self, insp, inst, inst_name, instance_cache, metric_cache,
                            dims_customer, dims_operations):
         """Inspect disk metrics for an instance"""
 
-        inst_name = inst.name()
         metric_aggregate = {}
         for disk in insp.inspect_disk_info(inst):
             disk_dimensions = {'device': disk[0].device}
@@ -513,20 +508,20 @@ class LibvirtCheck(AgentCheck):
             self.gauge("vm.{0}_total".format(metric), metric_aggregate[
                 metric], dimensions=this_dimensions)
 
-    def _inspect_state(self, insp, inst, instance_cache, dims_customer, dims_operations):
+    def _inspect_state(self, insp, inst, inst_name, instance_cache, dims_customer, dims_operations):
         """Look at the state of the instance, publish a metric using a
            user-friendly description in the 'detail' metadata, and return
            a status code (calibrated to UNIX status codes where 0 is OK)
            so that remaining metrics can be skipped if the VM is not OK
         """
-        inst_name = inst.name()
-        dom_status = inst.state()[0] - 1
+        inst_state = inst.state()
+        dom_status = inst_state[0] - 1
         metatag = None
 
-        if inst.state()[0] in DOM_STATES:
-            metatag = {'detail': DOM_STATES[inst.state()[0]]}
+        if inst_state[0] in DOM_STATES:
+            metatag = {'detail': DOM_STATES[inst_state[0]]}
         # A nova-suspended VM has a SHUTOFF Power State, but alternate Status
-        if inst.state() == [libvirt.VIR_DOMAIN_SHUTOFF, 5]:
+        if inst_state == [libvirt.VIR_DOMAIN_SHUTOFF, 5]:
             metatag = {'detail': 'VM has been suspended'}
 
         self.gauge('host_alive_status', dom_status, dimensions=dims_customer,
@@ -646,26 +641,27 @@ class LibvirtCheck(AgentCheck):
                 metric_cache[inst_name] = {}
 
             if self.init_config.get('vm_cpu_check_enable'):
-                self._inspect_cpu(insp, inst, instance_cache, metric_cache, dims_customer, dims_operations)
+                self._inspect_cpu(insp, inst, inst_name, instance_cache, metric_cache, dims_customer, dims_operations)
             if not self._skip_disk_collection:
                 self._last_disk_collect_time = datetime.now()
                 if self.init_config.get('vm_disks_check_enable'):
-                    self._inspect_disks(insp, inst, instance_cache, metric_cache, dims_customer,
+                    self._inspect_disks(insp, inst, inst_name, instance_cache, metric_cache, dims_customer,
                                         dims_operations)
                 if self.init_config.get('vm_extended_disks_check_enable'):
-                    self._inspect_disk_info(insp, inst, instance_cache, metric_cache, dims_customer,
+                    self._inspect_disk_info(insp, inst, inst_name, instance_cache, metric_cache, dims_customer,
                                             dims_operations)
             if self.init_config.get('vm_network_check_enable'):
-                self._inspect_network(insp, inst, instance_cache, metric_cache, dims_customer, dims_operations)
+                self._inspect_network(insp, inst, inst_name, instance_cache, metric_cache, dims_customer, dims_operations)
 
             # Memory utilizaion
             # (req. balloon driver; Linux kernel param CONFIG_VIRTIO_BALLOON)
             try:
-                mem_metrics = {'mem.free_mb': float(inst.memoryStats()['unused']) / 1024,
-                               'mem.swap_used_mb': float(inst.memoryStats()['swap_out']) / 1024,
-                               'mem.total_mb': float(inst.memoryStats()['available']) / 1024,
-                               'mem.used_mb': float(inst.memoryStats()['available'] - inst.memoryStats()['unused']) / 1024,
-                               'mem.free_perc': float(inst.memoryStats()['unused']) / float(inst.memoryStats()['available']) * 100}
+                mem_stats = inst.memoryStats()
+                mem_metrics = {'mem.free_mb': float(mem_stats['unused']) / 1024,
+                               'mem.swap_used_mb': float(mem_stats['swap_out']) / 1024,
+                               'mem.total_mb': float(mem_stats['available']) / 1024,
+                               'mem.used_mb': float(mem_stats['available'] - mem_stats['unused']) / 1024,
+                               'mem.free_perc': float(mem_stats['unused']) / float(mem_stats['available']) * 100}
                 for name in mem_metrics:
                     self.gauge(name, mem_metrics[name], dimensions=dims_customer,
                                delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
