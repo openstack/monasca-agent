@@ -42,7 +42,12 @@ class VCenter(Plugin):
             try:
                 cmd = proc.cmdline()
                 if len(cmd) > 2 and 'python' in cmd[0] and 'nova-compute' in cmd[1]:
-                    param = [cmd.index(y) for y in cmd if 'hypervisor.conf' in y][0]
+                    params = [cmd.index(y) for y in cmd if 'hypervisor.conf' in y]
+                    if not params:
+                        # The configuration file is not found, skip
+                        continue
+                    else:
+                        param = params[0]
                     if '=' in cmd[param]:
                         nova_conf = cmd[param].split('=')[1]
                     else:
