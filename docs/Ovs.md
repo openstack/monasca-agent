@@ -50,6 +50,10 @@ configured using the configuration file example below.
 
 `included_interface_re` will include network interfaces for collecting the ovs statistics matching the given regex. By default qg, vhu(dpdk) and sg interfaces will be enabled by detection plugin.
 
+`use_rate_metrics`  will submit the rate metrics derived from ovs-vsctl command output for the given network interface.
+
+`use_health_metrics`  will submit the health related metrics from ovs-vsctl command output for the given network interface. Example metric names are in_dropped, out_dropped, out_error and in_errors.
+
 Example config (`ovs.yaml`):
 ```
 ---
@@ -65,6 +69,8 @@ init_config:
   use_absolute_metrics: true
   ovs_cmd: 'sudo /usr/bin/ovs-vsctl' 
   included_interface_re: tap.*|qr.*|qg.*
+  use_rate_metrics: true
+  use_health_metrics: true
 
 instances:
  - {}

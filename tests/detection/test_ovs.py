@@ -99,6 +99,8 @@ class TestOvs(unittest.TestCase):
             self.assertEqual(result['ovs']['init_config']['ovs_cmd'],
                              "sudo /usr/bin/ovs-vsctl")
             self.assertFalse(result['ovs']['init_config']['use_absolute_metrics'])
+            self.assertTrue(result['ovs']['init_config']['use_rate_metrics'])
+            self.assertTrue(result['ovs']['init_config']['use_health_metrics'])
             return result
 
     def _build_config_without_args(self, ovs_obj):
@@ -119,6 +121,8 @@ class TestOvs(unittest.TestCase):
         self.assertIsInstance(result['ovs']['init_config']['admin_tenant_name'],
                               MagicMock)
         self.assertTrue(result['ovs']['init_config']['use_absolute_metrics'])
+        self.assertTrue(result['ovs']['init_config']['use_rate_metrics'])
+        self.assertTrue(result['ovs']['init_config']['use_health_metrics'])
         return result
 
     def test_detect(self):
