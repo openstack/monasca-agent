@@ -72,6 +72,13 @@ Main:
   # time to wait between collection runs
   check_freq: {args.check_frequency}
 
+  # Number of Collector Threads to run
+  num_collector_threads: {args.num_collector_threads}
+
+  # Maximum number of collection cycles where all of the threads in the pool are
+  # still running plugins before the collector will exit
+  pool_full_max_retries: {args.pool_full_max_retries}
+
   # Threshold value for warning on collection time of each check (in seconds)
   sub_collection_warn: 6
 

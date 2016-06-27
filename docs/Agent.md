@@ -96,6 +96,8 @@ All parameters require a '--' before the parameter such as '--verbose'. Run `mon
 | project_domain_name | Project domain name for keystone authentication | |
 | project_id | Keystone project id  for keystone authentication | |
 | check_frequency | How often to run metric collection in seconds | 60 |
+| num_collector_threads | Number of threads to use in collector for running checks | 1 |
+| pool_full_max_retries | Maximum number of collection cycles where all of the threads in the pool are still running plugins before the collector will exit| 4 |
 | keystone_url | This is a required parameter that specifies the url of the keystone api for retrieving tokens. It must be a v3 endpoint. | http://192.168.1.5:35357/v3 |
 | dimensions | A comma separated list of key:value pairs to include as dimensions in all submitted metrics| region:a,az:1 |
 | service | This is an optional parameter that specifies the name of the service associated with this particular node | nova, cinder, myservice |
@@ -234,6 +236,13 @@ A plugin config is specified something like this:
 # Running
 The monasca-setup command will create an appropriate startup script for the agent and so the agent can be run by using the standard daemon control tool for your operating system. If you have configured manually the startup script templates can be found in the code under the packaging directory.
 
+# Running the collector with multiple threads
+The number of threads to use for running the plugins is via num_collector_threads. Setting this value to greater than 1 can be very useful when some plugins take a relatively long time to run. With num_collector_threads set to 1, the plugins are run serially. If the sum of the collection times for each plugin is greater than the check_frequency, then the metrics will not be collected as often as they should be. With more threads, the collection time is closer to the longest plugin collection time.
 
+The collector is optimized for collecting as many metrics on schedule as possible. The plugins are run in reverse order of their collection time, i.e., the fastest plugin first. Also, if a plugin does not complete within the collection frequency, that plugin will be skipped in the next collection cycle. These two optimizations together ensure that plugins that complete with collection frequency seconds will get run on every collection cycle.
+
+If there is some problem with multiple plugins that end up blocking the entire thread pool, the collector will exit so that it can be restarted by the supervisord. The parameter pool_full_max_retries controls when this happens. If pool_full_max_retries consecutive collection cycles have ended with the Thread Pool completely full, the collector will exit.
+
+Some of the plugins have their own thread pools to handle asynchronous checks. The collector thread pool is separate and has no special interaction with those thread pools.
 # License
 (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP

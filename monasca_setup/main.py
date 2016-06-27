@@ -172,6 +172,13 @@ def modify_config(args, detected_config):
     return changes
 
 
+def validate_positive(value):
+    int_value = int(value)
+    if int_value <= 0:
+        raise argparse.ArgumentTypeError("%s must be greater than zero" % value)
+    return int_value
+
+
 def parse_arguments(parser):
     parser.add_argument(
         '-u', '--username', help="Username used for keystone authentication. Required for basic configuration.")
@@ -196,7 +203,14 @@ def parse_arguments(parser):
                         help="Skip detection for all plugins in this space separated list.")
     parser.add_argument('-a', '--detection_args', help="A string of arguments that will be passed to detection " +
                                                        "plugins. Only certain detection plugins use arguments.")
-    parser.add_argument('--check_frequency', help="How often to run metric collection in seconds", type=int, default=30)
+    parser.add_argument('--check_frequency', help="How often to run metric collection in seconds",
+                        type=validate_positive, default=30)
+    parser.add_argument('--num_collector_threads', help="Number of Threads to use in Collector " +
+                                                        "for running checks", type=validate_positive, default=1)
+    parser.add_argument('--max_pool_full_count', help="Maximum number of collection cycles where all of the threads " +
+                                                      "in the pool are still running plugins before the " +
+                                                      "collector will exit and be restart",
+                        type=validate_positive, default=4)
     parser.add_argument('--dimensions', help="Additional dimensions to set for all metrics. A comma separated list " +
                                              "of name/value pairs, 'name:value,name2:value2'")
     parser.add_argument('--ca_file', help="Sets the path to the ca certs file if using certificates. " +

@@ -2,6 +2,8 @@
 
 # Core modules
 import logging
+from multiprocessing.dummy import Pool
+import os
 import socket
 import threading
 import time
@@ -14,7 +16,6 @@ log = logging.getLogger(__name__)
 
 
 MAX_THREADS_COUNT = 50
-MAX_COLLECTION_TIME = 30
 MAX_CPU_PCT = 10
 FLUSH_LOGGING_PERIOD = 10
 FLUSH_LOGGING_INITIAL = 5
@@ -27,7 +28,7 @@ class Collector(util.Dimensions):
     passing it along to the emitters, who send it to their final destination.
     """
 
-    def __init__(self, agent_config, emitter, checksd=None):
+    def __init__(self, agent_config, emitter, checksd):
         super(Collector, self).__init__(agent_config)
         self.agent_config = agent_config
         self.os = util.get_os()
@@ -36,14 +37,22 @@ class Collector(util.Dimensions):
         socket.setdefaulttimeout(15)
         self.run_count = 0
         self.continue_running = True
-        self.initialized_checks_d = []
-        self.init_failed_checks_d = []
+        self.collection_metrics = {}
 
-        if checksd:
-            # is of type {check_name: check}
-            self.initialized_checks_d = checksd['initialized_checks']
-            # is of type {check_name: {error, traceback}}
-            self.init_failed_checks_d = checksd['init_failed_checks']
+        # is of type {check_name: check}
+        initialized_checks_d = checksd['initialized_checks']
+
+        self.pool_size = int(self.agent_config.get('num_collector_threads', 1))
+        log.info('Using %d Threads for Collector' % self.pool_size)
+        self.pool = Pool(self.pool_size)
+        self.pool_full_count = 0
+        self.collection_times = {}
+        self.collection_results = {}
+        for check in initialized_checks_d:
+            self.collection_times[check.name] = {'check': check,
+                                                 'last_collect_time': 99999999}
+        self.pool_full_max_retries = int(self.agent_config.get('pool_full_max_retries',
+                                                               4))
 
     def _emit(self, payload):
         """Send the payload via the emitter.
@@ -67,81 +76,170 @@ class Collector(util.Dimensions):
             log.debug("Finished run #%s. Collection time: %.2fs." %
                       (self.run_count, round(collect_duration, 2),))
 
+    def add_collection_metric(self, name, value):
+        self.collection_metrics[name] = value
+
     def collector_stats(self, num_metrics, collection_time):
-        metrics = {}
         thread_count = threading.active_count()
-        metrics['monasca.thread_count'] = thread_count
+        self.add_collection_metric('monasca.thread_count', thread_count)
         if thread_count > MAX_THREADS_COUNT:
             log.warn("Collector thread count is high: %d" % thread_count)
 
-        metrics['monasca.collection_time_sec'] = collection_time
-        if collection_time > MAX_COLLECTION_TIME:
-            log.info("Collection time (s) is high: %.1f, metrics count: %d" %
-                     (collection_time, num_metrics))
+        self.add_collection_metric('monasca.collection_time_sec', collection_time)
 
-        return metrics
-
-    def run(self):
+    def run(self, check_frequency):
         """Collect data from each check and submit their data.
 
-        There are currently two types of checks the system checks and the configured ones from checks_d
+        Also, submit a metric which is how long the checks_d took
         """
         timer = util.Timer()
         self.run_count += 1
         log.debug("Starting collection run #%s" % self.run_count)
 
         # checks_d checks
-        num_metrics = self.run_checks_d()
+        num_metrics = self.run_checks_d(check_frequency)
 
         collect_duration = timer.step()
 
+        # Warn if collection time is approaching the collection period
+        if collect_duration > (4 * check_frequency / 5):
+            log.warn("Collection time (s) is high: %.1f, metrics count: %d" %
+                     (collect_duration, num_metrics))
+
+        self.collector_stats(num_metrics, collect_duration)
         collect_stats = []
         dimensions = {'component': 'monasca-agent', 'service': 'monitoring'}
         # Add in metrics on the collector run
-        for name, value in self.collector_stats(num_metrics, collect_duration).iteritems():
+        for name, value in self.collection_metrics.iteritems():
             collect_stats.append(metrics.Measurement(name,
                                                      time.time(),
                                                      value,
                                                      self._set_dimensions(dimensions),
                                                      None))
+        self.collection_metrics.clear()
         self._emit(collect_stats)
 
         # Persist the status of the collection run.
         self._set_status(collect_duration)
 
-    def run_checks_d(self):
-        """Run defined checks_d checks.
+    def run_single_check(self, check):
+        """Run a single check
 
-        returns a list of Measurements.
+        returns number of measurement collected, colleciton time
         """
+
         sub_timer = util.Timer()
+        count = 0
+        log.debug("Running plugin %s" % check.name)
+        try:
+
+            # Run the check.
+            check.run()
+
+            current_check_metrics = check.get_metrics()
+
+            # Emit the metrics after each check
+            self._emit(current_check_metrics)
+
+            # Save the status of the check.
+            count += len(current_check_metrics)
+
+        except Exception:
+            log.exception("Error running plugin %s" % check.name)
+
+        sub_collect_duration = sub_timer.step()
+        sub_collect_duration_mills = sub_collect_duration * 1000
+        log.debug("Finished plugin %s run. Collection time: %.2fms %d Metrics." % (
+                  check.name, round(sub_collect_duration_mills, 2), count))
+        if sub_collect_duration > util.get_sub_collection_warn():
+            log.warn("Collection time for check %s is high: %.2fs." % (
+                     check.name, round(sub_collect_duration, 2)))
+        return count, sub_collect_duration_mills
+
+    def wait_for_results(self, check_frequency, start_time):
+        """Wait either for all running checks to finish or
+        for check_frequency seconds, whichever comes first
+
+        returns number of measurements collected
+        """
+
+        # Make sure we check for results at least once
+        wait_time = check_frequency / 10
         measurements = 0
-        for check in self.initialized_checks_d:
+        time_left = check_frequency
+        while time_left > 0 and self.collection_results:
+            for check_name in list(self.collection_results.keys()):
+                result = self.collection_results[check_name]['result']
+                result.wait(wait_time)
+                if result.ready():
+                    log.debug('Plugin %s has completed' % check_name)
+                    if not result.successful():
+                        log.error('Plugin %s failed' % check_name)
+                    else:
+                        count, collect_time = result.get()
+                        measurements += count
+                        self.collection_times[check_name]['last_collect_time'] = collect_time
+                    del self.collection_results[check_name]
+                else:
+                    log.debug('Plugin %s still running' % check_name)
+            time_left = start_time + check_frequency - time.time()
+        return measurements
+
+    def start_checks_in_thread_pool(self, start_time):
+        """Add the checks that are not already running to the Thread Pool
+        """
+
+        # Sort by the last collection time so the checks that take the
+        # least amount of time are run first so they are more likely to
+        # complete within the check_frequency
+        sorted_checks = sorted(self.collection_times.itervalues(),
+                               key=lambda x: x['last_collect_time'])
+        for entry in sorted_checks:
+            check = entry['check']
+            last_collect_time = entry['last_collect_time']
             if not self.continue_running:
-                return
-            log.debug("Running check %s" % check.name)
-            try:
-                # Run the check.
-                check.run()
+                break
+            if check.name in self.collection_results:
+                log.warning('Plugin %s is already running, skipping' % check.name)
+                continue
+            log.debug('Starting plugin %s, old collect time %d' %
+                      (check.name, last_collect_time))
+            async_result = self.pool.apply_async(self.run_single_check, [check])
+            self.collection_results[check.name] = {'result': async_result,
+                                                   'start_time': start_time}
 
-                current_check_metrics = check.get_metrics()
+    def run_checks_d(self, check_frequency):
+        """Run defined checks_d checks using the Thread Pool.
 
-                # Emit the metrics after each check
-                self._emit(current_check_metrics)
+        returns number of Measurements.
+        """
 
-                # Save the status of the check.
-                measurements += len(current_check_metrics)
+        start_time = time.time()
+        self.start_checks_in_thread_pool(start_time)
 
-            except Exception:
-                log.exception("Error running check %s" % check.name)
+        measurements = self.wait_for_results(check_frequency, start_time)
 
-            sub_collect_duration = sub_timer.step()
-            sub_collect_duration_mills = sub_collect_duration * 1000
-            log.debug("Finished run check %s. Collection time: %.2fms." % (
-                check.name, round(sub_collect_duration_mills, 2)))
-            if sub_collect_duration > util.get_sub_collection_warn():
-                log.warn("Collection time for check %s is high: %.2fs." % (
-                    check.name, round(sub_collect_duration, 2)))
+        # See if any checks are still running
+        if self.collection_results:
+            # Output a metric that can be used for Alarming. This metric is only
+            # emitted when there are checks running too long so a deterministic
+            # Alarm Definition should be created when monitoring it
+            self.add_collection_metric('monasca.checks_running_too_long',
+                                       len(self.collection_results))
+            for check_name in self.collection_results:
+                run_time = time.time() - self.collection_results[check_name]['start_time']
+                log.warning('Plugin %s still running after %d seconds' % (
+                            check_name, run_time))
+
+        if len(self.collection_results) >= self.pool_size:
+            self.pool_full_count += 1
+            if (self.pool_full_count > self.pool_full_max_retries):
+                log.error('Thread Pool full and %d plugins still running for ' +
+                          '%d collection cycles, exiting' %
+                          (len(self.collection_results), self.pool_full_count))
+                os._exit(1)
+        else:
+            self.pool_full_count = 0
 
         return measurements
 
@@ -155,5 +253,9 @@ class Collector(util.Dimensions):
         # in which case we'll get a misleading error in the logs.
         # Best to not even try.
         self.continue_running = False
-        for check in self.initialized_checks_d:
+        for check_name in self.collection_times:
+            check = self.collection_times[check_name]['check']
             check.stop()
+        self.pool.close()
+        # Can't call self.pool.join() because this is an event thread
+        # and that will cause a BlockingSwitchOutError

@@ -106,7 +106,7 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
                     log.warn("Cannot enable profiler")
 
             # Do the work.
-            self.collector.run()
+            self.collector.run(check_frequency)
 
             # disable profiler and printout stats to stdout
             if config.get('profile', False) and config.get('profile').lower() == 'yes' and profiled:
