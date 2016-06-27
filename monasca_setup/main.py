@@ -207,9 +207,9 @@ def parse_arguments(parser):
                         type=validate_positive, default=30)
     parser.add_argument('--num_collector_threads', help="Number of Threads to use in Collector " +
                                                         "for running checks", type=validate_positive, default=1)
-    parser.add_argument('--max_pool_full_count', help="Maximum number of collection cycles where all of the threads " +
-                                                      "in the pool are still running plugins before the " +
-                                                      "collector will exit and be restart",
+    parser.add_argument('--pool_full_max_retries', help="Maximum number of collection cycles where all of the threads " +
+                                                        "in the pool are still running plugins before the " +
+                                                        "collector will exit and be restart",
                         type=validate_positive, default=4)
     parser.add_argument('--dimensions', help="Additional dimensions to set for all metrics. A comma separated list " +
                                              "of name/value pairs, 'name:value,name2:value2'")
