@@ -98,6 +98,7 @@ All parameters require a '--' before the parameter such as '--verbose'. Run `mon
 | check_frequency | How often to run metric collection in seconds | 60 |
 | num_collector_threads | Number of threads to use in collector for running checks | 1 |
 | pool_full_max_retries | Maximum number of collection cycles where all of the threads in the pool are still running plugins before the collector will exit| 4 |
+| plugin_collect_time_warn | Number of seconds a plugin collection time exceeds that causes a warning to be logged for that plugin| 6 |
 | keystone_url | This is a required parameter that specifies the url of the keystone api for retrieving tokens. It must be a v3 endpoint. | http://192.168.1.5:35357/v3 |
 | dimensions | A comma separated list of key:value pairs to include as dimensions in all submitted metrics| region:a,az:1 |
 | service | This is an optional parameter that specifies the name of the service associated with this particular node | nova, cinder, myservice |
