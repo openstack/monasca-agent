@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 
 import logging
 import urllib2
@@ -12,22 +12,25 @@ log = logging.getLogger(__name__)
 # Process name is apache2 on Debian derivatives, on RHEL derivatives it's httpd
 APACHE_PROCESS_NAMES = ('apache2', 'httpd')
 DEFAULT_APACHE_CONFIG = '/root/.apache.cnf'
-DEFAULT_APACHE_URL = 'http://localhost/server-status?auto'
-CONFIG_ARG_KEYS = set(["url", "user", "password"])
+CONFIG_ARG_KEYS = set(["url", "user", "password", "use_server_status_metrics"])
 
 
 class Apache(monasca_setup.detection.Plugin):
 
-    """Detect Apache web server daemons and setup configuration to monitor them.
+    """Detect Apache web server daemons and setup configuration to monitor apache.
 
-        This plugin needs user/pass info for apache if security is setup on the web server,
-        this is best placed in /root/.apache.cnf in a format such as
+        This plugin will by default setup process check metrics for the apache process,
+        and setup server-status metrics using the input url.  If only process check
+        metrics are desired, the use_server_status_metrics argument can be passed in
+        with a value of false.
+        This plugin needs user/password for apache if using the server-status metrics
+        when security is setup on the web server.
+        This plugin accepts arguments and if none are provided it will attempt to read
+        the default configuration file (/root/.apache.cnf) in a format such as:
         [client]
             url=http://localhost/server-status?auto
             user=guest
             password=guest
-        If this file is not provided, the plugin will attempt to connect without security
-        using a default URL.
     """
 
     def __init__(self, *args, **kwargs):
@@ -49,6 +52,7 @@ class Apache(monasca_setup.detection.Plugin):
         apache_url = None
         apache_user = None
         apache_pass = None
+        use_server_status_metrics = True
         try:
             with open(config_location, "r") as config_file:
                 for row in config_file:
@@ -62,10 +66,12 @@ class Apache(monasca_setup.detection.Plugin):
                             apache_user = row.split("=")[1].strip()
                         if "password=" in row:
                             apache_pass = row.split("=")[1].strip()
+                        if "use_server_status_metrics" in row:
+                            use_server_status_metrics = row.split("=")[1].strip()
         except IOError:
             log.warn("\tUnable to read {:s}".format(config_location))
 
-        return apache_url, apache_user, apache_pass
+        return apache_url, apache_user, apache_pass, use_server_status_metrics
 
     def build_config(self):
         """Build the config as a Plugins object and return.
@@ -83,19 +89,29 @@ class Apache(monasca_setup.detection.Plugin):
         if self.dependencies_installed():
             # If any of the exact keys are present, use them.
             if self.args and self.args.viewkeys() & CONFIG_ARG_KEYS:
-                log.info("Attempting to use credentials from command args")
+                log.info("Attempting to use command args")
                 apache_url = self.args.get("url", None)
                 apache_user = self.args.get("user", None)
                 apache_pass = self.args.get("password", None)
+                use_server_status_metrics = self.args.get('use_server_status_metrics', True)
             elif self.args and self.args.get("apache_config_file"):
                 config_file = self.args.get("apache_config_file")
-                apache_url, apache_user, apache_pass = self._read_apache_config(config_file)
+                apache_url, apache_user, apache_pass, use_server_status_metrics = \
+                    self._read_apache_config(config_file)
             else:
-                apache_url, apache_user, apache_pass = self._read_apache_config(DEFAULT_APACHE_CONFIG)
+                apache_url, apache_user, apache_pass, use_server_status_metrics = \
+                    self._read_apache_config(DEFAULT_APACHE_CONFIG)
+            if type(use_server_status_metrics) is str:
+                use_server_status_metrics = (use_server_status_metrics.lower() == 'true')
 
-            if not apache_url:
-                log.warn("No url specified, using default url {:s}".format(DEFAULT_APACHE_URL))
-                apache_url = DEFAULT_APACHE_URL
+            if use_server_status_metrics:
+                if not apache_url:
+                    missing_url_msg = ('\tNo server-status url specified.' + error_msg)
+                    log.error(missing_url_msg)
+                    raise Exception(missing_url_msg)
+            else:
+                log.info("\tWatching the apache process only.")
+                return config
 
             if apache_user and apache_pass:
                 password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
@@ -126,12 +142,18 @@ class Apache(monasca_setup.detection.Plugin):
                 else:
                     log.warn('Unable to access the Apache server-status URL;' + error_msg)
             except urllib2.URLError as e:
-                log.error('\tError {0} received when accessing url {1}.'.format(e.reason, apache_url) +
-                          '\n\tPlease ensure the Apache web server is running and your configuration ' +
-                          'information is correct.' + error_msg)
-            # TODO(Ryan Brandt) this exception code is unreachable, will be caught by superclass URLError above
-            except urllib2.HTTPError as e:
-                log.error('\tError code {0} received when accessing {1}'.format(e.code, apache_url) + error_msg)
+                exception_msg = (
+                    '\tError {0} received when accessing url {1}.'.format(e.reason, apache_url) +
+                    '\n\tPlease ensure the Apache web server is running and your configuration ' +
+                    'information is correct.' + error_msg)
+                log.error(exception_msg)
+                raise Exception(exception_msg)
+            except Exception as e:
+                exception_msg = (
+                    'Error received when accessing url {0} exception {1}'.format(apache_url, e) +
+                    error_msg)
+                log.error(exception_msg)
+                raise Exception(exception_msg)
         else:
             log.error('\tThe dependencies for Apache Web Server are not installed or unavailable.' + error_msg)
 
