@@ -281,7 +281,6 @@ class LibvirtCheck(AgentCheck):
 
     def _inspect_network(self, insp, inst, instance_cache, metric_cache, dims_customer, dims_operations):
         """Inspect network metrics for an instance"""
-
         inst_name = inst.name()
         for vnic in insp.inspect_vnics(inst):
             sample_time = time.time()
@@ -300,8 +299,12 @@ class LibvirtCheck(AgentCheck):
 
                 value = int(vnic[1].__getattribute__(metric))
                 if vnic[0].name in metric_cache[inst_name][metric_name]:
-                    val_diff = value - metric_cache[inst_name][metric_name][vnic[0].name]['value']
-                    if val_diff < 0:
+                    last_update_time = metric_cache[inst_name][metric_name][vnic[0].name]['timestamp']
+                    time_diff = sample_time - float(last_update_time)
+                    rate_value = self._calculate_rate(value,
+                                                      metric_cache[inst_name][metric_name][vnic[0].name]['value'],
+                                                      time_diff)
+                    if rate_value < 0:
                         # Bad value, save current reading and skip
                         self.log.warn("Ignoring negative network sample for: "
                                       "{0} new value: {1} old value: {2}"
@@ -314,18 +317,18 @@ class LibvirtCheck(AgentCheck):
                     rate_name = self._get_metric_rate_name(metric_name)
                     rate_name = self._get_metric_name(rate_name)
                     if self.use_bits:
-                        val_diff *= 8
+                        rate_value *= 8
                     # Customer
                     this_dimensions = vnic_dimensions.copy()
                     this_dimensions.update(dims_customer)
-                    self.gauge(rate_name, val_diff,
+                    self.gauge(rate_name, rate_value,
                                dimensions=this_dimensions,
                                delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
                                hostname=instance_cache.get(inst_name)['hostname'])
                     # Operations (metric name prefixed with "vm."
                     this_dimensions = vnic_dimensions.copy()
                     this_dimensions.update(dims_operations)
-                    self.gauge("vm.{0}".format(rate_name), val_diff,
+                    self.gauge("vm.{0}".format(rate_name), rate_value,
                                dimensions=this_dimensions)
                 # Report raw counters.
                 mapped_name = self._get_metric_name(metric_name)
@@ -410,8 +413,11 @@ class LibvirtCheck(AgentCheck):
                 if disk[0].device in metric_cache[inst_name][metric_name]:
                     cached_val = metric_cache[inst_name][metric_name][disk[
                         0].device]['value']
-                    val_diff = value - cached_val
-                    if val_diff < 0:
+                    last_update_time = metric_cache[inst_name][metric_name][disk[
+                        0].device]['timestamp']
+                    time_diff = sample_time - float(last_update_time)
+                    rate_value = self._calculate_rate(value, cached_val, time_diff)
+                    if rate_value < 0:
                         # Bad value, save current reading and skip
                         self.log.warn("Ignoring negative disk sample for: "
                                       "{0} new value: {1} old value: {2}"
@@ -426,13 +432,13 @@ class LibvirtCheck(AgentCheck):
                     # Customer
                     this_dimensions = disk_dimensions.copy()
                     this_dimensions.update(dims_customer)
-                    self.gauge(rate_name, val_diff, dimensions=this_dimensions,
+                    self.gauge(rate_name, rate_value, dimensions=this_dimensions,
                                delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
                                hostname=instance_cache.get(inst_name)['hostname'])
                     # Operations (metric name prefixed with "vm."
                     this_dimensions = disk_dimensions.copy()
                     this_dimensions.update(dims_operations)
-                    self.gauge("vm.{0}".format(rate_name), val_diff,
+                    self.gauge("vm.{0}".format(rate_name), rate_value,
                                dimensions=this_dimensions)
                     self.gauge("vm.{0}".format(metric_name), value,
                                dimensions=this_dimensions)
@@ -450,9 +456,13 @@ class LibvirtCheck(AgentCheck):
             if rate_name not in metric_cache[inst_name]:
                 metric_cache[inst_name][rate_name] = {}
             else:
-                val_diff = metric_aggregate[metric] - metric_cache[inst_name][
-                    rate_name]['value']
-                if val_diff < 0:
+                last_update_time = metric_cache[inst_name][
+                    rate_name]['timestamp']
+                time_diff = sample_time - float(last_update_time)
+                rate_value = self._calculate_rate(metric_aggregate[metric],
+                                                  metric_cache[inst_name][rate_name]['value'],
+                                                  time_diff)
+                if rate_value < 0:
                     # Bad value, save current reading and skip
                     self.log.warn("Ignoring negative disk sample for: "
                                   "{0} new value: {1} old value: {2}"
@@ -462,7 +472,8 @@ class LibvirtCheck(AgentCheck):
                     metric_cache[inst_name][rate_name] = {
                         'timestamp': sample_time,
                         'value': metric_aggregate[metric]}
-                self.gauge(rate_name, val_diff,
+                    continue
+                self.gauge(rate_name, rate_value,
                            dimensions=this_dimensions)
             self.gauge("vm.{0}_total".format(metric), metric_aggregate[
                 metric], dimensions=this_dimensions)
@@ -696,3 +707,17 @@ class LibvirtCheck(AgentCheck):
         # Publish aggregate metrics
         for gauge in agg_gauges:
             self.gauge(agg_gauges[gauge], agg_values[gauge], dimensions=dims_base)
+
+    def _calculate_rate(self, current_value, cache_value, time_diff):
+        """Calculate rate based on current, cache value and time_diff."""
+        try:
+            rate_value = (current_value - cache_value) / time_diff
+        except ZeroDivisionError as e:
+            self.log.error("Time difference between current time and "
+                           "last_update time is 0 . {0}".format(e))
+            #
+            # Being extra safe here, in case we divide by zero
+            # just skip this reading with check below.
+            #
+            rate_value = -1
+        return rate_value
