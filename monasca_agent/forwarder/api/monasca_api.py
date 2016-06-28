@@ -102,7 +102,8 @@ class MonascaAPI(object):
 
         # Split out separate POSTs for each delegated tenant (includes 'None')
         tenant_group = {}
-        for measurement in measurements:
+        for measurement_element in measurements:
+            measurement = copy.deepcopy(measurement_element)
             m_dict = measurement.__dict__
             m_dict['timestamp'] *= 1000
             delegated_tenant = m_dict.pop('delegated_tenant')
