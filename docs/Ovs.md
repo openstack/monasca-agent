@@ -68,7 +68,7 @@ init_config:
   network_use_bits: true
   use_absolute_metrics: true
   ovs_cmd: 'sudo /usr/bin/ovs-vsctl' 
-  included_interface_re: tap.*|qr.*|qg.*
+  included_interface_re: qg.*|vhu.*|sg.*
   use_rate_metrics: true
   use_health_metrics: true
 
