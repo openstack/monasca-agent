@@ -60,6 +60,18 @@ def find_process_name(pname):
     return None
 
 
+def find_process_service(sname):
+    """Simple function to call systemctl (service) to check if a service is running.
+    """
+    try:
+        subprocess.check_call(['service', sname, 'status'], stdout=PIPE, stderr=PIPE)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+    return False
+
+
 def find_addr_listening_on_port(port):
     """Return the IP address which is listening on the specified TCP port."""
     for conn in psutil.net_connections(kind='tcp'):
