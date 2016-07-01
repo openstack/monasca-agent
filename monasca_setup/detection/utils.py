@@ -121,7 +121,7 @@ def watch_process_by_username(username, process_name, service=None, component=No
     return config
 
 
-def watch_file_size(directory_name, file_names, file_recursive,
+def watch_file_size(directory_name, file_names, file_recursive=False,
                     service=None, component=None):
     """Takes a directory, a list of files, recursive flag and returns a
         Plugins object with the config set.
