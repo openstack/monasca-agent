@@ -663,7 +663,7 @@ class LibvirtCheck(AgentCheck):
             try:
                 mem_metrics = {'mem.free_mb': float(inst.memoryStats()['unused']) / 1024,
                                'mem.swap_used_mb': float(inst.memoryStats()['swap_out']) / 1024,
-                               'mem.total_mb': float(inst.memoryStats()['available'] - inst.memoryStats()['unused']) / 1024,
+                               'mem.total_mb': float(inst.memoryStats()['available']) / 1024,
                                'mem.used_mb': float(inst.memoryStats()['available'] - inst.memoryStats()['unused']) / 1024,
                                'mem.free_perc': float(inst.memoryStats()['unused']) / float(inst.memoryStats()['available']) * 100}
                 for name in mem_metrics:
