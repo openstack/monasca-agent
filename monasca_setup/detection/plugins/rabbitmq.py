@@ -48,7 +48,7 @@ class RabbitMQ(monasca_setup.detection.Plugin):
     def _detect(self):
         """Run detection, set self.available True if the service is detected.
         """
-        if monasca_setup.detection.find_process_cmdline('rabbitmq-server') is not None:
+        if monasca_setup.detection.find_process_service('rabbitmq-server') is not None:
             self.available = True
 
     def _get_config(self):
@@ -129,7 +129,7 @@ class RabbitMQ(monasca_setup.detection.Plugin):
         """
         config = monasca_setup.agent_config.Plugins()
         # First watch the process
-        config.merge(monasca_setup.detection.watch_process(['rabbitmq-server'], 'rabbitmq', detailed=False))
+        config.merge(monasca_setup.detection.watch_process(['epmd'], 'rabbitmq', detailed=False))
         log.info("\tWatching the rabbitmq-server process.")
         config.merge(monasca_setup.detection.watch_process_by_username('rabbitmq', 'rabbitmq', 'rabbitmq'))
         log.info("\tWatching all processes owned by the rabbitmq user.")
