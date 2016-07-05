@@ -211,6 +211,9 @@ def parse_arguments(parser):
                                                         "in the pool are still running plugins before the " +
                                                         "collector will exit and be restart",
                         type=validate_positive, default=4)
+    parser.add_argument('--plugin_collect_time_warn', help="Number of seconds a plugin collection time exceeds " +
+                                                           "that causes a warning to be logged for that plugin",
+                        type=validate_positive, default=6)
     parser.add_argument('--dimensions', help="Additional dimensions to set for all metrics. A comma separated list " +
                                              "of name/value pairs, 'name:value,name2:value2'")
     parser.add_argument('--ca_file', help="Sets the path to the ca certs file if using certificates. " +

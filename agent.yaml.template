@@ -80,7 +80,7 @@ Main:
   pool_full_max_retries: {args.pool_full_max_retries}
 
   # Threshold value for warning on collection time of each check (in seconds)
-  sub_collection_warn: 6
+  sub_collection_warn: {args.plugin_collect_time_warn}
 
   # Collector restart interval (in hours)
   collector_restart_interval: 24
