@@ -17,7 +17,7 @@ class Ironic(monasca_setup.detection.ServicePlugin):
             'service_name': 'baremetal',
             'process_names': ['ironic-api', 'ironic-conductor'],
             'service_api_url': "http://localhost:6385",
-            'search_pattern': '.*200 OK.*',
+            'search_pattern': '.*v1.*',
         }
 
         super(Ironic, self).__init__(service_params)
