@@ -47,6 +47,29 @@ class Ovs(monasca_setup.detection.Plugin):
 
     """
     def _detect(self):
+        process_exist = (monasca_setup.detection.
+                         find_process_cmdline('neutron-openvsw'))
+        has_dependencies = self.dependencies_installed()
+        neutron_conf = self.get_ovs_config_file() if process_exist else ''
+
+        self.available = (process_exist is not None and
+                          os.path.isfile(neutron_conf) and has_dependencies)
+        if not self.available:
+            if not process_exist:
+                log.error('OVS daemon process does not exist.')
+            elif not neutron_conf:
+                log.error(('OVS daemon process exists but configuration'
+                           'file was not found. Path to file does not exist'
+                           'as a process parameter or was not '
+                           'passed via args.'))
+            elif not has_dependencies:
+                log.error(('OVS daemon process exists but required '
+                           'dependence python-neutronclient is '
+                           'not installed.'))
+        else:
+            self.neutron_conf = neutron_conf
+
+    def get_ovs_config_file(self):
         neutron_conf = None
         if self.args:
             for arg in self.args:
@@ -61,112 +84,110 @@ class Ovs(monasca_setup.detection.Plugin):
                     proc_dict = proc.as_dict()
                     if proc_dict['name'] == 'neutron-openvsw':
                         cmd = proc_dict['cmdline']
-                        neutron_config_params = [param for param in cmd if 'neutron.conf' in param]
+                        neutron_config_params = [param for param in cmd if
+                                                 'neutron.conf' in param]
                         if not neutron_config_params:
                             continue
                         if '=' in neutron_config_params[0]:
-                            neutron_conf = neutron_config_params[0].split('=')[1]
+                            neutron_conf = neutron_config_params[0].split('=')[
+                                1]
                         else:
                             neutron_conf = neutron_config_params[0]
                 except (IOError, psutil.NoSuchProcess):
                     # Process has already terminated, ignore
                     continue
-
-        if (neutron_conf is not None and os.path.isfile(neutron_conf)):
-            self.available = True
-            self.neutron_conf = neutron_conf
-        else:
-            log.error("Neutron configuration file not found!!!")
+        return neutron_conf
 
     def build_config(self):
         """Build the config as a Plugins object and return.
 
         """
         config = monasca_setup.agent_config.Plugins()
-        if self.dependencies_installed():
-            neutron_cfg = ConfigParser.SafeConfigParser()
-            log.info("\tUsing neutron configuration file {0}".format(self.neutron_conf))
-            neutron_cfg.read(self.neutron_conf)
-            cfg_needed = {'admin_user': 'admin_user',
-                          'admin_password': 'admin_password',
-                          'admin_tenant_name': 'admin_tenant_name'}
-            cfg_section = 'keystone_authtoken'
+        neutron_cfg = ConfigParser.SafeConfigParser()
+        log.info("\tUsing neutron configuration file {0}".format(self.neutron_conf))
+        neutron_cfg.read(self.neutron_conf)
+        cfg_needed = {'admin_user': 'admin_user',
+                      'admin_password': 'admin_password',
+                      'admin_tenant_name': 'admin_tenant_name'}
+        cfg_section = 'keystone_authtoken'
 
-            # Handle Devstack's slightly different neutron.conf names
-            if (
-               neutron_cfg.has_option(cfg_section, 'username') and
-               neutron_cfg.has_option(cfg_section, 'password') and
-               neutron_cfg.has_option(cfg_section, 'project_name')):
-                cfg_needed = {'admin_user': 'username',
-                              'admin_password': 'password',
-                              'admin_tenant_name': 'project_name'}
+        # Handle Devstack's slightly different neutron.conf names
+        if (
+           neutron_cfg.has_option(cfg_section, 'username') and
+           neutron_cfg.has_option(cfg_section, 'password') and
+           neutron_cfg.has_option(cfg_section, 'project_name')):
+            cfg_needed = {'admin_user': 'username',
+                          'admin_password': 'password',
+                          'admin_tenant_name': 'project_name'}
 
-            # Start with plugin-specific configuration parameters
-            init_config = {'cache_dir': cache_dir,
-                           'neutron_refresh': neutron_refresh,
-                           'ovs_cmd': ovs_cmd,
-                           'network_use_bits': network_use_bits,
-                           'included_interface_re': included_interface_re,
-                           'use_absolute_metrics': use_absolute_metrics,
-                           'use_rate_metrics': use_rate_metrics,
-                           'use_health_metrics': use_health_metrics}
+        # Start with plugin-specific configuration parameters
+        init_config = {'cache_dir': cache_dir,
+                       'neutron_refresh': neutron_refresh,
+                       'ovs_cmd': ovs_cmd,
+                       'network_use_bits': network_use_bits,
+                       'included_interface_re': included_interface_re,
+                       'use_absolute_metrics': use_absolute_metrics,
+                       'use_rate_metrics': use_rate_metrics,
+                       'use_health_metrics': use_health_metrics}
 
-            for option in cfg_needed:
-                init_config[option] = neutron_cfg.get(cfg_section, cfg_needed[option])
+        for option in cfg_needed:
+            init_config[option] = neutron_cfg.get(cfg_section, cfg_needed[option])
 
-            uri_version = 'v2.0'
-            if neutron_cfg.has_option(cfg_section, 'auth_version'):
-                uri_version = str(neutron_cfg.get(cfg_section, 'auth_version'))
+        uri_version = 'v2.0'
+        if neutron_cfg.has_option(cfg_section, 'auth_version'):
+            uri_version = str(neutron_cfg.get(cfg_section, 'auth_version'))
 
-            # Create an identity URI (again, slightly different for Devstack)
-            if neutron_cfg.has_option(cfg_section, 'auth_url'):
-                if re.match(uri_version_re, str(neutron_cfg.get(cfg_section, 'auth_url'))):
-                    uri_version = ''
-                init_config['identity_uri'] = "{0}/{1}".format(neutron_cfg.get(cfg_section, 'auth_url'), uri_version)
-            else:
-                init_config['identity_uri'] = "{0}/{1}".format(neutron_cfg.get(cfg_section, 'identity_uri'), uri_version)
+        # Create an identity URI (again, slightly different for Devstack)
+        if neutron_cfg.has_option(cfg_section, 'auth_url'):
+            if re.match(uri_version_re, str(neutron_cfg.get(cfg_section, 'auth_url'))):
+                uri_version = ''
+            init_config['identity_uri'] = "{0}/{1}".format(neutron_cfg.get(cfg_section, 'auth_url'), uri_version)
+        else:
+            init_config['identity_uri'] = "{0}/{1}".format(neutron_cfg.get(cfg_section, 'identity_uri'), uri_version)
 
-            # Create an region_name (again, slightly different for Devstack)
-            if neutron_cfg.has_option('service_auth', 'region'):
-                init_config['region_name'] = str(neutron_cfg.get('service_auth', 'region'))
-            else:
+        # Create an region_name (again, slightly different for Devstack)
+        if neutron_cfg.has_option('service_auth', 'region'):
+            init_config['region_name'] = str(neutron_cfg.get('service_auth', 'region'))
+        else:
+            try:
                 init_config['region_name'] = str(neutron_cfg.get('nova', 'region_name'))
-            # Handle monasca-setup detection arguments, which take precedence
-            if self.args:
-                for arg in self.args:
-                    if arg in acceptable_args and arg not in ignorable_args:
-                        if arg == 'included_interface_re':
-                            try:
-                                re.compile(self.args[arg])
-                            except re.error as e:
-                                exception_msg = (
-                                    "Invalid regular expression given for "
-                                    "'included_interface_re'. {0}.".format(e))
-                                log.exception(exception_msg)
-                                raise Exception(exception_msg)
+            except ConfigParser.NoOptionError:
+                log.debug(('Option region_name was not found in nova '
+                           'section, nova_region_name option from '
+                           'DEFAULT section will be used.'))
+                init_config['region_name'] = str(neutron_cfg.get('DEFAULT',
+                                                                 'nova_region_name'))
 
-                        init_config[arg] = self.literal_eval(self.args[arg])
-                    elif arg in ignorable_args:
-                        log.warn("Argument '{0}' is ignored; Fetching {0} from "
-                                 "neutron configuration file.".format(arg))
-                    else:
-                        log.warn("Invalid argument '{0}' "
-                                 "has been provided!!!".format(arg))
+        # Handle monasca-setup detection arguments, which take precedence
+        if self.args:
+            for arg in self.args:
+                if arg in acceptable_args and arg not in ignorable_args:
+                    if arg == 'included_interface_re':
+                        try:
+                            re.compile(self.args[arg])
+                        except re.error as e:
+                            exception_msg = (
+                                "Invalid regular expression given for "
+                                "'included_interface_re'. {0}.".format(e))
+                            log.exception(exception_msg)
+                            raise Exception(exception_msg)
 
-            config['ovs'] = {'init_config': init_config,
-                             'instances': []}
+                    init_config[arg] = self.literal_eval(self.args[arg])
+                elif arg in ignorable_args:
+                    log.warn("Argument '{0}' is ignored; Fetching {0} from "
+                             "neutron configuration file.".format(arg))
+                else:
+                    log.warn("Invalid argument '{0}' "
+                             "has been provided!!!".format(arg))
+
+        config['ovs'] = {'init_config': init_config,
+                         'instances': []}
 
         return config
 
     def dependencies_installed(self):
         try:
-            import monasca_agent.collector.virt.inspector
             import neutronclient.v2_0.client
-
-        except ImportError as e:
-            exception_msg = (
-                "Dependencies not satisfied; Plugin not "
-                "configured. {0}.".format(e))
-            log.exception(exception_msg)
-            raise Exception(exception_msg)
+        except ImportError:
+            return False
         return True
