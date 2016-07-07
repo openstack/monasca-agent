@@ -435,6 +435,10 @@ class LibvirtCheck(AgentCheck):
                     self.gauge(rate_name, rate_value, dimensions=this_dimensions,
                                delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
                                hostname=instance_cache.get(inst_name)['hostname'])
+                    self.gauge(metric_name, value, dimensions=this_dimensions,
+                               delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                               hostname=instance_cache.get(inst_name)['hostname'])
+
                     # Operations (metric name prefixed with "vm."
                     this_dimensions = disk_dimensions.copy()
                     this_dimensions.update(dims_operations)
@@ -452,7 +456,7 @@ class LibvirtCheck(AgentCheck):
         this_dimensions.update(dims_operations)
         for metric in metric_aggregate:
             sample_time = time.time()
-            rate_name = "vm.{0}_total_sec".format(metric)
+            rate_name = "{0}_total_sec".format(metric)
             if rate_name not in metric_cache[inst_name]:
                 metric_cache[inst_name][rate_name] = {}
             else:
@@ -473,10 +477,18 @@ class LibvirtCheck(AgentCheck):
                         'timestamp': sample_time,
                         'value': metric_aggregate[metric]}
                     continue
-                self.gauge(rate_name, rate_value,
+                self.gauge(rate_name, rate_value, dimensions=this_dimensions,
+                           delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                           hostname=instance_cache.get(inst_name)['hostname'])
+                self.gauge("vm.{0}".format(rate_name), rate_value,
                            dimensions=this_dimensions)
-            self.gauge("vm.{0}_total".format(metric), metric_aggregate[
-                metric], dimensions=this_dimensions)
+            self.gauge("{0}_total".format(metric), metric_aggregate[metric],
+                       dimensions=this_dimensions,
+                       delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                       hostname=instance_cache.get(inst_name)['hostname'])
+            self.gauge("vm.{0}_total".format(metric),
+                       metric_aggregate[metric],
+                       dimensions=this_dimensions)
             # Save this metric to the cache
             metric_cache[inst_name][rate_name] = {
                 'timestamp': sample_time,
@@ -510,8 +522,13 @@ class LibvirtCheck(AgentCheck):
         this_dimensions.update(dims_customer)
         this_dimensions.update(dims_operations)
         for metric in metric_aggregate:
-            self.gauge("vm.{0}_total".format(metric), metric_aggregate[
-                metric], dimensions=this_dimensions)
+            self.gauge("{0}_total".format(metric), metric_aggregate[metric],
+                       dimensions=this_dimensions,
+                       delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                       hostname=instance_cache.get(inst_name)['hostname'])
+            self.gauge("vm.{0}_total".format(metric),
+                       metric_aggregate[metric],
+                       dimensions=this_dimensions)
 
     def _inspect_state(self, insp, inst, instance_cache, dims_customer, dims_operations):
         """Look at the state of the instance, publish a metric using a
