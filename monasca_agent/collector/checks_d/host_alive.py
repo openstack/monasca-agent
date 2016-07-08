@@ -1,5 +1,5 @@
 #!/bin/env python
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 """Monitoring Agent remote host aliveness checker.
 
 """
@@ -84,12 +84,6 @@ class HostAlive(services_checks.ServicesCheck):
             self.log.warn(error_message)
             return False, error_message
         return True, None
-
-    def _create_status_event(self, status, msg, instance):
-        """Does nothing: status events are not yet supported by Mon API.
-
-        """
-        return
 
     def _check(self, instance):
         """Run the desired host-alive check againt this host.

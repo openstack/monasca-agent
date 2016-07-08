@@ -1,10 +1,9 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 
 import json
 import socket
 import subprocess
 import sys
-import time
 import urllib2
 import urlparse
 
@@ -355,14 +354,9 @@ class ElasticSearch(AgentCheck):
     def _process_health_data(self, config_url, data, dimensions=None):
         if self.cluster_status.get(config_url, None) is None:
             self.cluster_status[config_url] = data['status']
-            if data['status'] in ["yellow", "red"]:
-                event = self._create_event(data['status'])
-                self.event(event)
 
         if data['status'] != self.cluster_status.get(config_url):
             self.cluster_status[config_url] = data['status']
-            event = self._create_event(data['status'])
-            self.event(event)
 
         def process_metric(metric, xtype, path, xform=None):
             # closure over data
@@ -375,30 +369,3 @@ class ElasticSearch(AgentCheck):
 
     def _metric_not_found(self, metric, path):
         self.log.debug("Metric not found: %s -> %s", path, metric)
-
-    def _create_event(self, status):
-        hostname = self.hostname.decode('utf-8')
-        if status == "red":
-            alert_type = "error"
-            msg_title = "%s is %s" % (hostname, status)
-
-        elif status == "yellow":
-            alert_type = "warning"
-            msg_title = "%s is %s" % (hostname, status)
-
-        else:
-            # then it should be green
-            alert_type = "success"
-            msg_title = "%s recovered as %s" % (hostname, status)
-
-        msg = "ElasticSearch: %s just reported as %s" % (hostname, status)
-
-        return {'timestamp': int(time.time()),
-                'event_type': 'elasticsearch',
-                'host': hostname,
-                'msg_text': msg,
-                'msg_title': msg_title,
-                "alert_type": alert_type,
-                "source_type_name": "elasticsearch",
-                "event_object": hostname
-                }

@@ -68,22 +68,15 @@ class Reporter(threading.Thread):
                 except Exception:
                     log.exception("Error running emitter.")
 
-            events = self.aggregator.flush_events()
-            event_count = len(events)
-            if event_count:
-                log.warn('Event received but events are not available in the monasca api')
-
             should_log = self.flush_count <= FLUSH_LOGGING_INITIAL or self.log_count <= FLUSH_LOGGING_COUNT
             log_func = log.info
             if not should_log:
                 log_func = log.debug
             log_func(
-                "Flush #%s: flushed %s metric%s and %s event%s" %
+                "Flush #%s: flushed %s metric%s" %
                 (self.flush_count,
                  count,
-                 util.plural(count),
-                 event_count,
-                 util.plural(event_count)))
+                 util.plural(count)))
             if self.flush_count == FLUSH_LOGGING_INITIAL:
                 log.info(
                     "First flushes done, %s flushes will be logged every %s flushes." %

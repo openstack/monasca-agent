@@ -68,11 +68,6 @@ class HTTPCheck(services_checks.ServicesCheck):
         return url, username, password, timeout, headers, response_time, \
             ssl, use_keystone, keystone_config, instance_name
 
-    def _create_status_event(self, status, msg, instance):
-        """Does nothing: status events are not yet supported by Mon API.
-        """
-        return
-
     def _http_check(self, instance):
         addr, username, password, timeout, headers, response_time, \
             disable_ssl_validation, use_keystone, keystone_config, \

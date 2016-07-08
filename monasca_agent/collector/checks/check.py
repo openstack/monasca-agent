@@ -39,7 +39,6 @@ class AgentCheck(util.Dimensions):
             aggregator.MetricsAggregator(self.hostname,
                                          recent_point_threshold=threshold))
 
-        self.events = []
         self.instances = instances or []
         self.library_versions = None
 

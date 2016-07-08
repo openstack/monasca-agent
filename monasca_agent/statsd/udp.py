@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 
 import ast
 import logging
@@ -52,51 +52,6 @@ class Server(object):
                 log.exception("Error while setting up connection to external statsd server")
 
     @staticmethod
-    def _parse_event_packet(packet):
-        try:
-            name_and_metadata = packet.split(':', 1)
-            if len(name_and_metadata) != 2:
-                raise Exception(u'Unparseable event packet: %s' % packet)
-            # Event syntax:
-            # _e{5,4}:title|body|meta
-            name = name_and_metadata[0]
-            metadata = unicode(name_and_metadata[1])
-            title_length, text_length = name.split(',')
-            title_length = int(title_length[3:])
-            text_length = int(text_length[:-1])
-
-            event = {
-                'title': metadata[
-                    :title_length],
-                'text': (
-                    metadata[
-                        title_length +
-                        1:title_length +
-                        text_length +
-                        1]).replace(
-                    '\\n',
-                    '\n')}
-            meta = metadata[title_length + text_length + 1:]
-            for m in meta.split('|')[1:]:
-                if m[0] == u't':
-                    event['alert_type'] = m[2:]
-                elif m[0] == u'k':
-                    event['aggregation_key'] = m[2:]
-                elif m[0] == u's':
-                    event['source_type_name'] = m[2:]
-                elif m[0] == u'd':
-                    event['date_happened'] = int(m[2:])
-                elif m[0] == u'p':
-                    event['priority'] = m[2:]
-                elif m[0] == u'h':
-                    event['hostname'] = m[2:]
-                elif m[0] == u'#':
-                    event['dimensions'] = sorted(m[1:].split(u','))
-            return event
-        except IndexError:
-            raise Exception(u'Unparseable event packet: %s' % packet)
-
-    @staticmethod
     def _parse_metric_packet(packet):
         name_and_metadata = packet.split(':', 1)
 
@@ -148,10 +103,8 @@ class Server(object):
                 continue
 
             if packet.startswith('_e'):
-                event = self._parse_event_packet(packet)
-                # todo it seems like this count should be done in the event method
-                self.aggregator.event_count += 1
-                self.aggregator.event(**event)
+                # Monasca api doesnt support events
+                pass
             else:
                 # todo it seems like this count should be done in the submit_metric method
                 self.aggregator.count += 1

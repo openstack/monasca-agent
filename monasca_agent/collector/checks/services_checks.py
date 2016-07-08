@@ -1,9 +1,8 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 
 import collections
 import Queue
 import threading
-import time
 
 from gevent import monkey
 from gevent import Timeout
@@ -132,8 +131,6 @@ class ServicesCheck(monasca_agent.collector.checks.AgentCheck):
                     self.restart_pool()
                 continue
 
-            event = None
-
             if name not in self.statuses:
                 self.statuses[name] = []
 
@@ -154,15 +151,10 @@ class ServicesCheck(monasca_agent.collector.checks.AgentCheck):
 
             if nb_failures >= threshold:
                 if self.notified.get(name, Status.UP) != Status.DOWN:
-                    event = self._create_status_event(status, msg, queue_instance)
                     self.notified[name] = Status.DOWN
             else:
                 if self.notified.get(name, Status.UP) != Status.UP:
-                    event = self._create_status_event(status, msg, queue_instance)
                     self.notified[name] = Status.UP
-
-            if event is not None:
-                self.events.append(event)
 
     def _check(self, instance):
         """This function should be implemented by inherited classes.

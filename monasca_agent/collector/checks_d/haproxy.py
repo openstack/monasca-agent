@@ -1,7 +1,6 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 
 from collections import defaultdict
-import time
 import urllib2
 
 from monasca_agent.collector.checks import AgentCheck
@@ -63,9 +62,7 @@ class HAProxy(AgentCheck):
 
         data = self._fetch_data(url, username, password)
 
-        process_events = instance.get('status_check', self.init_config.get('status_check', False))
-
-        self._process_data(data, collect_service_stats_only, collect_aggregates_only, process_events,
+        self._process_data(data, collect_service_stats_only, collect_aggregates_only,
                            url=url, collect_status_metrics=collect_status_metrics)
 
     def _fetch_data(self, url, username, password):
@@ -89,11 +86,11 @@ class HAProxy(AgentCheck):
         # Split the data by line
         return response.split('\n')
 
-    def _process_data(self, data, collect_service_stats_only, collect_aggregates_only, process_events,
+    def _process_data(self, data, collect_service_stats_only, collect_aggregates_only,
                       url=None, collect_status_metrics=False):
         """Main data-processing loop. For each piece of useful data, we'll
 
-        either save a metric, save an event or both.
+        save a metric.
         """
 
         # Split the first line into an index of fields
@@ -140,12 +137,10 @@ class HAProxy(AgentCheck):
             if data_dict['svname'] in Services.ALL:
                 data_list.append(data_dict)
 
-                # Send the list of data to the metric and event callbacks
+                # Send the list of data to the metric callbacks
                 self._process_metrics(data_list, service, url)
-                if process_events:
-                    self._process_events(data_list, url)
 
-                # Clear out the event list for the next service
+                # Clear out the list for the next service
                 data_list = []
             elif not collect_aggregates_only:
                 data_list.append(data_dict)
@@ -206,56 +201,3 @@ class HAProxy(AgentCheck):
                         self.rate(name, value, dimensions=metric_dimensions)
                     else:
                         self.gauge(name, value, dimensions=metric_dimensions)
-
-    def _process_events(self, data_list, url):
-        """Main event processing loop. Events will be created for a service status change.
-
-        """
-        for data in data_list:
-            hostname = data['svname']
-            service_name = data['pxname']
-            key = "%s:%s" % (hostname, service_name)
-            status = self.host_status[url][key]
-
-            if status is None:
-                self.host_status[url][key] = data['status']
-                continue
-
-            if status != data['status'] and data['status'] in ('UP', 'DOWN'):
-                # If the status of a host has changed, we trigger an event
-                try:
-                    lastchg = int(data['lastchg'])
-                except Exception:
-                    lastchg = 0
-
-                # Create the event object
-                ev = self._create_event(data['status'], hostname, lastchg, service_name)
-                self.event(ev)
-
-                # Store this host status so we can check against it later
-                self.host_status[url][key] = data['status']
-
-    def _create_event(self, status, hostname, lastchg, service_name):
-        if status == "DOWN":
-            alert_type = "error"
-            title = "HAProxy %s front-end reported %s %s" % (service_name, hostname, status)
-        else:
-            if status == "UP":
-                alert_type = "success"
-            else:
-                alert_type = "info"
-            title = "HAProxy %s front-end reported %s back and %s" % (
-                service_name, hostname, status)
-        event_dimensions = self.dimensions.copy()
-        event_dimensions.update({"frontend": service_name, "host": hostname})
-
-        return {
-            'timestamp': int(time.time() - lastchg),
-            'event_type': EVENT_TYPE,
-            'host': hostname,
-            'msg_title': title,
-            'alert_type': alert_type,
-            "source_type_name": SOURCE_TYPE_NAME,
-            "event_object": hostname,
-            "dimensions": event_dimensions
-        }

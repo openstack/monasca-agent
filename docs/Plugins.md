@@ -75,7 +75,6 @@
     - [ESX Cluster Metrics](#esx-cluster-metrics)
     - [ESX Cluster Dimensions](#esx-cluster-dimensions)
   - [Vertica Checks](#vertica-checks)
-  - [Win32 Event Log](#win32-event-log)
   - [WMI Check](#wmi-check)
   - [ZooKeeper](#zookeeper)
   - [OpenStack Monitoring](#openstack-monitoring)
@@ -127,7 +126,6 @@ The following plugins are delivered via setup as part of the standard plugin che
 | docker |  |  |
 | elastic |  |  |
 | file_size |  |  |
-| gearmand |  |  |
 | gunicorn |  |  |
 | haproxy |  |  |
 | hdfs |  |  |
@@ -163,7 +161,6 @@ The following plugins are delivered via setup as part of the standard plugin che
 | varnish |  |  |
 | vcenter |  |  |
 | vertica | /root/.vertica.cnf |
-| win32_event_log |  |  |
 | wmi_check |  |  |
 | zk |  | Apache Zookeeper |
 
@@ -1463,8 +1460,6 @@ instances:
 | vertica.resource.request_queue_depth | hostname, node_name, service=vertica | The cumulative number of requests for threads, file handles, and memory. |
 | vertica.resource.resource_rejections | hostname, node_name, service=vertica | The number of rejected plan requests. |
 | vertica.resource.wos_used_bytes | hostname, node_name, service=vertica | The size of the WOS in bytes. |
-
-## Win32 Event Log
 
 ## WMI Check
 
