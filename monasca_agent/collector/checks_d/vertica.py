@@ -43,6 +43,7 @@ class Vertica(checks.AgentCheck):
 
     def __init__(self, name, init_config, agent_config):
         super(Vertica, self).__init__(name, init_config, agent_config)
+        self._last_connection_status = 1
 
     @staticmethod
     def _get_config(instance):
@@ -64,7 +65,12 @@ class Vertica(checks.AgentCheck):
 
         if connection_status != 0:
             self.gauge('vertica.db.connection_status', 1, dimensions=dimensions)
+            self._last_connection_status = 1
         else:
+            if self._last_connection_status > 0:
+                # report successful connection status when last status not success
+                self.gauge('vertica.db.connection_status', 0, dimensions=dimensions)
+            self._last_connection_status = 0
             results = results.split('\n')
             self._report_node_status(results[0], dimensions)
 
