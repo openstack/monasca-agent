@@ -174,17 +174,17 @@ Dot files, as referenced above, provide an added level of configuration to some 
 
 > **apache**
 ```
-Example for apache process and server-status metrics (secure connection):
+Example for apache process and server-status metrics (secure)
 [client]
 user=root
 password=pass
-url=http://localhost/server-status?auto
-
-Example for apache process and server-status metrics (non-secure):
+url=https://localhost/server-status?auto
+or
+Example for apache process and server-status metrics (non-secure)
 [client]
 url=http://localhost/server-status?auto
-
-Example for apache process metrics only:
+or
+Example for apache process metrics only
 [client]
 use_server_status_metrics=false
 ```
