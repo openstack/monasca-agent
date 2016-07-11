@@ -64,12 +64,12 @@ class Vertica(checks.AgentCheck):
         results, connection_status = self._query_database(user, password, timeout, query)
 
         if connection_status != 0:
-            self.gauge('vertica.db.connection_status', 1, dimensions=dimensions)
+            self.gauge('vertica.connection_status', 1, dimensions=dimensions)
             self._last_connection_status = 1
         else:
             if self._last_connection_status > 0:
                 # report successful connection status when last status not success
-                self.gauge('vertica.db.connection_status', 0, dimensions=dimensions)
+                self.gauge('vertica.connection_status', 0, dimensions=dimensions)
             self._last_connection_status = 0
             results = results.split('\n')
             self._report_node_status(results[0], dimensions)
@@ -107,7 +107,6 @@ class Vertica(checks.AgentCheck):
         node_status = result[0]['node_state']
         status_metric = 0 if node_status == 'UP' else 1
         self.gauge('vertica.node_status', status_metric, dimensions=dimensions, value_meta=result[0])
-        self.gauge('vertica.connection_status', 0, dimensions=dimensions)
 
     def _report_projection_metrics(self, results, dimensions):
         results = self._results_to_dict(results)
