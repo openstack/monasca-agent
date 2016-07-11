@@ -354,8 +354,9 @@ class LibvirtCheck(AgentCheck):
         """Inspect cpu metrics for an instance"""
 
         sample_time = float("{:9f}".format(time.time()))
+        cpu_info = insp.inspect_cpus(inst)
+
         if 'cpu.time' in metric_cache[inst_name]:
-            cpu_info = insp.inspect_cpus(inst)
             # I have a prior value, so calculate the raw_perc & push the metric
             cpu_diff = cpu_info.time - metric_cache[inst_name]['cpu.time']['value']
             time_diff = sample_time - float(metric_cache[inst_name]['cpu.time']['timestamp'])
