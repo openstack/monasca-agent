@@ -639,7 +639,7 @@ class LibvirtCheck(AgentCheck):
                     agg_values[gauge] += instance_cache.get(inst_name)[gauge]
 
             # Skip further processing on VMs that are not in an active state
-            if self._inspect_state(insp, inst, instance_cache,
+            if self._inspect_state(insp, inst, inst_name, instance_cache,
                                    dims_customer, dims_operations) != 0:
                 continue
 
