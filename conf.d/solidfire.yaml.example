@@ -1,0 +1,12 @@
+# Copyright (c) 2016 NetApp, Inc.
+init_config:
+
+instances:
+    # Each cluster can be monitored with a separate instance.
+    - name: rack_d_cluster
+      # Cluser admin with reporting permissions.
+      username: monasca_admin
+      # Cluster admin password
+      password: secret_password
+      # Cluster MVIP address, must be reachable.
+      mvip: 192.168.1.1
