@@ -1,6 +1,6 @@
 #!/bin/env python
 
-# (c) Copyright 2014-2016 Hewlett Packard Enterprise Development Company LP
+# (c) Copyright 2014-2016 Hewlett Packard Enterprise Development LP
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -386,9 +386,16 @@ class LibvirtCheck(AgentCheck):
                        dimensions=dims_operations)
             self.gauge('vm.cpu.utilization_norm_perc', int(round(normalized_perc, 0)),
                        dimensions=dims_operations)
-            self.gauge('vm.cpu.time_ns', cpu_info.time,
-                       dimensions=dims_operations)
 
+            cpu_time_name = 'cpu.time_ns'
+            # cpu.time_ns for owning tenant
+            self.gauge(cpu_time_name, cpu_info.time,
+                       dimensions=dims_operations,
+                       delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                       hostname=instance_cache.get(inst_name)['hostname'])
+            # vm..cpu.time_ns for operations tenant
+            self.gauge("vm.{0}".format(cpu_time_name), cpu_info.time,
+                       dimensions=dims_operations)
         metric_cache[inst_name]['cpu.time'] = {'timestamp': sample_time,
                                                'value': cpu_info.time}
 
