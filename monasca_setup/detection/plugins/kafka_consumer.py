@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development LP
 
 import logging
 import re
@@ -127,11 +127,16 @@ class Kafka(Plugin):
         elif self.args is not None and len(self.args) > 0:
             kafka_connect_str = self._find_kafka_connection()
             consumers = {}
+            service_name = kafka_connect_str
+            # Check if the plugin passed in a service name
+            # If it did, delete it after use so it doesn't become a consumer group
+            if 'service_name' in self.args:
+                service_name += '_' + str(self.args.pop('service_name'))
             for key, value in self.args.iteritems():
                 value_dict = {topic: [] for topic in value.split('/')}
                 consumers[key] = value_dict
             self.config['kafka_consumer'] = {'init_config': None,
-                                             'instances': [{'name': kafka_connect_str,
+                                             'instances': [{'name': service_name,
                                                             'kafka_connect_str': kafka_connect_str,
                                                             'per_partition': False,
                                                             'consumer_groups': consumers}]}
