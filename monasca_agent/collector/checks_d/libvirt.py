@@ -456,45 +456,49 @@ class LibvirtCheck(AgentCheck):
                     'timestamp': sample_time,
                     'value': value}
 
-        for metric in metric_aggregate:
-            sample_time = time.time()
-            rate_name = "{0}_total_sec".format(metric)
-            if rate_name not in metric_cache[inst_name]:
-                metric_cache[inst_name][rate_name] = {}
-            else:
-                last_update_time = metric_cache[inst_name][
-                    rate_name]['timestamp']
-                time_diff = sample_time - float(last_update_time)
-                rate_value = self._calculate_rate(metric_aggregate[metric],
-                                                  metric_cache[inst_name][rate_name]['value'],
-                                                  time_diff)
-                if rate_value < 0:
-                    # Bad value, save current reading and skip
-                    self.log.warn("Ignoring negative disk sample for: "
-                                  "{0} new value: {1} old value: {2}"
-                                  .format(inst_name, metric_aggregate[metric],
-                                          metric_cache[inst_name][rate_name][
-                                              'value']))
-                    metric_cache[inst_name][rate_name] = {
-                        'timestamp': sample_time,
-                        'value': metric_aggregate[metric]}
-                    continue
-                self.gauge(rate_name, rate_value, dimensions=dims_customer,
+        if self.init_config.get('vm_extended_disks_check_enable'):
+            this_dimensions = dict()
+            this_dimensions.update(dims_customer)
+            this_dimensions.update(dims_operations)
+            for metric in metric_aggregate:
+                sample_time = time.time()
+                rate_name = "{0}_total_sec".format(metric)
+                if rate_name not in metric_cache[inst_name]:
+                    metric_cache[inst_name][rate_name] = {}
+                else:
+                    last_update_time = metric_cache[inst_name][
+                        rate_name]['timestamp']
+                    time_diff = sample_time - float(last_update_time)
+                    rate_value = self._calculate_rate(metric_aggregate[metric],
+                                                      metric_cache[inst_name][rate_name]['value'],
+                                                      time_diff)
+                    if rate_value < 0:
+                        # Bad value, save current reading and skip
+                        self.log.warn("Ignoring negative disk sample for: "
+                                      "{0} new value: {1} old value: {2}"
+                                      .format(inst_name, metric_aggregate[metric],
+                                              metric_cache[inst_name][rate_name][
+                                                  'value']))
+                        metric_cache[inst_name][rate_name] = {
+                            'timestamp': sample_time,
+                            'value': metric_aggregate[metric]}
+                        continue
+                    self.gauge(rate_name, rate_value, dimensions=this_dimensions,
+                               delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                               hostname=instance_cache.get(inst_name)['hostname'])
+                    self.gauge("vm.{0}".format(rate_name), rate_value,
+                               dimensions=this_dimensions)
+                self.gauge("{0}_total".format(metric), metric_aggregate[metric],
+                           dimensions=this_dimensions,
                            delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
                            hostname=instance_cache.get(inst_name)['hostname'])
-                self.gauge("vm.{0}".format(rate_name), rate_value,
-                           dimensions=dims_operations)
-            self.gauge("{0}_total".format(metric), metric_aggregate[metric],
-                       dimensions=dims_customer,
-                       delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
-                       hostname=instance_cache.get(inst_name)['hostname'])
-            self.gauge("vm.{0}_total".format(metric),
-                       metric_aggregate[metric],
-                       dimensions=dims_operations)
-            # Save this metric to the cache
-            metric_cache[inst_name][rate_name] = {
-                'timestamp': sample_time,
-                'value': metric_aggregate[metric]}
+                self.gauge("vm.{0}_total".format(metric),
+                           metric_aggregate[metric],
+                           dimensions=this_dimensions)
+                # Save this metric to the cache
+                metric_cache[inst_name][rate_name] = {
+                    'timestamp': sample_time,
+                    'value': metric_aggregate[metric]}
 
     def _inspect_disk_info(self, insp, inst, inst_name, instance_cache, metric_cache,
                            dims_customer, dims_operations):
