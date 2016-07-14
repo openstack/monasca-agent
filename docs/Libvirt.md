@@ -46,6 +46,8 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 
 `ping_check` includes the entire command line (sans the IP address, which is automatically appended) used to perform a ping check against instances, with a keyword `NAMESPACE` automatically replaced with the appropriate network namespace for the VM being monitored.  Set to False (or omit altogether) to disable ping checks.  See [ping checks](#ping-checks) below for more detail on how ping checks are set up and how they work.
 
+`max_ping_concurrency` specifies the number of ping command processes that will be run concurrently. This should be set to a value that allows the plugin to finish within the agent collection period even if there is a networking issue. For example, if the expected number of VMs per compute node is 40 and each VM will have one IP Adddress and using the default ping timeout of 1 seconds, if all of the pings fail and `max_ping_concurrency` is 1, then the plugin will take at least 40 seconds to do the ping checks. Increasing `max_ping_concurrency` will allow the plugin to finish faster. The default value is 8.
+
 `alive_only` will suppress all per-VM metrics aside from `host_alive_status` and `vm.host_alive_status`, including all I/O, network, memory, ping, and CPU metrics.  [Aggregate Metrics](#aggregate-metrics), however, would still be enabled if `alive_only` is true.  By default, `alive_only` is false.
 
 `network_use_bits` will submit network metrics in bits rather than bytes.  This will stop submitting the metrics `net.in_bytes_sec` and `net.out_bytes_sec`, and instead submit `net.in_bits_sec` and `net.out_bits_sec`.
