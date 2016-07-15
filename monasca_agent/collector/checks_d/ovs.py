@@ -163,6 +163,10 @@ class OvsCheck(AgentCheck):
                 continue
             if is_router_port:
                 router_name = port_info['router_name']
+                if not router_name:
+                    log_msg = "Missing router name for router_uuid {0} -- skipping."
+                    self.log.error(log_msg.format(device_uuid))
+                    continue
                 ifx_dimensions = {'resource_id': device_uuid,
                                   'port_id': port_uuid,
                                   'router_name': router_name}
