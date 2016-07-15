@@ -1,18 +1,18 @@
-requests
+requests>=2.7.0,<=2.10.0
 
-oslo.config
-oslo.utils
-oslo.vmware
+oslo.config<=3.12.0
+oslo.utils<=3.15.0
+oslo.vmware>=1.16.0,<=2.10.0
 
-PyYAML
-gevent
-httplib2
-netaddr
+PyYAML>=3.1.0,<=3.11
+gevent>=1.1.1
+httplib2>=0.7.5,<=0.9.2
+netaddr>=0.7.12,<=0.7.18,!=0.7.16
 ntplib>=0.3.2,<0.4
-#psutil>=2.2.1,<3.1.0
-pymongo
-python-memcached
+psutil>=3.0.0,<3.1.0
+pymongo>=3.0.2,<=3.2.2,!=3.1 
+python-memcached>=1.56,<=1.58
 python-monascaclient>=1.0.30 # Apache-2.0
-redis
+redis>=2.10.0,<=2.10.5
 supervisor>=3.1.3,<3.2
-tornado
+tornado>=4.3
