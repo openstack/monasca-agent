@@ -179,6 +179,13 @@ class OvsCheck(AgentCheck):
             for metric_name, idx in self._get_metrics_map(measure).iteritems():
                 # POST to customer project
                 interface_stats_key = self._get_interface_stats_key(idx, metric_name, measure, ifx)
+                if interface_stats_key not in value:
+                    #
+                    # If we've skipped a given metric above due to
+                    # counter rollover/negative value, we won't have
+                    # a value to publish for that metric this round.
+                    #
+                    continue
                 customer_dimensions = this_dimensions.copy()
                 del customer_dimensions['hostname']
                 if is_router_port:
