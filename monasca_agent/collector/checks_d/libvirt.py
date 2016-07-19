@@ -1,6 +1,6 @@
 #!/bin/env python
 
-# (c) Copyright 2014-2016 Hewlett Packard Enterprise Development Company LP
+# (c) Copyright 2014-2016 Hewlett Packard Enterprise Development LP
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -125,7 +125,8 @@ class LibvirtCheck(AgentCheck):
                                password=self.init_config.get('admin_password'),
                                tenant_name=self.init_config.get('admin_tenant_name'),
                                auth_url=self.init_config.get('identity_uri'),
-                               endpoint_type='internalURL')
+                               endpoint_type='internalURL',
+                               region_name=self.init_config.get('region_name'))
             port_cache = nu.list_ports()['ports']
             # Finding existing network namespaces is an indication that either
             # DVR agent_mode is enabled, or this is all-in-one (like devstack)
