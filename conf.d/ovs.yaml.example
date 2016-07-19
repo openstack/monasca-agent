@@ -1,4 +1,4 @@
-# (C) Copyright 2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2016 Hewlett Packard Enterprise Development LP
 init_config:
     # These are Neutron credentials, [keystone_authtoken] in /etc/neutron/neutron.conf
     admin_password: password
@@ -29,6 +29,12 @@ init_config:
     # If set, will submit the health related metrics from ovs-vsctl command
     # output for the given network interface.
     use_health_metrics = true
+    # If specified, the collector will skip calling the plugin until the specified
+    # number of seconds has passed.
+    # NOTE: Collection is dictated by the default collection frequency therefor
+    # collect_period should be evenly divisible by the default collection frequency
+    # otherwise the plugin will be called on the collection run after the specified time
+    collect_period = 300
 
 instances:
     # Instances are not used and should be empty in `ovs.yaml` because like the
