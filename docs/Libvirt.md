@@ -252,7 +252,7 @@ Example cache (pretty-printed excerpt, see next section for complete list of ava
 | mem.free_perc        | Percent of memory free                 |                        |
 | mem.swap_used_mb     | Used swap space in Mbytes              |                        |
 | ping_status          | 0 for ping success, 1 for ping failure |                        |
-| cpu.time_ns          | Cumulative CPU time (in ns), an Operations-only metric |        |
+| cpu.time_ns          | Cumulative CPU time (in ns) |        |
 | mem.resident_mb      | Total memory used on host, an Operations-only metric |          |
 
 ### host_alive_status Codes
@@ -367,4 +367,4 @@ In addition to per-instance metrics, the Libvirt plugin will publish aggregate m
 Aggregate dimensions include hostname and component from the Operations Value column above.
 
 # License
-(C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+(C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
