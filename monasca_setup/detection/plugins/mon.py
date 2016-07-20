@@ -177,8 +177,24 @@ class MonPersister(monasca_setup.detection.Plugin):
         log.info("\tEnabling the Monasca persister process check")
         config.merge(watch_process(['monasca-persister'], 'monitoring', 'monasca-persister', exact_match=False))
 
+        adminConnector = self.persister_config['server']['adminConnectors'][0]
+        try:
+            admin_endpoint_type = adminConnector['type']
+        except Exception:
+            admin_endpoint_type = "http"
+
+        try:
+            admin_endpoint_port = adminConnector['port']
+        except Exception:
+            admin_endpoint_port = 8091
+
         log.info("\tEnabling the Monasca persister healthcheck")
-        config.merge(dropwizard_health_check('monitoring', 'monasca-persister', 'http://localhost:8091/healthcheck'))
+        config.merge(
+            dropwizard_health_check(
+                'monitoring',
+                'monasca-persister',
+                '{0}://localhost:{1}/healthcheck'.format(admin_endpoint_type,
+                                                         admin_endpoint_port)))
 
         log.info("\tEnabling the Monasca persister metrics")
         whitelist = [
@@ -244,7 +260,13 @@ class MonPersister(monasca_setup.detection.Plugin):
                           }
             whitelist.append(new_thread)
 
-        config.merge(dropwizard_metrics('monitoring', 'monasca-persister', 'http://localhost:8091/metrics', whitelist))
+        config.merge(
+            dropwizard_metrics(
+                'monitoring',
+                'monasca-persister',
+                '{0}://localhost:{1}/metrics'.format(admin_endpoint_type,
+                                                     admin_endpoint_port),
+                whitelist))
         return config
 
     def dependencies_installed(self):
