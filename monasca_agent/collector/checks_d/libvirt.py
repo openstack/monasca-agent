@@ -391,7 +391,7 @@ class LibvirtCheck(AgentCheck):
             cpu_time_name = 'cpu.time_ns'
             # cpu.time_ns for owning tenant
             self.gauge(cpu_time_name, cpu_info.time,
-                       dimensions=dims_operations,
+                       dimensions=dims_customer,
                        delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
                        hostname=instance_cache.get(inst_name)['hostname'])
             # vm..cpu.time_ns for operations tenant
