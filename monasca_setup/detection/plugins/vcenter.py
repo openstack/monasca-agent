@@ -1,4 +1,4 @@
-# (C) Copyright 2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2016 Hewlett Packard Enterprise Development LP
 
 import ConfigParser
 import logging
@@ -82,15 +82,20 @@ class VCenter(Plugin):
                 if (nova_cfg.has_option(cfg_section, 'host_ip')
                         and nova_cfg.has_option(cfg_section, 'host_username')
                         and nova_cfg.has_option(cfg_section, 'host_password')
+                        and nova_cfg.has_option(cfg_section, 'host_port')
                         and nova_cfg.has_option(cfg_section, 'cluster_name')):
 
                     instance = {
                         'vcenter_ip': nova_cfg.get(cfg_section, 'host_ip'),
                         'username': nova_cfg.get(cfg_section, 'host_username'),
                         'password': nova_cfg.get(cfg_section, 'host_password'),
+                        'port': int(nova_cfg.get(cfg_section, 'host_port')),
                         'clusters': [nova_cfg.get(cfg_section, 'cluster_name')]
                     }
                 else:
+                    log.warn("One or more configuration parameters are missing"
+                             " host_ip, host_username, host_password,"
+                             " host_port, cluster_name")
                     # put default format
                     instance = self._config_format()
             config['vcenter'] = {'init_config': {},
@@ -103,6 +108,7 @@ class VCenter(Plugin):
         instance = {'vcenter_ip': None,
                     'username': None,
                     'password': None,
+                    'port': None,
                     'clusters': []}
         return instance
 
