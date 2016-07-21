@@ -1,11 +1,9 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 """ Metric data types
 """
-from collections import namedtuple
 import logging
 from time import time
 
-from monasca_agent.common.exceptions import Infinity
 from monasca_agent.common.exceptions import UnknownValue
 
 
@@ -254,38 +252,46 @@ class Rate(Metric):
             self.value_meta = value_meta.copy()
         else:
             self.value_meta = None
+        self.value = None
 
     def sample(self, value, sample_rate, timestamp=None):
         if not timestamp:
             timestamp = time()
         self.samples.append((int(timestamp), value))
 
+        if len(self.samples) < 2:
+            self.value = None
+        else:
+            self.value = self._rate(self.samples[-2], self.samples[-1])
+            self.samples = self.samples[-1:]
+
     def _rate(self, sample1, sample2):
-        rate_interval = sample2[0] - sample1[0]
-        if rate_interval == 0:
-            log.warn('Metric %s has an interval of 0. Not flushing.' % self.name)
-            raise Infinity()
-
-        delta = sample2[1] - sample1[1]
-        if delta < 0:
-            log.info('Metric %s has a rate < 0. Counter may have been Reset.' % self.name)
-            raise UnknownValue()
-
-        return (delta / float(rate_interval))
+        delta_t = sample2[0] - sample1[0]
+        delta_v = sample2[1] - sample1[1]
+        rate = None
+        if delta_v < 0:
+            log.debug('Metric {0} has a rate < 0. New value = {1} and old '
+                      'value = {2}. Counter may have been Reset.'.
+                      format(self.name, sample2[1], sample1[1]))
+            return rate
+        try:
+            rate = delta_v / float(delta_t)
+        except ZeroDivisionError as e:
+            log.exception('Error in sampling metric {0}, time difference '
+                          'between current time and last_update time is '
+                          '0, returned {1}'.format(self.name, e))
+        return rate
 
     def flush(self, timestamp):
-        if len(self.samples) < 2:
+        if not self.value:
             return []
-
-        val = self._rate(self.samples[-2], self.samples[-1])
-        self.samples = self.samples[-1:]
-
-        return [self.formatter(hostname=self.hostname,
-                               device_name=self.device_name,
-                               dimensions=self.dimensions,
-                               delegated_tenant=self.delegated_tenant,
-                               metric=self.name,
-                               value=val,
-                               timestamp=timestamp,
-                               metric_type=MetricTypes.GAUGE,
-                               value_meta=self.value_meta)]
+        else:
+            return [self.formatter(hostname=self.hostname,
+                                   device_name=self.device_name,
+                                   dimensions=self.dimensions,
+                                   delegated_tenant=self.delegated_tenant,
+                                   metric=self.name,
+                                   value=self.value,
+                                   timestamp=timestamp,
+                                   metric_type=MetricTypes.GAUGE,
+                                   value_meta=self.value_meta)]
