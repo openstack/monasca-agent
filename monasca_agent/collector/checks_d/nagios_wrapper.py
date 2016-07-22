@@ -1,11 +1,10 @@
 #!/bin/env python
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016Hewlett Packard Enterprise Development Company LP
 """Monasca Agent wrapper for Nagios checks.
 
 """
 
 import hashlib
-import json
 import os
 import pickle
 import socket
@@ -38,12 +37,6 @@ class WrapNagios(ServicesCheck):
                 return True
         else:
             return False
-
-    def _create_status_event(self, status, msg, instance):
-        """Does nothing: status events are not yet supported by Mon API.
-
-        """
-        return
 
     def _check(self, instance):
         """Run the command specified by check_command and capture the result.

@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 
 import json
 import time
@@ -15,8 +15,7 @@ NODE_TYPE = 'nodes'
 MAX_DETAILED_QUEUES = 150
 MAX_DETAILED_EXCHANGES = 100
 MAX_DETAILED_NODES = 50
-# Post an event in the stream when the number of queues or nodes to
-# collect is above 90% of the limit
+
 ALERT_THRESHOLD = 0.9
 QUEUE_ATTRIBUTES = [
     # Path, Name
@@ -247,30 +246,3 @@ class RabbitMQ(checks.AgentCheck):
             except ValueError:
                 self.log.exception("Caught ValueError for %s %s = %s  with dimensions: %s" % (
                     METRIC_SUFFIX[object_type], attribute, value, dimensions))
-
-    def alert(self, base_url, max_detailed, size, object_type):
-        key = "%s%s" % (base_url, object_type)
-        if key in self.already_alerted:
-            # We have already posted an event
-            return
-
-        self.already_alerted.append(key)
-
-        title = "RabbitMQ integration is approaching the limit on the number of %s that can be collected from on %s" % (
-            object_type, self.hostname)
-        msg = """%s %s are present. The limit is %s.
-        Please get in touch with Monasca development to increase the limit.""" % (size, object_type, max_detailed)
-
-        event = {
-            "timestamp": int(time.time()),
-            "event_type": EVENT_TYPE,
-            "msg_title": title,
-            "msg_text": msg,
-            "alert_type": 'warning',
-            "source_type_name": SOURCE_TYPE_NAME,
-            "host": self.hostname,
-            "dimensions": {"base_url": base_url, "host": self.hostname},
-            "event_object": "rabbitmq.limit.%s" % object_type,
-        }
-
-        self.event(event)

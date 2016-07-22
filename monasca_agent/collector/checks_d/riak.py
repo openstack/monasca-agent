@@ -1,11 +1,9 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 
-from hashlib import md5
 from httplib2 import Http
 from httplib2 import HttpLib2Error
 import json
 import socket
-import time
 
 from monasca_agent.collector.checks import AgentCheck
 
@@ -56,8 +54,6 @@ class Riak(AgentCheck):
         default_timeout = self.init_config.get('default_timeout', 5)
         timeout = float(instance.get('timeout', default_timeout))
 
-        aggregation_key = md5(url).hexdigest()
-
         dimensions = self._set_dimensions(None, instance)
 
         try:
@@ -65,19 +61,13 @@ class Riak(AgentCheck):
             resp, content = h.request(url, "GET")
 
         except socket.timeout:
-            self.timeout_event(url, timeout, aggregation_key)
             return
 
         except socket.error:
-            self.timeout_event(url, timeout, aggregation_key)
             return
 
         except HttpLib2Error:
-            self.timeout_event(url, timeout, aggregation_key)
             return
-
-        if resp.status != 200:
-            self.status_code_event(url, resp, aggregation_key)
 
         stats = json.loads(content)
 
@@ -89,21 +79,3 @@ class Riak(AgentCheck):
             self.gauge('riak.coord_redirs', count, dimensions=dimensions)
 
         self.prev_coord_redirs_total = coord_redirs_total
-
-    def timeout_event(self, url, timeout, aggregation_key):
-        self.event({
-            'timestamp': int(time.time()),
-            'event_type': 'riak_check',
-            'msg_title': 'riak check timeout',
-            'msg_text': '%s timed out after %s seconds.' % (url, timeout),
-            'aggregation_key': aggregation_key
-        })
-
-    def status_code_event(self, url, r, aggregation_key):
-        self.event({
-            'timestamp': int(time.time()),
-            'event_type': 'riak_check',
-            'msg_title': 'Invalid response code for riak check',
-            'msg_text': '%s returned a status of %s' % (url, r.status_code),
-            'aggregation_key': aggregation_key
-        })

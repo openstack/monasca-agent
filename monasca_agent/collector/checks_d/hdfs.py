@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 
 from monasca_agent.collector.checks import AgentCheck
 
@@ -48,5 +48,4 @@ if __name__ == '__main__':
     check, instances = HDFSCheck.from_yaml('./hdfs.yaml')
     for instance in instances:
         check.check(instance)
-        print("Events: %r" % check.get_events())
         print("Metrics: %r" % check.get_metrics())

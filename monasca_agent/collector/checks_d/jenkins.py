@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 
 from collections import defaultdict
 from glob import glob
@@ -119,17 +119,14 @@ class Jenkins(AgentCheck):
         except Exception as e:
             self.log.error("Error while working on job %s, exception: %s" % (job_name, e))
 
-    def check(self, instance, create_event=True):
-        dimensions = self._set_dimensions(None, instance)
+    def check(self, instance):
         if self.high_watermarks.get(instance.get('name'), None) is None:
             # On the first run of check(), prime the high_watermarks dict
-            # so that we only send events that occurred after the agent
-            # started.
             # (Setting high_watermarks in the next statement prevents
             # any kind of infinite loop (assuming nothing ever sets
             # high_watermarks to None again!))
             self.high_watermarks[instance.get('name')] = defaultdict(lambda: 0)
-            self.check(instance, create_event=False)
+            self.check(instance)
 
         jenkins_home = instance.get('jenkins_home', None)
 
@@ -145,18 +142,4 @@ class Jenkins(AgentCheck):
 
         for job_dir in job_dirs:
             for output in self._get_build_results(instance.get('name'), job_dir):
-                output['host'] = get_hostname(self.agent_config)
-                if create_event:
-                    self.log.debug("Creating event for job: %s" % output['job_name'])
-                    self.event(output)
-
-                    dimensions.update({'job_name': output['job_name']})
-                    if 'branch' in output:
-                        dimensions.update({'branch': output['branch']})
-                    self.gauge("jenkins.job.duration", float(
-                        output['duration']) / 1000.0, dimensions=dimensions)
-
-                    if output['result'] == 'SUCCESS':
-                        self.increment('jenkins.job.success', dimensions=dimensions)
-                    else:
-                        self.increment('jenkins.job.failure', dimensions=dimensions)
+                output['host'] = get_hostname()

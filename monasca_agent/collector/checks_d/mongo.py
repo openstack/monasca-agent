@@ -1,11 +1,9 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 
 import re
-import time
 import types
 
 from monasca_agent.collector.checks import AgentCheck
-from monasca_agent.common.util import get_hostname
 
 
 # When running with pymongo < 2.0
@@ -103,53 +101,6 @@ class MongoDb(AgentCheck):
             version = "Unknown"
 
         return {"pymongo": version}
-
-    def check_last_state(self, state, server, agentConfig):
-        if self._last_state_by_server.get(server, -1) != state:
-            self._last_state_by_server[server] = state
-            return self.create_event(state, server, agentConfig)
-
-    def create_event(self, state, server, agentConfig):
-        """Create an event with a message describing the replication
-
-        state of a mongo node
-        """
-
-        def get_state_description(state):
-            if state == 0:
-                return 'Starting Up'
-            elif state == 1:
-                return 'Primary'
-            elif state == 2:
-                return 'Secondary'
-            elif state == 3:
-                return 'Recovering'
-            elif state == 4:
-                return 'Fatal'
-            elif state == 5:
-                return 'Starting up (forking threads)'
-            elif state == 6:
-                return 'Unknown'
-            elif state == 7:
-                return 'Arbiter'
-            elif state == 8:
-                return 'Down'
-            elif state == 9:
-                return 'Rollback'
-
-        status = get_state_description(state)
-        hostname = get_hostname(agentConfig)
-        msg_title = "%s is %s" % (server, status)
-        msg = "MongoDB %s just reported as %s" % (server, status)
-
-        self.event({
-            'timestamp': int(time.time()),
-            'event_type': 'Mongo',
-            'api_key': agentConfig['api_key'],
-            'msg_title': msg_title,
-            'msg_text': msg,
-            'host': hostname
-        })
 
     def check(self, instance):
         """Returns a dictionary that looks a lot like what's sent back by db.serverStatus().
@@ -249,7 +200,6 @@ class MongoDb(AgentCheck):
                     data['health'] = current['health']
 
                 data['state'] = replSet['myState']
-                self.check_last_state(data['state'], server, self.agent_config)
                 status['replSet'] = data
         except Exception as e:
             if "OperationFailure" in repr(e) and "replSetGetStatus" in str(e):
