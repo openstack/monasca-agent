@@ -84,7 +84,7 @@ class TestPostfix(unittest.TestCase):
         # output what went in... per queue
         print()
         for queue, count in self.in_count.iteritems():
-            print('Test messges put into', queue, '= ', self.in_count[queue][0])
+            print('Test messages put into', queue, '= ', self.in_count[queue][0])
 
         # output postfix.py dd-agent plugin counts... per queue
         print()

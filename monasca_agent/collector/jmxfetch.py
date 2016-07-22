@@ -105,7 +105,7 @@ class JMXFetch(object):
         java_bin_path: is the path to the java executable. It was
         previously set in the "instance" part of the yaml file of the
         jmx check. So we need to parse yaml files to get it.
-        We assume that this value is alwayws the same for every jmx check
+        We assume that this value is always the same for every jmx check
         so we can return the first value returned
 
         java_options: is string contains options that will be passed to java_bin_path
