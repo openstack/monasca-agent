@@ -1,4 +1,4 @@
-# (C) Copyright 2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2016 Hewlett Packard Enterprise Development LP
 """VCenter Only.
 
 Generic VCenter check. This check allows you to specify particular metrics that
@@ -81,6 +81,7 @@ class VCenterCheck(AgentCheck):
             self.password,
             3,  # retry count
             0.5,  # task_poll_interval
+            port=self.port,
             scheme="https")
         return api_session
 
@@ -302,6 +303,7 @@ class VCenterCheck(AgentCheck):
                 self.vcenter_ip = instance.get('vcenter_ip', None)
                 self.user = instance.get('username', None)
                 self.password = instance.get('password', None)
+                self.port = instance.get('port', 443)
                 self.clusters = instance.get('clusters', None)
                 if not self.vcenter_ip:
                     self.log.warn("vCenter not configured")
