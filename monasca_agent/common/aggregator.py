@@ -1,4 +1,4 @@
-# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 """ Aggregation classes used by the collector and statsd to batch messages sent to the forwarder.
 """
 import json
@@ -62,14 +62,12 @@ class MetricsAggregator(object):
         self.metrics = {}
 
     def flush(self):
-        timestamp = time()
-
         # Flush samples.  The individual metrics reset their internal samples
         # when required
         metrics = []
         for context, metric in self.metrics.items():
             try:
-                metrics.extend(metric.flush(timestamp))
+                metrics.extend(metric.flush())
             except Exception:
                 log.exception('Error flushing {0} metrics.'.format(metric.name))
 
@@ -89,25 +87,6 @@ class MetricsAggregator(object):
         if 'SUPPRESS' == hostname:
             return None
         return hostname or self.hostname
-
-    @staticmethod
-    def formatter(metric, value, timestamp, dimensions, hostname, delegated_tenant=None,
-                  device_name=None, metric_type=None, value_meta=None):
-        """Formats metrics, put them into a Measurement class
-           (metric, timestamp, value, {"dimensions": {"name1": "value1", "name2": "value2"}, ...})
-           dimensions should be a dictionary
-        """
-        if 'hostname' not in dimensions and hostname:
-            dimensions.update({'hostname': hostname})
-        if device_name:
-            dimensions.update({'device': device_name})
-
-        return metrics_pkg.Measurement(metric,
-                                       int(timestamp),
-                                       value,
-                                       dimensions,
-                                       delegated_tenant=delegated_tenant,
-                                       value_meta=value_meta)
 
     def packets_per_second(self, interval):
         if interval == 0:
@@ -185,22 +164,26 @@ class MetricsAggregator(object):
         if value_meta:
             if not self._valid_value_meta(value_meta, name, dimensions):
                 raise InvalidValueMeta
-            meta = tuple(value_meta.items())
-        else:
-            meta = None
 
         hostname_to_post = self.get_hostname_to_post(hostname)
-        context = (name, tuple(dimensions.items()), meta, delegated_tenant,
+
+        if 'hostname' not in dimensions and hostname_to_post:
+            dimensions.update({'hostname': hostname_to_post})
+
+        # TODO(joe): Shouldn't device_name be added to dimensions in the check
+        #            plugin?  Why is it special cased through so many layers?
+        if device_name:
+            dimensions.update({'device': device_name})
+
+        # TODO(joe): Decide if hostname_to_post and device_name are necessary
+        #            for the context tuple
+        context = (name, tuple(dimensions.items()), delegated_tenant,
                    hostname_to_post, device_name)
 
         if context not in self.metrics:
-            self.metrics[context] = metric_class(self.formatter,
-                                                 name,
+            self.metrics[context] = metric_class(name,
                                                  dimensions,
-                                                 hostname_to_post,
-                                                 device_name,
-                                                 delegated_tenant,
-                                                 value_meta)
+                                                 tenant=delegated_tenant)
         cur_time = time()
         if timestamp is not None:
             if cur_time - int(timestamp) > self.recent_point_threshold:
@@ -209,4 +192,5 @@ class MetricsAggregator(object):
                 return
         else:
             timestamp = cur_time
+        self.metrics[context].value_meta = value_meta
         self.metrics[context].sample(value, sample_rate, timestamp)

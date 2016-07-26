@@ -1,5 +1,5 @@
 #!/bin/env python
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 """Monitoring Agent plugin for HTTP/API checks.
 
 """
@@ -19,8 +19,6 @@ class HTTPMetrics(http_check.HTTPCheck):
         self.metric_method = {
             'gauge': self.gauge,
             'counter': self.increment,
-            'histogram': self.histogram,
-            'set': self.set,
             'rate': self.rate}
 
     def _valid_number(self, value, name):
@@ -60,8 +58,8 @@ class HTTPMetrics(http_check.HTTPCheck):
 
                 value = current
 
-                # everything requires a number, except set
-                if metric_type in ['gauge', 'counter', 'histogram', 'rate']:
+                # everything requires a number
+                if metric_type in ['gauge', 'counter', 'rate']:
                     if not self._valid_number(value, metric_name):
                         self.log.warning("Invalid value '{0}' for metric '{1}'".format(value, metric_name))
                         continue

@@ -1,4 +1,4 @@
-# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 
 import collections
 import copy
@@ -42,7 +42,7 @@ class MonascaAPI(object):
         except KeyError:
             self.amplifier = None
 
-    def _post(self, measurements, delegated_tenant=None):
+    def _post(self, measurements, tenant=None):
         """Does the actual http post
             measurements is a list of Measurement
         """
@@ -50,8 +50,9 @@ class MonascaAPI(object):
             'jsonbody': measurements
         }
 
-        if delegated_tenant is not None:
-            kwargs['tenant_id'] = delegated_tenant
+        if tenant:
+            kwargs['tenant_id'] = tenant
+
         if not self.mon_client:
             self.mon_client = self.get_monclient()
             if not self.mon_client:
@@ -84,32 +85,18 @@ class MonascaAPI(object):
             the monitoring api
         """
         # Add default dimensions
-        for measurement in measurements:
-            if isinstance(measurement.dimensions, list):
-                measurement.dimensions = dict([(d[0], d[1]) for d in measurement.dimensions])
-
-        # "Amplify" these measurements to produce extra load, if so configured
-        if self.amplifier is not None and self.amplifier > 0:
-            extra_measurements = []
-            for measurement in measurements:
-                for multiple in range(1, self.amplifier + 1):
-                    # Create a copy of the measurement, but with the addition
-                    # of an 'amplifier' dimension
-                    measurement_copy = copy.deepcopy(measurement)
-                    measurement_copy.dimensions.update({'amplifier': multiple})
-                    extra_measurements.append(measurement_copy)
-            measurements.extend(extra_measurements)
+        for envelope in measurements:
+            measurement = envelope['measurement']
+            if isinstance(measurement['dimensions'], list):
+                measurement['dimensions'] = dict([(d[0], d[1]) for d in measurement['dimensions']])
 
         # Split out separate POSTs for each delegated tenant (includes 'None')
         tenant_group = {}
-        for measurement_element in measurements:
-            measurement = copy.deepcopy(measurement_element)
-            m_dict = measurement.__dict__
-            m_dict['timestamp'] *= 1000
-            delegated_tenant = m_dict.pop('delegated_tenant')
-            if delegated_tenant not in tenant_group:
-                tenant_group[delegated_tenant] = []
-            tenant_group[delegated_tenant].extend([m_dict.copy()])
+        for envelope in measurements:
+            measurement = envelope['measurement']
+            tenant = envelope['tenant_id']
+            tenant_group.setdefault(tenant, []).append(copy.deepcopy(measurement))
+
         for tenant in tenant_group:
             self._post(tenant_group[tenant], tenant)
 

@@ -1,10 +1,8 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 
 from hashlib import md5
 import json
 import urllib2
-
-from monasca_agent.common.metrics import Measurement
 
 
 def post_headers(payload):
@@ -25,11 +23,7 @@ def http_emitter(message, log, url):
     # Post back the data
     partial_payload = []
     for measurement in message:
-        if not isinstance(measurement, Measurement):
-            log.error('Data was not in the form of a monasca_agent.common.metrics.Measurement')
-            continue
-        # Measurements need their __dict__ encoded to avoid being expressed as a tuple
-        partial_payload.append(measurement.__dict__)
+        partial_payload.append(measurement)
 
     payload = json.dumps(partial_payload)
     url = "%s/intake" % url
