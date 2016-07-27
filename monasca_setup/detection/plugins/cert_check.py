@@ -1,4 +1,4 @@
-# (C) Copyright 2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2016 Hewlett Packard Enterprise Development LP
 
 import logging
 
@@ -24,7 +24,7 @@ class CertificateCheck(monasca_setup.detection.ArgsPlugin):
        which is a comma-separated list of urls
        Examples:
 
-       monasca-setup -d hostalive -a "urls=https://ThisCloud.example:8070"
+       monasca-setup -d CertificateCheck -a "urls=https://ThisCloud.example:8070"
        These arguments are optional:
        ca_certs: file containing the certificates for Certificate Authorities
                  default is CA_CERTS
