@@ -29,6 +29,7 @@ from datetime import datetime
 from datetime import timedelta
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.collector.virt import inspector
+from multiprocessing.dummy import Pool
 from netaddr import all_matching_cidrs
 
 DOM_STATES = {libvirt.VIR_DOMAIN_BLOCKED: 'VM is blocked',
@@ -57,6 +58,8 @@ class LibvirtCheck(AgentCheck):
         else:
             self._disk_collection_period = 0
         self._skip_disk_collection = False
+        pool_size = self.init_config.get('max_ping_concurrency', 8)
+        self.pool = Pool(pool_size)
 
     def _test_vm_probation(self, created):
         """Test to see if a VM was created within the probation period.
@@ -578,6 +581,43 @@ class LibvirtCheck(AgentCheck):
         else:
             self._skip_disk_collection = False
 
+    def _run_ping(self, dims_customer, dims_operations, inst_name, instance_cache, net):
+        """Create a ping command and hand it off to the Thread Pool"""
+        ping_cmd = self.init_config.get('ping_check').replace('NAMESPACE',
+                                                              net['namespace']).split()
+        ping_cmd.append(net['ip'])
+        dims_customer_ip = dims_customer.copy()
+        dims_operations_ip = dims_operations.copy()
+        dims_customer_ip['ip'] = net['ip']
+        dims_operations_ip['ip'] = net['ip']
+        with open(os.devnull, "w") as fnull:
+            try:
+                self.log.debug("Running ping test: {0}".format(' '.join(ping_cmd)))
+                res = subprocess.call(ping_cmd,
+                                      stdout=fnull,
+                                      stderr=fnull)
+                tenant_id = instance_cache.get(inst_name)['tenant_id']
+                hostname = instance_cache.get(inst_name)['hostname']
+                return (res, dims_customer_ip, dims_operations_ip, tenant_id,
+                        hostname)
+
+            except Exception as e:
+                self.log.exception("OS error running '{0}' failed".format(ping_cmd), e)
+                raise e
+
+    def _check_ping_results(self, ping_results):
+        """Iterate through ping results and create measurements"""
+        for result in ping_results:
+            result.wait()
+            # If it wasn't successful, a message was already logged in _run_ping
+            if result.successful():
+                (res, dims_customer_ip, dims_operations_ip, delegated_tenant,
+                 hostname) = result.get()
+                self.gauge('ping_status', res, dimensions=dims_customer_ip,
+                           delegated_tenant=delegated_tenant,
+                           hostname=hostname)
+                self.gauge('vm.ping_status', res, dimensions=dims_operations_ip)
+
     def check(self, instance):
         """Gather VM metrics for each instance"""
 
@@ -602,6 +642,7 @@ class LibvirtCheck(AgentCheck):
 
         insp = inspector.get_hypervisor_inspector()
         updated_cache_this_time = False
+        ping_results = []
         for inst in insp._get_connection().listAllDomains():
             # Verify that this instance exists in the cache.  Add if necessary.
             inst_name = inst.name()
@@ -703,26 +744,8 @@ class LibvirtCheck(AgentCheck):
             # Test instance's remote responsiveness (ping check) if possible
             if (self.init_config.get('vm_ping_check_enable')) and self.init_config.get('ping_check') and 'network' in instance_cache.get(inst_name):
                 for net in instance_cache.get(inst_name)['network']:
-
-                    ping_cmd = self.init_config.get('ping_check').replace('NAMESPACE',
-                                                                          net['namespace']).split()
-                    ping_cmd.append(net['ip'])
-                    dims_customer_ip = dims_customer.copy()
-                    dims_operations_ip = dims_operations.copy()
-                    dims_customer_ip['ip'] = net['ip']
-                    dims_operations_ip['ip'] = net['ip']
-                    with open(os.devnull, "w") as fnull:
-                        try:
-                            self.log.debug("Running ping test: {0}".format(' '.join(ping_cmd)))
-                            res = subprocess.call(ping_cmd,
-                                                  stdout=fnull,
-                                                  stderr=fnull)
-                            self.gauge('ping_status', res, dimensions=dims_customer_ip,
-                                       delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
-                                       hostname=instance_cache.get(inst_name)['hostname'])
-                            self.gauge('vm.ping_status', res, dimensions=dims_operations_ip)
-                        except OSError as e:
-                            self.log.warn("OS error running '{0}' returned {1}".format(ping_cmd, e))
+                    ping_args = [dims_customer, dims_operations, inst_name, instance_cache, net]
+                    ping_results.append(self.pool.apply_async(self._run_ping, ping_args))
 
         # Save these metrics for the next collector invocation
         self._update_metric_cache(metric_cache, math.ceil(time.time() - time_start))
@@ -730,6 +753,9 @@ class LibvirtCheck(AgentCheck):
         # Publish aggregate metrics
         for gauge in agg_gauges:
             self.gauge(agg_gauges[gauge], agg_values[gauge], dimensions=dims_base)
+
+        # Check results of ping tests
+        self._check_ping_results(ping_results)
 
     def _calculate_rate(self, current_value, cache_value, time_diff):
         """Calculate rate based on current, cache value and time_diff."""

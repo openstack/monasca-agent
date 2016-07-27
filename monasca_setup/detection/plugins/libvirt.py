@@ -35,6 +35,8 @@ ping_options = [["/usr/bin/fping", "-n", "-c1", "-t250", "-q"],
                 ["/bin/ping", "-n", "-c1", "-w1", "-q"]]
 # Path to 'ip' command (needed to execute ping within network namespaces)
 ip_cmd = "/sbin/ip"
+# How many ping commands to run concurrently
+default_max_ping_concurrency = 8
 # Disk metrics can be collected at a larger interval than other vm metrics
 default_disk_collection_period = 0
 
@@ -103,6 +105,7 @@ class Libvirt(Plugin):
                            'nova_refresh': nova_refresh,
                            'vm_probation': vm_probation,
                            'metadata': metadata,
+                           'max_ping_concurrency': default_max_ping_concurrency,
                            'disk_collection_period': default_disk_collection_period}
 
             # Set default parameters for included checks
@@ -164,7 +167,7 @@ class Libvirt(Plugin):
             # Handle monasca-setup detection arguments, which take precedence
             if self.args:
                 for arg in self.args:
-                    if arg == 'disk_collection_period':
+                    if arg in ['disk_collection_period', 'max_ping_concurrency']:
                         init_config[arg] = int(self.args[arg])
                     else:
                         init_config[arg] = self.literal_eval(self.args[arg])
