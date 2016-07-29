@@ -460,9 +460,6 @@ class LibvirtCheck(AgentCheck):
                     'value': value}
 
         if self.init_config.get('vm_extended_disks_check_enable'):
-            this_dimensions = dict()
-            this_dimensions.update(dims_customer)
-            this_dimensions.update(dims_operations)
             for metric in metric_aggregate:
                 sample_time = time.time()
                 rate_name = "{0}_total_sec".format(metric)
@@ -486,18 +483,18 @@ class LibvirtCheck(AgentCheck):
                             'timestamp': sample_time,
                             'value': metric_aggregate[metric]}
                         continue
-                    self.gauge(rate_name, rate_value, dimensions=this_dimensions,
+                    self.gauge(rate_name, rate_value, dimensions=dims_customer,
                                delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
                                hostname=instance_cache.get(inst_name)['hostname'])
                     self.gauge("vm.{0}".format(rate_name), rate_value,
-                               dimensions=this_dimensions)
+                               dimensions=dims_operations)
                 self.gauge("{0}_total".format(metric), metric_aggregate[metric],
-                           dimensions=this_dimensions,
+                           dimensions=dims_customer,
                            delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
                            hostname=instance_cache.get(inst_name)['hostname'])
                 self.gauge("vm.{0}_total".format(metric),
                            metric_aggregate[metric],
-                           dimensions=this_dimensions)
+                           dimensions=dims_operations)
                 # Save this metric to the cache
                 metric_cache[inst_name][rate_name] = {
                     'timestamp': sample_time,
