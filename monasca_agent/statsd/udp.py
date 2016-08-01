@@ -1,4 +1,4 @@
-# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development LP
 
 import ast
 import logging
@@ -15,9 +15,6 @@ UDP_SOCKET_TIMEOUT = 5
 metric_class = {
     'g': metrics_pkg.Gauge,
     'c': metrics_pkg.Counter,
-    'h': metrics_pkg.Histogram,
-    'ms': metrics_pkg.Histogram,
-    's': metrics_pkg.Set,
     'r': metrics_pkg.Rate,
 }
 
@@ -104,14 +101,21 @@ class Server(object):
 
             if packet.startswith('_e'):
                 # Monasca api doesnt support events
-                pass
-            else:
-                # todo it seems like this count should be done in the submit_metric method
-                self.aggregator.count += 1
-                name, value, mtype, dimensions, sample_rate = self._parse_metric_packet(packet)
+                continue
 
-                self.aggregator.submit_metric(
-                    name, value, metric_class[mtype], dimensions=dimensions, sample_rate=sample_rate)
+            # todo it seems like this count should be done in the submit_metric method
+            self.aggregator.count += 1
+            name, value, mtype, dimensions, sample_rate = self._parse_metric_packet(packet)
+
+            if mtype not in metric_class:
+                log.warn("metric type {} not supported.".format(mtype))
+                continue
+
+            self.aggregator.submit_metric(name,
+                                          value,
+                                          metric_class[mtype],
+                                          dimensions=dimensions,
+                                          sample_rate=sample_rate)
 
     def start(self):
         """Run the server."""
