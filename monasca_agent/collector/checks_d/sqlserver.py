@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 """Check the performance counters from SQL Server.
 
 """
@@ -8,7 +8,7 @@ from monasca_agent.collector.checks import AgentCheck
 
 
 ALL_INSTANCES = 'ALL'
-VALID_METRIC_TYPES = ('gauge', 'rate', 'histogram')
+VALID_METRIC_TYPES = ('gauge', 'rate')
 
 
 class SQLServer(AgentCheck):

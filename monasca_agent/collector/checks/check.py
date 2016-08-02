@@ -137,48 +137,6 @@ class AgentCheck(util.Dimensions):
                                       device_name,
                                       value_meta)
 
-    def histogram(self, metric, value, dimensions=None, delegated_tenant=None,
-                  hostname=None, device_name=None, value_meta=None):
-        """Sample a histogram value, with optional dimensions, hostname and device name.
-
-        :param metric: The name of the metric
-        :param value: The value to sample for the histogram
-        :param dimensions: (optional) A dictionary of dimensions for this metric
-        :param delegated_tenant: (optional) Submit metrics on behalf of this tenant ID.
-        :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
-        :param device_name: (optional) The device name for this metric
-        :param value_meta: Additional metadata about this value
-        """
-        self.aggregator.submit_metric(metric,
-                                      value,
-                                      metrics_pkg.Histogram,
-                                      dimensions,
-                                      delegated_tenant,
-                                      hostname,
-                                      device_name,
-                                      value_meta)
-
-    def set(self, metric, value, dimensions=None, delegated_tenant=None,
-            hostname=None, device_name=None, value_meta=None):
-        """Sample a set value, with optional dimensions, hostname and device name.
-
-        :param metric: The name of the metric
-        :param value: The value for the set
-        :param dimensions: (optional) A dictionary of dimensions for this metric
-        :param delegated_tenant: (optional) Submit metrics on behalf of this tenant ID.
-        :param hostname: (optional) A hostname for this metric. Defaults to the current hostname.
-        :param device_name: (optional) The device name for this metric
-        :param value_meta: Additional metadata about this value
-        """
-        self.aggregator.submit_metric(metric,
-                                      value,
-                                      metrics_pkg.Set,
-                                      dimensions,
-                                      delegated_tenant,
-                                      hostname,
-                                      device_name,
-                                      value_meta)
-
     def get_metrics(self, prettyprint=False):
         """Get all metrics, including the ones that are tagged.
 
