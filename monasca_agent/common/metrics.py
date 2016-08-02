@@ -3,9 +3,6 @@
 """
 import logging
 
-from monasca_agent.common.exceptions import UnknownValue
-
-
 log = logging.getLogger(__name__)
 
 
@@ -78,7 +75,7 @@ class Counter(Metric):
             self.timestamp = timestamp
         except TypeError:
             log.error("metric {} value {} sample_rate {}".
-                      format(self.name, value, sample_rate))
+                      format(self.metric['name'], value, sample_rate))
 
     def flush(self):
         envelope = self.measurement(self.value, self.timestamp)
@@ -116,14 +113,15 @@ class Rate(Metric):
         if delta_v < 0:
             log.debug('Metric {0} has a rate < 0. New value = {1} and old '
                       'value = {2}. Counter may have been Reset.'.
-                      format(self.name, sample2[1], sample1[1]))
+                      format(self.metric['name'], sample2[1], sample1[1]))
             return rate
         try:
             rate = delta_v / float(delta_t)
         except ZeroDivisionError as e:
             log.exception('Error in sampling metric {0}, time difference '
                           'between current time and last_update time is '
-                          '0, returned {1}'.format(self.name, e))
+                          '0, returned {1}'.
+                          format(self.self.metric['name'], e))
         return rate
 
     def flush(self):
