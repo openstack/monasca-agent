@@ -1,7 +1,10 @@
 # (C) Copyright 2015,2016 Hewlett Packard Enterprise Development LP
+# Copyright 2016 FUJITSU LIMITED
 
 import logging
+import os
 import re
+
 from subprocess import CalledProcessError
 from subprocess import STDOUT
 
@@ -15,6 +18,13 @@ from monasca_setup.detection.utils import check_output
 from monasca_setup.detection.utils import find_addr_listening_on_port
 
 log = logging.getLogger(__name__)
+
+_VIA_KAFKA_TOPIC_INDEX = 1
+_KAFKA_BIN_DIR = '/opt/kafka/bin'
+_KAFKA_CONSUMER_GROUP_COMMAND = '%s/kafka-consumer-groups.sh' % _KAFKA_BIN_DIR
+_KAFKA_ZOOKEEPER_SHELL_COMMAND = '%s/zookeeper-shell.sh' % _KAFKA_BIN_DIR
+
+_CONSUMER_GROUP_COMMAND_LINE_VALUES_LEN = 7
 
 
 class Kafka(Plugin):
@@ -39,33 +49,129 @@ class Kafka(Plugin):
 
     def _detect(self):
         """Run detection, set self.available True if the service is detected."""
-        if find_process_cmdline('kafka') is not None:
-            self.available = True
+        process_exists = find_process_cmdline('kafka') is not None
+        has_dependencies = self.dependencies_installed()
+
+        self._consumer_group_shell_exists = os.path.isfile(
+            _KAFKA_CONSUMER_GROUP_COMMAND)
+        self._zookeeper_shell_exists = os.path.isfile(
+            _KAFKA_ZOOKEEPER_SHELL_COMMAND)
+
+        kafka_has_scripts = (self._consumer_group_shell_exists or
+                             self._zookeeper_shell_exists)
+
+        self.available = (process_exists and has_dependencies and
+                          kafka_has_scripts)
+
+        if not self.available:
+            if not process_exists:
+                log.error('Kafka process does not exist.')
+            elif not has_dependencies:
+                log.error(('Kafka process exists but required '
+                           'dependency kafka-python is '
+                           'not installed.'))
+            elif not kafka_has_scripts:
+                log.error(('Kafka process exists, dependencies are installed '
+                           'but neither %s nor %s '
+                           'executable was found.'),
+                          _KAFKA_CONSUMER_GROUP_COMMAND,
+                          _KAFKA_CONSUMER_GROUP_COMMAND)
 
     def _detect_consumers(self):
         """Using zookeeper and a kafka connection find the consumers and associated topics. """
         try:
-            # The kafka api provides no way to discover existing consumer groups so a query to
-            # zookeeper must be made. This is unfortunately fragile as kafka is moving away from
-            # zookeeper. Tested with kafka 0.8.1.1
+            log.info("\tInstalling kafka_consumer plugin.")
+
             kafka_connect_str = self._find_kafka_connection()
 
-            # {'consumer_group_name': { 'topic1': [ 0, 1, 2] # partitions }}
+            consumers = None
+
+            if self._consumer_group_shell_exists:
+                consumers = self._detect_consumer_via_kafka()
+            if not consumers and self._zookeeper_shell_exists:
+                consumers = self._detect_consumer_via_zookeeper()
+
+            instances = {
+                'name': kafka_connect_str,
+                'kafka_connect_str': kafka_connect_str,
+                'per_partition': False,
+                'consumer_groups': consumers or {}
+            }
+            self.config['kafka_consumer'] = {
+                'init_config': None,
+                'instances': [instances]
+            }
+
+        except Exception as ex:
+            log.error('Error Detecting Kafka consumers/topics')
+            log.exception(ex)
+
+    def _detect_consumer_via_kafka(self):
+        """Detect consumers groups using kafka-consumer-groups"""
+        log.info("\tDetecting kafka consumers with {:s} command".format(
+            _KAFKA_CONSUMER_GROUP_COMMAND))
+        try:
+            output = check_output([
+                _KAFKA_CONSUMER_GROUP_COMMAND,
+                '--zookeeper',
+                self.zk_url,
+                '--list'
+            ], stderr=STDOUT)
+
             consumers = {}
-            # Find consumers and topics
+            consumer_groups = output.splitlines()
+
+            for consumer_group in consumer_groups:
+                output = check_output([
+                    _KAFKA_CONSUMER_GROUP_COMMAND,
+                    '--zookeeper',
+                    self.zk_url,
+                    '--describe',
+                    '--group',
+                    consumer_group
+                ], stderr=STDOUT)
+
+                lines = output.splitlines()
+                topics = {}
+                for it, line in enumerate(reversed(lines)):
+                    if it == len(lines) - 1 or not line:
+                        break
+                    values = line.split(',')
+                    # There will be always 7 values in output
+                    # after splitting the line by ,
+                    if (values and len(values)
+                            == _CONSUMER_GROUP_COMMAND_LINE_VALUES_LEN):
+                        topics[values[_VIA_KAFKA_TOPIC_INDEX].strip()] = []
+                if len(topics.keys()):
+                    consumers[consumer_group] = topics
+
+            return consumers
+        except Exception as ex:
+            log.warn(('Failed to retrieve consumers '
+                      'with kafka-consumer-groups.sh. Error is %s'), ex)
+        return None
+
+    def _detect_consumer_via_zookeeper(self):
+        """Try to get consumers via zookeeper.
+
+        :return: map of consumers group to topics
+        :rtype: dict
+        """
+        log.info("\tDetecting kafka consumers with {:s} command".format(
+            _KAFKA_ZOOKEEPER_SHELL_COMMAND))
+        try:
+            consumers = {}
             for consumer in self._ls_zookeeper('/consumers'):
-                topics = dict((topic, []) for topic in self._ls_zookeeper('/consumers/%s/offsets' % consumer))
+                topics = dict((topic, []) for topic in self._ls_zookeeper(
+                    '/consumers/%s/offsets' % consumer))
                 if len(topics) > 0:
                     consumers[consumer] = topics
+            return consumers
+        except Exception as ex:
+            log.warn(('Failed to retrieve consumers '
+                      'with zookeeper-shell.sh. Error is %s'), ex)
 
-            log.info("\tInstalling kafka_consumer plugin.")
-            self.config['kafka_consumer'] = {'init_config': None,
-                                             'instances': [{'name': kafka_connect_str,
-                                                            'kafka_connect_str': kafka_connect_str,
-                                                            'per_partition': False,
-                                                            'consumer_groups': dict(consumers)}]}
-        except Exception:
-            log.error('Error Detecting Kafka consumers/topics')
+        return None
 
     def _find_kafka_connection(self):
         listen_ip = find_addr_listening_on_port(self.port)
@@ -100,7 +206,7 @@ class Kafka(Plugin):
            I am using the local command line kafka rather than kazoo because it doesn't make sense to
            have kazoo as a dependency only for detection.
         """
-        zk_shell = ['/opt/kafka/bin/zookeeper-shell.sh', self.zk_url, 'ls', path]
+        zk_shell = [_KAFKA_ZOOKEEPER_SHELL_COMMAND, self.zk_url, 'ls', path]
         try:
             output = check_output(zk_shell, stderr=STDOUT)
         except CalledProcessError:
