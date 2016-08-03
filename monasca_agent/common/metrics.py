@@ -125,7 +125,7 @@ class Rate(Metric):
         return rate
 
     def flush(self):
-        if not self.value:
+        if self.value is None:
             return []
 
         envelope = self.measurement(self.value, self.timestamp)
