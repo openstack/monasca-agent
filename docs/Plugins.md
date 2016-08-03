@@ -65,6 +65,7 @@
   - [RabbitMQ Checks](#rabbitmq-checks)
   - [RedisDB](#redisdb)
   - [Riak](#riak)
+  - [SolidFire](#solidfire)
   - [SQLServer](#sqlserver)
   - [Supervisord](#supervisord)
   - [Swift Diags](#swift-diags)
@@ -154,6 +155,7 @@ The following plugins are delivered via setup as part of the standard plugin che
 | rabbitmq | /root/.rabbitmq.cnf |
 | redisdb |  |  |
 | riak |  |  |
+| solidfire |  | Track cluster health and use stats |
 | sqlserver |  |  |
 | supervisord |  |  |
 | swift_diags |  |  |
@@ -1374,6 +1376,45 @@ See [the example configuration](https://github.com/openstack/monasca-agent/blob/
 
 ## Riak
 See [the example configuration](https://github.com/openstack/monasca-agent/blob/master/conf.d/riak.yaml.example) for how to configure the Riak plugin.
+
+## SolidFire
+The SolidFire checks require a matching solidfire.yaml to be present. Currently the checks report a mixture of cluster utilization and health metrics. Multiple clusters can be monitored via separate instance stanzas in the config file.
+
+Sample config:
+
+instances:
+    - name: cluster_rack_d
+      username: cluster_admin
+      password: secret_password
+      mvip: 192.168.1.1
+
+The SolidFire checks return the following metrics:
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| solidfire.active_cluster_faults     | service=solidfire, cluster | Amount of active cluster faults, such as failed drives |
+| solidfire.cluster_utilization       | service=solidfire, cluster | Overall cluster IOP utilization |
+| solidfire.num_iscsi_sessions        | service=solidfire, cluster | Amount of active iSCSI sessions connected to the cluster |
+| solidfire.iops.avg_5_sec            | service=solidfire, cluster | Average IOPs over the last 5 seconds |
+| solidfire.iops.avg_utc              | service=solidfire, cluster | Average IOPs since midnight UTC |
+| solidfire.iops.peak_utc             | service=solidfire, cluster | Peak IOPS since midnight UTC |
+| solidfire.iops.max_available        | service=solidfire, cluster | Theoretical maximum amount of IOPs |
+| solidfire.active_block_bytes        | service=solidfire, cluster | Amount of space consumed by the block services, including cruft |
+| solidfire.active_meta_bytes         | service=solidfire, cluster | Amount of space consumed by the metadata services |
+| solidfire.active_snapshot_bytes     | service=solidfire, cluster | Amount of space consumed by the metadata services for snapshots |
+| solidfire.provisioned_bytes         | service=solidfire, cluster | Total number of provisioned bytes |
+| solidfire.unique_blocks_used_bytes  | service=solidfire, cluster | Amount of space the unique blocks take on the block drives |
+| solidfire.max_block_bytes           | service=solidfire, cluster | Maximum amount of bytes allocated to the block services |
+| solidfire.max_meta_bytes            | service=solidfire, cluster | Maximum amount of bytes allocated to the metadata services |
+| solidfire.max_provisioned_bytes     | service=solidfire, cluster | Max provisionable space if 100% metadata space used |
+| solidfire.max_overprovisioned_bytes | service=solidfire, cluster | Max provisionable space * 5, artificial safety limit |
+| solidfire.unique_blocks             | service=solidfire, cluster | Number of blocks(not always 4KiB) stored on block drives |
+| solidfire.non_zero_blocks           | service=solidfire, cluster | Number of 4KiB blocks with data after the last garbage collection |
+| solidfire.zero_blocks               | service=solidfire, cluster | Number of 4KiB blocks without data after the last garbage collection |
+| solidfire.thin_provision_factor     | service=solidfire, cluster | Thin provisioning factor, (nonZeroBlocks + zeroBlocks) / nonZeroBlocks |
+| solidfire.deduplication_factor      | service=solidfire, cluster | Data deduplication factor, nonZeroBlocks / uniqueBlocks |
+| solidfire.compression_factor        | service=solidfire, cluster | Data compression factor, (uniqueBlocks * 4096) / uniqueBlocksUsedSpace |
+| solidfire.data_reduction_factor     | service=solidfire, cluster | Aggregate data reduction efficiency, thin_prov * dedup * compression |
 
 ## SQLServer
 See [the example configuration](https://github.com/openstack/monasca-agent/blob/master/conf.d/sqlserver.yaml.example) for how to configure the SQLServer plugin.
