@@ -165,12 +165,6 @@ Here are some examples of how code can be instrumented using calls to monasca-st
 		With dimensions:
 		statsd.gauge('users_online', 91, dimensions={'Origin': 'Dev', 'Environment': 'Test'})
 
-    * Sample a histogram.
-		statsd.histogram('file.upload_size', 20456)
-
-		With dimensions:
-		statsd.histogram('file.upload_size', 20456, sample_rate=0.5, dimensions={'Name': 'MyFile.pdf', 'Version': '1.0'})
-
     * Time a function call.
 		@statsd.timed('page.render')
 		def render_page():
@@ -184,4 +178,4 @@ Here are some examples of how code can be instrumented using calls to monasca-st
 ```
 
 # License
-(C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+(C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
