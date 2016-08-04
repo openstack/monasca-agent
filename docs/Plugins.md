@@ -78,6 +78,7 @@
   - [Vertica Checks](#vertica-checks)
   - [WMI Check](#wmi-check)
   - [ZooKeeper](#zookeeper)
+  - [Kibana](#kibana)
   - [OpenStack Monitoring](#openstack-monitoring)
     - [Nova Checks](#nova-checks)
         - [Nova Processes Monitored](#nova-processes-monitored)
@@ -136,6 +137,7 @@ The following plugins are delivered via setup as part of the standard plugin che
 | iis |  | Microsoft Internet Information Services |
 | jenkins |  |  |
 | kafka_consumer |  |  |
+| kibana | **kibana_install_dir**/kibana.yml | Integration to Kibana |
 | kyototycoon |  |  |
 | libvirt |  |  |
 | lighttpd |  |  |
@@ -302,6 +304,7 @@ These are the detection plugins included with the Monasca Agent.  See [Customiza
 | vcenter | Plugin |
 | vertica | Plugin |
 | zookeeper | Plugin |
+| kibana | Plugin |
 
 
 # Agent Plugin Detail
@@ -744,9 +747,9 @@ The Elasticsearch checks return the following metrics:
 * [List of available thread pools](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-threadpool.html)
 
 ## File Size
-This section describes the file size check that can be performed by the Agent. File size checks are used for gathering the size of individual files or the size of each file under a specific directory. The agent supports additional functionality through the use of Python scripts. A YAML file (file_size.yaml) contains the list of file directory names and file names to check. A Python script (file_size.py) runs checks each host in turn to gather stats. 
+This section describes the file size check that can be performed by the Agent. File size checks are used for gathering the size of individual files or the size of each file under a specific directory. The agent supports additional functionality through the use of Python scripts. A YAML file (file_size.yaml) contains the list of file directory names and file names to check. A Python script (file_size.py) runs checks each host in turn to gather stats.
 
-Similar to other checks, the configuration is done in YAML, and consists of two keys: init_config and instances. The former is not used by file_size, while the later contains one or more sets of file directory name and file names to check, plus optional parameter recursive. When recursive is true and file_name is set to '*', file_size check will take all the files under the given directory recursively. 
+Similar to other checks, the configuration is done in YAML, and consists of two keys: init_config and instances. The former is not used by file_size, while the later contains one or more sets of file directory name and file names to check, plus optional parameter recursive. When recursive is true and file_name is set to '*', file_size check will take all the files under the given directory recursively.
 
 Sample config:
 
@@ -1060,7 +1063,7 @@ instances:
   port: 3306
   server: padawan-ccp-c1-m1-mgmt
   user: root
-  
+
 Example ssl connect:
 instances:
 - built_by: MySQL
@@ -1534,6 +1537,43 @@ The Zookeeper checks return the following metrics:
 | zookeeper.zxid_count | hostname, mode, service=zookeeper | Count number |
 | zookeeper.zxid_epoch | hostname, mode, service=zookeeper | Epoch number |
 
+## Kibana
+This section describes the Kibana check that can be performed by the Agent.
+The Kibana check requires a configuration file containing Kibana configuration
+(it is the same file Kibana is using).
+
+Check is accessing status endpoint (```curl -XGET http://localhost:5601/api/status```)
+of Kibana, which means it can work only with Kibana >= 4.2.x, that was first to introduce
+this capability.
+
+Sample config:
+
+```yaml
+init_config:
+  url: http://localhost:5601/api/status
+instances:
+- built_by: Kibana
+  metrics:
+    - heap_size
+    - heap_used
+    - load
+    - req_sec
+    - resp_time_avg
+    - resp_time_max
+```
+
+The Kibana checks return the following metrics:
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| kibana.load_avg_1m | hostnam, version, service=monitoring | The average kibana load over a 1 minute period, for more details see [here](https://nodejs.org/api/os.html#os_os_loadavg) |
+| kibana.load_avg_5m | hostnam, version, service=monitoring | The average kibana load over a 5 minutes period, for more details see [here](https://nodejs.org/api/os.html#os_os_loadavg) |
+| kibana.load_avg_15m | hostnam, version, service=monitoring | The average kibana load over a 15 minutes period, for more details see [here](https://nodejs.org/api/os.html#os_os_loadavg) |
+| kibana.heap_size_mb | hostnam, version, service=monitoring | Total heap size in MB |
+| kibana.heap_used_mb | hostnam, version, service=monitoring | Used heap size in MB |
+| kibana.req_sec | hostnam, version, service=monitoring | Requests per second to Kibana server |
+| kibana.resp_time_avg_ms | hostnam, version, service=monitoring | The average response time of Kibana server in ms |
+| kibana.resp_time_max_ms | hostnam, version, service=monitoring | The maximum response time of Kibana server in ms |
 
 ## OpenStack Monitoring
 The `monasca-setup` script when run on a system that is running OpenStack services, configures the Agent to send the following list of metrics:
