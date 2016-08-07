@@ -54,7 +54,8 @@ class Gauge(Metric):
         self.timestamp = timestamp
 
     def flush(self):
-        if not self.value:
+        # 0 is a valid value, so can't do: if not self.value:
+        if self.value is None:
             return []
 
         envelope = self.measurement(self.value, self.timestamp)
