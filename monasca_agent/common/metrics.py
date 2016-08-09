@@ -101,12 +101,6 @@ class Rate(Metric):
             self.value = self._rate(self.samples[-2], self.samples[-1])
             self.samples = self.samples[-1:]
 
-        if len(self.samples) < 2:
-            self.value = None
-        else:
-            self.value = self._rate(self.samples[-2], self.samples[-1])
-            self.samples = self.samples[-1:]
-
     def _rate(self, sample1, sample2):
         delta_t = sample2[0] - sample1[0]
         delta_v = sample2[1] - sample1[1]
