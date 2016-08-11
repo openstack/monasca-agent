@@ -1,8 +1,8 @@
 # (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 
 import logging
+import os
 import urllib2
-
 
 import monasca_setup.agent_config
 import monasca_setup.detection
@@ -41,10 +41,21 @@ class Apache(monasca_setup.detection.Plugin):
         """Run detection, set self.available True if the service is detected.
 
         """
+        process_exists = False
         for proc_name in APACHE_PROCESS_NAMES:
-            if monasca_setup.detection.find_process_cmdline(proc_name) is not None:
+            if monasca_setup.detection.find_process_name(proc_name) is not None:
                 self._apache_process_name = proc_name
-                self.available = True
+                process_exists = True
+        has_args_or_config_file = (self.args is not None or
+                                   os.path.isfile(DEFAULT_APACHE_CONFIG))
+        self.available = process_exists and has_args_or_config_file
+        if not self.available:
+            if not process_exists:
+                log.error('Apache process does not exist.')
+            elif not has_args_or_config_file:
+                log.error(('Apache process exists but '
+                           'configuration file was not found and '
+                           'no arguments were given.'))
 
     def _read_apache_config(self, config_location):
         # Read the apache config file to extract the needed variables.
