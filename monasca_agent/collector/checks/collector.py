@@ -48,9 +48,26 @@ class Collector(util.Dimensions):
         self.pool_full_count = 0
         self.collection_times = {}
         self.collection_results = {}
+        self.collect_runs = 0
         for check in initialized_checks_d:
-            self.collection_times[check.name] = {'check': check,
-                                                 'last_collect_time': 99999999}
+            derived_collect_periods = 1
+            if 'collect_period' in check.init_config:
+                if check.init_config['collect_period'] < 0:
+                    log.warn('Invalid negative time parameter. '
+                             'collect_period for %s will be reset '
+                             'to default' % check.name)
+                else:
+                    # This equation calculates on which nth run the plugin
+                    # gets called. It converts the collect_period from seconds
+                    # to an integer which holds the collection round the
+                    # plugin should get called on.
+                    derived_collect_periods = (
+                        ((check.init_config['collect_period'] - 1)
+                         / agent_config['check_freq']) + 1)
+            self.collection_times[check.name] = {
+                'check': check,
+                'last_collect_time': 99999999,
+                'derived_collect_periods': derived_collect_periods}
         self.pool_full_max_retries = int(self.agent_config.get('pool_full_max_retries',
                                                                4))
 
@@ -201,11 +218,16 @@ class Collector(util.Dimensions):
             if check.name in self.collection_results:
                 log.warning('Plugin %s is already running, skipping' % check.name)
                 continue
+            if self.collect_runs % entry['derived_collect_periods'] != 0:
+                log.debug('%s has not skipped enough collection periods yet. '
+                          'Skipping.' % check.name)
+                continue
             log.debug('Starting plugin %s, old collect time %d' %
                       (check.name, last_collect_time))
             async_result = self.pool.apply_async(self.run_single_check, [check])
             self.collection_results[check.name] = {'result': async_result,
                                                    'start_time': start_time}
+        self.collect_runs += 1
 
     def run_checks_d(self, check_frequency):
         """Run defined checks_d checks using the Thread Pool.
