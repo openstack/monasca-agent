@@ -116,7 +116,7 @@ class Rate(Metric):
             log.exception('Error in sampling metric {0}, time difference '
                           'between current time and last_update time is '
                           '0, returned {1}'.
-                          format(self.self.metric['name'], e))
+                          format(self.metric['name'], e))
         return rate
 
     def flush(self):
