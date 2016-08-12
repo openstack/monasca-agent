@@ -686,6 +686,13 @@ class LibvirtCheck(AgentCheck):
                 if gauge in instance_cache.get(inst_name):
                     agg_values[gauge] += instance_cache.get(inst_name)[gauge]
 
+            # Skip instances created within the probation period
+            vm_probation_remaining = self._test_vm_probation(instance_cache.get(inst_name)['created'])
+            if (vm_probation_remaining >= 0):
+                self.log.info("Libvirt: {0} in probation for another {1} seconds".format(instance_cache.get(inst_name)['hostname'].encode('utf8'),
+                                                                                         vm_probation_remaining))
+                continue
+
             # Skip further processing on VMs that are not in an active state
             if self._inspect_state(insp, inst, inst_name, instance_cache,
                                    dims_customer, dims_operations) != 0:
@@ -693,13 +700,6 @@ class LibvirtCheck(AgentCheck):
 
             # Skip the remainder of the checks if alive_only is True in the config
             if self.init_config.get('alive_only'):
-                continue
-
-            # Skip instances created within the probation period
-            vm_probation_remaining = self._test_vm_probation(instance_cache.get(inst_name)['created'])
-            if (vm_probation_remaining >= 0):
-                self.log.info("Libvirt: {0} in probation for another {1} seconds".format(instance_cache.get(inst_name)['hostname'].encode('utf8'),
-                                                                                         vm_probation_remaining))
                 continue
 
             if inst_name not in metric_cache:
