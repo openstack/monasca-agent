@@ -1,4 +1,4 @@
-# (c) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+# (c) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 
 import ConfigParser
 import grp
@@ -39,6 +39,10 @@ ip_cmd = "/sbin/ip"
 default_max_ping_concurrency = 8
 # Disk metrics can be collected at a larger interval than other vm metrics
 default_disk_collection_period = 0
+
+# Arguments which should be written as integers, not strings
+INT_ARGS = ['disk_collection_period', 'max_ping_concurrency',
+            'nova_refresh', 'vm_probation']
 
 
 class Libvirt(Plugin):
@@ -167,8 +171,13 @@ class Libvirt(Plugin):
             # Handle monasca-setup detection arguments, which take precedence
             if self.args:
                 for arg in self.args:
-                    if arg in ['disk_collection_period', 'max_ping_concurrency']:
-                        init_config[arg] = int(self.args[arg])
+                    if arg in INT_ARGS:
+                        value = self.args[arg]
+                        try:
+                            init_config[arg] = int(value)
+                        except ValueError:
+                            log.warn("\tInvalid integer value '{0}' for parameter {1}, ignoring value"
+                                     .format(value, arg))
                     else:
                         init_config[arg] = self.literal_eval(self.args[arg])
 
