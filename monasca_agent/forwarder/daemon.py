@@ -55,8 +55,8 @@ class AgentInputHandler(tornado.web.RequestHandler):
         """
         global message_batch
 
-        msg = tornado.escape.json_decode(self.request.body)
         try:
+            msg = tornado.escape.json_decode(self.request.body)
             message_batch.extend(msg)
         except Exception:
             log.exception('Error parsing body of Agent Input')
