@@ -577,6 +577,7 @@ class LibvirtCheck(AgentCheck):
             self._skip_disk_collection = True
         else:
             self._skip_disk_collection = False
+            self._last_disk_collect_time = datetime.now()
 
     def _run_ping(self, dims_customer, dims_operations, inst_name, instance_cache, net):
         """Create a ping command and hand it off to the Thread Pool"""
@@ -708,7 +709,6 @@ class LibvirtCheck(AgentCheck):
             if self.init_config.get('vm_cpu_check_enable'):
                 self._inspect_cpu(insp, inst, inst_name, instance_cache, metric_cache, dims_customer, dims_operations)
             if not self._skip_disk_collection:
-                self._last_disk_collect_time = datetime.now()
                 if self.init_config.get('vm_disks_check_enable'):
                     self._inspect_disks(insp, inst, inst_name, instance_cache, metric_cache, dims_customer,
                                         dims_operations)
