@@ -127,11 +127,6 @@ class OvsCheck(AgentCheck):
                 ctr_cache[ifx][metric_name] = {
                     'timestamp': sample_time,
                     'value': value}
-        if not ifx_deltas:
-            # There is a chance that after all the neutron ports are empty still
-            # port cache value might exists for the old ports
-            self._update_port_cache()
-        #
         # Done collecting current rates and updating the cache file,
         # let's publish.
         #
