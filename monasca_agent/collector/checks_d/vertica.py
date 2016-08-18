@@ -1,18 +1,18 @@
-# (C) Copyright 2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2016 Hewlett Packard Enterprise Development LP
 
 import monasca_agent.collector.checks as checks
 from monasca_agent.common.util import timeout_command
 
+LICENSE_STATUS_QUERY = "SELECT COALESCE(" \
+                       "(SELECT usage_percent * 100 " \
+                       "FROM v_catalog.license_audits " \
+                       "WHERE audited_data ='Total' " \
+                       "ORDER BY audit_start_timestamp " \
+                       "DESC LIMIT 1), 0) license_usage_percent;"
+
 NODE_METRICS_QUERY = "SELECT node_state " \
                      "FROM NODES " \
                      "WHERE node_name = '{0}';"
-
-RESOURCE_METRICS_QUERY = "SELECT COALESCE(request_queue_depth, 0) request_queue_depth, " \
-                         "wos_used_bytes, " \
-                         "COALESCE(resource_request_reject_count, 0) resource_rejections, " \
-                         "COALESCE(disk_space_request_reject_count, 0) disk_space_rejections " \
-                         "FROM resource_usage " \
-                         "WHERE node_name = '{0}';"
 
 PROJECTION_METRICS_QUERY = "SELECT projection_name, wos_used_bytes, ros_count, " \
                            "COALESCE(tuple_mover_moveouts, 0) tuple_mover_moveouts, " \
@@ -26,6 +26,13 @@ PROJECTION_METRICS_QUERY = "SELECT projection_name, wos_used_bytes, ros_count, "
                            "GROUP BY projection_id) tm " \
                            "ON projection_storage.projection_id = tm.projection_id " \
                            "WHERE node_name = '{0}';"
+
+RESOURCE_METRICS_QUERY = "SELECT COALESCE(request_queue_depth, 0) request_queue_depth, " \
+                         "wos_used_bytes, " \
+                         "COALESCE(resource_request_reject_count, 0) resource_rejections, " \
+                         "COALESCE(disk_space_request_reject_count, 0) disk_space_rejections " \
+                         "FROM resource_usage " \
+                         "WHERE node_name = '{0}';"
 
 RESOURCE_POOL_METRICS_QUERY = "SELECT pool_name, memory_size_actual_kb, memory_inuse_kb, running_query_count, " \
                               "COALESCE(rejection_count, 0) rejection_count " \
@@ -72,13 +79,20 @@ class Vertica(checks.AgentCheck):
                 self.gauge('vertica.connection_status', 0, dimensions=dimensions)
             self._last_connection_status = 0
             results = results.split('\n')
-            self._report_node_status(results[0], dimensions)
 
-            self._report_resource_metrics(results[1], dimensions)
+            # Database metrics
+            self._report_license_status(results[0], dimensions)
 
-            self._report_projection_metrics(results[2], dimensions)
+            # Node metrics
+            dimensions['node_name'] = node_name
 
-            self._report_resource_pool_metrics(results[3], dimensions)
+            self._report_node_status(results[1], dimensions)
+
+            self._report_resource_metrics(results[2], dimensions)
+
+            self._report_projection_metrics(results[3], dimensions)
+
+            self._report_resource_pool_metrics(results[4], dimensions)
 
     def _query_database(self, user, password, timeout, query):
         stdout, stderr, return_code = timeout_command(["/opt/vertica/bin/vsql", "-U", user, "-w", password, "-A", "-R",
@@ -93,6 +107,7 @@ class Vertica(checks.AgentCheck):
 
     def _build_query(self, node_name):
         query = ''
+        query += LICENSE_STATUS_QUERY
         query += NODE_METRICS_QUERY.format(node_name)
         query += RESOURCE_METRICS_QUERY.format(node_name)
         query += PROJECTION_METRICS_QUERY.format(node_name)
@@ -154,3 +169,9 @@ class Vertica(checks.AgentCheck):
                        dimensions=resource_pool_dimensions)
             self.rate(resource_pool_metric_name + 'rejection_count', int(result['rejection_count']),
                       dimensions=resource_pool_dimensions)
+
+    def _report_license_status(self, results, dimensions):
+        results = self._results_to_dict(results)
+        license_status = results[0]
+        self.gauge('vertica.license_usage_percent', float(license_status['license_usage_percent']),
+                   dimensions=dimensions)

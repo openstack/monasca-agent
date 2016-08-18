@@ -1500,6 +1500,7 @@ instances:
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
+| vertica.license_usage_percent | hostname, service=vertica| Percentage of the license size taken up. |
 | vertica.connection_status | hostname, node_name, service=vertica | Value of DB connection status (0=Healthy). |
 | vertica.node_status | hostname, node_name, service=vertica| Status of node connection (0=UP). |
 | vertica.projection.ros_count | hostname, node_name, projection_name, service=vertica| 	The number of ROS containers in the projection. |
