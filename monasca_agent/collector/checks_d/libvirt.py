@@ -30,8 +30,13 @@ from datetime import datetime
 from datetime import timedelta
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.collector.virt import inspector
+from monasca_agent.common import keystone
 from multiprocessing.dummy import Pool
 from netaddr import all_matching_cidrs
+from neutronclient.v2_0 import client as neutron_client
+from novaclient import client as n_client
+from novaclient.exceptions import NotFound
+
 
 DOM_STATES = {libvirt.VIR_DOMAIN_BLOCKED: 'VM is blocked',
               libvirt.VIR_DOMAIN_CRASHED: 'VM has crashed',
@@ -120,33 +125,27 @@ class LibvirtCheck(AgentCheck):
     def _update_instance_cache(self):
         """Collect instance_id, project_id, and AZ for all instance UUIDs
         """
-        from novaclient import client
-        from novaclient.exceptions import NotFound
 
         id_cache = {}
         flavor_cache = {}
         port_cache = None
         netns = None
         # Get a list of all instances from the Nova API
-        nova_client = client.Client(2,
-                                    username=self.init_config.get('admin_user'),
-                                    password=self.init_config.get('admin_password'),
-                                    project_name=self.init_config.get('admin_tenant_name'),
-                                    auth_url=self.init_config.get('identity_uri'),
-                                    endpoint_type='internalURL',
-                                    service_type="compute",
-                                    region_name=self.init_config.get('region_name'))
-        instances = nova_client.servers.list(search_opts={'all_tenants': 1,
-                                                          'host': self.hostname})
+        session = keystone.get_session(self.init_config)
+        nova_client = n_client.Client(
+            "2.1", session=session,
+            endpoint_type=self.init_config.get("endpoint_type", "publicURL"),
+            service_type="compute",
+            region_name=self.init_config.get('region_name'))
+
+        instances = nova_client.servers.list(
+            search_opts={'all_tenants': 1, 'host': self.hostname})
         # Lay the groundwork for fetching VM IPs and network namespaces
         if self.init_config.get('ping_check'):
-            from neutronclient.v2_0 import client
-            nu = client.Client(username=self.init_config.get('admin_user'),
-                               password=self.init_config.get('admin_password'),
-                               tenant_name=self.init_config.get('admin_tenant_name'),
-                               auth_url=self.init_config.get('identity_uri'),
-                               endpoint_type='internalURL',
-                               region_name=self.init_config.get('region_name'))
+            nu = neutron_client.Client(
+                session=session,
+                endpoint_type=self.init_config.get("endpoint_type", "publicURL"),
+                region_name=self.init_config.get('region_name'))
             port_cache = nu.list_ports()['ports']
             # Finding existing network namespaces is an indication that either
             # DVR agent_mode is enabled, or this is all-in-one (like devstack)

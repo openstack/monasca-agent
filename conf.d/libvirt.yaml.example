@@ -2,10 +2,13 @@
 
 init_config:
     # These are Nova credentials, [keystone_authtoken] in /etc/nova/nova.conf
-    admin_password: pass
-    admin_tenant_name: service
-    admin_user: nova
-    identity_uri: 'http://192.168.10.5:35357/v2.0'
+    password: pass
+    project_name: service
+    username: nova
+    auth_url: 'http://192.168.10.5/identity'
+    # Options to specify endpoint type, default to 'publicURL', other choices:
+    # 'internalURL' and 'adminURL'
+    endpoint_type: 'publicURL'
     # Location of temporary files maintained by the plugin.  Ramdisk preferred.
     cache_dir: /dev/shm
     # How long to wait before querying Nova for instance updates? (seconds)

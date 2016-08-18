@@ -1,6 +1,10 @@
 # (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2017 KylinCloud
 
 import base64
+
+from keystoneclient.v2_0 import client as kc
+from monasca_agent.common import keystone
 
 
 def add_basic_auth(request, username, password):
@@ -14,17 +18,11 @@ def add_basic_auth(request, username, password):
 
 
 def get_keystone_client(config):
-    import keystoneclient.v2_0.client as kc
-    kwargs = {
-        'username': config.get('admin_user'),
-        'project_name': config.get('admin_tenant_name'),
-        'password': config.get('admin_password'),
-        'auth_url': config.get('identity_uri'),
-        'endpoint_type': 'internalURL',
-        'region_name': config.get('region_name'),
-    }
+    session = keystone.get_session(config)
 
-    return kc.Client(**kwargs)
+    return kc.Client(session=session,
+                     endpoint_type=config.get('endpoint_type', 'publicURL'),
+                     region_name=config.get('region_name'))
 
 
 def get_tenant_name(tenants, tenant_id):

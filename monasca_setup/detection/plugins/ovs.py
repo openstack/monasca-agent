@@ -32,16 +32,14 @@ use_health_metrics = True
 # If set, router max capacity metrics will be published
 publish_router_capacity = False
 # Acceptable arguments
-acceptable_args = ['admin_user', 'admin_password', 'admin_tenant_name',
-                   'identity_uri', 'cache_dir', 'neutron_refresh', 'ovs_cmd',
+acceptable_args = ['username', 'password', 'project_name',
+                   'auth_url', 'cache_dir', 'neutron_refresh', 'ovs_cmd',
                    'network_use_bits', 'check_router_ha', 'region_name',
                    'included_interface_re', 'conf_file_path', 'use_absolute_metrics',
                    'use_rate_metrics', 'use_health_metrics', 'publish_router_capacity']
 # Arguments which must be ignored if provided
-ignorable_args = ['admin_user', 'admin_password', 'admin_tenant_name',
-                  'identity_uri', 'region_name', 'conf_file_path']
-# Regular expression to match the URI version
-uri_version_re = re.compile('.*v2.0|.*v3.0|.*v1|.*v2')
+ignorable_args = ['username', 'password', 'project_name',
+                  'auth_url', 'region_name', 'conf_file_path']
 
 
 class Ovs(detection.Plugin):
@@ -136,19 +134,9 @@ class Ovs(detection.Plugin):
         log.info("\tUsing neutron configuration file %s", self.neutron_conf)
         neutron_cfg.read(self.neutron_conf)
         cfg_section = 'keystone_authtoken'
-
-        # Handle Devstack's slightly different neutron.conf names
-        if (
-           neutron_cfg.has_option(cfg_section, 'username') and
-           neutron_cfg.has_option(cfg_section, 'password') and
-           neutron_cfg.has_option(cfg_section, 'project_name')):
-            cfg_needed = {'admin_user': 'username',
-                          'admin_password': 'password',
-                          'admin_tenant_name': 'project_name'}
-        else:
-            cfg_needed = {'admin_user': 'admin_user',
-                          'admin_password': 'admin_password',
-                          'admin_tenant_name': 'admin_tenant_name'}
+        cfg_needed = {'username': 'username',
+                      'password': 'password',
+                      'project_name': 'project_name'}
 
         # Start with plugin-specific configuration parameters
         init_config = {'cache_dir': cache_dir,
@@ -164,17 +152,11 @@ class Ovs(detection.Plugin):
         for option in cfg_needed:
             init_config[option] = neutron_cfg.get(cfg_section, cfg_needed[option])
 
-        uri_version = 'v2.0'
-        if neutron_cfg.has_option(cfg_section, 'auth_version'):
-            uri_version = str(neutron_cfg.get(cfg_section, 'auth_version'))
-
         # Create an identity URI (again, slightly different for Devstack)
         if neutron_cfg.has_option(cfg_section, 'auth_url'):
-            if re.match(uri_version_re, str(neutron_cfg.get(cfg_section, 'auth_url'))):
-                uri_version = ''
-            init_config['identity_uri'] = "{0}/{1}".format(neutron_cfg.get(cfg_section, 'auth_url'), uri_version)
+            init_config['auth_url'] = neutron_cfg.get(cfg_section, 'auth_url')
         else:
-            init_config['identity_uri'] = "{0}/{1}".format(neutron_cfg.get(cfg_section, 'identity_uri'), uri_version)
+            init_config['auth_url'] = neutron_cfg.get(cfg_section, 'identity_uri')
 
         # Create an region_name (again, slightly different for Devstack)
         if neutron_cfg.has_option('service_auth', 'region'):

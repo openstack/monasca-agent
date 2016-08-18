@@ -93,18 +93,10 @@ class Libvirt(Plugin):
             nova_cfg.read(self.nova_conf)
             # Which configuration options are needed for the plugin YAML?
             # Use a dict so that they can be renamed later if necessary
-            cfg_needed = {'admin_user': 'admin_user',
-                          'admin_password': 'admin_password',
-                          'admin_tenant_name': 'admin_tenant_name'}
+            cfg_needed = {'username': 'username',
+                          'password': 'password',
+                          'project_name': 'project_name'}
             cfg_section = 'keystone_authtoken'
-
-            # Handle Devstack's slightly different nova.conf names
-            if (nova_cfg.has_option(cfg_section, 'username')
-               and nova_cfg.has_option(cfg_section, 'password')
-               and nova_cfg.has_option(cfg_section, 'project_name')):
-                cfg_needed = {'admin_user': 'username',
-                              'admin_password': 'password',
-                              'admin_tenant_name': 'project_name'}
 
             # Start with plugin-specific configuration parameters
             init_config = {'cache_dir': cache_dir,
@@ -128,9 +120,9 @@ class Libvirt(Plugin):
 
             # Create an identity URI (again, slightly different for Devstack)
             if nova_cfg.has_option(cfg_section, 'auth_url'):
-                init_config['identity_uri'] = "{0}/v2.0".format(nova_cfg.get(cfg_section, 'auth_url'))
+                init_config['auth_url'] = nova_cfg.get(cfg_section, 'auth_url')
             else:
-                init_config['identity_uri'] = "{0}/v2.0".format(nova_cfg.get(cfg_section, 'identity_uri'))
+                init_config['auth_url'] = nova_cfg.get(cfg_section, 'identity_uri')
 
             # Verify requirements to enable ping checks
             init_config['ping_check'] = self.literal_eval('False')

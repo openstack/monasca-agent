@@ -1,12 +1,15 @@
 # (C) Copyright 2016 Hewlett Packard Enterprise Development LP
 init_config:
     # These are Neutron credentials, [keystone_authtoken] in /etc/neutron/neutron.conf
-    admin_password: password
-    admin_tenant_name: services
-    admin_user: neutron
-    identity_uri: 'http://192.168.10.5:35357/v2.0'
+    password: password
+    project_name: services
+    username: neutron
+    auth_url: 'http://192.168.10.5/identity'
     # Number of seconds to wait before updating the neutron router cache file.
     neutron_refresh: 14400
+    # Options to specify endpoint type, default to 'publicURL', other choices:
+    # 'internalURL' and 'adminURL'
+    endpoint_type: 'publicURL'
     # The region name in /etc/neutron/neutron.conf
     region_name: 'region1'
     # Location of temporary files maintained by the plugin. Ramdisk preferred.

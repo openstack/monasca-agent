@@ -33,19 +33,21 @@ The Libvirt plugin provides metrics for virtual machines when run on the hypervi
 ## Configuration
 The `monasca-setup` program will configure the Libvirt plugin if `nova-compute` is running, its `nova.conf` config file is readable by the Monasca Agent user (default: 'mon-agent'), and `python-novaclient` is installed.
 
-In order to fetch data on hosted compute instances, the Libvirt plugin needs to be able to talk to the Nova API.  It does this using credentials found in `nova.conf` under `[keystone_authtoken]`, obtained when `monasca-setup` is run, and stored in `/etc/monasca/agent/conf.d/libvirt.yaml` as `admin_user`, `admin_password`, `admin_tenant_name`, and `admin_password`.  These credentials are only used to build and update the [Instance Cache](#instance-cache).
+In order to fetch data on hosted compute instances, the Libvirt plugin needs to be able to talk to the Nova API.  It does this using credentials found in `nova.conf` under `[keystone_authtoken]`, obtained when `monasca-setup` is run, and stored in `/etc/monasca/agent/conf.d/libvirt.yaml` as `username`, `project_name`, and `password`.  These credentials are only used to build and update the [Instance Cache](#instance-cache).
 
 The Libvirt plugin uses a cache directory to persist data, which is `/dev/shm` by default.  On non-Linux systems (BSD, Mac OSX), `/dev/shm` may not exist, so `cache_dir` would need to be changed accordingly, either in `monasca_setup/detection/plugins/libvirt.py` prior to running `monasca-setup`, or `/etc/monasca/agent/conf.d/libvirt.yaml` afterwards.
 
 If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Submission can be setup. See this [documentation](https://github.com/openstack/monasca-agent/blob/master/docs/MonascaMetrics.md#cross-tenant-metric-submission) for details.
 
-`admin_user` is the username capable of making administrative nova calls.
+`username` is the username capable of making administrative nova calls.
 
-`admin_password` password for the nova user.
+`password` password for the nova user.
 
-`admin_tenant_name` is the project/tenant to POST metrics with the `vm.` prefix.
+`project_name` is the project/tenant to POST metrics with the `vm.` prefix.
 
-`identity_url` is the keystone endpoint for auth.
+`auth_url` is the keystone endpoint for auth.
+
+`endpoint_type` is the endpoint type for making nova/neutron calls.
 
 `region_name` is used to add the region dimension to metrics.
 
@@ -84,10 +86,11 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 Example config:
 ```
 init_config:
-    admin_password: pass
-    admin_tenant_name: service
-    admin_user: nova
-    identity_uri: 'http://192.168.10.5:35357/v2.0'
+    password: pass
+    project_name: service
+    username: nova
+    auth_url: 'http://192.168.10.5/identity'
+    endpoint_type: 'publicURL'
     region_name: 'region1'
     cache_dir: /dev/shm
     nova_refresh: 14400
