@@ -52,7 +52,8 @@ class IIS(AgentCheck):
     def _get_wmi_conn(self, host, user, password):
         key = "%s:%s:%s" % (host, user, password)
         if key not in self.wmi_conns:
-            self.wmi_conns[key] = wmi.WMI(host, user=user, password=password)
+            self.wmi_conns[key] = wmi.WMI(computer=host, user=user,
+                                          password=password)
         return self.wmi_conns[key]
 
     def check(self, instance):
