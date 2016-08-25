@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 
 import logging
 import os
@@ -48,7 +48,7 @@ class Crash(checks.AgentCheck):
         """
         dimensions = self._set_dimensions(None, instance)
         dump_count = 0
-        value_meta = {'latest': ''}
+        value_meta = None
 
         # Parse the crash directory
         if os.path.isdir(self.crash_dir):
