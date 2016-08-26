@@ -52,14 +52,20 @@ class LibvirtCheck(AgentCheck):
         self.metric_cache_file = "{0}/{1}".format(self.init_config.get('cache_dir'),
                                                   'libvirt_metrics.json')
         self.use_bits = self.init_config.get('network_use_bits')
-        if self.init_config.get('disk_collection_period'):
-            self._disk_collection_period = int(self.init_config.get('disk_collection_period'))
-            self._last_disk_collect_time = datetime.fromordinal(1)
-        else:
-            self._disk_collection_period = 0
-        self._skip_disk_collection = False
+
+        self._collect_intervals = {}
+
+        self._set_collection_intervals('disk', 'disk_collection_period')
+        self._set_collection_intervals('vnic', 'vnic_collection_period')
+
         pool_size = self.init_config.get('max_ping_concurrency', 8)
         self.pool = Pool(pool_size)
+
+    def _set_collection_intervals(self, interval_name, config_name):
+        self._collect_intervals[interval_name] = {
+            'period': int(self.init_config.get(config_name, 0)),
+            'last_collect': datetime.fromordinal(1),
+            'skip': False}
 
     def _test_vm_probation(self, created):
         """Test to see if a VM was created within the probation period.
@@ -562,22 +568,24 @@ class LibvirtCheck(AgentCheck):
         return dom_status
 
     def prepare_run(self):
-        """Check if it is time for the disk measurements to be collected"""
-        # A separate disk collection period is optional
-        if self._disk_collection_period <= 0:
-            return
+        """Check if it is time for measurements to be collected"""
+        for name, collection in self._collect_intervals.iteritems():
+            if collection['period'] <= 0:
+                continue
 
-        time_since_last = datetime.now() - self._last_disk_collect_time
-        # Handle times that are really close to the disk collection period
-        period_with_fudge_factor = timedelta(0, self._disk_collection_period - 1,
-                                             500000)
-        if time_since_last < period_with_fudge_factor:
-            self.log.debug('Skipping disk collection for %d seconds' %
-                           (self._disk_collection_period - time_since_last.seconds))
-            self._skip_disk_collection = True
-        else:
-            self._skip_disk_collection = False
-            self._last_disk_collect_time = datetime.now()
+            time_since_last = datetime.now() - collection['last_collect']
+            # Handle times that are really close to the collection period
+            period_with_fudge_factor = timedelta(0, collection['period'] - 1,
+                                                 500000)
+
+            if time_since_last < period_with_fudge_factor:
+                self.log.debug('Skipping {} collection for {} seconds'.format(
+                               name,
+                               (collection['period'] - time_since_last.seconds)))
+                collection['skip'] = True
+            else:
+                collection['skip'] = False
+                collection['last_collect'] = datetime.now()
 
     def _run_ping(self, dims_customer, dims_operations, inst_name, instance_cache, net):
         """Create a ping command and hand it off to the Thread Pool"""
@@ -708,15 +716,17 @@ class LibvirtCheck(AgentCheck):
 
             if self.init_config.get('vm_cpu_check_enable'):
                 self._inspect_cpu(insp, inst, inst_name, instance_cache, metric_cache, dims_customer, dims_operations)
-            if not self._skip_disk_collection:
+            if not self._collect_intervals['disk']['skip']:
                 if self.init_config.get('vm_disks_check_enable'):
                     self._inspect_disks(insp, inst, inst_name, instance_cache, metric_cache, dims_customer,
                                         dims_operations)
                 if self.init_config.get('vm_extended_disks_check_enable'):
                     self._inspect_disk_info(insp, inst, inst_name, instance_cache, metric_cache, dims_customer,
                                             dims_operations)
-            if self.init_config.get('vm_network_check_enable'):
-                self._inspect_network(insp, inst, inst_name, instance_cache, metric_cache, dims_customer, dims_operations)
+
+            if not self._collect_intervals['vnic']['skip']:
+                if self.init_config.get('vm_network_check_enable'):
+                    self._inspect_network(insp, inst, inst_name, instance_cache, metric_cache, dims_customer, dims_operations)
 
             # Memory utilizaion
             # (req. balloon driver; Linux kernel param CONFIG_VIRTIO_BALLOON)
