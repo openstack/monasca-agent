@@ -39,10 +39,12 @@ ip_cmd = "/sbin/ip"
 default_max_ping_concurrency = 8
 # Disk metrics can be collected at a larger interval than other vm metrics
 default_disk_collection_period = 0
+# VNIC metrics can be collected at a larger interval than other vm metrics
+default_vnic_collection_period = 0
 
 # Arguments which should be written as integers, not strings
-INT_ARGS = ['disk_collection_period', 'max_ping_concurrency',
-            'nova_refresh', 'vm_probation']
+INT_ARGS = ['disk_collection_period', 'vnic_collection_period',
+            'max_ping_concurrency', 'nova_refresh', 'vm_probation']
 
 
 class Libvirt(Plugin):
@@ -110,7 +112,8 @@ class Libvirt(Plugin):
                            'vm_probation': vm_probation,
                            'metadata': metadata,
                            'max_ping_concurrency': default_max_ping_concurrency,
-                           'disk_collection_period': default_disk_collection_period}
+                           'disk_collection_period': default_disk_collection_period,
+                           'vnic_collection_period': default_vnic_collection_period}
 
             # Set default parameters for included checks
             init_config['vm_cpu_check_enable'] = self.literal_eval('True')
