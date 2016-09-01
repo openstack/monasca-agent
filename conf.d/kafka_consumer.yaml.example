@@ -4,8 +4,6 @@ init_config:
 
 instances:
 #  -   kafka_connect_str: localhost:19092
-#      zk_connect_str: localhost:2181
-#      zk_prefix: /0.8
 # It is possible to get the lag for each partition, the default is to sum lag for all partitions
 #      per_partition: False
 # Full includes additional metrics with actual offsets per partition, can't be set if per_partition is False

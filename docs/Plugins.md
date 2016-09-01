@@ -941,23 +941,21 @@ This section describes the Kafka check that can be performed by the Agent.  The 
 
 Sample config:
 
-```
+```yml
 init_config:
 
 instances:
-- consumer_groups:
-    '1_alarm-state-transitions':
-        'alarm-state-transitions': ['3', '2', '1', '0']
-    '1_metrics':
-        'metrics': &id001 ['3', '2', '1', '0']
-        'test':
-            'healthcheck': ['1', '0']
-        'thresh-event':
-            'events': ['3', '2', '1', '0']
-        'thresh-metric':
-            'metrics': *id001
-  kafka_connect_str: localhost:9092
-  zk_connect_str: localhost:2181
+- built_by: Kafka
+  consumer_groups:
+    1_metrics:
+      metrics: []
+    thresh-event:
+      events: []
+    thresh-metric:
+      metrics: []
+  kafka_connect_str: 192.168.10.6:9092
+  name: 192.168.10.6:9092
+  per_partition: false
 ```
 
 The Kafka checks return the following metrics:
