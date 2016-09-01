@@ -1,4 +1,4 @@
-# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -93,85 +93,101 @@ class Ceph(Plugin):
                 search_strings.append(" ".join(permutation))
         return search_strings
 
-    def _service_config(self, cluster_name, service_type):
+    def _service_config(self, clusters, service_type):
         display_name = self.service_constants[service_type]['display_name']
         service_dir = self.service_constants[service_type]['service_dir']
         executable = self.service_constants[service_type]['executable']
         expected_processes = list()
-        # Get the list of daemon identifiers
-        instance_list = os.listdir(service_dir) \
-            if os.path.exists(service_dir) else list()
 
-        for instance in instance_list:
-            # Daemon identifier is of format <cluster_name>-<id>
-            # 'id' for ceph-mon is alphanumeric and is usually the hostname
-            # where the service is running for ceph-mon
-            # E.g., ceph-monitor1.dom, ceph-monitor2.dom etc.
-            #
-            # 'id' for ceph-osd is a unique numeric index for
-            # that OSD in the cluster
-            # E.g., ceph-1, ceph-2 etc.
-            #
-            # 'id' for ceph-mds is alphanumeric and is usually the hostname
-            # where the service is running.
-            # E.g., ceph-mds1.dom, ceph-mds2.dom etc.
-            daemon_id = instance.split(cluster_name + '-', 1)[1]
-            process = dict()
-            process_args = ['--cluster %s' % cluster_name,
-                            '--id %s' % daemon_id, '-f']
-            process['search_string'] = self._build_search_string(
-                executable, process_args)
-            process['name'] = '%s-%s.%s' \
-                              % (cluster_name, service_type, daemon_id)
-            process['type'] = display_name
-            expected_processes.append(process)
+        for cluster in clusters:
+            cluster_name = cluster['cluster_name']
+            instance_list = list()
+
+            # Get the list of daemon identifiers for given cluster
+            if os.path.exists(service_dir):
+                instance_list = [entry for entry in os.listdir(service_dir)
+                                 if entry.startswith(cluster_name)]
+
+            for instance in instance_list:
+                # Daemon identifier is of format <cluster_name>-<id>
+                # 'id' for ceph-mon is alphanumeric and is usually the hostname
+                # where the service is running for ceph-mon
+                # E.g., ceph-monitor1.dom, ceph-monitor2.dom etc.
+                #
+                # 'id' for ceph-osd is a unique numeric index for
+                # that OSD in the cluster
+                # E.g., ceph-1, ceph-2 etc.
+                #
+                # 'id' for ceph-mds is alphanumeric and is usually the hostname
+                # where the service is running.
+                # E.g., ceph-mds1.dom, ceph-mds2.dom etc.
+                daemon_id = instance.split(cluster_name + '-', 1)[1]
+                process = dict()
+                process_args = ['--cluster %s' % cluster_name,
+                                '--id %s' % daemon_id, '-f']
+                process['search_string'] = self._build_search_string(
+                    executable, process_args)
+                process['name'] = '%s-%s.%s' \
+                                  % (cluster_name, service_type, daemon_id)
+                process['type'] = display_name
+                expected_processes.append(process)
 
         return expected_processes
 
-    def _radosgw_config(self, cluster_name, config_file):
+    def _radosgw_config(self, clusters):
         service_dir = self.service_constants['radosgw']['service_dir']
         expected_processes = list()
-        # Get the list of daemon identifiers
-        instance_list = os.listdir(service_dir) \
-            if os.path.exists(service_dir) else list()
 
-        for instance in instance_list:
-            # RADOS Gateway processes is of the format:
-            # /usr/bin/radosgw -c <config_file> -n <rados_username>
-            # E.g.,
-            # /usr/bin/radosgw -c /etc/ceph/ceph.conf -n client.radosgw.gateway
-            process = dict()
+        for cluster in clusters:
+            cluster_name = cluster['cluster_name']
+            config_file = cluster['config_file']
+            instance_list = list()
 
-            # The rados user will have a designated data directory, of the
-            # format ceph-radosw.<rados_username> in the service dir.
-            # E.g., /var/lib/ceph/radosgw/ceph-radosgw.gateway
-            rados_username = instance.replace('ceph-radosgw.', '')
-            process['search_string'] = list()
-            process['name'] = '%s-radosgw.%s' % (cluster_name, rados_username)
-            process['type'] = self.service_constants['radosgw']['display_name']
-            executable = self.service_constants['radosgw']['executable']
+            # Get the list of daemon identifiers for given cluster
+            if os.path.exists(service_dir):
+                instance_list = [entry for entry in os.listdir(service_dir)
+                                 if entry.startswith(cluster_name)]
 
-            process_options = ['-n client.radosgw.%s' % rados_username,
-                               '--name=client.radosgw.%s' % rados_username]
-            for opt in process_options:
-                # Adding multiple combinations for all possible use cases,
-                # since any of the following combination can be used to start
-                # the process
-
-                # Trivial case (This will be the most used scenario)
+            for instance in instance_list:
+                # RADOS Gateway processes is of the format:
+                # /usr/bin/radosgw -c <config_file> -n <rados_username>
                 # E.g.,
-                # /usr/bin/radosgw -n client.radosgw.gateway
-                process['search_string'].append('%s %s' % (executable, opt))
+                # /usr/bin/radosgw -c ceph.conf -n client.radosgw.gateway
+                process = dict()
 
-                # Service started with specific conf file (For rare cases)
-                # E.g.,
-                # /usr/bin/radosgw -c custom.conf -n client.radosgw.gateway
-                process['search_string'].append(
-                    '%s -c %s %s' % (executable, config_file, opt))
-                process['search_string'].append(
-                    '%s --conf=%s %s' % (executable, config_file, opt))
+                # The rados user will have a designated data directory, of the
+                # format ceph-radosw.<rados_username> in the service dir.
+                # E.g., /var/lib/ceph/radosgw/ceph-radosgw.gateway
+                rados_username = instance.replace('ceph-radosgw.', '')
+                process['search_string'] = list()
+                process['name'] = '%s-radosgw.%s' \
+                                  % (cluster_name, rados_username)
+                process['type'] = \
+                    self.service_constants['radosgw']['display_name']
+                executable = self.service_constants['radosgw']['executable']
 
-            expected_processes.append(process)
+                process_options = ['-n client.radosgw.%s' % rados_username,
+                                   '--name=client.radosgw.%s' % rados_username]
+                for opt in process_options:
+                    # Adding multiple combinations for all possible use cases,
+                    # since any of the following combination can be used to
+                    # start the process
+
+                    # Trivial case (This will be the most used scenario)
+                    # E.g.,
+                    # /usr/bin/radosgw -n client.radosgw.gateway
+                    process['search_string'].append(
+                        '%s %s' % (executable, opt))
+
+                    # Service started with specific conf file (For rare cases)
+                    # E.g.,
+                    # /usr/bin/radosgw -c custom.conf -n client.radosgw.gateway
+                    process['search_string'].append(
+                        '%s -c %s %s' % (executable, config_file, opt))
+                    process['search_string'].append(
+                        '%s --conf=%s %s' % (executable, config_file, opt))
+                expected_processes.append(process)
+
         return expected_processes
 
     def build_config(self):
@@ -180,9 +196,9 @@ class Ceph(Plugin):
         """
         config = agent_config.Plugins()
 
-        # Default cluster name
-        cluster_name = 'ceph'
-        config_file = '/etc/ceph/ceph.conf'
+        # There may be multiple clusters, and we construct a list of dicts
+        # containing cluster_name and config_file for each cluster
+        clusters = list()
 
         # Get the cluster_name from <cluster_name>.conf in /etc/ceph/ directory
         if os.path.exists(self.ceph_config_dir):
@@ -190,18 +206,21 @@ class Ceph(Plugin):
                             if f.endswith('.conf')]
             if not config_files:
                 return config
-            config_file = os.path.join(self.ceph_config_dir, config_files[0])
-            cluster_name = config_files[0][:-5]
+            for config_file in config_files:
+                cluster_dict = dict()
+                cluster_dict['cluster_name'] = config_file[:-5]
+                cluster_dict['config_file'] = \
+                    os.path.join(self.ceph_config_dir, config_file)
+                clusters.append(cluster_dict)
 
         expected_processes = list()
 
-        expected_processes.extend(self._service_config(cluster_name, 'mon'))
-        expected_processes.extend(self._service_config(cluster_name, 'osd'))
-        expected_processes.extend(self._service_config(cluster_name, 'mds'))
+        expected_processes.extend(self._service_config(clusters, 'mon'))
+        expected_processes.extend(self._service_config(clusters, 'osd'))
+        expected_processes.extend(self._service_config(clusters, 'mds'))
         # RADOS Gateway is little different from other ceph-daemons hence
         # the process definition is handled differently
-        expected_processes.extend(self._radosgw_config(
-            cluster_name, config_file))
+        expected_processes.extend(self._radosgw_config(clusters))
 
         for process in expected_processes:
             # Watch the service processes
