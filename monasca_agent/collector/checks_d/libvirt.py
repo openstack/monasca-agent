@@ -112,6 +112,7 @@ class LibvirtCheck(AgentCheck):
         """Collect instance_id, project_id, and AZ for all instance UUIDs
         """
         from novaclient import client
+        from novaclient.exceptions import NotFound
 
         id_cache = {}
         flavor_cache = {}
@@ -151,7 +152,11 @@ class LibvirtCheck(AgentCheck):
             if instance.flavor['id'] in flavor_cache:
                 inst_flavor = flavor_cache[instance.flavor['id']]
             else:
-                inst_flavor = nova_client.flavors.get(instance.flavor['id'])
+                try:
+                    inst_flavor = nova_client.flavors.get(instance.flavor['id'])
+                except NotFound as e:
+                    self.log.error('Skipping VM {}: {}'.format(inst_name, e))
+                    continue
                 flavor_cache[instance.flavor['id']] = inst_flavor
             if port_cache:
                 instance_ports = [p['id'] for p in port_cache if p['device_id'] == instance.id]
