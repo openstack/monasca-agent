@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 
 """ Detect running daemons then configure and start the agent.
 """
@@ -134,42 +134,64 @@ def base_configuration(args):
 
 
 def modify_config(args, detected_config):
-    changes = False
-    # Compare existing and detected config for each check plugin and write out the plugin config if changes
-    for key, value in detected_config.iteritems():
+    """Compare existing and detected config for each check plugin and write out
+       the plugin config if there are changes
+    """
+    modified_config = False
+
+    for detection_plugin_name, new_config in detected_config.iteritems():
         if args.overwrite:
-            changes = True
+            modified_config = True
             if args.dry_run:
                 continue
             else:
-                agent_config.save_plugin_config(args.config_dir, key, args.user, value)
+                agent_config.save_plugin_config(args.config_dir, detection_plugin_name, args.user, new_config)
         else:
-            old_config = agent_config.read_plugin_config_from_disk(args.config_dir, key)
+            config = agent_config.read_plugin_config_from_disk(args.config_dir, detection_plugin_name)
             # merge old and new config, new has precedence
-            if old_config is not None:
-                if key == "http_check":
-                    old_config_urls = [i['url'] for i in old_config['instances'] if 'url' in i]
-                    value, old_config = agent_config.check_endpoint_changes(value, old_config)
-                agent_config.merge_by_name(value['instances'], old_config['instances'])
-                # Sort before compare, if instances have no name the sort will fail making order changes significant
+            if config is not None:
+                # For HttpCheck, if the new input url has the same host and
+                # port but a different protocol comparing with one of the
+                # existing instances in http_check.yaml, we want to keep the
+                # existing http check instance and replace the url with the
+                # new protocol. If name in this instance is the same as the
+                # url, we replace name with new url too.
+                # For more details please see:
+                # monasca-agent/docs/DeveloperDocs/agent_internals.md
+                if detection_plugin_name == "http_check":
+                    # Save old http_check urls from config for later comparison
+                    config_urls = [i['url'] for i in config['instances'] if
+                                   'url' in i]
+
+                    # Check endpoint change, use new protocol instead
+                    # Note: config is possibly changed after running
+                    # check_endpoint_changes function.
+                    config = agent_config.check_endpoint_changes(new_config, config)
+
+                agent_config.merge_by_name(new_config['instances'], config['instances'])
+                # Sort before compare, if instances have no name the sort will
+                #  fail making order changes significant
                 try:
-                    value['instances'].sort(key=lambda k: k['name'])
-                    old_config['instances'].sort(key=lambda k: k['name'])
+                    new_config['instances'].sort(key=lambda k: k['name'])
+                    config['instances'].sort(key=lambda k: k['name'])
                 except Exception:
                     pass
-                value_urls = [i['url'] for i in value['instances'] if 'url' in i]
-                if key == "http_check":
-                    if value_urls == old_config_urls:  # Don't write config if no change
+
+                if detection_plugin_name == "http_check":
+                    new_config_urls = [i['url'] for i in new_config['instances'] if 'url' in i]
+                    # Don't write config if no change
+                    if new_config_urls == config_urls and new_config == config:
                         continue
                 else:
-                    if value == old_config:
+                    if new_config == config:
                         continue
-            changes = True
+            modified_config = True
             if args.dry_run:
-                log.info("Changes would be made to the config file for the {0} check plugin".format(key))
+                log.info("Changes would be made to the config file for the {0}"
+                         " check plugin".format(detection_plugin_name))
             else:
-                agent_config.save_plugin_config(args.config_dir, key, args.user, value)
-    return changes
+                agent_config.save_plugin_config(args.config_dir, detection_plugin_name, args.user, new_config)
+    return modified_config
 
 
 def validate_positive(value):

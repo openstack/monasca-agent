@@ -1,4 +1,4 @@
-# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 
 """Classes to aid in configuration of the agent."""
 
@@ -102,6 +102,9 @@ def save_plugin_config(config_dir, plugin_name, user, conf):
 
 
 def check_endpoint_changes(value, config):
+    """Change urls in config with same path but different protocols into new
+       endpoints.
+    """
     new_url = value['instances'][0]['url']
     old_urls = [i['url'] for i in config['instances'] if 'url' in i]
     new_path = new_url.split("://")[1]
@@ -111,7 +114,7 @@ def check_endpoint_changes(value, config):
             if config['instances'][i]['url'] == config['instances'][i]['name']:
                 config['instances'][i]['name'] = new_url
             config['instances'][i]['url'] = new_url
-    return value, config
+    return config
 
 
 def delete_from_config(args, config, file_path, plugin_name):
