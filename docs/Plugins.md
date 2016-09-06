@@ -1187,7 +1187,8 @@ The NTP checks return the following metrics:
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
-| ntp.offset | hostname | Time offset in seconds |
+| ntp.offset | hostname, ntp_server | Time offset in seconds |
+| ntp.connection_status | hostname, ntp_server | Value of ntp server connection status (0=Healthy) |
 
 ## Postfix Checks
 This section describes the Postfix checks that can be performed by the Agent. The Postfix checks gathers metrics on the Postfix. The Postfix checks requires a configuration file called postfix.yaml to be available in the agent conf.d configuration directory. The config file must contain the name, directory and queue that you are interested in monitoring.
