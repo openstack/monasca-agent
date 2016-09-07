@@ -60,6 +60,13 @@ class ProcessCheck(checks.AgentCheck):
 
         return set(found_process_list)
 
+    @staticmethod
+    def _safely_increment_var(var, value):
+        if var:
+            return var + value
+        else:
+            return value
+
     def get_process_metrics(self, pids, psutil, name):
         processes_to_remove = set(self._cached_processes[name].keys()) - pids
         for pid in processes_to_remove:
@@ -68,14 +75,14 @@ class ProcessCheck(checks.AgentCheck):
         io_permission = True
 
         # initialize aggregation values
-        total_thr = 0
+        total_thr = None
         total_cpu = None
-        total_rss = 0
-        total_open_file_descriptors = 0
-        total_read_count = 0
-        total_write_count = 0
-        total_read_kbytes = 0
-        total_write_kbytes = 0
+        total_rss = None
+        total_open_file_descriptors = None
+        total_read_count = None
+        total_write_count = None
+        total_read_kbytes = None
+        total_write_kbytes = None
 
         for pid in set(pids):
             try:
@@ -88,20 +95,16 @@ class ProcessCheck(checks.AgentCheck):
                     p = self._cached_processes[name][pid]
 
                 mem = p.memory_info_ex()
-                total_rss += float(mem.rss / 1048576)
-                total_thr += p.num_threads()
+                total_rss = self._safely_increment_var(total_rss, float(mem.rss / 1048576))
+                total_thr = self._safely_increment_var(total_thr, p.num_threads())
 
                 try:
-                    total_open_file_descriptors += float(p.num_fds())
+                    total_open_file_descriptors = self._safely_increment_var(total_open_file_descriptors, float(p.num_fds()))
                 except psutil.AccessDenied:
                     got_denied = True
 
                 if not added_process:
-                    cpu = p.cpu_percent(interval=None)
-                    if not total_cpu:
-                        total_cpu = cpu
-                    else:
-                        total_cpu += cpu
+                    total_cpu = self._safely_increment_var(total_cpu, p.cpu_percent(interval=None))
                 else:
                     p.cpu_percent(interval=None)
 
@@ -109,10 +112,10 @@ class ProcessCheck(checks.AgentCheck):
                 if io_permission:
                     try:
                         io_counters = p.io_counters()
-                        total_read_count += io_counters.read_count
-                        total_write_count += io_counters.write_count
-                        total_read_kbytes += float(io_counters.read_bytes / 1024)
-                        total_write_kbytes += float(io_counters.write_bytes / 1024)
+                        total_read_count = self._safely_increment_var(total_read_count, io_counters.read_count)
+                        total_write_count = self._safely_increment_var(total_write_count, io_counters.write_count)
+                        total_read_kbytes = self._safely_increment_var(total_read_kbytes, float(io_counters.read_bytes / 1024))
+                        total_write_kbytes = self._safely_increment_var(total_write_kbytes, float(io_counters.write_bytes / 1024))
                     except psutil.AccessDenied:
                         self.log.debug('monasca-agent user does not have ' +
                                        'access to I/O counters for process' +
@@ -191,5 +194,5 @@ class ProcessCheck(checks.AgentCheck):
         if instance.get('detailed', False):
             metrics = self.get_process_metrics(pids, psutil, name)
             for metric_name, metric_value in metrics.iteritems():
-                if metric_value is not None and metric_value > 0:
+                if metric_value is not None:
                     self.gauge(metric_name, metric_value, dimensions=dimensions)
