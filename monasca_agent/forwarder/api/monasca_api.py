@@ -2,6 +2,7 @@
 
 import collections
 import copy
+import json
 import logging
 import random
 import time
@@ -32,9 +33,24 @@ class MonascaAPI(object):
         self.mon_client = None
         self._failure_reason = None
         self._resume_time = None
+        self._log_interval_remaining = 1
+        self._current_number_measurements = 0
         self.max_buffer_size = int(config['max_buffer_size'])
+        self.max_measurement_buffer_size = int(config['max_measurement_buffer_size'])
+
+        if self.max_buffer_size > -1:
+            log.debug("'max_buffer_size' is deprecated. Please use"
+                      " 'max_measurement_buffer_size' instead")
+            if self.max_measurement_buffer_size > -1:
+                log.debug("Overriding 'max_buffer_size' option with new"
+                          " 'max_measurment_buffer_size' option")
+                self.max_buffer_size = -1
+
         self.backlog_send_rate = int(config['backlog_send_rate'])
-        self.message_queue = collections.deque(maxlen=self.max_buffer_size)
+        if self.max_buffer_size > -1:
+            self.message_queue = collections.deque(maxlen=self.max_buffer_size)
+        else:
+            self.message_queue = collections.deque()
         self.write_timeout = int(config['write_timeout'])
         # 'amplifier' is completely optional and may not exist in the config
         try:
@@ -65,10 +81,13 @@ class MonascaAPI(object):
                 messages_sent = 0
                 for index in range(0, len(self.message_queue)):
                     if index < self.backlog_send_rate:
-                        msg = self.message_queue.pop()
+
+                        msg = json.loads(self.message_queue.pop())
 
                         if self._send_message(**msg):
                             messages_sent += 1
+                            for value in msg.values():
+                                self._current_number_measurements -= len(value)
                         else:
                             self._queue_message(msg, self._failure_reason)
                             break
@@ -76,6 +95,7 @@ class MonascaAPI(object):
                         break
                 log.info("Sent {0} messages from the backlog.".format(messages_sent))
                 log.info("{0} messages remaining in the queue.".format(len(self.message_queue)))
+                self._log_interval_remaining = 0
         else:
             self._queue_message(kwargs.copy(), self._failure_reason)
 
@@ -147,10 +167,35 @@ class MonascaAPI(object):
         return False
 
     def _queue_message(self, msg, reason):
-        self.message_queue.append(msg)
-        queue_size = len(self.message_queue)
-        if queue_size is 1 or queue_size % MonascaAPI.LOG_INTERVAL == 0:
+        if self.max_buffer_size == 0 or self.max_measurement_buffer_size == 0:
+            return
+
+        self.message_queue.append(json.dumps(msg))
+
+        for value in msg.values():
+            self._current_number_measurements += len(value)
+
+        if self.max_measurement_buffer_size > -1:
+            while self._current_number_measurements > self.max_measurement_buffer_size:
+                self._remove_oldest_from_queue()
+
+        if self._log_interval_remaining <= 1:
             log.warn("{0}. Queuing the messages to send later...".format(reason))
             log.info("Current agent queue size: {0} of {1}.".format(len(self.message_queue),
                                                                     self.max_buffer_size))
+            log.info("Current measurements in queue: {0} of {1}".format(
+                self._current_number_measurements, self.max_measurement_buffer_size))
+
             log.info("A message will be logged for every {0} messages queued.".format(MonascaAPI.LOG_INTERVAL))
+            self._log_interval_remaining = MonascaAPI.LOG_INTERVAL
+        else:
+            self._log_interval_remaining -= 1
+
+    def _remove_oldest_from_queue(self):
+        removed_batch = json.loads(self.message_queue.popleft())
+        num_discarded = 0
+        for value in removed_batch.values():
+            num_discarded += len(value)
+        self._current_number_measurements -= num_discarded
+        log.warn("Queue too large, discarding oldest batch: {0} measurements discarded".format(
+            num_discarded))

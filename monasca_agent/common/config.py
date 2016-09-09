@@ -1,4 +1,4 @@
-# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 
 import logging
 import os
@@ -66,6 +66,7 @@ class Config(object):
                                 'keystone_timeout': 20,
                                 'keystone_url': '',
                                 'max_buffer_size': 1000,
+                                'max_measurement_buffer_size': -1,
                                 'write_timeout': 10,
                                 'backlog_send_rate': 5},
                         'Statsd': {'recent_point_threshold': None,

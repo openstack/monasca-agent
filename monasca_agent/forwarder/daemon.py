@@ -30,7 +30,6 @@ import tornado.web
 
 # agent import
 import monasca_agent.common.config as cfg
-import monasca_agent.common.metrics as metrics
 import monasca_agent.common.util as util
 import monasca_agent.forwarder.api.monasca_api as mon
 

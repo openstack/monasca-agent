@@ -37,13 +37,19 @@ Api:
   # Name of the ca certs file
   ca_file: {args.ca_file}
 
-  # The following 2 options are for handling buffering and reconnection to the monasca-api
-  # If you want the messages to be sent as fast as possible, set these two options to
-  # the same number.  If you have a larger system with many agents, you may want to throttle
-  # the number of messages sent to the API by setting the backlog_send_rate to a lower number.
+  # The following 3 options are for handling buffering and reconnection to the monasca-api
+  # If the agent forwarder is consuming too much memory, you may want to set
+  # max_measurement_buffer_size to a lower value. If you have a larger system with many agents,
+  # you may want to throttle the number of messages sent to the API by setting the
+  # backlog_send_rate to a lower number.
 
-  # Maximum number of messages to buffer when unable to communicate with the monasca-api
+  # DEPRECATED - please use max_measurement_buffer_size instead
+  # Maximum number of messages (batches of measurements) to buffer when unable to communicate
+  # with the monasca-api (-1 means no limit)
   max_buffer_size: 1000
+  # Maximum number of measurements to buffer when unable to communicate with the monasca-api
+  # (-1 means no limit)
+  max_measurement_buffer_size: {args.max_measurement_buffer_size}
   # Maximum number of messages to send at one time when communication with the monasca-api is restored
   backlog_send_rate: 1000
 
