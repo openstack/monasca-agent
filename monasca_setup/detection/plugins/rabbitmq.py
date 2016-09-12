@@ -1,4 +1,4 @@
-# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 
 import logging
 import urllib2
@@ -143,10 +143,15 @@ class RabbitMQ(monasca_setup.detection.Plugin):
             service_name = 'rabbitmq'
 
             # Setup an active http_status check on the API
+            if self.api_url.endswith("/"):
+                check_api_url = self.api_url
+            else:
+                check_api_url = self.api_url + "/"
+
             log.info("\tConfiguring an http_check for the {0} API.".format(
                 service_name))
             config.merge(service_api_check(service_name,
-                                           self.api_url,
+                                           check_api_url,
                                            '.*RabbitMQ.*',
                                            use_keystone=False,
                                            service=service_name))
