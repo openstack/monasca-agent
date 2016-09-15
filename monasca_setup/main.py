@@ -268,6 +268,10 @@ def parse_arguments(parser):
                                             "Useful for load testing; not for production use.", default=0)
     parser.add_argument('-v', '--verbose', help="Verbose Output", action="store_true")
     parser.add_argument('--dry_run', help="Make no changes just report on changes", action="store_true")
+    parser.add_argument('--max_measurement_buffer_size',
+                        help='Maximum number of measurements to buffer when unable to communicate'
+                             ' with the monasca-api',
+                        default=-1)
     return parser.parse_args()
 
 
