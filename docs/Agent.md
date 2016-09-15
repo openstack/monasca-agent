@@ -112,6 +112,8 @@ All parameters require a '--' before the parameter such as '--verbose'. Run `mon
 | skip_detection_plugins | Skip provided space separated list of detection plugins. | system |
 | overwrite | This is an optional parameter to overwrite the plugin configuration.  Use this if you don't want to keep the original configuration.  If this parameter is not specified, the configuration will be appended to the existing configuration, possibly creating duplicate checks.  **NOTE:** The agent config file, agent.yaml, will always be overwritten, even if this parameter is not specified. | |
 | detection_args | Some detection plugins can be passed arguments. This is a string that will be passed to the detection plugins. | "hostname=ping.me" |
+| max_measurement_buffer_size | Integer value for the maximum number of measurements to buffer locally while unable to connect to the monasca-api. If the queue exceeds this value, measurements will be dropped in batches. A value of '-1' indicates no limit | 100000 |
+| backlog_send_rate | Integer value of how many batches of buffered measurements to send each time the forwarder flushes data | 1000 |
 
 ### Providing Arguments to Detection plugins
 When running individual detection plugins you can specify arguments that augment the configuration created. In some instances the arguments just provide additional
