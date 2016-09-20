@@ -534,17 +534,14 @@ class LibvirtCheck(AgentCheck):
                 self.gauge("vm.{0}".format(metric_name), value,
                            dimensions=this_dimensions)
 
-        this_dimensions = dict()
-        this_dimensions.update(dims_customer)
-        this_dimensions.update(dims_operations)
         for metric in metric_aggregate:
             self.gauge("{0}_total".format(metric), metric_aggregate[metric],
-                       dimensions=this_dimensions,
+                       dimensions=dims_customer,
                        delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
                        hostname=instance_cache.get(inst_name)['hostname'])
             self.gauge("vm.{0}_total".format(metric),
                        metric_aggregate[metric],
-                       dimensions=this_dimensions)
+                       dimensions=dims_operations)
 
     def _inspect_state(self, insp, inst, inst_name, instance_cache, dims_customer, dims_operations):
         """Look at the state of the instance, publish a metric using a
