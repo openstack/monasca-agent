@@ -25,6 +25,9 @@ init_config:
     # scaling in Heat.
     metadata:
     - scale_group
+    # Include scale group dimension for customer metrics.
+    customer_metadata:
+    - scale_group
 instances:
     # Instances are automatically detected through queries to the Nova API,
     # and therefore do not need to be listed here, so this remains empty.

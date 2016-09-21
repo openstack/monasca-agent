@@ -28,6 +28,8 @@ vm_probation = 60 * 5  # Five minutes
 # By default 'scale_group' metadata is used here for supporting auto
 # scaling in Heat.
 metadata = ['scale_group']
+# Include scale group dimension for customer metrics.
+customer_metadata = ['scale_group']
 # List 'ping' commands (paths and parameters) in order of preference.
 # The plugin will use the first fuctional command. 127.0.0.1 will be appended.
 ping_options = [["/usr/bin/fping", "-n", "-c1", "-t250", "-q"],
@@ -111,6 +113,7 @@ class Libvirt(Plugin):
                            'nova_refresh': nova_refresh,
                            'vm_probation': vm_probation,
                            'metadata': metadata,
+                           'customer_metadata': customer_metadata,
                            'max_ping_concurrency': default_max_ping_concurrency,
                            'disk_collection_period': default_disk_collection_period,
                            'vnic_collection_period': default_vnic_collection_period}
