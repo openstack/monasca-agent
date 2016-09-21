@@ -79,6 +79,8 @@ init_config:
     nova_refresh: 14400
     metadata:
     - scale_group
+    customer_metadata:
+    - scale_group
     vm_probation: 300
     ping_check: /opt/stack/venv/monasca_agent-20160224T213950Z/bin/ip netns exec NAMESPACE
       /bin/ping -n -c1 -w1 -q
