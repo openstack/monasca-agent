@@ -605,7 +605,7 @@ def initialize_logging(logger_name):
         # set up file loggers
         log_file = logging_config.get('%s_log_file' % logger_name)
         if log_file is not None and not logging_config['disable_file_logging']:
-            # make sure the log directory is writeable
+            # make sure the log directory is writable
             # NOTE: the entire directory needs to be writable so that rotation works
             if os.access(os.path.dirname(log_file), os.R_OK | os.W_OK):
                 file_handler = logging.handlers.RotatingFileHandler(
