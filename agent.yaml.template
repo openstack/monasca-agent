@@ -6,9 +6,14 @@ Api:
   #   Set username, password and project id.
   #   Set username, password, project name and (domain id or domain name).
   #
-  # Monitoring API URL: URL for the monitoring API, if undefined it will be pulled from the keystone service catalog
-  # Example: https://region-a.geo-1.monitoring.hpcloudsvc.com:8080/v2.0
+  # Monitoring API URL (example: https://region-a.geo-1.monitoring.hpcloudsvc.com:8080/v2.0)
+  # If undefined, it will be pulled from Keystone Service Catalog optionally filtering by
+  # service_type ('monitoring' by default), endpoint_type ('publicURL' by default) and/or
+  # region_name (none by default).
   url: {args.monasca_url}
+  service_type: {args.service_type}
+  endpoint_type: {args.endpoint_type}
+  region_name: {args.region_name}
   # Keystone Username
   username: {args.username}
   # Keystone Password
