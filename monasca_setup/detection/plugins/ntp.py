@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development LP
 
 import logging
 import os
@@ -17,7 +17,7 @@ class Ntp(monasca_setup.detection.Plugin):
     def _detect(self):
         """Run detection, set self.available True if the service is detected.
         """
-        if monasca_setup.detection.find_process_cmdline('ntp') is not None:
+        if monasca_setup.detection.find_process_cmdline('ntpd') is not None:
             self.available = True
 
     def build_config(self):
