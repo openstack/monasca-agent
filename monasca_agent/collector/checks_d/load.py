@@ -50,14 +50,21 @@ class Load(checks.AgentCheck):
 
         dimensions = self._set_dimensions(None)
 
+        #
+        # Normalize the load averages by number of cores
+        # so the metric is useful for alarming across
+        # hosts with varying core numbers
+        #
+        num_cores = psutil.cpu_count(logical=True)
+
         self.gauge('load.avg_1_min',
-                   float(load[0]),
+                   round((float(load[0]) / num_cores), 3),
                    dimensions=dimensions)
         self.gauge('load.avg_5_min',
-                   float(load[1]),
+                   round((float(load[1]) / num_cores), 3),
                    dimensions=dimensions)
         self.gauge('load.avg_15_min',
-                   float(load[2]),
+                   round((float(load[2]) / num_cores), 3),
                    dimensions=dimensions)
 
-        log.debug('Collected 3 load metrics')
+        log.debug("Collected 3 load metrics (normalized by {} cores)".format(num_cores))
