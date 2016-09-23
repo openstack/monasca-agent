@@ -107,6 +107,7 @@ All parameters require a '--' before the parameter such as '--verbose'. Run `mon
 | skip_detection_plugins | Skip provided space separated list of detection plugins. | system |
 | overwrite | This is an optional parameter to overwrite the plugin configuration.  Use this if you don't want to keep the original configuration.  If this parameter is not specified, the configuration will be appended to the existing configuration, possibly creating duplicate checks.  **NOTE:** The agent config file, agent.yaml, will always be overwritten, even if this parameter is not specified. | |
 | detection_args | Some detection plugins can be passed arguments. This is a string that will be passed to the detection plugins. | "hostname=ping.me" |
+| detection_args_json | A JSON string can be passed to the detection plugin. | '{"process_config":{"process_names":["monasca-api","monasca-notification"],"dimensions":{"service":"monitoring"}}}' |
 | max_measurement_buffer_size | Integer value for the maximum number of measurements to buffer locally while unable to connect to the monasca-api. If the queue exceeds this value, measurements will be dropped in batches. A value of '-1' indicates no limit | 100000 |
 | backlog_send_rate | Integer value of how many batches of buffered measurements to send each time the forwarder flushes data | 1000 |
 
@@ -252,4 +253,4 @@ If there is some problem with multiple plugins that end up blocking the entire t
 
 Some of the plugins have their own thread pools to handle asynchronous checks. The collector thread pool is separate and has no special interaction with those thread pools.
 # License
-(C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+(C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
