@@ -16,6 +16,10 @@ init_config:
     # If set, will submit raw counters from ovs-vsctl command output for the given
     # network interface
     use_absolute_metrics: true
+    # List of router metadata keys to be sent as dimensions when cross posting
+    # metrics to the infrastruture project.
+    metadata:
+    - tenant_name
     # Installations that don't allow usage of sudo should copy the `ovs-vsctl`
     # command to another location and use the `setcap` command to allow the
     # monasca-agent to run that command. The new location of the `ovs-vsctl`

@@ -6,6 +6,7 @@ import datetime
 import json
 import logging
 import math
+import monasca_agent.collector.checks.utils as utils
 import os
 import re
 import socket
@@ -154,6 +155,9 @@ class OvsCheck(AgentCheck):
             device_uuid = port_info['device_uuid']
             is_router_port = port_info['is_router_port']
             tenant_id = port_info['tenant_id']
+            tenant_name = None
+            if 'tenant_name' in port_info:
+                tenant_name = port_info['tenant_name']
             if is_router_port and not self._is_active_router(device_uuid):
                 continue
             if is_router_port:
@@ -193,6 +197,8 @@ class OvsCheck(AgentCheck):
                         continue
                 ops_dimensions = this_dimensions.copy()
                 ops_dimensions.update({'tenant_id': tenant_id})
+                if tenant_name:
+                    ops_dimensions.update({'tenant_name': tenant_name})
                 if self.use_rate_metrics:
                     self.gauge(metric_name_rate, value[interface_stats_key],
                                dimensions=customer_dimensions,
@@ -393,6 +399,15 @@ class OvsCheck(AgentCheck):
         all_ports_data = all_ports_data['ports']
         all_routers_data = all_routers_data['routers']
 
+        #
+        # Only make the keystone call to get the tenant list
+        # if we are configured to publish tenant names.
+        #
+        if self.init_config.get('metadata') and 'tenant_name' in self.init_config.get('metadata'):
+            tenants = utils.get_tenant_list(self.init_config, self.log)
+        else:
+            tenants = []
+
         for port_data in all_ports_data:
             port_uuid = port_data['id']
             device_uuid = port_data['device_id']
@@ -409,6 +424,10 @@ class OvsCheck(AgentCheck):
                                      'router_name': router_name,
                                      'is_router_port': is_router_port,
                                      'tenant_id': tenant_id}
+
+            tenant_name = utils.get_tenant_name(tenants, tenant_id)
+            if tenant_name:
+                port_cache[port_uuid]['tenant_name'] = tenant_name
 
         port_cache['last_update'] = int(time.time())
 
