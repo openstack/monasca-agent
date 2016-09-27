@@ -108,8 +108,7 @@ class MetricsAggregator(object):
                 return False
 
         try:
-            value_meta_json = json.dumps(value_meta)
-            if len(value_meta_json) > VALUE_META_VALUE_MAX_LENGTH:
+            if get_value_meta_overage(value_meta):
                 msg = "valueMeta name value combinations must be {0} characters or less: {1} -> {2} valueMeta {3}"
                 log.error(msg.format(VALUE_META_VALUE_MAX_LENGTH, name, dimensions, value_meta))
                 return False
@@ -194,3 +193,9 @@ class MetricsAggregator(object):
             timestamp = cur_time
         self.metrics[context].value_meta = value_meta
         self.metrics[context].sample(value, sample_rate, timestamp)
+
+
+def get_value_meta_overage(value_meta):
+    if len(json.dumps(value_meta)) > VALUE_META_VALUE_MAX_LENGTH:
+        return len(json.dumps(value_meta)) - VALUE_META_VALUE_MAX_LENGTH
+    return 0
