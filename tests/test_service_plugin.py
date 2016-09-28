@@ -30,11 +30,11 @@ class TestKeystone(unittest.TestCase):
         config = test_plugin.build_config()
         http_instance = config['http_check']['instances'][0]
         url = 'http://localhost:{0}/healthcheck'.format(port_used)
-        self.assertEquals(http_instance['url'], url)
-        self.assertEquals(http_instance['match_pattern'], '.*OK.*')
+        self.assertEqual(http_instance['url'], url)
+        self.assertEqual(http_instance['match_pattern'], '.*OK.*')
 
         processes = config['process']['instances']
-        self.assertEquals(processes[0]['search_string'], ['nose'])
+        self.assertEqual(processes[0]['search_string'], ['nose'])
 
     def test_override_values(self):
         """ Test overriding values using args works
@@ -49,12 +49,12 @@ class TestKeystone(unittest.TestCase):
         config = test_plugin.build_config()
 
         http_instance = config['http_check']['instances'][0]
-        self.assertEquals(http_instance['url'], url)
-        self.assertEquals(http_instance['match_pattern'], pattern)
+        self.assertEqual(http_instance['url'], url)
+        self.assertEqual(http_instance['match_pattern'], pattern)
 
         processes = config['process']['instances']
-        self.assertEquals(processes[0]['search_string'], ['tox'])
-        self.assertEquals(processes[1]['search_string'], ['nose'])
+        self.assertEqual(processes[0]['search_string'], ['tox'])
+        self.assertEqual(processes[1]['search_string'], ['nose'])
 
 class TestPlugin(monasca_setup.detection.ServicePlugin):
 
