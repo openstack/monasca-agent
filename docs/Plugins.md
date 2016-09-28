@@ -525,7 +525,7 @@ An extension to the Agent provides the ability to determine the expiration date 
 
 A YAML file (cert_check.yaml) contains the list of urls to check. It also contains
 
-The configuration of the certicate expiration check is done in YAML, and consists of two keys:
+The configuration of the certificate expiration check is done in YAML, and consists of two keys:
 
 * init_config
 * instances
