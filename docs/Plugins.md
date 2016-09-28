@@ -1649,10 +1649,10 @@ Sample config:
 init_config:
 
 instances:
-	user: mon_api
-	password: password
-	service: monasca (optional, defaults to vertica)
-	timeout: 3 (optional, defaults to 3 seconds)
+    user: mon_api
+    password: password
+    service: monasca (optional, defaults to vertica)
+    timeout: 3 (optional, defaults to 3 seconds)
 ```
 
 | Metric Name | Dimensions | Semantics |
@@ -1660,7 +1660,7 @@ instances:
 | vertica.license_usage_percent | hostname, service=vertica| Percentage of the license size taken up. |
 | vertica.connection_status | hostname, node_name, service=vertica | Value of DB connection status (0=Healthy). |
 | vertica.node_status | hostname, node_name, service=vertica| Status of node connection (0=UP). |
-| vertica.projection.ros_count | hostname, node_name, projection_name, service=vertica| 	The number of ROS containers in the projection. |
+| vertica.projection.ros_count | hostname, node_name, projection_name, service=vertica| The number of ROS containers in the projection. |
 | vertica.projection.tuple_mover_mergeouts | hostname, node_name, projection_name, service=vertica | Number of current tuple mover mergeouts on this projection. |
 | vertica.projection.tuple_mover_moveouts | hostname, node_name, projection_name, service=vertica | Number of current tuple mover moveout on this projection. |
 | vertica.projection.wos_used_bytes | hostname, node_name, projection_name, service=vertica | The number of WOS bytes in the projection.). |
@@ -1685,9 +1685,9 @@ Sample config:
 init_config:
 
 instances:
-	host: localhost
-	port: 2181
-	timeout: 3
+    host: localhost
+    port: 2181
+    timeout: 3
 ```
 
 The Zookeeper checks return the following metrics:

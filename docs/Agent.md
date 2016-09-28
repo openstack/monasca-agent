@@ -135,19 +135,19 @@ In particular, replace any values that have curly braces.
 Example:
 Change
 
-	username: {args.username}
+    username: {args.username}
 
-			to
+        to
 
-	username: myuser
+    username: myuser
 
 You must replace all of the curly brace values and you can also optionally tweak any of the other configuration items as well like a port number in the case of a port conflict.  The config file options are documented in the agent.yaml.template file.  You may also specify zero or more dimensions that would be included in every metric generated on that node, using the dimensions: value. Example: (include no extra dimensions on every metric)
 
     dimensions: (No dimensions example)
-			OR
+        OR
     dimensions: (Single dimension example)
         service: nova
-    		OR
+        OR
     dimensions: (3 dimensions example)
         service: nova
         group: group_a
@@ -206,33 +206,33 @@ The init_config section contains global configuration parameters for the plugin.
 A plugin config is specified something like this:
 
     init_config:
-    	is_jmx: true
+        is_jmx: true
 
-    	# Metrics collected by this check. You should not have to modify this.
-    	conf:
-       	#
-       	# Aggregate cluster stats
-        	#
-        	- include:
-            domain: '"kafka.server"'
-            bean: '"kafka.server":type="BrokerTopicMetrics",name="AllTopicsBytesOutPerSec"'
-            attribute:
-                MeanRate:
-                    metric_type: counter
-                    alias: kafka.net.bytes_out
+        # Metrics collected by this check. You should not have to modify this.
+        conf:
+            #
+            # Aggregate cluster stats
+            #
+            - include:
+              domain: '"kafka.server"'
+              bean: '"kafka.server":type="BrokerTopicMetrics",name="AllTopicsBytesOutPerSec"'
+              attribute:
+                  MeanRate:
+                      metric_type: counter
+                      alias: kafka.net.bytes_out
 
     instances:
-		- 	host: localhost
-        	port: 9999
-        	name: jmx_instance
-        	user: username
-        	password: password
-        	#java_bin_path: /path/to/java #Optional, should be set if the agent cannot find your java executable
-        	#trust_store_path: /path/to/trustStore.jks # Optional, should be set if ssl is enabled
-        	#trust_store_password: password
-        	dimensions:
-             env: stage
-             newDim: test
+        - host: localhost
+          port: 9999
+          name: jmx_instance
+          user: username
+          password: password
+          #java_bin_path: /path/to/java #Optional, should be set if the agent cannot find your java executable
+          #trust_store_path: /path/to/trustStore.jks # Optional, should be set if ssl is enabled
+          #trust_store_password: password
+          dimensions:
+              env: stage
+              newDim: test
 
 monasca-collector service can receive a `--config-file` argument, which represents an alternate agent configuration file, instead of the default /etc/monasca/agent.yaml.
 
