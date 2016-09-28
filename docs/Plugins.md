@@ -419,9 +419,9 @@ It is possible to reduce the number of system metrics with certain configuration
 | send_io_stats  | true/false | If true, sends I/O metrics for each disk device.  If false, sends only disk space metrics. |
 
 These parameters may added to `instances` in the plugin `.yaml` configuration file, or added via `monasca-setup` like this:
-```
-monasca-setup -d system -a 'cpu_idle_only=true net_bytes_only=true send_io_stats=false' --overwrite
-```
+
+    $ monasca-setup -d system -a 'cpu_idle_only=true net_bytes_only=true send_io_stats=false' --overwrite
+
 By default, all metrics are enabled.
 
 ## Apache
@@ -532,9 +532,7 @@ The configuration of the certificate expiration check is done in YAML, and consi
 
 The init_config section lists the global configuration settings, such as the Certificate Authority Certificate file, the ciphers to use, the period at which to output the metric and the url connection timeout (in seconds, floating-point number)
 
-```
-ls -l `which ping` -rwsr-xr-x 1 root root 35712 Nov 8 2011 /bin/ping
-```
+    $ ls -l `which ping` -rwsr-xr-x 1 root root 35712 Nov 8 2011 /bin/ping
 
 ```
 init_config:
@@ -563,7 +561,7 @@ The certicate expiration checks return the following metrics
 
 There is a detection plugin that should be used to configure this extension. It is invoked as:
 
-monasca-setup -d CertificateCheck -a urls=https://somehost.somedomain.net:8333,https://somehost.somedomain.net:9696
+    $ monasca-setup -d CertificateCheck -a urls=https://somehost.somedomain.net:8333,https://somehost.somedomain.net:9696
 
 The urls option is a comma separated list of urls to check.
 
@@ -829,9 +827,7 @@ The configuration of the host alive check is done in YAML, and consists of two k
 
 The init_config section lists the global configuration settings, such as SSH port, SSH connection timeout (in seconds, floating-point number), and ping timeout (in seconds, integer).
 
-```
-ls -l `which ping` -rwsr-xr-x 1 root root 35712 Nov 8 2011 /bin/ping
-```
+    $ ls -l `which ping` -rwsr-xr-x 1 root root 35712 Nov 8 2011 /bin/ping
 
 ```
 init_config:

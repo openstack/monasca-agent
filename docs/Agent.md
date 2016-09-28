@@ -44,23 +44,17 @@ The Agent is composed of the following components:
 # Installing
 The Agent (monasca-agent) is available for installation from the Python Package Index (PyPI). To install it, you first need `pip` installed on the node to be monitored. Instructions on installing pip may be found at https://pip.pypa.io/en/latest/installing.html.  The Agent will NOT run under any flavor of Windows or Mac OS at this time but has been tested thoroughly on Ubuntu and should work under most flavors of Linux.  Support may be added for Mac OS and Windows in the future.  Example of an Ubuntu or Debian based install:
 
-```
-sudo apt-get install python-pip
-```
+    $ sudo apt-get install python-pip
 
 To ensure you are running the latest version of pip
 
-```
-sudo pip install --upgrade pip
-```
+    $ sudo pip install --upgrade pip
 
 Warning, the Agent is known to not install properly under python-pip version 1.0, which is packaged with Ubuntu 12.04 LTS (Precise Pangolin).
 
 The Agent can be installed using pip as follows:
 
-```
-sudo pip install monasca-agent
-```
+    $ sudo pip install monasca-agent
 
 # Configuring
 The Agent requires configuration in order to run. There are two ways to configure the agent, either using the [monasca-setup](#monasca-setup) script or manually.
@@ -74,9 +68,10 @@ The plugin configuration files are located in /etc/monasca/agent/conf.d.
 
 monasca-setup is located in `[installed prefix dir]/bin/monasca-setup` and can be run as follows:
 
-```
-sudo monasca-setup --username KEYSTONE_USERNAME --password KEYSTONE_PASSWORD --project_name KEYSTONE_PROJECT_NAME --keystone_url http://URL_OF_KEYSTONE_API:35357/v3
-```
+    $ sudo monasca-setup --username KEYSTONE_USERNAME \
+      --password KEYSTONE_PASSWORD --project_name KEYSTONE_PROJECT_NAME \
+      --keystone_url http://URL_OF_KEYSTONE_API:35357/v3
+
 It is also possible to skip most detection plugins in monasca-setup with the `--system_only` flag. You can then come back later and run individual detection plugins without additional arguments,
 for example `monasca-setup -d mysql`. This allows a base install to setup the agent and required credentials then later easily add additional services and monitoring.
 
@@ -127,12 +122,12 @@ This is not the recommended way to configure the agent but if you are having tro
 
 Start by creating an agent.yaml file.  An example configuration file can be found in <install_dir>/share/monasca/agent/.
 
-    sudo mkdir -p /etc/monasca/agent
-    sudo cp /usr/local/share/monasca/agent/agent.yaml.template /etc/monasca/agent/agent.yaml
+    $ sudo mkdir -p /etc/monasca/agent
+    $ sudo cp /usr/local/share/monasca/agent/agent.yaml.template /etc/monasca/agent/agent.yaml
 
 and then edit the file with your favorite text editor (vi, nano, emacs, etc.)
 
-    sudo nano /etc/monasca/agent/agent.yaml
+    $ sudo nano /etc/monasca/agent/agent.yaml
 
 In particular, replace any values that have curly braces.
 Example:
@@ -158,7 +153,7 @@ You must replace all of the curly brace values and you can also optionally tweak
 
 Once the configuration file has been updated and saved, monasca-agent must be restarted.
 
-    sudo service monasca-agent restart
+    $ sudo service monasca-agent restart
 
 ## Dimension Precedence
 If a dimension is specified in /etc/monasca/agent/agent.yaml with the same name (e.g. service)
@@ -192,12 +187,13 @@ Agent plugins are activated by placing a valid configuration file in the /etc/mo
 
 For example, to activate the http_check plugin:
 
-    sudo mkdir -p /etc/monasca/agent/conf.d
-    sudo cp /usr/local/share/monasca/agent/conf.d/http_check.yaml.example /etc/monasca/agent/conf.d/http_check.yaml
+    $ sudo mkdir -p /etc/monasca/agent/conf.d
+    $ sudo cp /usr/local/share/monasca/agent/conf.d/http_check.yaml.example \
+      /etc/monasca/agent/conf.d/http_check.yaml
 
 and then edit the file as needed for your configuration.
 
-    sudo nano /etc/monasca/agent/conf.d/http_check.yaml
+    $ sudo nano /etc/monasca/agent/conf.d/http_check.yaml
 
 The plugins are annotated and include the possible configuration parameters. In general, though, configuration files are split into two sections:
 init_config
