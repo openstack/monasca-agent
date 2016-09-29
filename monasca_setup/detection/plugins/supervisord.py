@@ -61,8 +61,8 @@ class Supervisord(monasca_setup.detection.Plugin):
             if not found_process:
                 log.error('Supervisord process does not exist.')
             elif not has_args_or_conf_file:
-                log.error(('Supervisord process exists but'
-                           'configuration file was not found and'
+                log.error(('Supervisord process exists but '
+                           'configuration file was not found and '
                            'no arguments were given.'))
 
     def _get_config(self):
