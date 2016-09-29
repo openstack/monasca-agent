@@ -322,6 +322,6 @@ if __name__ == '__main__':
         # Try our best to log the error.
         try:
             log.exception("Uncaught error running the Agent")
-        except Exception:
+        except Exception:  # nosec
             pass
         raise

@@ -174,7 +174,7 @@ class Memcache(AgentCheck):
         # See https://github.com/DataDog/dd-agent/issues/278 for details.
         try:
             memcache.Client.debuglog = None
-        except Exception:
+        except Exception:  # nosec
             pass
 
         port = int(instance.get('port', self.DEFAULT_PORT))

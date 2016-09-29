@@ -58,7 +58,7 @@ class WrapNagios(ServicesCheck):
         last_run_path = self.init_config.get('temp_file_path')
         # Use a default last_run_file if no temp_file is specified in the YAML
         if last_run_path is None:
-            last_run_path = '/dev/shm/'
+            last_run_path = '/dev/shm/'  # nosec
 
         if last_run_path.endswith('/') is False:
             last_run_path += '/'

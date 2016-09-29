@@ -207,7 +207,7 @@ SELECT relname,
                 raise ImportError(
                     "psycopg2 library cannot be imported. Please check the installation instruction on the Datadog Website.")
 
-            if host == 'localhost' and password == '':
+            if host == 'localhost' and password == '':  # nosec
                 # Use ident method
                 connection = pg.connect("user=%s dbname=%s" % (user, dbname))
             elif port != '':

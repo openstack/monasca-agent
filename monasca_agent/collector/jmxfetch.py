@@ -279,8 +279,9 @@ class JMXFetch(object):
             os.kill(pid, signal.SIGTERM)
             JMXFetch.pid_file.clean()
             try:
-                os.remove(os.path.join(tempfile.gettempdir(), PYTHON_JMX_STATUS_FILE))
-            except Exception:
+                os.remove(os.path.join(tempfile.gettempdir(),
+                                       PYTHON_JMX_STATUS_FILE))
+            except Exception:  # nosec
                 pass
             log.info("Success")
         except Exception:

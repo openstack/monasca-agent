@@ -115,7 +115,7 @@ class HAProxy(AgentCheck):
                     try:
                         # Try converting to a long, if failure, just leave it
                         val = float(val)
-                    except Exception:
+                    except Exception:  # nosec
                         pass
                     data_dict[fields[i]] = val
 

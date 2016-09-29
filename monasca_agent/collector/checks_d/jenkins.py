@@ -78,7 +78,7 @@ class Jenkins(AgentCheck):
                     .find('hudson.plugins.git.Branch') \
                     .find('name') \
                     .text
-            except Exception:
+            except Exception:  # nosec
                 pass
             return d
 
@@ -102,7 +102,7 @@ class Jenkins(AgentCheck):
                         # If we can't get build metadata, we try the previous one
                         try:
                             build_metadata = self._get_build_metadata(dir_name)
-                        except Exception:
+                        except Exception:  # nosec
                             continue
 
                         output = {

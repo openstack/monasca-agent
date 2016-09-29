@@ -13,3 +13,7 @@ AUTHORS
 ChangeLog
 *.egg*
 .*.sw*
+.coverage
+htmlcov/
+.testrepository/
+cover/
