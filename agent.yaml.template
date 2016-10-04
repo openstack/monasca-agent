@@ -108,7 +108,7 @@ Statsd:
   # Monasca Statsd is a small server that aggregates your custom app metrics.
 
   #  Make sure your client is sending to the same port.
-  monasca_statsd_port : 8125
+  monasca_statsd_port : {args.monasca_statsd_port}
 
   ## The monasca_statsd flush period.
   # monasca_statsd_interval : 20
