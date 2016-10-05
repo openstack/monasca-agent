@@ -1,6 +1,7 @@
 # (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
 
 import json
+import re
 import time
 import urllib2
 import urlparse
@@ -19,45 +20,47 @@ MAX_DETAILED_NODES = 50
 ALERT_THRESHOLD = 0.9
 QUEUE_ATTRIBUTES = [
     # Path, Name
-    ('active_consumers', 'active_consumers'),
-    ('consumers', 'consumers'),
-    ('memory', 'memory'),
+    ('active_consumers', 'active_consumers', float),
+    ('consumers', 'consumers', float),
+    ('memory', 'memory', float),
 
-    ('messages', 'messages'),
-    ('messages_details/rate', 'messages.rate'),
+    ('messages', 'messages', float),
+    ('messages_details/rate', 'messages.rate', float),
 
-    ('messages_ready', 'messages.ready'),
-    ('messages_ready_details/rate', 'messages.ready_rate'),
+    ('messages_ready', 'messages.ready', float),
+    ('messages_ready_details/rate', 'messages.ready_rate', float),
 
-    ('messages_unacknowledged', 'messages.unacknowledged'),
-    ('messages_unacknowledged_details/rate', 'messages.unacknowledged_rate'),
+    ('messages_unacknowledged', 'messages.unacknowledged', float),
+    ('messages_unacknowledged_details/rate', 'messages.unacknowledged_rate', float),
 
-    ('message_stats/ack', 'messages.ack_count'),
-    ('message_stats/ack_details/rate', 'messages.ack_rate'),
+    ('message_stats/ack', 'messages.ack_count', float),
+    ('message_stats/ack_details/rate', 'messages.ack_rate', float),
 
-    ('message_stats/deliver', 'messages.deliver_count'),
-    ('message_stats/deliver_details/rate', 'messages.deliver_rate'),
+    ('message_stats/deliver', 'messages.deliver_count', float),
+    ('message_stats/deliver_details/rate', 'messages.deliver_rate', float),
 
-    ('message_stats/deliver_get', 'messages.deliver_get_count'),
-    ('message_stats/deliver_get_details/rate', 'messages.deliver_get_rate'),
+    ('message_stats/deliver_get', 'messages.deliver_get_count', float),
+    ('message_stats/deliver_get_details/rate', 'messages.deliver_get_rate', float),
 
-    ('message_stats/publish', 'messages.publish_count'),
-    ('message_stats/publish_details/rate', 'messages.publish_rate'),
+    ('message_stats/publish', 'messages.publish_count', float),
+    ('message_stats/publish_details/rate', 'messages.publish_rate', float),
 
-    ('message_stats/redeliver', 'messages.redeliver_count'),
-    ('message_stats/redeliver_details/rate', 'messages.redeliver_rate')]
+    ('message_stats/redeliver', 'messages.redeliver_count', float),
+    ('message_stats/redeliver_details/rate', 'messages.redeliver_rate', float)]
 
-EXCHANGE_ATTRIBUTES = [('message_stats/publish_out', 'messages.published_count'),
-                       ('message_stats/publish_out_details/rate', 'messages.published_rate'),
+EXCHANGE_ATTRIBUTES = [('message_stats/publish_out', 'messages.published_count', float),
+                       ('message_stats/publish_out_details/rate', 'messages.published_rate', float),
 
-                       ('message_stats/publish_in', 'messages.received_count'),
-                       ('message_stats/publish_in_details/rate', 'messages.received_rate')]
+                       ('message_stats/publish_in', 'messages.received_count', float),
+                       ('message_stats/publish_in_details/rate', 'messages.received_rate', float)]
 
 NODE_ATTRIBUTES = [
-    ('fd_used', 'fd_used'),
-    ('mem_used', 'mem_used'),
-    ('run_queue', 'run_queue'),
-    ('sockets_used', 'sockets_used')]
+    ('fd_used', 'fd_used', float),
+    ('mem_used', 'mem_used', float),
+    ('run_queue', 'run_queue', float),
+    ('sockets_used', 'sockets_used', float),
+    ('partitions', 'partitions', len)
+]
 
 ATTRIBUTES = {QUEUE_TYPE: QUEUE_ATTRIBUTES,
               EXCHANGE_TYPE: EXCHANGE_ATTRIBUTES,
@@ -125,14 +128,25 @@ class RabbitMQ(checks.AgentCheck):
 
         # List of queues/nodes to collect metrics from
         specified = {
-            QUEUE_TYPE: instance.get('queues', []),
-            EXCHANGE_TYPE: instance.get('exchanges', []),
-            NODE_TYPE: instance.get('nodes', [])
+            QUEUE_TYPE: {
+                'explicit': instance.get('queues', []),
+                'regexes': instance.get('queues_regexes', []),
+            },
+            EXCHANGE_TYPE: {
+                'explicit': instance.get('exchanges', []),
+                'regexes': instance.get('exchanges_regexes', []),
+            },
+            NODE_TYPE: {
+                'explicit': instance.get('nodes', []),
+                'regexes': instance.get('nodes_regexes', []),
+            },
         }
 
-        for object_type, specified_objects in specified.iteritems():
-            if not isinstance(specified_objects, list):
-                raise TypeError("%s parameter must be a list" % object_type)
+        for object_type, filters in specified.iteritems():
+            for filter_type, filter_objects in filters.iteritems():
+                if type(filter_objects) != list:
+                    raise TypeError(
+                        "{0} / {0}_regexes parameter must be a list".format(object_type))
 
         # setup urllib2 for Basic Auth
         auth_handler = urllib2.HTTPBasicAuthHandler()
@@ -150,12 +164,12 @@ class RabbitMQ(checks.AgentCheck):
                        base_url,
                        QUEUE_TYPE,
                        max_detailed[QUEUE_TYPE],
-                       list(specified[QUEUE_TYPE]))
+                       specified[QUEUE_TYPE])
         self.get_stats(instance,
                        base_url,
                        NODE_TYPE,
                        max_detailed[NODE_TYPE],
-                       list(specified[NODE_TYPE]))
+                       specified[NODE_TYPE])
         self.get_stats(instance,
                        base_url,
                        EXCHANGE_TYPE,
@@ -172,17 +186,18 @@ class RabbitMQ(checks.AgentCheck):
             raise Exception('Cannot parse JSON response from API url: %s %s' % (url, str(e)))
         return data
 
-    def get_stats(self, instance, base_url, object_type, max_detailed, specified_list):
+    def get_stats(self, instance, base_url, object_type, max_detailed, filters):
         """instance: the check instance
 
         base_url: the url of the rabbitmq management api (e.g. http://localhost:15672/api)
         object_type: either QUEUE_TYPE, EXCHANGE_TYPE or NODE_TYPE
         max_detailed: the limit of objects to collect for this type
-        specified_list: a list of specified queues or nodes (specified in the yaml file)
+        filters: explicit or regexes filters of specified queues or nodes (specified in the yaml file)
         """
         data = self._get_data(urlparse.urljoin(base_url, object_type))
         # Make a copy of this list as we will remove items from it at each iteration
-        specified_items = list(specified_list)
+        explicit_filters = list(filters['explicit'])
+        regex_filters = filters['regexes']
 
         """data is a list of nodes or queues:
 
@@ -193,26 +208,45 @@ class RabbitMQ(checks.AgentCheck):
             ...
         ]
         """
-        if len(specified_items) > max_detailed:
+        if len(explicit_filters) > max_detailed:
             raise Exception("The maximum number of %s you can specify is %d." %
                             (object_type, max_detailed))
 
-        # If a list of exchanges/queues/nodes is specified,
-        # we process only those.
-        if specified_items is not None and len(specified_items) > 0:
+        # a list of queues/nodes is specified. We process only those
+        if explicit_filters or regex_filters:
+            matching_lines = []
             for data_line in data:
                 name = data_line.get("name")
-                if name not in specified_items:
-                    if object_type == QUEUE_TYPE:
-                        name = '%s/%s' % (data_line.get("vhost"), name)
-                if name in specified_items:
-                    self._get_metrics(data_line, object_type, instance)
-                    specified_items.remove(name)
+                if self._is_matching_stat(name, explicit_filters, regex_filters):
+                    matching_lines.append(data_line)
+                    continue
 
-        # No queues/node are specified. We will process every queue/node
-        else:
-            for data_line in data:
-                self._get_metrics(data_line, object_type, instance)
+                # Absolute names work only for queues
+                if object_type != QUEUE_TYPE:
+                    continue
+                absolute_name = '%s/%s' % (data_line.get("vhost"), name)
+                if self._is_matching_stat(absolute_name, explicit_filters, regex_filters):
+                    matching_lines.append(data_line)
+                    continue
+
+            data = matching_lines
+
+        if len(data) > max_detailed:
+            self.log.warning(
+                "Too many %s to fetch.  Increase max_detailed_ in the config or results will be truncated." % object_type)
+
+        for data_line in data[:max_detailed]:
+            # We truncate the list of nodes/queues if it's above the limit
+            self._get_metrics(data_line, object_type, instance)
+
+    def _is_matching_stat(self, name, explicit_filters, regex_filters):
+        if name in explicit_filters:
+            return True
+        for p in regex_filters:
+            match = re.search(p, name)
+            if match:
+                return True
+        return False
 
     def _get_metrics(self, data, object_type, instance):
         whitelist = instance.get('whitelist', {})
@@ -226,7 +260,7 @@ class RabbitMQ(checks.AgentCheck):
             if dim not in [None, ""]:
                 dimensions[dimensions_list[d]] = dim
 
-        for attribute, metric_name in ATTRIBUTES[object_type]:
+        for attribute, metric_name, operation in ATTRIBUTES[object_type]:
             # Check if the metric should be collected
             if attribute not in object_whitelist:
                 continue
@@ -241,8 +275,8 @@ class RabbitMQ(checks.AgentCheck):
             if value is None:
                 value = 0.0
             try:
-                self.log.debug("Collected data for %s: metric name: %s: value: %f dimensions: %s" % (object_type, metric_name, float(value), str(dimensions)))
-                self.gauge('rabbitmq.%s.%s' % (METRIC_SUFFIX[object_type], metric_name), float(value), dimensions=dimensions)
+                self.log.debug("Collected data for %s: metric name: %s: value: %f dimensions: %s" % (object_type, metric_name, operation(value), str(dimensions)))
+                self.gauge('rabbitmq.%s.%s' % (METRIC_SUFFIX[object_type], metric_name), operation(value), dimensions=dimensions)
             except ValueError:
                 self.log.exception("Caught ValueError for %s %s = %s  with dimensions: %s" % (
                     METRIC_SUFFIX[object_type], attribute, value, dimensions))
