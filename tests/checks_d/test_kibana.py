@@ -156,8 +156,8 @@ class KibanaCheckTest(unittest.TestCase):
             self.kibana_check.check({'metrics': enabled_metrics})
 
             self.assertTrue(self.kibana_check._process_metric.called)
-            self.assertEquals(len(enabled_metrics),
-                              self.kibana_check._process_metric.call_count)
+            self.assertEqual(len(enabled_metrics),
+                             self.kibana_check._process_metric.call_count)
 
     def test_check(self):
         fixture_file = os.path.dirname(
@@ -194,7 +194,7 @@ class KibanaCheckTest(unittest.TestCase):
             self.kibana_check.check({'metrics': metrics})
 
             self.assertTrue(self.kibana_check.gauge.called)
-            self.assertEquals(89, self.kibana_check.gauge.call_count)
+            self.assertEqual(89, self.kibana_check.gauge.call_count)
 
             for call_arg in self.kibana_check.gauge.call_args_list:
                 metric_name = call_arg[1]['metric']
