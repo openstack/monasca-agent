@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development LP
 
 import logging
 
@@ -18,8 +18,12 @@ class HostAlive(monasca_setup.detection.ArgsPlugin):
 
        monasca-setup -d hostalive -a "hostname=remotebox type=ping"
 
-       monasca-setup -d hostalive -a "hostname=remotebox,remotebox2 type=ssh"
+       monasca-setup -d hostalive -a "hostname=rb,rb2 target_hostname=,rb2-nic2 type=ssh"
     """
+
+    DEFAULT_PING_TIMEOUT = 1
+    DEFAULT_SSH_TIMEOUT = 2
+    DEFAULT_SSH_PORT = 22
 
     def _detect(self):
         """Run detection, set self.available True if the service is detected.
@@ -43,10 +47,21 @@ class HostAlive(monasca_setup.detection.ArgsPlugin):
                              'host_name': hostname,
                              'alive_test': self.args['type']})
             instances.append(instance)
+        if 'target_hostname' in self.args:
+            index = 0
+            network_names_to_check = self.args['target_hostname'].split(',')
+            for target_hostname in network_names_to_check:
+                if target_hostname:
+                    if index >= len(instances):
+                        raise Exception('Too many target_hostname values')
+                    instance = instances[index]
+                    instance.update({'target_hostname': target_hostname})
+                index += 1
 
-        config['host_alive'] = {'init_config': {'ping_timeout': 1,
-                                                'ssh_timeout': 2,
-                                                'ssh_port': 22},
-                                'instances': instances}
+        config['host_alive'] = {
+            'init_config': {'ping_timeout': self.DEFAULT_PING_TIMEOUT,
+                            'ssh_timeout': self.DEFAULT_SSH_TIMEOUT,
+                            'ssh_port': self.DEFAULT_SSH_PORT},
+            'instances': instances}
 
         return config
