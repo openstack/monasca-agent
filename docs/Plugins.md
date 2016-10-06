@@ -139,6 +139,7 @@ The following plugins are delivered via setup as part of the standard plugin che
 | http_metrics |  |  |
 | iis |  | Microsoft Internet Information Services |
 | jenkins |  |  |
+| json_plugin | | |
 | kafka_consumer |  |  |
 | kibana | **kibana_install_dir**/kibana.yml | Integration to Kibana |
 | kyototycoon |  |  |
@@ -1024,6 +1025,122 @@ See [the example configuration](https://github.com/openstack/monasca-agent/blob/
 
 ## Jenkins
 See [the example configuration](https://github.com/openstack/monasca-agent/blob/master/conf.d/jenkins.yaml.example) for how to configure the Jenkins plugin.
+
+## JsonPlugin
+This plugin allows you to report metrics by simply writing the metrics to a file. The plugin reads the file
+and sends the metrics to Monasca.
+
+### Simple Reporting
+
+The simplest approach is to create a file in the /var/cache/monasca_json_plugin directory. The file should
+contain a list of metrics in JSON format as shown in the following example. The file must have
+a ".json" extension in the name.
+
+Simple Example -- /var/cache/monasca_json_plugin/my-metrics-file.json:
+```
+[
+   {"name": "metric1", "value": 10.1, "timestamp": 1475596165},
+   {"name": "metric2", "value": 12.3, "timestamp": 1475596165}
+]
+```
+
+In the above example, the "name", "value" and "timestamp" of each measurement is reported. The following keys are available:
+
+| Key | Description |
+| ----------- | ---------- |
+| name  | Required. The name of the metric. The key "metric" may be used instead of "name". |
+| value | Required. The value of the measurement. This is a floating point number. |
+| timestamp | Optional (if replace_timestamps is true; see below); otherwise required. The time of the measurement. Uses UNIX time epoch value. Note: this is seconds, not mulliseconds, since the epoch.|
+| dimensions | Optional. Dimensions of the metric as a set of key/value pairs. |
+| value_meta | Optional. Value meta of the metric as a set of key/value pairs. |
+
+### Writing and Locking the Metrics File
+
+You should take an exclusive lock on the file while you write new metrics
+(this plugin takes a shared lock). You must close or flush the file
+after writing new data to make sure the data is written to the file.
+
+Example of writing metrics file:
+
+```
+metric_data = [{"name": "metric1", "value": 10.1, "timestamp": time.time()}]
+max_retries = 10
+delay = 0.02
+attempts = 0
+with open('/var/cache/monasca_json_plugin/my-metrics-file.json', 'w') as fd:
+    while True:
+        attempts += 1
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            break
+        except IOError as err:
+            if (err.errno not in [errno.EWOULDBLOCK, errno.EACCES] or
+                    attempts > max_retries):
+                raise
+        time.sleep(delay * attempts)
+    fd.write(json.dumps(metric_data))
+```
+
+### Additional Directives
+
+You can add additional directives to the JSON file as shown in the following example:
+
+Additional Directives Example:
+```
+{
+   "replace_timestamps": false,
+   "stale_age": 300,
+   "measurements": [
+      {"name": "metric1", "value": 10.1, "timestamp": 1475596165, "dimensions": {"path": "/tmp"}},
+      {"name": "metric2", "value": 12.3, "timestamp": 1475596165, "value_meta": {"msg": "hello world"}}
+   ]
+}
+
+```
+
+The additional directives are described in the following table. The directives are optional.
+
+| Directive | Description |
+| --------- | ----------- |
+| replace_timestamps | If true, the timestamps are ignored. Instead, the timestamp of the measurement is set to the current time. Default is false.|
+| stale_age | The number of seconds after which metrics are considered stale. This stops measurements from a file that is not updating from being reported to Monasca. It defaults to 4 minutes.|
+
+The main purpose of the stale_age directive is to detect if the JSON file stops updating (e.g., due to a bug or system failure). See the description of the monasca.json_plugin.status metric below.
+
+The main purpose of the replace_timestamps directive is where the mechanism to write the JSON file runs infrequently or erratically. Every time Monasa Agent runs, the metrics
+are reported with the current time -- whether or not the file is updated. In this mode, you do not need to supply a timestamp (in fact, any timestamp you include is ignored). Also the
+stale_age directive is also ignored.
+
+### Custom JSON file locations
+
+To use the built-in /var/cache/monasca_json_plugin directory, your application must be
+able to create and write files to that directory. If this is not possible, you can
+write the JSON file(s) to a different file path. An example of this configuration
+is in [the example configuration](https://github.com/openstack/monasca-agent/blob/master/conf.d/json_plugin.yaml.example).
+
+The Monasca Agent user must be able to read the files.
+
+### The monasca.json_plugin.status Metric
+
+The plugin reports a metric called "monasca.json_plugin.status". A single metric is reported by the
+JSON plugin. If there are problems, you can examine the value_meta. It will contain a list
+of problem paths/messages. You to create an alarm to trigger if there is
+a problem processing any JSON file.
+
+The monasca.json_plugin.status metric has the following information:
+
+| Field     | Description |
+| --------- | ----------- |
+| name      | "monasca.json_plugin.status" -- the name of the metric |
+| value      | A value of 0.0 is normal -- there are no issues processing all JSON files. A value of 1.0 indicates there is a problem. |
+| value_meta | Value meta is only present when the value is 1.0. The value meta contains a "msg" key indicating the problem. |
+
+The value_meta/msg reports problems such as:
+
+- Failure to open the JSON file
+- Invalid JSON syntax
+- That metrics are older than the stale_age
+
 
 ## Kafka Checks
 This section describes the Kafka check that can be performed by the Agent.  The Kafka check requires a configuration file called kafka.yaml to be available in the agent conf.d configuration directory.

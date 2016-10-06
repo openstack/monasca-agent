@@ -1,0 +1,11 @@
+init_config: null
+instances:
+- built_by: JsonPlugin
+  metrics_dir: /var/cache/monasca_json_plugin
+  name: /var/cache/monasca_json_plugin
+- built_by: Me
+  metrics_file: /var/cache/my_dir/my_metrics.json
+  name: Mine1
+- built_by: Me
+  metrics_file: /dev/shm/more_metrics.json
+  name: Mine2
