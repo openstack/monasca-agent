@@ -1051,11 +1051,15 @@ See [the example configuration](https://github.com/openstack/monasca-agent/blob/
 ## MySQL Checks
 This section describes the mySQL check that can be performed by the Agent.  The mySQL check also supports MariaDB.  The mySQL check requires a configuration file called mysql.yaml to be available in the agent conf.d configuration directory.
 
-Sample config:
-defaults_file: /root/.my.cnf
-	host=padawan-ccp-c1-m1-mgmt
-	user=root
-	password=pass
+Sample config: defaults_file: /root/.my.cnf
+```
+[client]
+host=padawan-ccp-c1-m1-mgmt
+user=root
+password=pass
+```
+##### Note
+Be assured that the password is set properly. As default monasca-agent expects password without quotation marks. Otherwise monasca-setup returns an error about inability to connect to MySQL with given password.
 
 Instance variables can be passed via command line arguments
 to the monasca-setup -d mysql command.
