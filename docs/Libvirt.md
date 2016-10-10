@@ -15,6 +15,9 @@
       - [Algorithm](#algorithm)
       - [Client Configuration](#client-configuration)
       - [Troubleshooting](#troubleshooting)
+  - [Mapping Metrics to Configuration Parameters](#mapping-metrics-to-configuration-parameters)
+    - [Tunable Metrics](#tunable-metrics)
+    - [Untunable Metrics](#untunable-metrics)
   - [VM Dimensions](#vm-dimensions)
   - [Aggregate Metrics](#aggregate-metrics)
 - [License](#license)
@@ -57,15 +60,17 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 `vnic_collection_period` will cause vnic metrics to be output at a minimum `vnic_collection_period` second interval. This can be optionally set to have vnic metrics be outputted less often to reduce metric load on the system. If this is less than the agent collection period, it will be ignored. The default value is 0.
 
 
-`vm_cpu_check_enable` enables collecting of VM CPU metrics. (Default True)
+`vm_cpu_check_enable` enables collecting of VM CPU metrics (Default True). Please see "Mapping Metrics to Configuration Parameters" section below for what metrics are controlled by this flag.
 
-`vm_disks_check_enable` enables collecting of VM Disk metrics. (Default True)
+`vm_disks_check_enable` enables collecting of VM Disk metrics (Default True). Please see "Mapping Metrics to Configuration Parameters" section below for what metrics are controlled by this flag.
 
-`vm_network_check_enable` enables collecting of VM Network metrics. (Default True)
 
-`vm_ping_check_enable` enable host alive ping check. (Default True)
+`vm_network_check_enable` enables collecting of VM Network metrics (Default True). Please see "Mapping Metrics to Configuration Parameters" section below for what metrics are controlled by this flag.
 
-`vm_extended_disks_check_enable` enable collecting of extended Disk metrics. (Default False)
+
+`vm_ping_check_enable` enable host alive ping check (Default True). Please see "Mapping Metrics to Configuration Parameters" section below for what metrics are controlled by this flag.
+
+`vm_extended_disks_check_enable` enable collecting of extended Disk metrics (Default True). Please see "Mapping Metrics to Configuration Parameters" section below for what metrics are controlled by this flag.
 
 Example config:
 ```
@@ -346,6 +351,63 @@ Other questions you could ask, if ping checks are not configured, are:
 * Do _any_ VMs have the "network" section in `/dev/shm/libvirt_instances.json`?  If so, security rules for the VM in question may be the cause.
 * Does the command `ip netns list |grep qrouter` produce any output on the compute node?  If not, perhaps Neutron is not configured in DVR mode, or no VMs are present on that compute node.
 * Is the `ping_check` command defined `/etc/monasca/agent/conf.d/libvirt.yaml`?  If not, try running `monasca-setup -d libvirt` as root from within the appropriate Python virtual environment
+
+## Mapping Metrics to Configuration Parameters
+Configuration parameters can be used to control which metrics are reported by libvirt plugin. There are 5 parameters currently in libvirt config file: vm_cpu_check_enable, vm_disks_check_enable, vm_network_check_enable, vm_ping_check_enable and vm_extended_disks_check_enable.
+
+### Tunable Metrics
+
+
+| Configuration Parameter | Admin Metric Name | Tenant Metric Name |
+| ----------- | ----------------- | ------------------ |
+|vm_cpu_check_enable (default: True) | vm.cpu.time_ns | cpu.time_ns |
+| | vm.cpu.utilization_norm_perc | cpu.utilization_norm_perc |
+| | vm.cpu.utilization_perc | cpu.utilization_perc |
+| vm_disks_check_enable (default: True) | vm.io.errors | io.errors|
+| | vm.io.errors_sec | io.errors_sec |
+| | vm.io.read_bytes | io.read_bytes |
+| | vm.io.read_ops | io.read_ops |
+| | vm.io.read_ops_sec | io.read_ops_sec |
+| | vm.io.write_bytes | io.write_bytes |
+| | vm.io.write_bytes_sec | io.write_bytes_sec |
+| | vm.io.write_ops | io.write_ops |
+| | vm.io.write_ops_sec | io.write_ops_sec |
+|vm_network_check_enable (default: True) | vm.net.in_bytes | net.in_bytes |
+| | vm.net.in_bytes_sec | net.in_bytes_sec |
+| | vm.net.in_packets | net.in_packets |
+| | vm.net.in_packets_sec | net.in_packets_sec |
+| | vm.net.out_bytes | net.out_bytes |
+| | vm.net.out_bytes_sec | net.out_bytes_sec |
+| | vm.net.out_packets | net.out_packets |
+| | vm.net.out_packets_sec | net.out_packets_sec |
+| vm_ping_check_enable (default: True) | vm.ping_status | ping_status |
+| vm_extended_disks_check_enable (default: True) | vm.disk.allocation | disk.allocation |
+| | vm.disk.capacity | disk.capacity |
+| | vm.disk.physical | disk.physical |
+| | vm.disk.allocation_total | disk.allocation_total |
+|vm_disks_check_enable(default: True) and vm_extended_disks_check_enable(default: True) | vm.io.errors_total | io.errors_total |
+| | vm.io.errors_total_sec | io.errors_total_sec |
+| | vm.io.read_bytes_total | io.read_bytes_total |
+| | vm.io.read_bytes_total_sec | io.read_bytes_total_sec |
+| | vm.io.read_ops_total | io.read_ops_total |
+| | vm.io.read_ops_total_sec | io.read_ops_total_sec |
+| | vm.io.write_bytes_total | io.write_bytes_total |
+| | vm.io.write_bytes_total_sec | io.write_bytes_total_sec |
+| | vm.io.write_ops_total | io.write_ops_total |
+| | vm.io.write_ops_total_sec | io.write_ops_total_sec |
+
+### Untunable Metrics
+Please see table below for metrics in libvirt that are always enabled.
+
+| Admin Metric Name | Tenant Metric Name |
+| ----------------- | ------------------ |
+| vm.host_alive_status | host_alive_status |
+| vm.mem.free_mb | mem.free_mb |
+| vm.mem.free_perc | mem.free_perc |
+| vm.mem.resident_mb | |
+| vm.mem.swap_used_mb | mem.swap_used_mb |
+| vm.mem.total_mb | mem.total_mb |
+| vm.mem.used_mb | mem.used_mb |
 
 ## VM Dimensions
 All metrics include `resource_id` and `zone` (availability zone) dimensions.  Because there is a separate set of metrics for the two target audiences (VM customers and Operations), other dimensions may differ.
