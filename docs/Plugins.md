@@ -266,7 +266,22 @@ The base class of detection plugins requires a separate Agent plugin of the same
 Any plugins which are configured by passing arguments, rather than relying on detection, may use the ArgsPlugin class.
 
 ## ServicePlugin
-This class covers both processes and HTTP endpoints, primarily used for monitoring OpenStack components.
+This class covers Process, HTTP endpoints, Directory, and File monitoring.  It is primarily used for monitoring OpenStack components.
+Note: There are existing default detection plugins for http_check.py, directory.py, and file_size.py that only require configuration.
+
+A process can be monitored by process_names or by process_username. Pass in the process_names list argument when watching process by name.  Pass in the process_username argument and component_name arguments when watching process by username. Watching by username is useful for groups of processes that
+are owned by a specific user.  For process monitoring by process_username the component_name is required since it is used to initialize the instance name in process.yaml.
+component_name is optional for monitoring by process_name and all other checks.
+
+An http endpoint connection can be checked by passing in the service_api_url and optional search_pattern parameters.
+The http check can be skipped by specifying the argument 'disable_http_check'
+
+Directory size can be checked by passing in a directory_names list.
+
+File size can be checked by passing in a file_dirs_names list where each directory name item includes a list of files.
+example: 'file_dirs_names': [('/var/log/monasca/api', ['monasca-api'])]
+
+Note: service_name and component_name are optional (except component_name is required with process_username) arguments used for metric dimensions by all checks.
 
 ## List of Detection Plugins
 These are the detection plugins included with the Monasca Agent.  See [Customizations.md](https://github.com/openstack/monasca-agent/blob/master/docs/Customizations.md) for how to write new detection plugins.

@@ -1,10 +1,10 @@
-# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 
 import logging
 import psutil
 import urlparse
 
-from plugin import Plugin
+from monasca_setup.detection.plugin import Plugin
 
 from monasca_setup import agent_config
 from monasca_setup.detection.utils import find_process_cmdline
@@ -12,6 +12,7 @@ from monasca_setup.detection.utils import service_api_check
 from monasca_setup.detection.utils import watch_directory
 from monasca_setup.detection.utils import watch_file_size
 from monasca_setup.detection.utils import watch_process
+from monasca_setup.detection.utils import watch_process_by_username
 
 log = logging.getLogger(__name__)
 
@@ -21,17 +22,40 @@ class ServicePlugin(Plugin):
         Detection plugins inheriting from this class can easily setup up processes to be watched and
         a http endpoint to be checked.
 
+        This class covers Process, HTTP endpoints, Directory, and File monitoring.  It is primarily used for
+        monitoring OpenStack components.
+        Note: There are existing default detection plugins for http_check.py, directory.py, and file_size.py that
+        only require configuration.
+
+        A process can be monitored by process_names or by process_username. Pass in the process_names list argument
+        when watching process by name.  Pass in the process_username argument and component_name arguments when
+        watching process by username. Watching by username is useful for groups of processes that are owned by a specific user.
+        For process monitoring by process_username the component_name is required since it is used to initialize the
+        instance name in process.yaml.  component_name is optional for monitoring by process_name and all other checks.
+
+        An http endpoint connection can be checked by passing in the service_api_url and optional search_pattern parameters.
         The http check can be skipped by specifying the argument 'disable_http_check'
+
+        Directory size can be checked by passing in a directory_names list.
+
+        File size can be checked by passing in a file_dirs_names list where each directory name item includes a list of files.
+        example: 'file_dirs_names': [('/var/log/monasca/api', ['monasca-api'])]
+
+        Note: service_name and component_name are optional (except component_name is required with process_username) arguments
+        used for metric dimensions by all checks.
     """
 
     def __init__(self, kwargs):
         self.service_name = kwargs['service_name']
         self.process_names = kwargs.get('process_names')
+        self.process_username = kwargs.get('process_username', None)
+        self.component_name = kwargs.get('component_name', None)
         self.file_dirs_names = kwargs.get('file_dirs_names')
         self.directory_names = kwargs.get('directory_names')
         self.service_api_url = kwargs.get('service_api_url')
         self.search_pattern = kwargs.get('search_pattern')
-        overwrite = kwargs['overwrite']
+        # overwrite is currently not used with this class, make optional until we remove it.
+        overwrite = kwargs.get('overwrite', False)
         template_dir = kwargs['template_dir'],
         if 'args' in kwargs:
             args = kwargs['args']
@@ -44,6 +68,10 @@ class ServicePlugin(Plugin):
                     # Allow args to override all of these parameters
                     if 'process_names' in args_dict:
                         self.process_names = args_dict['process_names'].split(',')
+                    if 'process_username' in args_dict:
+                        self.process_username = args_dict['process_username']
+                    if 'component_name' in args_dict:
+                        self.component_name = args_dict['component_name']
                     if 'file_dirs_names' in args_dict:
                         self.file_dirs_names = args_dict['file_dirs_names']
                     if 'directory_names' in args_dict:
@@ -72,6 +100,8 @@ class ServicePlugin(Plugin):
                     self.found_processes.append(process)
             if len(self.found_processes) > 0:
                 self.available = True
+        if self.process_username and self.component_name:
+            self.available = True
         if self.file_dirs_names:
             self.available = True
         if self.directory_names:
@@ -83,11 +113,21 @@ class ServicePlugin(Plugin):
         """
         config = agent_config.Plugins()
         if self.found_processes:
+            log.info("\tMonitoring by process_name(s): {0} "
+                     "for service: {1}.".format(",".join(self.found_processes), self.service_name))
             for process in self.found_processes:
                 # Watch the service processes
-                log.info("\tMonitoring the {0} {1} process.".format(process, self.service_name))
-                config.merge(watch_process([process], self.service_name, process, exact_match=False))
+                component_name = self.component_name if self.component_name else process
+                config.merge(watch_process(search_strings=[process], service=self.service_name,
+                                           component=component_name, exact_match=False))
 
+        if self.process_username:
+            log.info("\tMonitoring by process_username: {0} for "
+                     "service: {1}.".format(self.process_username, self.service_name))
+            config.merge(watch_process_by_username(username=self.process_username,
+                                                   process_name=self.component_name,
+                                                   service=self.service_name,
+                                                   component=self.component_name))
         if self.file_dirs_names:
             for file_dir_name in self.file_dirs_names:
                 # Watch file size
@@ -103,14 +143,15 @@ class ServicePlugin(Plugin):
                 else:
                     log.info("\tMonitoring the size of files {0} in the "
                              "directory {1}.".format(", ".join(str(name) for name in file_names), file_dir))
-                config.merge(watch_file_size(file_dir, file_names,
-                                             file_recursive, self.service_name))
+                config.merge(watch_file_size(directory_name=file_dir, file_names=file_names,
+                                             file_recursive=file_recursive, service=self.service_name,
+                                             component=self.component_name))
 
         if self.directory_names:
             for dir_name in self.directory_names:
                 log.info("\tMonitoring the size of directory {0}.".format(
                     dir_name))
-                config.merge(watch_directory(dir_name, self.service_name))
+                config.merge(watch_directory(directory_name=dir_name, service=self.service_name, component=self.component_name))
 
         # Skip the http_check if disable_http_check is set
         if self.args is not None and self.args.get('disable_http_check', False):
@@ -137,11 +178,12 @@ class ServicePlugin(Plugin):
 
                 # Setup an active http_status check on the API
                 log.info("\tConfiguring an http_check for the {0} API.".format(self.service_name))
-                config.merge(service_api_check(self.service_name + '-api',
-                                               api_url,
-                                               self.search_pattern,
+                config.merge(service_api_check(name=self.service_name + '-api',
+                                               url=api_url,
+                                               pattern=self.search_pattern,
                                                use_keystone=True,
-                                               service=self.service_name))
+                                               service=self.service_name,
+                                               component=self.component_name))
             else:
                 log.info("\tNo process found listening on {0} ".format(port) +
                          "skipping setup of http_check for the {0} API." .format(self.service_name))
