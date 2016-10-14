@@ -820,14 +820,6 @@ See [the example configuration](https://github.com/openstack/monasca-agent/blob/
 ## Host Alive
 An extension to the Agent can provide basic "aliveness" checks of other systems, verifying that the remote host (or device) is online. This check currently provides two methods of determining connectivity:
 
- default dimensions:
-    observer_host: fqdn
-    hostname: fqdn | supplied
-    test_type: ping | ssh | Unrecognized alive_test
-
- default value_meta
-    error: error_message
-
 * ping (ICMP)
 * SSH (banner test, port 22 by default)
 
@@ -877,13 +869,42 @@ The instances section contains the hostname/IP to check, and the type of check t
     alive_test: ssh
 ```
 
+To handle the case where the target system has multiple IP Addresses and the network name to be used for
+liveness checking is not the same as the usual name used to identify the server in Monasca,
+an additional target_hostname parameter can be configured. It is the network hostname or IP
+Address to check instead of host_name. The hostname dimension will always be set to the value of
+host_name even if target_hostname is specified. A dimension target_hostname will be added
+with the value of target_hostname if it is different from host_name.
+
+To simplify configuring multiple checks, when the host_alive detection plugin is configured, hostname can
+be a comma separated list. Instances will be created for each value. target_hostname can also
+be a comma separated list, however, empty values for an individual entry can be given if there is
+no target_hostname for a given hostname entry.
+
+Here is an example of configuring target_hostname :
+```
+  - name: ping somenode
+    host_name: somenode
+    target_hostname: somenode.mgmt.net
+    alive_test: ssh
+```
+
 The host alive checks return the following metrics
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
-| host_alive_status | observer_host=fqdn, hostname=supplied hostname being checked, test_type=ping or ssh | Status of remote host(device) is online or not. (0=online, 1=offline)
+| host_alive_status | observer_host=fqdn of checking host, hostname=supplied hostname being checked, test_type=ping or ssh | Status of remote host(device) is online or not. (0=online, 1=offline)
 
 Also in the case of an error the value_meta contains an error message.
+
+The default dimensions are:
+   observer_host: fqdn
+   hostname: fqdn | supplied
+   target_hostname: Set to target_hostname only if that is different than host_name
+   test_type: ping | ssh | Unrecognized alive_test
+
+default value_meta
+   error: error_message
 
 ## HTTP (endpoint status)
 This section describes the http endpoint check that can be performed by the Agent. Http endpoint checks are checks that perform simple up/down checks on services, such as HTTP/REST APIs. An agent, given a list of URLs, can dispatch an http request and report to the API success/failure as a metric.

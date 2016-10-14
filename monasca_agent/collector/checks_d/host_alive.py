@@ -1,5 +1,5 @@
 #!/bin/env python
-# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development LP
 """Monitoring Agent remote host aliveness checker.
 
 """
@@ -86,26 +86,38 @@ class HostAlive(services_checks.ServicesCheck):
         return True, None
 
     def _check(self, instance):
-        """Run the desired host-alive check againt this host.
+        """Run the desired host-alive check against this host.
 
         """
 
-        if not instance['host_name']:
-            raise ValueError('Target hostname not specified!')
+        host_name = instance.get('host_name', None)
+        if not host_name:
+            raise ValueError('host_name not specified!')
 
-        dimensions = self._set_dimensions({'hostname': instance['host_name'],
-                                           'observer_host': util.get_hostname()},
+        # Allow a different network name to be used for the check
+        # to handle multi-homed systems
+        if instance.get('target_hostname', None):
+            target_hostname = instance.get('target_hostname')
+        else:
+            target_hostname = host_name
+
+        host_dimensions = {'hostname': host_name, 'observer_host': util.get_hostname()}
+        # If the check is against a different network name than host_name, add it to
+        # the dimensions
+        if target_hostname != host_name:
+            host_dimensions['target_hostname'] = target_hostname
+
+        dimensions = self._set_dimensions(host_dimensions,
                                           instance)
 
         success = False
-
         test_type = instance['alive_test']
         if test_type == 'ssh':
-            success, error_message = self._test_ssh(instance['host_name'],
+            success, error_message = self._test_ssh(target_hostname,
                                                     self.init_config.get('ssh_port'),
                                                     self.init_config.get('ssh_timeout'))
         elif test_type == 'ping':
-            success, error_message = self._test_ping(instance['host_name'],
+            success, error_message = self._test_ping(target_hostname,
                                                      self.init_config.get('ping_timeout'))
         else:
             error_message = 'Unrecognized alive_test: {0}'.format(test_type)
