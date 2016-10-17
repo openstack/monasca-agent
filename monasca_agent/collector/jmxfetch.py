@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 
 import glob
 import logging
@@ -125,11 +125,7 @@ class JMXFetch(object):
             if os.path.exists(conf):
                 f = open(conf)
                 try:
-                    if hasattr(yaml, 'CLoader'):
-                        Loader = yaml.CLoader
-                    else:
-                        Loader = yaml.Loader
-                    check_config = yaml.load(f.read(), Loader=Loader)
+                    check_config = yaml.safe_load(f.read())
                     assert check_config is not None
                     f.close()
                 except Exception:

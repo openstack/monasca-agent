@@ -1,4 +1,4 @@
-# (c) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+# (c) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 
 import grp
 import logging
@@ -42,7 +42,7 @@ class Postfix(monasca_setup.detection.Plugin):
         # A bit silly to parse the yaml only for it to be converted back but this
         # plugin is the exception not the rule
         with open(os.path.join(self.template_dir, 'conf.d/postfix.yaml.example'), 'r') as postfix_template:
-            default_net_config = yaml.load(postfix_template.read())
+            default_net_config = yaml.safe_load(postfix_template.read())
         config = monasca_setup.agent_config.Plugins()
         config['postfix'] = default_net_config
         return config

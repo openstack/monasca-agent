@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 
 import logging
 import os
@@ -31,7 +31,7 @@ class System(Plugin):
         for metric in System.system_metrics:
             try:
                 with open(os.path.join(self.template_dir, 'conf.d/' + metric + '.yaml'), 'r') as metric_template:
-                    default_config = yaml.load(metric_template.read())
+                    default_config = yaml.safe_load(metric_template.read())
                 config[metric] = default_config
                 if self.args:
                     for arg in self.args:

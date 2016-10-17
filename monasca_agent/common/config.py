@@ -6,11 +6,6 @@ import pkg_resources
 import six
 import yaml
 
-try:
-    from yaml import CLoader as Loader
-except ImportError:
-    from yaml import Loader
-
 from monasca_agent.common.exceptions import PathNotFound
 import monasca_agent.common.singleton as singleton
 
@@ -112,7 +107,7 @@ class Config(object):
         try:
             with open(self._configFile, 'r') as f:
                 log.debug('Loading config file from {0}'.format(self._configFile))
-                config = yaml.load(f.read(), Loader=Loader)
+                config = yaml.safe_load(f.read())
                 [self._config[section].update(config[section]) for section in config.keys()]
         except Exception as e:
             log.exception('Error loading config file from {0}'.format(self._configFile))
@@ -127,7 +122,7 @@ class Config(object):
     def check_yaml(self, conf_path):
         f = open(conf_path)
         try:
-            check_config = yaml.load(f.read(), Loader=Loader)
+            check_config = yaml.safe_load(f.read())
             assert 'init_config' in check_config, "No 'init_config' section found"
             assert 'instances' in check_config, "No 'instances' section found"
 

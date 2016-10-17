@@ -1,4 +1,5 @@
 # Copyright 2016 FUJITSU LIMITED
+# (C) Copyright 2016 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -157,7 +158,7 @@ class Kibana(detection.Plugin):
     def _read_config(kibana_cfg):
         import yaml
         with open(kibana_cfg, 'r') as stream:
-            document = yaml.load(stream=stream)
+            document = yaml.safe_load(stream=stream)
 
             has_ssl_support = ('server.ssl.cert' in document and
                                'server.ssl.key' in document)

@@ -72,7 +72,7 @@ def read_plugin_config_from_disk(config_dir, plugin_name):
     config = None
     if os.path.exists(config_path):
         with open(config_path, 'r') as config_file:
-            config = yaml.load(config_file.read())
+            config = yaml.safe_load(config_file.read())
     return config
 
 

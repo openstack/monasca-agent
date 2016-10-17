@@ -1,4 +1,4 @@
-# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 
 """Classes for monitoring the monitoring server stack.
 
@@ -50,7 +50,7 @@ class MonAPI(monasca_setup.detection.Plugin):
             # Find the right port from the config, this is specific to the Java version
             try:
                 with open('/etc/monasca/api-config.yml', 'r') as config:
-                    self.api_config = yaml.load(config.read())
+                    self.api_config = yaml.safe_load(config.read())
                 api_port = self.api_config['server']['applicationConnectors'][0]['port']
             except Exception:
                 api_port = 8070
@@ -161,7 +161,7 @@ class MonPersister(monasca_setup.detection.Plugin):
         """Read persister-config.yml file to find the exact numThreads."""
         try:
             with open('/etc/monasca/persister-config.yml', 'r') as config:
-                self.persister_config = yaml.load(config.read())
+                self.persister_config = yaml.safe_load(config.read())
         except Exception:
             log.exception('Failed parsing /etc/monasca/persister-config.yml')
             self.available = False

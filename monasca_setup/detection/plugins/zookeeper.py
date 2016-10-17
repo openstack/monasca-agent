@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 
 import logging
 import os
@@ -36,7 +36,7 @@ class Zookeeper(monasca_setup.detection.Plugin):
 
         log.info("\tEnabling the zookeeper plugin")
         with open(os.path.join(self.template_dir, 'conf.d/zk.yaml.example'), 'r') as zk_template:
-            zk_config = yaml.load(zk_template.read())
+            zk_config = yaml.safe_load(zk_template.read())
         config['zk'] = zk_config
 
         return config

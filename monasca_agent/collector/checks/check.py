@@ -222,10 +222,6 @@ class AgentCheck(util.Dimensions):
     def from_yaml(cls, path_to_yaml=None, agentConfig=None, yaml_text=None, check_name=None):
         """A method used for testing your check without running the agent.
         """
-        if hasattr(yaml, 'CLoader'):
-            Loader = yaml.CLoader
-        else:
-            Loader = yaml.Loader
 
         if path_to_yaml:
             check_name = os.path.basename(path_to_yaml).split('.')[0]
@@ -236,7 +232,7 @@ class AgentCheck(util.Dimensions):
             yaml_text = f.read()
             f.close()
 
-        config = yaml.load(yaml_text, Loader=Loader)
+        config = yaml.safe_load(yaml_text)
         check = cls(check_name, config.get('init_config') or {}, agentConfig or {})
 
         return check, config.get('instances', [])
