@@ -893,7 +893,8 @@ The host alive checks return the following metrics
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
-| host_alive_status | observer_host=fqdn of checking host, hostname=supplied hostname being checked, test_type=ping or ssh | Status of remote host(device) is online or not. (0=online, 1=offline)
+| host_alive_status | observer_host=fqdn of checking host, hostname=supplied hostname being checked, target_hostname=the network hostname or IP Address to check instead of host_name; only added if different than hostname, test_type=ping or ssh | Status of remote host(device) is online or not. (0=online, 1=offline)
+
 
 Also in the case of an error the value_meta contains an error message.
 
