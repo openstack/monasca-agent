@@ -1,8 +1,10 @@
 # -*- coding: latin-1 -*-
 import unittest
+import mock
 import os.path
 import tempfile
 
+from monasca_agent.common import config
 from monasca_agent.common.config import Config
 from monasca_agent.common.util import PidFile, is_valid_hostname
 
@@ -83,6 +85,32 @@ class TestConfig(unittest.TestCase):
         conf_3 = Config()
         self.assertTrue(conf_1 is conf_2)
         self.assertTrue(conf_1 is conf_3)
+
+    @mock.patch.object(Config, '_read_config')
+    @mock.patch('monasca_agent.common.util.get_parsed_args')
+    def testConfigFromParsedArgs(self, mock_parsed_args, mock_read_config):
+        mock_options = mock.Mock()
+        mock_parsed_args.return_value = (mock_options, mock.sentinel.args)
+        conf = Config()
+        # object is singleton, for this case, it needs to be reloaded.
+        conf.__init__()
+
+        self.assertEqual(mock_options.config_file, conf._configFile)
+
+    @mock.patch.object(Config, '_read_config')
+    @mock.patch('monasca_agent.common.util.get_parsed_args')
+    @mock.patch('monasca_agent.common.config.os')
+    def testConfigFileFromDefault(self, mock_os, mock_parsed_args, mock_read_config):
+        mock_os.path.exists = mock.create_autospec(mock_os.path.exists, return_value=True)
+        mock_options = mock.Mock()
+        mock_options.config_file = None
+        mock_parsed_args.return_value = (mock_options, mock.sentinel.args)
+        conf = Config()
+        # object is singleton, for this case, it needs to be reloaded.
+        conf.__init__()
+
+        self.assertEqual(config.DEFAULT_CONFIG_FILE, conf._configFile)
+        mock_os.path.exists.assert_called_once_with(config.DEFAULT_CONFIG_FILE)
 
 
 if __name__ == '__main__':

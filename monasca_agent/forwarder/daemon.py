@@ -207,6 +207,9 @@ def main():
     tornado.options.define("sslcheck", default=1, help="Verify SSL hostname, on by default")
     tornado.options.define("use_simple_http_client", default=0,
                            help="Use Tornado SimpleHTTPClient instead of CurlAsyncHTTPClient")
+    tornado.options.define("config_file", default=None,
+                           help="Location for an alternate config rather than "
+                                "using the default config location.")
     args = tornado.options.parse_command_line()
     skip_ssl_validation = False
     use_simple_http_client = False

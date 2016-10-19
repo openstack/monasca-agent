@@ -22,8 +22,15 @@ log = logging.getLogger(__name__)
 class Config(object):
 
     def __init__(self, configFile=None):
+        # importing it here, in order to avoid a circular import
+        # as monasca_agent.common.util imports this module.
+        from monasca_agent.common import util
+
+        options, args = util.get_parsed_args()
         if configFile is not None:
             self._configFile = configFile
+        elif options.config_file is not None:
+            self._configFile = options.config_file
         elif os.path.exists(DEFAULT_CONFIG_FILE):
             self._configFile = DEFAULT_CONFIG_FILE
         elif os.path.exists(os.getcwd() + '/agent.yaml'):

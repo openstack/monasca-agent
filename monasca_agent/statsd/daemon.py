@@ -88,7 +88,7 @@ class MonascaStatsd(object):
 def main():
     """The main entry point for the unix version of monasca_statsd. """
     parser = argparse.ArgumentParser(description='Monasca statsd - statsd server supporting metric dimensions')
-    parser.add_argument('--config', '-c',
+    parser.add_argument('--config', '--config-file', '-c',
                         help="Location for an alternate config rather than using the default config location.")
     args = parser.parse_args()
 
