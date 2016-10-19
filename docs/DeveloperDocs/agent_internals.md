@@ -38,10 +38,8 @@ old_config:
 
 monasca-setup arguments:
 
-```
-monasca-setup -d 'HttpCheck' -a 'url=http://192.168.10.6:8070 match_pattern=
-.*OK.* name=monasca dimensions=service:monitoring'
-```
+    $ monasca-setup -d 'HttpCheck' -a 'url=http://192.168.10.6:8070
+      match_pattern=.*OK.* name=monasca dimensions=service:monitoring'
 
 input_config generated from monasca-setup:
 
@@ -102,10 +100,8 @@ old_config:
 
 monasca-setup arguments:
 
-```
-monasca-setup -d 'HttpCheck' -a 'url=https://192.168.10.6:8070
-                match_pattern=.*VERSION.* dimensions=service:logging'
-```
+    $ monasca-setup -d 'HttpCheck' -a 'url=https://192.168.10.6:8070
+      match_pattern=.*VERSION.* dimensions=service:logging'
 
 input_config generated from monasca-setup:
 

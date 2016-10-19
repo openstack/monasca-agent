@@ -326,9 +326,9 @@ The process of looking for namespaces and security rules occurs each time the in
 
 #### Client Configuration
 The VM owner would need to add a security rule to allow ICMP access to their VM.  The simplest implementation would be to allow ICMP globally:
-```
-nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
-```
+
+    $ nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
+
 However, more security-conscious customers may not want the world to ping their VM, so at a minimum, ICMP needs to be allowed for the subnet gateway IP address.
 
 #### Troubleshooting
@@ -338,9 +338,8 @@ To limit false negative, ping checks will not be performed unless all the requir
 "network" : [ { "ip" : "10.0.0.3", "namespace" : "qrouter-ae714057-4453-48c4-81cb-15f8db9434a8" } ],
 ```
 You can attempt to ping the IP address through the given namespace with a command like
-```
-sudo ip netns exec qrouter-ae714057-4453-48c4-81cb-15f8db9434a8 ping 10.0.0.3
-```
+
+    $ sudo ip netns exec qrouter-ae714057-4453-48c4-81cb-15f8db9434a8 ping 10.0.0.3
 
 Other questions you could ask, if ping checks are not configured, are:
 * Do _any_ VMs have the "network" section in `/dev/shm/libvirt_instances.json`?  If so, security rules for the VM in question may be the cause.
