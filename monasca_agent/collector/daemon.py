@@ -74,7 +74,9 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
         signal.signal(signal.SIGTERM, self._handle_sigterm)
 
         # A SIGUSR1 signals an exit with an autorestart
-        signal.signal(signal.SIGUSR1, self._handle_sigusr1)
+        if hasattr(signal, 'SIGUSR1'):
+            # Windows does not have this signal.
+            signal.signal(signal.SIGUSR1, self._handle_sigusr1)
 
         # Handle Keyboard Interrupt
         signal.signal(signal.SIGINT, self._handle_sigterm)
