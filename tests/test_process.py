@@ -11,12 +11,13 @@ class TestSimpleProcess(unittest.TestCase):
         self.mock_process_iter = self.psutil_process_iter_patcher.start()
 
         process_attrs = {
-            'name.return_value': 'process_name',
+            'name': 'process_name',
             'pid': 1234,
-            'username.return_value': 'user',
-            'cmdline.return_value': '/usr/bin/process_name'
+            'username': 'user',
+            'cmdline': '/usr/bin/process_name'
         }
-        process = mock.Mock(**process_attrs)
+        process = mock.Mock()
+        process.as_dict.return_value = process_attrs
         self.mock_process_iter.return_value = [process]
 
         config = {'init_config': {},
@@ -44,11 +45,14 @@ class TestDetailedProcess(unittest.TestCase):
         self.mock_process = self.psutil_process_patcher.start()
         self.mock_process_iter = self.psutil_process_iter_patcher.start()
 
-        process_attrs = {
-            'name.return_value': 'process_name',
+        process_attrs_as_dict = {
+            'name': 'process_name',
             'pid': 1234,
-            'username.return_value': 'user',
-            'cmdline.return_value': '/usr/bin/process_name',
+            'username': 'user',
+            'cmdline': '/usr/bin/process_name',
+        }
+
+        process_attrs = {
             'memory_info_ex.return_value': mock.Mock(rss=1048576),
             'num_threads.return_value': 1,
             'num_fds.return_value': 1,
@@ -59,6 +63,7 @@ class TestDetailedProcess(unittest.TestCase):
                                                      'write_bytes': 1024})
         }
         process = mock.Mock(**process_attrs)
+        process.as_dict.return_value = process_attrs_as_dict
         self.mock_process_iter.return_value = [process]
         self.mock_process.return_value = process
 
