@@ -66,7 +66,7 @@ class JMXTestCase(unittest.TestCase):
 
         metrics = self.reporter.metrics
 
-        self.assertTrue(isinstance(metrics, list))
+        self.assertIsInstance(metrics, list)
         self.assertTrue(len(metrics) > 8, metrics)
         self.assertEqual(len([t for t in metrics if 'instance:solr_instance' in t[
                          'dimensions'] and t['metric'] == "jvm.thread_count"]), 1, metrics)

@@ -23,6 +23,6 @@ class GearmanTestCase(unittest.TestCase):
         self.check.check(config['instances'][0])
 
         metrics = self.check.get_metrics()
-        self.assertTrue(isinstance(metrics, list))
+        self.assertIsInstance(metrics, list)
         self.assertTrue(len(metrics) == 4)
         self.assertTrue(len([k for k in metrics if "second" in k[3]['dimensions']['first']]) == 4)

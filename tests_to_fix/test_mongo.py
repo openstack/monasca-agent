@@ -116,7 +116,7 @@ class TestMongo(unittest.TestCase):
         # Metric assertions
         metrics = self.check.get_metrics()
         assert metrics
-        self.assertTrue(isinstance(metrics, list))
+        self.assertIsInstance(metrics, list)
         self.assertTrue(len(metrics) > 0)
 
         metric_val_checks = {
@@ -142,7 +142,7 @@ class TestMongo(unittest.TestCase):
         # Metric assertions
         metrics = self.check.get_metrics()
         assert metrics
-        self.assertTrue(isinstance(metrics, list))
+        self.assertIsInstance(metrics, list)
         self.assertTrue(len(metrics) > 0)
 
         for m in metrics:
@@ -178,7 +178,7 @@ class TestMongo(unittest.TestCase):
         # Metric assertions
         metrics = self.check.get_metrics()
         assert metrics
-        self.assertTrue(isinstance(metrics, list))
+        self.assertIsInstance(metrics, list)
         self.assertTrue(len(metrics) > 0)
 
         metric_val_checks = {
@@ -207,7 +207,7 @@ class TestMongo(unittest.TestCase):
         # Metric assertions
         metrics = self.check.get_metrics()
         assert metrics
-        self.assertTrue(isinstance(metrics, list))
+        self.assertIsInstance(metrics, list)
         self.assertTrue(len(metrics) > 0)
 
         for m in metrics:
