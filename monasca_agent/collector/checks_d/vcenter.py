@@ -300,6 +300,7 @@ class VCenterCheck(AgentCheck):
     def check(self, instance):
         try:
             if self.is_new_session:
+                self.instance = instance
                 self.vcenter_ip = instance.get('vcenter_ip', None)
                 self.user = instance.get('username', None)
                 self.password = instance.get('password', None)
@@ -451,10 +452,13 @@ class VCenterCheck(AgentCheck):
 
     def _get_dims(self, cluster, mor_id):
         cluster_id = mor_id + "." + self.vc_uuid
-        return {
+        local_dimensions = {
             "vcenter_ip": self.vcenter_ip,
             "esx_cluster_id": cluster_id
         }
+        final_dimensions = self._set_dimensions(local_dimensions,
+                                                self.instance)
+        return final_dimensions
 
     @staticmethod
     def parse_agent_config(agentConfig):
