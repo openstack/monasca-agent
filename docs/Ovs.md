@@ -1,11 +1,17 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**
+
 - [Open vSwitch Neutron Router Monitoring](#open-vswitch-neutron-router-monitoring)
   - [Overview](#overview)
   - [Configuration](#configuration)
+  - [Per-Router Rate Metrics](#per-router-rate-metrics)
   - [Per-Router Metrics](#per-router-metrics)
+  - [Per-DHCP port Metrics](#per-dhcp-port-metrics)
+  - [Per-DHCP Rate Metrics](#per-dhcp-rate-metrics)
+  - [Mapping Metrics to Configuration Parameters](#mapping-metrics-to-configuration-parameters)
   - [Router Metric Dimensions](#router-metric-dimensions)
+  - [OVS Port Metric Dimensions](#ovs-port-metric-dimensions)
 - [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -40,8 +46,6 @@ configured using the configuration file example below.
 
 `network_use_bits` will submit network metrics in bits rather than bytes.  This will stop submitting the metrics `router.in_bytes_sec` and `router.out_bytes_sec`, and instead submit `router.in_bits_sec` and `router.out_bits_sec`.
 
-`use_absolute_metrics` will submit the raw counters from ovs-vsctl command output for the given network interface. If this flag is disabled then default rate metrics will get collected for the enabled network interfaces.
-
 `check_router_ha` will check router HA status if set to true.  This should be set to false if not configuring routers for HA, as setting this to true will cause the plugin to make additional neutron calls.
 
 `ovs_cmd` is the location of the open vswitch command.  Installations that allow sudo should set this to `sudo /usr/bin/ovs-vsctl` and add `mon-agent ALL=(ALL) NOPASSWD:/usr/bin/ovs-vsctl` to the `/etc/sudoers` file.  Installations that don't allow usage of sudo should copy the `ovs-vsctl` command to another location and use the `setcap` command to allow the monasca-agent to run that command.  The new location of the `ovs-vsctl` command should be what is set in the config file for `ovs_cmd`.
@@ -50,9 +54,11 @@ configured using the configuration file example below.
 
 `included_interface_re` will include network interfaces for collecting the ovs statistics matching the given regex. By default qg, vhu(dpdk) and sg interfaces will be enabled by detection plugin.
 
-`use_rate_metrics`  will submit the rate metrics derived from ovs-vsctl command output for the given network interface.
+`use_absolute_metrics` will submit the raw counters from ovs-vsctl command output for the given network interface. If this flag is disabled then default rate metrics will get collected for the enabled network interfaces (Default True). Please see "Mapping Metrics to Configuration Parameters" section below for what metrics are controlled by this flag.
 
-`use_health_metrics`  will submit the health related metrics from ovs-vsctl command output for the given network interface. Example metric names are in_dropped, out_dropped, out_error and in_errors.
+`use_rate_metrics`  will submit the rate metrics derived from ovs-vsctl command output for the given network interface (Default False). Please see "Mapping Metrics to Configuration Parameters" section below for what metrics are controlled by this flag.
+
+`use_health_metrics`  will submit the health related metrics from ovs-vsctl command output for the given network interface. Example metric names are in_dropped, out_dropped, out_error and in_errors (Default False). Please see "Mapping Metrics to Configuration Parameters" section below for what metrics are controlled by this flag.
 
 Example config (`ovs.yaml`):
 ```
@@ -136,6 +142,34 @@ instances:
 | vswitch.out_error_sec      | Outgoing errors per second for the DHCP port                              |
 | vswitch.in_error_sec       | Incoming errors per second for the DHCP port                              |
 
+## Mapping Metrics to Configuration Parameters
+Configuration parameters can be used to control which metrics are reported by ovs plugin. There are 3 parameters currently in ovs config file: use_rate_metrics, use_absolute_metrics and use_health_metrics.
+
+
+| Tuning Knob | Admin Metric Name | Tenant Metric Name |
+| ----------- | ----------------- | ------------------ |
+| use_rate_metrics (default: False) | ovs.vrouter.in_bytes_sec | vrouter.in_bytes_sec |
+| | ovs.vrouter.in_packets_sec | vrouter.in_packets_sec |
+| | ovs.vrouter.out_bytes_sec | vrouter.out_bytes_sec |
+| | ovs.vrouter.out_packets_sec | vrouter.out_packets_sec |
+| use_absolute_metrics (default: True) | ovs.vrouter.in_bytes | vrouter.in_bytes |
+| | ovs.vrouter.in_packets | vrouter.in_packets |
+| | ovs.vrouter.out_bytes | vrouter.out_bytes |
+| | ovs.vrouter.out_packets | vrouter.out_packets |
+| use_health_metrics (default: False) and use_rate_metrics (default: False) | ovs.vrouter.in_dropped_sec | vrouter.in_dropped_sec |
+| | ovs.vrouter.in_errors_sec | vrouter.in_errors_sec |
+| | ovs.vrouter.out_dropped_sec | vrouter.out_dropped_sec |
+| | ovs.vrouter.out_errors_sec | vrouter.out_errors_sec |
+| use_health_metrics(default: False) and use_absolute_metrics (default: True)| ovs.vrouter.in_dropped | vrouter.in_dropped |
+| | ovs.vrouter.in_errors | vrouter.in_errors |
+| | ovs.vrouter.out_dropped | vrouter.out_dropped |
+| | ovs.vrouter.out_errors | vrouter.out_errors |
+
+
+NOTE:
+&nbsp;&nbsp;1) per router metrics start with vrouter.* or ovs.vrouter.*
+&nbsp;&nbsp;2) per DHCP metrics start with vswitch.* or ovs.vswitch.*
+&nbsp;&nbsp;3) Default use_absolute_metrics=true, use_rate_metrics=false, use_health_metrics=false
 
 ## Router Metric Dimensions
 
@@ -160,4 +194,4 @@ instances:
 | port_id        | port ID of VM              | port  ID of VM              |
 
 # License
-(C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+(C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
