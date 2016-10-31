@@ -253,7 +253,8 @@ class ElasticSearch(AgentCheck):
                 hostnames = (
                     self.hostname.decode('utf-8'),
                     socket.gethostname().decode('utf-8'),
-                    socket.getfqdn().decode('utf-8')
+                    socket.getfqdn().decode('utf-8'),
+                    socket.gethostbyname(socket.gethostname()).decode('utf-8')
                 )
                 if node_hostname.decode('utf-8') in hostnames:
                     for metric in self.METRICS:
