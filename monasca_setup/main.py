@@ -280,6 +280,9 @@ def parse_arguments(parser):
                         help="Maximum number of buffered batches of measurements to send at"
                              " one time when connection to the monasca-api is restored",
                         default=1000)
+    parser.add_argument('--monasca_statsd_port',
+                        help="Statsd daemon port number",
+                        default=8125)
     return parser.parse_args()
 
 
