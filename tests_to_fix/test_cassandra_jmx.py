@@ -65,7 +65,7 @@ class JMXTestCase(unittest.TestCase):
 
         metrics = self.reporter.metrics
 
-        self.assertTrue(isinstance(metrics, list))
+        self.assertIsInstance(metrics, list)
         self.assertTrue(len(metrics) > 0)
         self.assertTrue(len([t for t in metrics if "cassandra.db." in t[
                         'metric'] and "instance:cassandra_instance" in t['dimensions']]) > 40, metrics)

@@ -59,7 +59,7 @@ class TestElastic(unittest.TestCase):
         self.check.check(conf['instances'][0])
         r = self.check.get_metrics()
 
-        self.assertTrue(isinstance(r, list))
+        self.assertIsInstance(r, list)
         self.assertTrue(len(r) > 0)
         self.assertEqual(len([t for t in r if t[0] == "elasticsearch.get.total"]), 1, r)
         self.assertEqual(len([t for t in r if t[0] == "elasticsearch.search.fetch.total"]), 1, r)

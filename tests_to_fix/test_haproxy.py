@@ -93,7 +93,7 @@ class HaproxyTestCase(unittest.TestCase):
         # Metric assertions
         metrics = self.check.get_metrics()
         assert metrics
-        self.assertTrue(isinstance(metrics, list))
+        self.assertIsInstance(metrics, list)
         self.assertTrue(len(metrics) > 0)
 
         self.assertEqual(len([t for t in metrics
@@ -156,7 +156,7 @@ class HaproxyTestCase(unittest.TestCase):
 
         metrics = self.check.get_metrics()
         assert metrics
-        self.assertTrue(isinstance(metrics, list))
+        self.assertIsInstance(metrics, list)
         self.assertTrue(len(metrics) > 0)
 
         self.assertEqual(len([t for t in metrics
