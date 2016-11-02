@@ -32,7 +32,7 @@ configured using the configuration file example below.
 
 `admin_password` password for the neutron user.
 
-`admin_tenant_name` is the project/tenant to POST metrics with the `vm.` prefix.
+`admin_tenant_name` is the project/tenant to POST metrics with the `ovs.` prefix.
 
 `admin_user` is the username capable of making administrative neutron calls.
 
@@ -47,6 +47,8 @@ configured using the configuration file example below.
 `network_use_bits` will submit network metrics in bits rather than bytes.  This will stop submitting the metrics `router.in_bytes_sec` and `router.out_bytes_sec`, and instead submit `router.in_bits_sec` and `router.out_bits_sec`.
 
 `check_router_ha` will check router HA status if set to true.  This should be set to false if not configuring routers for HA, as setting this to true will cause the plugin to make additional neutron calls.
+
+`metadata` specifies the list of router metadata keys to be included as dimensions with the cross-tenant metrics for the operations project. This is helpful to give more information about an router. Tenant name (in addition to default ID) can be provided as dimensions if `tenant_name` is provided in the list of metadata keys.
 
 `ovs_cmd` is the location of the open vswitch command.  Installations that allow sudo should set this to `sudo /usr/bin/ovs-vsctl` and add `mon-agent ALL=(ALL) NOPASSWD:/usr/bin/ovs-vsctl` to the `/etc/sudoers` file.  Installations that don't allow usage of sudo should copy the `ovs-vsctl` command to another location and use the `setcap` command to allow the monasca-agent to run that command.  The new location of the `ovs-vsctl` command should be what is set in the config file for `ovs_cmd`.
 
@@ -173,25 +175,27 @@ NOTE:
 
 ## Router Metric Dimensions
 
-| Dimension Name | Customer Value             | Operations Value            |
-| -------------- | -------------------------- | --------------------------- |
-| hostname       | (N/A)                      | hostname hosting the router |
-| resource_id    | resource ID of router      | resource ID of router       |
-| service        | "networking"               | "networking"                |
-| component      | "ovs"                      | "ovs"                       |
-| router_name    | name of the virtual router | name of the virtual router  |
-| tenant_id      | (N/A)                      | project owner of the router |
-| port_id        | port ID of the router      | port ID of the router       |
+| Dimension Name | Customer Value             | Operations Value                                                   |
+| -------------- | -------------------------- | ------------------------------------------------------------------ |
+| hostname       | (N/A)                      | hostname hosting the router                                        |
+| resource_id    | resource ID of router      | resource ID of router                                              |
+| service        | "networking"               | "networking"                                                       |
+| component      | "ovs"                      | "ovs"                                                              |
+| router_name    | name of the virtual router | name of the virtual router                                         |
+| tenant_id      | (N/A)                      | id of the project owner of the router                              |
+| tenant_name    | (N/A)                      | name of the project owner of the router (if configured to publish) |
+| port_id        | port ID of the router      | port ID of the router                                              |
 
 ## OVS Port Metric Dimensions
-| Dimension Name | Customer Value             | Operations Value            |
-| -------------- | -------------------------- | --------------------------- |
-| hostname       | (N/A)                      | hostname hosting the ports  |
-| resource_id    | resource ID of port        | resource id of the port     |
-| service        | "networking"               | "networking"                |
-| component      | "ovs"                      | "ovs"                       |
-| tenant_id      | (N/A)                      | project owner of the port   |
-| port_id        | port ID of VM              | port  ID of VM              |
+| Dimension Name | Customer Value             | Operations Value                                                   |
+| -------------- | -------------------------- | ------------------------------------------------------------------ |
+| hostname       | (N/A)                      | hostname hosting the ports                                         |
+| resource_id    | resource ID of port        | resource id of the port                                            |
+| service        | "networking"               | "networking"                                                       |
+| component      | "ovs"                      | "ovs"                                                              |
+| tenant_id      | (N/A)                      | project owner of the port                                          |
+| tenant_name    | (N/A)                      | name of the project owner of the router (if configured to publish) |
+| port_id        | port ID of VM              | port ID of VM                                                      |
 
 # License
 (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP

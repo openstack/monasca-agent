@@ -18,6 +18,7 @@
 import json
 import libvirt
 import math
+import monasca_agent.collector.checks.utils as utils
 import os
 import stat
 import subprocess
@@ -145,6 +146,14 @@ class LibvirtCheck(AgentCheck):
                 self.log.warn("Unable to ping VMs, no network namespaces found." +
                               "Either no VMs are present, or routing is centralized.")
 
+        #
+        # Only make the keystone call to get the tenant list
+        # if we are configured to publish tenant names.
+        #
+        tenants = []
+        if self.init_config.get('metadata') and 'tenant_name' in self.init_config.get('metadata'):
+            tenants = utils.get_tenant_list(self.init_config, self.log)
+
         for instance in instances:
             instance_ports = []
             inst_name = instance.__getattr__('OS-EXT-SRV-ATTR:instance_name')
@@ -169,6 +178,10 @@ class LibvirtCheck(AgentCheck):
                                    'ram': inst_flavor.ram,
                                    'disk': inst_flavor.disk,
                                    'instance_ports': instance_ports}
+
+            tenant_name = utils.get_tenant_name(tenants, instance.tenant_id)
+            if tenant_name:
+                id_cache[inst_name]['tenant_name'] = tenant_name
 
             for config_var in ['metadata', 'customer_metadata']:
                 if self.init_config.get(config_var):
@@ -671,12 +684,7 @@ class LibvirtCheck(AgentCheck):
                 # Add dimensions that would be helpful for operations
                 dims_operations = dims_customer.copy()
                 dims_operations['tenant_id'] = instance_cache.get(inst_name)['tenant_id']
-                if self.init_config.get('metadata'):
-                    for metadata in self.init_config.get('metadata'):
-                        metadata_value = (instance_cache.get(inst_name).
-                                          get(metadata))
-                        if metadata_value:
-                            dims_operations[metadata] = metadata_value
+                dims_operations = self._update_dims_with_metadata(instance_cache, inst_name, dims_operations)
                 if self.init_config.get('customer_metadata'):
                     for metadata in self.init_config.get('customer_metadata'):
                         metadata_value = (instance_cache.get(inst_name).
@@ -779,3 +787,18 @@ class LibvirtCheck(AgentCheck):
             #
             rate_value = -1
         return rate_value
+
+    def _update_dims_with_metadata(self, instance_cache, inst_name, dim_operations):
+        """Update operations dimensions with metadata."""
+        dims = dim_operations
+        if self.init_config.get('metadata'):
+            for metadata in self.init_config.get('metadata'):
+                if 'vm_name' == metadata:
+                    metadata_value = (instance_cache.get(inst_name).
+                                      get('hostname'))
+                else:
+                    metadata_value = (instance_cache.get(inst_name).
+                                      get(metadata))
+                if metadata_value:
+                    dims[metadata] = metadata_value
+        return dims

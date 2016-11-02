@@ -39,9 +39,19 @@ The Libvirt plugin uses a cache directory to persist data, which is `/dev/shm` b
 
 If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Submission can be setup. See this [documentation](https://github.com/openstack/monasca-agent/blob/master/docs/MonascaMetrics.md#cross-tenant-metric-submission) for details.
 
+`admin_user` is the username capable of making administrative nova calls.
+
+`admin_password` password for the nova user.
+
+`admin_tenant_name` is the project/tenant to POST metrics with the `vm.` prefix.
+
+`identity_url` is the keystone endpoint for auth.
+
+`region_name` is used to add the region dimension to metrics.
+
 `nova_refresh` specifies the number of seconds between calls to the Nova API to refresh the instance cache.  This is helpful for updating VM hostname and pruning deleted instances from the cache.  By default, it is set to 14,400 seconds (four hours).  Set to 0 to refresh every time the Collector runs, or to None to disable regular refreshes entirely (though the instance cache will still be refreshed if a new instance is detected).
 
-`metadata` specifies the list of instance metadata keys to be included as dimensions with the cross-tenant metrics for the operations project. This is helpful to give more information about an instance. When using the agent setup scripts, by default `scale_group` metadata is enabled for supporting auto scaling in Heat.
+`metadata` specifies the list of instance metadata keys to be included as dimensions with the cross-tenant metrics for the operations project. This is helpful to give more information about an instance. When using the agent setup scripts, by default `scale_group` metadata is enabled for supporting auto scaling in Heat. VM name and tenant name (in addition to default IDs) can be provided as dimensions if `vm_name` and `tenant_name` are provided in the list of metadata keys.
 
 `customer_metadata` specifies the list of instance metadata keys to be included as dimensions with customer metrics. This is helpful to give more information about an instance.
 
@@ -58,7 +68,6 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 `disk_collection_period` will cause disk metrics to be output at a minimum `disk_collection_period` second interval. This can be optionally set to have disk metrics be outputted less often to reduce metric load on the system. If this is less than the agent collection period, it will be ignored. The default value is 0.
 
 `vnic_collection_period` will cause vnic metrics to be output at a minimum `vnic_collection_period` second interval. This can be optionally set to have vnic metrics be outputted less often to reduce metric load on the system. If this is less than the agent collection period, it will be ignored. The default value is 0.
-
 
 `vm_cpu_check_enable` enables collecting of VM CPU metrics (Default True). Please see "Mapping Metrics to Configuration Parameters" section below for what metrics are controlled by this flag.
 
@@ -411,16 +420,18 @@ Please see table below for metrics in libvirt that are always enabled.
 ## VM Dimensions
 All metrics include `resource_id` and `zone` (availability zone) dimensions.  Because there is a separate set of metrics for the two target audiences (VM customers and Operations), other dimensions may differ.
 
-| Dimension Name | Customer Value            | Operations Value        |
-| -------------- | ------------------------- | ----------------------- |
-| hostname       | name of VM as provisioned | hypervisor's hostname   |
-| zone           | availability zone         | availability zone       |
-| resource_id    | resource ID of VM         | resource ID of VM       |
-| service        | "compute"                 | "compute"               |
-| component      | "vm"                      | "vm"                    |
-| device         | name of net or disk dev   | name of net or disk dev |
-| port_id        | port ID of the VM port    | port ID of the VM port  |
-| tenant_id      | (N/A)                     | owner of VM             |
+| Dimension Name | Customer Value            | Operations Value                                               |
+| -------------- | ------------------------- | -------------------------------------------------------------- |
+| hostname       | name of VM as provisioned | hypervisor's hostname                                          |
+| zone           | availability zone         | availability zone                                              |
+| resource_id    | resource ID of VM         | resource ID of VM                                              |
+| service        | "compute"                 | "compute"                                                      |
+| component      | "vm"                      | "vm"                                                           |
+| device         | name of net or disk dev   | name of net or disk dev                                        |
+| port_id        | port ID of the VM port    | port ID of the VM port                                         |
+| tenant_id      | (N/A)                     | owner of VM                                                    |
+| tenant_name    | (N/A)                     | name of the project owner of the VM (if configured to publish) |
+| vm_name        | (N/A)                     | name of the VM (if configured to publish)                      |
 
 ## Aggregate Metrics
 
