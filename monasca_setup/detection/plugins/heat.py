@@ -16,7 +16,7 @@ class Heat(monasca_setup.detection.ServicePlugin):
             'process_names': ['heat-api ', 'heat-api-cfn',
                               'heat-api-cloudwatch', 'heat-engine'],
             'service_api_url': 'http://localhost:8004',
-            'search_pattern': '.*200 OK.*',
+            'search_pattern': '.*versions.*',
         }
 
         super(Heat, self).__init__(service_params)
