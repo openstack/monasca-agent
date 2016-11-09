@@ -15,7 +15,7 @@ class Cinder(monasca_setup.detection.ServicePlugin):
             'service_name': 'block-storage',
             'process_names': ['cinder-scheduler',
                               'cinder-api'],
-            'service_api_url': 'http://localhost:8776/v2.0',
+            'service_api_url': 'http://localhost:8776/v2',
             'search_pattern': '.*version=1.*'
         }
         # process_names: cinder-volume and cinder-backup can
