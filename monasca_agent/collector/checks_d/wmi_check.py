@@ -25,7 +25,8 @@ class WMICheck(AgentCheck):
     def _get_wmi_conn(self, host, user, password):
         key = "%s:%s:%s" % (host, user, password)
         if key not in self.wmi_conns:
-            self.wmi_conns[key] = wmi.WMI(host, user=user, password=password)
+            self.wmi_conns[key] = wmi.WMI(computer=host, user=user,
+                                          password=password)
         return self.wmi_conns[key]
 
     def check(self, instance):
@@ -56,7 +57,7 @@ class WMICheck(AgentCheck):
                     results = w.query(wql)
                 else:
                     results = getattr(w, wmi_class)(**f)
-                self._extract_metrics(results, metrics, tag_by)
+                self._extract_metrics(results, metrics, tag_by, instance)
         else:
             results = getattr(w, wmi_class)()
             self._extract_metrics(results, metrics, tag_by, instance)
