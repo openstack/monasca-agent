@@ -1,34 +1,20 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2016 Hewlett Packard Enterprise Development LP
 
 # Warning
-# The user running the Datadog Agent (usually "dd-agent") must be part of the "docker" group
+# The user running the monasca-agent (usually "mon-agent") must be part of the "docker" group
 
 init_config:
+  docker_root: /
+
+  # Timeout on Docker api connection. You may have to increase it if you have many containers.
+  # connection_timeout: 3
+
+  # docker version to use when connecting to the docker api. Default is auto
+  # version: "auto"
 
 instances:
-    - url: "unix://var/run/docker.sock"
+    # URL of the Docker daemon socket to reach the Docker API. HTTP also works.
+  - url: "unix://var/run/docker.sock"
 
-# Include/Exclude rules
-#
-# To include or exclude containers based on their docker tags, use the include and
-# exclude keys in your instance.
-# The reasoning is: if a tag matches an exclude rule, it won't be included
-# unless it also matches an include rule.
-#
-# Examples:
-# exclude all, except ubuntu and debian:
-# instances:
-#     - url: "unix://var/run/docker.sock"
-#       include:
-#         - "image:ubuntu"
-#         - "image:debian"
-#       exclude:
-#         - ".*"
-#
-# include all, except ubuntu and debian:
-# instances:
-#     - url: "unix://var/run/docker.sock"
-#       include: []
-#       exclude:
-#         - "image:ubuntu"
-#         - "image:debian"
+    # Set to true if you want the kubernetes namepsace and pod name to be set as dimensions
+    add_kubernetes_dimensions: True

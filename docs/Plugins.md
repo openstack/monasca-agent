@@ -644,6 +644,61 @@ The directory checks return the following metrics:
 | directory.files_count  | path, hostname, service |
 
 ## Docker
+This plugin gathers metrics on docker containers.
+
+A YAML file (docker.yaml) contains the url of the docker api to connect to and the root of docker that is used for looking for docker proc metrics.
+
+For this check the user that is running the monasca agent (usually the mon-agent user) must be a part of the docker group
+
+Also if you want to want to attach kubernetes dimensions to each metric you can set add_kubernetes_dimensions to true in the yaml file. This will set the pod_name and namespace.
+
+Sample config:
+
+Without kubernetes dimensions
+
+```
+init_config:
+  docker_root: /
+  socket_timeout: 5
+instances:
+  - url: "unix://var/run/docker.sock"
+```
+
+With kubernetes dimensions
+```
+init_config:
+  docker_root: /
+  socket_timeout: 5
+instances:
+  - url: "unix://var/run/docker.sock"
+    add_kubernetes_dimensions: True
+```
+
+Note this plugin only supports one instance in the config file.
+
+The docker check return the following metrics:
+
+| Metric Name | Metric Type | Dimensions | Optional_dimensions (set if add_kubernetes_dimensions is true and container is running under kubernetes) | Semantics |
+| ----------- | ---------- | --------- |
+| container.containers.running_count | Gauge | hostname | | Number of containers running on the host |
+| container.cpu.system_time  | Gauge| hostname, name, image | kubernetes_pod_name, kubernetes_namespace | The total time the CPU has executed system calls on behalf of the processes in the container |
+| container.cpu.system_time_sec  | Rate | hostname, name, image | kubernetes_pod_name, kubernetes_namespace | The rate the CPU is executing system calls on behalf of the processes in the container |
+| container.cpu.user_time  | Gauge | hostname, name, image | kubernetes_pod_name, kubernetes_namespace | The total time the CPU is under direct control of the processes in this container |
+| container.cpu.user_time_sec  | Rate | hostname, name, image | kubernetes_pod_name, kubernetes_namespace | The rate the CPU is under direct control of the processes in this container |
+| container.cpu.utilization_perc | Gauge | hostname, name, image | kubernetes_pod_name, kubernetes_namespace | The percentage of CPU used by the container |
+| container.io.read_bytes  | Gauge | hostname, name, image | kubernetes_pod_name, kubernetes_namespace | The total amount bytes read from the processes in the container |
+| container.io.read_bytes_sec  | Rate | hostname, name, image | kubernetes_pod_name, kubernetes_namespace | The rate of bytes read from the processes in the container |
+| container.io.write_bytes  | Gauge | hostname, name, image | kubernetes_pod_name, kubernetes_namespace | The total amount bytes written from the processes in the container |
+| container.io.write_bytes_sec  | Rate | hostname, name, image | kubernetes_pod_name, kubernetes_namespace | The rate of bytes written from the processes in the container |
+| container.mem.cache | Gauge | hostname, name, image | kubernetes_pod_name, kubernetes_namespace |The amount of cached memory that belongs to the container's processes |
+| container.mem.rss  | Gauge | hostname, name, image | kubernetes_pod_name, kubernetes_namespace | The amount of non-cached memory used by the container's processes |
+| container.mem.swap  | Gauge | hostname, name, image | kubernetes_pod_name, kubernetes_namespace | The amount of swap memory used by the processes in the container |
+| container.mem.used_perc | Gauge | hostname, name, image | kubernetes_pod_name, kubernetes_namespace | The percentage of memory used out of the given limit of the container |
+| container.net.in_bytes  | Gauge | hostname, name, image, interface | kubernetes_pod_name, kubernetes_namespace | The total amount of bytes received by the container per interface |
+| container.net.in_bytes_sec  | Rate | hostname, name, image, interface | kubernetes_pod_name, kubernetes_namespace | The rate of bytes received by the container per interface |
+| container.net.out_bytes  | Gauge | hostname, name, image, interface | kubernetes_pod_name, kubernetes_namespace | The total amount of bytes sent by the container per interface |
+| container.net.out_bytes_sec  | Rate | hostname, name, image, interface | kubernetes_pod_name, kubernetes_namespace | The rate of bytes sent by the container per interface |
+
 
 ## Elasticsearch Checks
 This section describes the Elasticsearch check that can be performed by the Agent.  The Elasticsearch check requires a configuration file called elastic.yaml to be available in the agent conf.d configuration directory.
