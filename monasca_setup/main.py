@@ -6,6 +6,7 @@
 
 import argparse
 from glob import glob
+import json
 import logging
 import os
 import pwd
@@ -73,6 +74,7 @@ def main(argv=None):
     else:
         # Run detection for all the plugins, halting on any failures if plugins were specified in the arguments
         detected_config = plugin_detection(plugins, args.template_dir, args.detection_args,
+                                           args.detection_args_json,
                                            skip_failed=(args.detection_plugins is None))
         if detected_config is None:
             return 1  # Indicates detection problem, skip remaining steps and give non-zero exit code
@@ -223,8 +225,11 @@ def parse_arguments(parser):
                              "This assumes the base config has already run.")
     parser.add_argument('--skip_detection_plugins', nargs='*',
                         help="Skip detection for all plugins in this space separated list.")
-    parser.add_argument('-a', '--detection_args', help="A string of arguments that will be passed to detection " +
-                                                       "plugins. Only certain detection plugins use arguments.")
+    detection_args_group = parser.add_mutually_exclusive_group()
+    detection_args_group.add_argument('-a', '--detection_args', help="A string of arguments that will be passed to detection " +
+                                      "plugins. Only certain detection plugins use arguments.")
+    detection_args_group.add_argument('-json', '--detection_args_json',
+                                      help="A JSON string that will be passed to detection plugins that parse JSON.")
     parser.add_argument('--check_frequency', help="How often to run metric collection in seconds",
                         type=validate_positive, default=30)
     parser.add_argument('--num_collector_threads', help="Number of Threads to use in Collector " +
@@ -286,7 +291,7 @@ def parse_arguments(parser):
     return parser.parse_args()
 
 
-def plugin_detection(plugins, template_dir, detection_args, skip_failed=True, remove=False):
+def plugin_detection(plugins, template_dir, detection_args, detection_args_json, skip_failed=True, remove=False):
     """Runs the detection step for each plugin in the list and returns the complete detected agent config.
     :param plugins: A list of detection plugin classes
     :param template_dir: Location of plugin configuration templates
@@ -295,9 +300,14 @@ def plugin_detection(plugins, template_dir, detection_args, skip_failed=True, re
     :return: An agent_config instance representing the total configuration from all detection plugins run.
     """
     plugin_config = agent_config.Plugins()
+    if detection_args_json:
+        json_data = json.loads(detection_args_json)
     for detect_class in plugins:
         # todo add option to install dependencies
-        detect = detect_class(template_dir, False, detection_args)
+        if detection_args_json:
+            detect = detect_class(template_dir, False, **json_data)
+        else:
+            detect = detect_class(template_dir, False, detection_args)
         if detect.available:
             new_config = detect.build_config_with_name()
             if not remove:
@@ -324,9 +334,9 @@ def remove_config(args, plugin_names):
     detected_plugins = utils.discover_plugins(CUSTOM_PLUGIN_PATH)
     plugins = utils.select_plugins(args.detection_plugins, detected_plugins)
 
-    if args.detection_args is not None:
+    if (args.detection_args or args.detection_args_json):
         detected_config = plugin_detection(
-            plugins, args.template_dir, args.detection_args,
+            plugins, args.template_dir, args.detection_args, args.detection_args_json,
             skip_failed=(args.detection_plugins is None), remove=True)
 
     for file_path in existing_config_files:

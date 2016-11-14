@@ -321,6 +321,7 @@ These are the detection plugins included with the Monasca Agent.  See [Customiza
 | ovsvapp | ServicePlugin |
 | postfix | Plugin |
 | powerdns | Plugin |
+| process | Plugin |
 | rabbitmq | Plugin |
 | supervisord | Plugin |
 | swift | ServicePlugin |
@@ -1374,24 +1375,89 @@ Each process entry consists of one primary key: name. Either search_string or us
 
 To grab more process metrics beside the process.pid_count, which only shows that the process is up and running, the configuration option detailed must be set to true.
 
+Sample monasca-setup:
+Monitor by process_names:
 ```
-init_config:
-
+monasca-setup -d ProcessCheck -json \
+         '{"process_config":[{"process_names":["monasca-notification","monasca-api"],"dimensions":{"service":"monitoring"}}]}'
+```
+Monitor by process_username:
+```
+monasca-setup -d ProcessCheck -json \
+         '{"process_config":[{"process_username":"dbadmin","dimensions":{"service":"monitoring","component":"vertica"}}]}'
+```
+Multiple entries in one call:
+```
+monasca-setup -d ProcessCheck -json \
+         '{"process_config":[{"process_names":["monasca-notification","monasca-api"],"dimensions":{"service":"monitoring"}},
+                             {"process_names":["elasticsearch"],"dimensions":{"service":"logging"}},
+                             {"process_username":"dbadmin","dimensions":{"service":"monitoring","component":"vertica"}}]}'
+```
+Using a yaml config file:
+```
+monasca-setup -d ProcessCheck -a "conf_file_path=/home/stack/myprocess.yaml"
+```
+Example yaml input file format for process check by process names:
+```
+---
+process_config:
+- process_names:
+  - monasca-notification
+  - monasca-api
+  dimensions:
+    service: monitoring
+```
+Example yaml input file format for multiple process_names entries:
+```
+---
+process_config:
+- process_names:
+  - monasca-notification
+  - monasca-api
+  dimensions:
+    service: monitoring
+- process_names:
+  - elasticsearch
+  dimensions:
+    service: logging
+- process_names:
+  - monasca-thresh
+  exact_match: 'true'
+  dimensions:
+    service: monitoring
+    component: thresh
+```
+Sample successfully built process.yaml:
+```
+init_config: null
 instances:
- - name: ssh
-   search_string: ['ssh', 'sshd']
+- built_by: ProcessCheck
+  detailed: true
+  dimensions:
+    component: monasca-api
+    service: monitoring
+  exact_match: false
+  name: monasca-api
+  search_string:
+  - monasca-api
 
- - name: mysql
-   search_string: ['mysql']
-   exact_match: True
+- built_by: ProcessCheck
+  detailed: true
+  dimensions:
+    component: monasca-notification
+    service: monitoring
+  exact_match: false
+  name: monasca-notification
+  search_string:
+  - monasca-notification
 
- - name: kafka
-   search_string: ['kafka']
-   detailed: true
-
- - name: monasca_agent
-   username: mon-agent
-   detailed: true
+- built_by: ProcessCheck
+  detailed: true
+  dimensions:
+    component: vertica
+    service: monitoring
+  name: vertica
+  username: dbadmin
 ```
 The process checks return the following metrics ( if detailed is set to true, otherwise process.pid_count is only returned ):
 

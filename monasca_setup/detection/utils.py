@@ -1,4 +1,4 @@
-# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 
 """ Util functions to assist in detection.
 """
@@ -39,7 +39,8 @@ def find_process_cmdline(search_string):
     """
     for process in psutil.process_iter():
         try:
-            if search_string in ' '.join(process.cmdline()):
+            if (search_string in ' '.join(process.cmdline()) and
+               'monasca-setup' not in ' '.join(process.cmdline())):
                 return process
         except psutil.NoSuchProcess:
             continue
