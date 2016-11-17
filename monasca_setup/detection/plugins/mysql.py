@@ -2,6 +2,7 @@
 
 import logging
 import os
+from six.moves import configparser
 
 import monasca_setup.agent_config
 import monasca_setup.detection
@@ -86,36 +87,25 @@ class MySQL(monasca_setup.detection.Plugin):
         :param config_file: The filename of the configuration to read and parse
         """
         log.info("\tUsing client credentials from {}".format(config_file))
-        client_section = False
-        self.user = None
-        self.password = None
-        self.host = HOST
-        self.port = PORT
-        self.socket = None
-        self.ssl_ca = None
-        self.ssl_key = None
-        self.ssl_cert = None
-        with open(mysql_conf, "r") as confFile:
-            for row in confFile:
-                if client_section:
-                    if "user=" in row:
-                        self.user = row.split("=")[1].strip()
-                    if "password=" in row:
-                        self.password = row.split("=")[1].strip()
-                    if "port=" in row:
-                        self.port = int(row.split("=")[1].strip())
-                    if "host=" in row:
-                        self.host = row.split("=")[1].strip()
-                    if "socket=" in row:
-                        self.socket = row.split("=")[1].strip()
-                    if "ssl_ca=" in row:
-                        self.ssl_ca = row.split("=")[1].strip()
-                    if "ssl_key=" in row:
-                        self.ssl_key = row.split("=")[1].strip()
-                    if "ssl_cert=" in row:
-                        self.ssl_cert = row.split("=")[1].strip()
-                if "[client]" in row:
-                    client_section = True
+        parser = configparser.RawConfigParser(defaults={
+            'user': None,
+            'password': None,
+            'host': HOST,
+            'port': PORT,
+            'socket': None,
+            'ssl_ca': None,
+            'ssl_key': None,
+            'ssl_cert': None
+        }, allow_no_value=True)
+        parser.read(config_file)
+        self.user = parser.get('client', 'user')
+        self.password = parser.get('client', 'password')
+        self.host = parser.get('client', 'host')
+        self.port = parser.get('client', 'port')
+        self.socket = parser.get('client', 'socket')
+        self.ssl_ca = parser.get('client', 'ssl_ca')
+        self.ssl_key = parser.get('client', 'ssl_key')
+        self.ssl_cert = parser.get('client', 'ssl_cert')
 
     def build_config(self):
         """Build the config as a Plugins object and return.
