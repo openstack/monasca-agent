@@ -39,7 +39,15 @@ DOM_STATES = {libvirt.VIR_DOMAIN_BLOCKED: 'VM is blocked',
               libvirt.VIR_DOMAIN_PAUSED: 'VM is paused',
               libvirt.VIR_DOMAIN_PMSUSPENDED: 'VM is in power management (s3) suspend',
               libvirt.VIR_DOMAIN_SHUTDOWN: 'VM is shutting down',
-              libvirt.VIR_DOMAIN_SHUTOFF: 'VM has been shut off'}
+              libvirt.VIR_DOMAIN_SHUTOFF: 'VM has been shut off (other reason)'}
+DOM_SHUTOFF_STATES = {libvirt.VIR_DOMAIN_SHUTOFF_UNKNOWN: 'VM has been shutoff (reason unknown)',
+                      libvirt.VIR_DOMAIN_SHUTOFF_SHUTDOWN: 'VM has been shut down',
+                      libvirt.VIR_DOMAIN_SHUTOFF_DESTROYED: 'VM has been destroyed (forced off)',
+                      libvirt.VIR_DOMAIN_SHUTOFF_CRASHED: 'VM has crashed',
+                      libvirt.VIR_DOMAIN_SHUTOFF_MIGRATED: 'VM has been migrated',
+                      libvirt.VIR_DOMAIN_SHUTOFF_SAVED: 'VM has been suspended',
+                      libvirt.VIR_DOMAIN_SHUTOFF_FAILED: 'VM has failed to start',
+                      libvirt.VIR_DOMAIN_SHUTOFF_FROM_SNAPSHOT: 'VM has been restored from powered off snapshot'}
 
 
 class LibvirtCheck(AgentCheck):
@@ -568,9 +576,10 @@ class LibvirtCheck(AgentCheck):
 
         if inst_state[0] in DOM_STATES:
             metatag = {'detail': DOM_STATES[inst_state[0]]}
-        # A nova-suspended VM has a SHUTOFF Power State, but alternate Status
-        if inst_state == [libvirt.VIR_DOMAIN_SHUTOFF, 5]:
-            metatag = {'detail': 'VM has been suspended'}
+        # A VM being in SHUTOFF state may have many reasons, we try to be more specific here
+        if inst_state[0] == libvirt.VIR_DOMAIN_SHUTOFF:
+            if inst_state[1] in DOM_SHUTOFF_STATES:
+                metatag = {'detail': DOM_SHUTOFF_STATES[inst_state[1]]}
 
         self.gauge('host_alive_status', dom_status, dimensions=dims_customer,
                    delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
