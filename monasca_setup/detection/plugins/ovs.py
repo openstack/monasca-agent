@@ -58,8 +58,8 @@ class Ovs(monasca_setup.detection.Plugin):
             if not process_exist:
                 log.error('OVS daemon process does not exist.')
             elif not neutron_conf:
-                log.error(('OVS daemon process exists but configuration'
-                           'file was not found. Path to file does not exist'
+                log.error(('OVS daemon process exists but configuration '
+                           'file was not found. Path to file does not exist '
                            'as a process parameter or was not '
                            'passed via args.'))
             elif not has_dependencies:
