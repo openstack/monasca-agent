@@ -1,4 +1,4 @@
-hacking>=0.10.2
-flake8>=2.2.4,<2.6.0
-nose==1.3.0
-mock>=1.0.1
+hacking>=0.12.0,<0.13  # Apache-2.0
+flake8>=2.5.4,<2.6.0  # MIT
+nose
+mock>=2.0 # BSD
