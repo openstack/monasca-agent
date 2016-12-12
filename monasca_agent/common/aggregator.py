@@ -166,22 +166,24 @@ class MetricsAggregator(object):
 
         hostname_to_post = self.get_hostname_to_post(hostname)
 
-        if 'hostname' not in dimensions and hostname_to_post:
-            dimensions.update({'hostname': hostname_to_post})
+        dimensions_copy = dimensions.copy()
+
+        if 'hostname' not in dimensions_copy and hostname_to_post:
+            dimensions_copy.update({'hostname': hostname_to_post})
 
         # TODO(joe): Shouldn't device_name be added to dimensions in the check
         #            plugin?  Why is it special cased through so many layers?
         if device_name:
-            dimensions.update({'device': device_name})
+            dimensions_copy.update({'device': device_name})
 
         # TODO(joe): Decide if hostname_to_post and device_name are necessary
         #            for the context tuple
-        context = (name, tuple(dimensions.items()), delegated_tenant,
+        context = (name, tuple(dimensions_copy.items()), delegated_tenant,
                    hostname_to_post, device_name)
 
         if context not in self.metrics:
             self.metrics[context] = metric_class(name,
-                                                 dimensions,
+                                                 dimensions_copy,
                                                  tenant=delegated_tenant)
         cur_time = time()
         if timestamp is not None:
