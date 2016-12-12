@@ -1613,7 +1613,15 @@ instances:
     rabbitmq_pass: guest
 ```
 
-If you want the monasca-setup program to detect and auto-configure the plugin for you, you must create the file /root/.rabbitmq.cnf with the information needed in the configuration yaml file before running the setup program.  It should look something like this:
+If you want the monasca-setup program to detect and auto-configure the plugin for you, you must pass ``watch_api=true`` to the plugin, for example:
+
+```
+monasca-setup \
+  --detection_plugins rabbitmq \
+  --detection_args "watch_api=true"
+```
+
+Additionally, you must create the file /root/.rabbitmq.cnf with the information needed in the configuration yaml file before running the setup program.  It should look something like this:
 
 ```
 [client]
@@ -1624,6 +1632,19 @@ queues=conductor
 exchanges=nova,cinder,ceilometer,glance,keystone,neutron,heat
 ```
 
+Alternatively, the arguments can be passed on the command line, but note that all arguments must be passed in this case - the configuration file will not be read:
+
+```
+monasca-setup \
+  --detection_plugins rabbitmq \
+  --detection_args \
+    "watch_api=true
+     user=guest
+     password=pass
+     nodes=rabbit@devstack
+     queues=conductor
+     exchanges=nova,cinder,ceilometer,glance,keystone,neutron,heat"
+```
 
 For more details of each metric, please refer the [RabbitMQ documentation](http://www.rabbitmq.com/documentation.html).
 The RabbitMQ checks return the following metrics:
