@@ -57,7 +57,7 @@ The order of precedence for all dimensions is:
 #### Common Dimensions
 
 | Name | Description |
-| ---- | ----------- | 
+| ---- | ----------- |
 | hostname | The FQDN of the host being measured. |
 | observer_host | The FQDN of the host that runs a check against another host. |
 | url | In the case of the http endpoint check the url of the http endpoint being checked. |
@@ -137,42 +137,57 @@ statsd.timing('pipeline', 2468.34)      # Pipeline took 2468.34 ms to execute
 statsd.gauge('gaugething', 3.14159265)  # 'gauge' would be the preferred metric type for Monitoring
 ```
 
-The [monasca-statsd](https://github.com/openstack/monasca-statsd library provides a python based implementation 
+The [monasca-statsd](https://github.com/openstack/monasca-statsd library provides a python based implementation
 of a statsd client but also adds the ability to add dimensions to the statsd metrics for the client.
 
 Here are some examples of how code can be instrumented using calls to monasca-statsd.
-```
 
-    * Import the module once it's installed.
-		from monascastatsd import monasca_statsd
-		statsd = monasca_statsd.MonascaStatsd()
+* Import the module once it's installed.
 
-    * Optionally, configure the host and port if you're running Statsd on a non-standard port.
-		statsd.connect('localhost', 8125)
+    ```python
+    from monascastatsd import monasca_statsd
+    statsd = monasca_statsd.MonascaStatsd()
+    ```
 
-    * Increment a counter.
-		statsd.increment('page_views')
+* Optionally, configure the host and port if you're running Statsd on a non-standard port.
 
-		With dimensions:
-    	statsd.increment('page_views', 5, dimensions={'Hostname': 'prod.mysql.abccorp.com'})
+    ```python
+    statsd.connect('localhost', 8125)
+    ```
 
-    * Record a gauge 50% of the time.
-		statsd.gauge('users_online', 91, sample_rate=0.5)
+* Increment a counter.
 
-		With dimensions:
-		statsd.gauge('users_online', 91, dimensions={'Origin': 'Dev', 'Environment': 'Test'})
+    ```python
+    statsd.increment('page_views')
 
-    * Time a function call.
-		@statsd.timed('page.render')
-		def render_page():
-    	# Render things...
+    With dimensions:
+        statsd.increment('page_views', 5, dimensions={'Hostname': 'prod.mysql.abccorp.com'})
+    ```
 
-    * Time a block of code.
-     with statsd.time('database_read_time',
-                      dimensions={'db_host': 'mysql1.mycompany.net'}):
-    	# Do something...
+* Record a gauge 50% of the time.
 
-```
+    ```python
+    statsd.gauge('users_online', 91, sample_rate=0.5)
+
+    With dimensions:
+        statsd.gauge('users_online', 91, dimensions={'Origin': 'Dev', 'Environment': 'Test'})
+    ```
+
+* Time a function call.
+
+    ```python
+    @statsd.timed('page.render')
+    def render_page():
+        # Render things...
+    ```
+
+* Time a block of code.
+
+    ```python
+    with statsd.time('database_read_time',
+                     dimensions={'db_host': 'mysql1.mycompany.net'}):
+    # Do something...
+    ```
 
 # License
 (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
