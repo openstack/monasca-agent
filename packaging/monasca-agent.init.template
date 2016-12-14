@@ -111,11 +111,20 @@ case "$1" in
         ;;
     stop)
 
-        echo "Stopping $DESC (stopping supervisord)" "$NAME"
         if [ -e $SUPERVISOR_PIDFILE ]; then
-          kill `cat $SUPERVISOR_PIDFILE`
+            kill `cat $SUPERVISOR_PIDFILE`
+            retries=10
+            until ! check_status > /dev/null; do
+                if [ $retries -le 1 ]; then
+                    echo "Timeout hit while waiting for agent to stop"
+                    break
+                else
+                    retries=$(($retries - 1))
+                    sleep 1
+                fi
+            done
         else
-          echo "Pid file $SUPERVISOR_PIDFILE not found, nothing to stop"
+            echo "Pid file $SUPERVISOR_PIDFILE not found, nothing to stop"
         fi
 
         exit $?
@@ -141,7 +150,6 @@ case "$1" in
 
     restart|force-reload)
         $0 stop
-        sleep 1
         $0 start
         ;;
 
