@@ -47,8 +47,8 @@ class Kibana(checks.AgentCheck):
 
         instance_metrics = instance.get('metrics', None)
         if not instance_metrics:
-            LOG.warn('All metrics have been disabled in configuration '
-                     'file, nothing to do.')
+            LOG.warning('All metrics have been disabled in configuration '
+                        'file, nothing to do.')
             return
 
         version = self._get_kibana_version(config_url)
@@ -65,7 +65,7 @@ class Kibana(checks.AgentCheck):
             return
 
         if not stats:
-            LOG.warn('No stats data was collected from kibana')
+            LOG.warning('No stats data was collected from kibana')
             return
 
         self._process_metrics(stats, dimensions, instance_metrics)
