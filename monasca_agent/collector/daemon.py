@@ -5,7 +5,9 @@
 import glob
 import logging
 import os
+import pstats
 import signal
+import six
 import sys
 import time
 
@@ -97,7 +99,7 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
             collection_start = time.time()
             # enable profiler if needed
             profiled = False
-            if config.get('profile', False) and config.get('profile').lower() == 'yes':
+            if config.get('profile', False):
                 try:
                     import cProfile
                     profiler = cProfile.Profile()
@@ -111,12 +113,10 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
             self.collector.run(check_frequency)
 
             # disable profiler and printout stats to stdout
-            if config.get('profile', False) and config.get('profile').lower() == 'yes' and profiled:
+            if config.get('profile', False) and profiled:
                 try:
                     profiler.disable()
-                    import cStringIO
-                    import pstats
-                    s = cStringIO.StringIO()
+                    s = six.StringIO()
                     ps = pstats.Stats(profiler, stream=s).sort_stats("cumulative")
                     ps.print_stats()
                     log.debug(s.getvalue())
