@@ -9,6 +9,7 @@
   - [Per-Router Metrics](#per-router-metrics)
   - [Per-DHCP port Metrics](#per-dhcp-port-metrics)
   - [Per-DHCP Rate Metrics](#per-dhcp-rate-metrics)
+  - [Per-Host Metrics](#per-host-metrics)
   - [Mapping Metrics to Configuration Parameters](#mapping-metrics-to-configuration-parameters)
   - [Router Metric Dimensions](#router-metric-dimensions)
   - [OVS Port Metric Dimensions](#ovs-port-metric-dimensions)
@@ -101,18 +102,19 @@ instances:
 
 ## Per-Router Metrics
 
-| Name                     | Description                                                     |
-| -------------------------|-----------------------------------------------------------------|
-| vrouter.in_bytes         |Inbound bytes for the router (if `network_use_bits` is false)    |
-| vrouter.out_bytes        | Outgoing bytes for the router  (if `network_use_bits` is false) |
-| vrouter.in_bits          | Inbound bits for the router  (if `network_use_bits` is true)    |
-| vrouter.out_bits         | Outgoing bits for the router  (if `network_use_bits` is true)   |
-| vrouter.in_packets       | Incoming packets for the router                                 |
-| vrouter.out_packets      | Outgoing packets for the router                                 |
-| vrouter.in_dropped       | Incoming dropped packets for the router                         |
-| vrouter.out_dropped      | Outgoing dropped packets for the router                         |
-| vrouter.in_errors        | Number of incoming errors for the router                        |
-| vrouter.out_errors       | Number of outgoing errors for the router                        |
+| Name                     | Description                                                                                                              |
+| -------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| vrouter.in_bytes         | Inbound bytes for the router (if `network_use_bits` is false)                                                            |
+| vrouter.out_bytes        | Outgoing bytes for the router  (if `network_use_bits` is false)                                                          |
+| vrouter.in_bits          | Inbound bits for the router  (if `network_use_bits` is true)                                                             |
+| vrouter.out_bits         | Outgoing bits for the router  (if `network_use_bits` is true)                                                            |
+| vrouter.in_packets       | Incoming packets for the router                                                                                          |
+| vrouter.out_packets      | Outgoing packets for the router                                                                                          |
+| vrouter.in_dropped       | Incoming dropped packets for the router                                                                                  |
+| vrouter.out_dropped      | Outgoing dropped packets for the router                                                                                  |
+| vrouter.in_errors        | Number of incoming errors for the router                                                                                 |
+| vrouter.out_errors       | Number of outgoing errors for the router                                                                                 |
+| vrouter.max_bw_kb        | Maximum bandwidth possible for the router based on the instances using the router (if `publish_router_capacity` is true) |
 
 ## Per-DHCP port Metrics
 
@@ -144,8 +146,14 @@ instances:
 | vswitch.out_error_sec      | Outgoing errors per second for the DHCP port                              |
 | vswitch.in_error_sec       | Incoming errors per second for the DHCP port                              |
 
+## Per-Host Metrics
+
+| Name                       | Description                                                                                                                                                                         |
+| ---------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ovs.vrouter.host_max_bw_kb | Maximum bandwidth possible for routers on the the host based on the instances using those routers (if `publish_router_capacity` is true).  Only published to the operations tenant. |
+
 ## Mapping Metrics to Configuration Parameters
-Configuration parameters can be used to control which metrics are reported by ovs plugin. There are 3 parameters currently in ovs config file: use_rate_metrics, use_absolute_metrics and use_health_metrics.
+Configuration parameters can be used to control which metrics are reported by ovs plugin. There are 4 parameters currently in ovs config file: use_rate_metrics, use_absolute_metrics, use_health_metrics and publish_router_capacity.
 
 
 | Tuning Knob | Admin Metric Name | Tenant Metric Name |
@@ -166,6 +174,8 @@ Configuration parameters can be used to control which metrics are reported by ov
 | | ovs.vrouter.in_errors | vrouter.in_errors |
 | | ovs.vrouter.out_dropped | vrouter.out_dropped |
 | | ovs.vrouter.out_errors | vrouter.out_errors |
+| publish_router_capacity (default: False) | ovs.vrouter.max_bw_kb | vrouter.max_bw_kb |
+| | ovs.vrouter.host_max_bw_kb | N/A |
 
 
 NOTE:

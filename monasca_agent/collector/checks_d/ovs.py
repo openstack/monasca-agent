@@ -17,6 +17,7 @@ import time
 from copy import deepcopy
 from monasca_agent.collector.checks import AgentCheck
 from neutronclient.v2_0 import client as neutron_client
+from novaclient import client as nova_client
 
 OVS_CMD = """\
 %s --columns=name,external_ids,statistics,options \
@@ -48,6 +49,7 @@ class OvsCheck(AgentCheck):
         self.use_absolute_metrics = self.init_config.get('use_absolute_metrics')
         self.use_rate_metrics = self.init_config.get('use_rate_metrics')
         self.use_health_metrics = self.init_config.get('use_health_metrics')
+        self.publish_router_capacity = self.init_config.get('publish_router_capacity')
         if include_re is None:
             include_re = 'qg.*'
         else:
@@ -132,6 +134,7 @@ class OvsCheck(AgentCheck):
         # let's publish.
         #
         tried_one_update = False
+        host_router_max_bw = 0
         for ifx, value in ifx_deltas.iteritems():
 
             port_uuid = value['port_uuid']
@@ -141,7 +144,7 @@ class OvsCheck(AgentCheck):
                 # file for a missing port uuid once per wakeup.
                 #
                 tried_one_update = True
-                log_msg = "port_uuid {0} not in  port cache -- updating."
+                log_msg = "port_uuid {0} not in port cache -- updating."
                 self.log.info(log_msg.format(port_uuid))
                 port_cache = self._update_port_cache()
             if not port_cache:
@@ -175,6 +178,13 @@ class OvsCheck(AgentCheck):
 
             this_dimensions = dims_base.copy()
             this_dimensions.update(ifx_dimensions)
+            customer_dimensions = this_dimensions.copy()
+            del customer_dimensions['hostname']
+            ops_dimensions = this_dimensions.copy()
+            ops_dimensions.update({'tenant_id': tenant_id})
+            if tenant_name:
+                ops_dimensions.update({'tenant_name': tenant_name})
+
             for metric_name, idx in self._get_metrics_map(measure).iteritems():
                 # POST to customer project
                 interface_stats_key = self._get_interface_stats_key(idx, metric_name, measure, ifx)
@@ -185,8 +195,6 @@ class OvsCheck(AgentCheck):
                     # a value to publish for that metric this round.
                     #
                     continue
-                customer_dimensions = this_dimensions.copy()
-                del customer_dimensions['hostname']
                 if is_router_port:
                     metric_name_rate = "vrouter.{0}_sec".format(metric_name)
                     metric_name_abs = "vrouter.{0}".format(metric_name)
@@ -195,10 +203,6 @@ class OvsCheck(AgentCheck):
                     metric_name_abs = "vswitch.{0}".format(metric_name)
                 if not self.use_health_metrics and interface_stats_key in HEALTH_METRICS:
                         continue
-                ops_dimensions = this_dimensions.copy()
-                ops_dimensions.update({'tenant_id': tenant_id})
-                if tenant_name:
-                    ops_dimensions.update({'tenant_name': tenant_name})
                 if self.use_rate_metrics:
                     self.gauge(metric_name_rate, value[interface_stats_key],
                                dimensions=customer_dimensions,
@@ -220,6 +224,15 @@ class OvsCheck(AgentCheck):
                     # POST to operations project
                     self.gauge("ovs.{0}".format(metric_name_abs), abs_value,
                                dimensions=ops_dimensions)
+
+            self._publish_max_bw_metrics(port_info, customer_dimensions,
+                                         ops_dimensions)
+            host_router_max_bw += self._get_port_cache_max_bw(port_info)
+
+        if host_router_max_bw > 0:
+            self.gauge('ovs.vrouter.host_max_bw_kb', host_router_max_bw,
+                       dimensions=dims_base)
+
         self._update_counter_cache(ctr_cache,
                                    math.ceil(time.time() - time_start), measure)
 
@@ -274,6 +287,24 @@ class OvsCheck(AgentCheck):
             if data['id'] == uuid:
                 return data
         return None
+
+    def _get_nova_client(self):
+
+        username = self.init_config.get('admin_user')
+        password = self.init_config.get('admin_password')
+        tenant_name = self.init_config.get('admin_tenant_name')
+        auth_url = self.init_config.get('identity_uri')
+        region_name = self.init_config.get('region_name')
+
+        nc = nova_client.Client(2, username,
+                                password,
+                                tenant_name,
+                                auth_url,
+                                endpoint_type='internalURL',
+                                service_type="compute",
+                                region_name=region_name)
+
+        return nc
 
     def _get_neutron_client(self):
 
@@ -429,6 +460,8 @@ class OvsCheck(AgentCheck):
             if tenant_name:
                 port_cache[port_uuid]['tenant_name'] = tenant_name
 
+        port_cache = self._add_max_bw_to_port_cache(port_cache,
+                                                    all_ports_data)
         port_cache['last_update'] = int(time.time())
 
         # Write the updated cache
@@ -441,6 +474,115 @@ class OvsCheck(AgentCheck):
             self.log.error("Cannot write to {0}: {1}".
                            format(self.port_cache_file, e))
         return port_cache
+
+    def _get_port_cache_max_bw(self, port_info):
+        if port_info['is_router_port'] and 'max_bw_kb' in port_info:
+            return port_info['max_bw_kb']
+        else:
+            return 0
+
+    def _publish_max_bw_metrics(self, port_info, cust_dims, ops_dims):
+        max_bw_kb = self._get_port_cache_max_bw(port_info)
+
+        if not self.publish_router_capacity or max_bw_kb == 0:
+            return
+
+        metric_name = 'vrouter.max_bw_kb'
+
+        self.gauge(metric_name, max_bw_kb, dimensions=cust_dims,
+                   delegated_tenant=ops_dims['tenant_id'],
+                   hostname='SUPPRESS')
+
+        self.gauge("ovs.{0}".format(metric_name), max_bw_kb,
+                   dimensions=ops_dims)
+
+    def _get_max_flavor_bw(self, flavor_keys):
+        avg_bw = 0
+        peak_bw = 0
+        burst_bw = 0
+
+        #
+        # we'll sum inbound and outbound for the max possible throughput
+        #
+        avg_re = re.compile('quota:vif_.*bound_average')
+        peak_re = re.compile('quota:vif_.*bound_peak')
+        burst_re = re.compile('quota:vif_.*bound_burst')
+
+        for key in flavor_keys:
+            if re.match(avg_re, key):
+                avg_bw += int(flavor_keys[key])
+            elif re.match(peak_re, key):
+                peak_bw += int(flavor_keys[key])
+            elif re.match(burst_re, key):
+                burst_bw += int(flavor_keys[key])
+
+        return max(avg_bw, peak_bw, burst_bw)
+
+    def _add_max_bw_to_port_cache(self, port_cache, all_ports_data):
+        if not self.publish_router_capacity:
+            return port_cache
+
+        tmp_port_cache = deepcopy(port_cache)
+        #
+        # No need to do a flavor get multiple times
+        # for the same flavor when rebuilding the cache.
+        #
+        flavor_cache = {}
+
+        try:
+            if not hasattr(self, 'nova_client'):
+                self.nova_client = self._get_nova_client()
+
+            for uuid in port_cache:
+                router_max_bw_kb = 0
+                port = port_cache[uuid]
+
+                if not port['is_router_port']:
+                    continue
+
+                inst_ids = self._get_instance_ids(all_ports_data, port['device_uuid'])
+
+                for instance_id in inst_ids:
+                    instance = self.nova_client.servers.get(instance_id)
+                    flavor_id = instance.flavor['id']
+                    if flavor_id not in flavor_cache:
+                        flavor = self.nova_client.flavors.get(instance.flavor['id'])
+                        flavor_cache[flavor_id] = flavor.get_keys()
+                    router_max_bw_kb += self._get_max_flavor_bw(flavor_cache[flavor_id])
+
+                if router_max_bw_kb > 0:
+                    tmp_port_cache[uuid]['max_bw_kb'] = router_max_bw_kb
+
+        except Exception as e:
+            msg = "Unable to get the nova instance and flavor info: {0}"
+            self.log.error(msg.format(e))
+
+        return tmp_port_cache
+
+    def _get_instance_ids(self, ports, router_uuid):
+        subnet_ids = self._get_port_ids(ports,
+                                        'network:router_interface',
+                                        [router_uuid],
+                                        'device_id',
+                                        'network_id')
+
+        instance_ids = self._get_port_ids(ports,
+                                          'compute:',
+                                          subnet_ids,
+                                          'network_id',
+                                          'device_id')
+        return instance_ids
+
+    def _get_port_ids(self, ports, owner, uuids, match_field, return_field):
+        return_uuids = []
+        if len(uuids) == 0:
+            return return_uuids
+
+        for port in ports:
+            if port[match_field] in uuids and owner in port['device_owner']:
+                return_uuids.append(port[return_field])
+
+        return return_uuids
 
     def _load_port_cache(self):
         """Load the cache map of router/dhcp port uuids to router uuid, name,

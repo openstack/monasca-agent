@@ -29,12 +29,14 @@ use_absolute_metrics = True
 use_rate_metrics = True
 # If set, will submit the health metrics
 use_health_metrics = True
+# If set, router max capacity metrics will be published
+publish_router_capacity = False
 # Acceptable arguments
 acceptable_args = ['admin_user', 'admin_password', 'admin_tenant_name',
                    'identity_uri', 'cache_dir', 'neutron_refresh', 'ovs_cmd',
                    'network_use_bits', 'check_router_ha', 'region_name',
                    'included_interface_re', 'conf_file_path', 'use_absolute_metrics',
-                   'use_rate_metrics', 'use_health_metrics']
+                   'use_rate_metrics', 'use_health_metrics', 'publish_router_capacity']
 # Arguments which must be ignored if provided
 ignorable_args = ['admin_user', 'admin_password', 'admin_tenant_name',
                   'identity_uri', 'region_name', 'conf_file_path']
@@ -128,7 +130,8 @@ class Ovs(monasca_setup.detection.Plugin):
                        'included_interface_re': included_interface_re,
                        'use_absolute_metrics': use_absolute_metrics,
                        'use_rate_metrics': use_rate_metrics,
-                       'use_health_metrics': use_health_metrics}
+                       'use_health_metrics': use_health_metrics,
+                       'publish_router_capacity': publish_router_capacity}
 
         for option in cfg_needed:
             init_config[option] = neutron_cfg.get(cfg_section, cfg_needed[option])
