@@ -36,7 +36,8 @@ class MonascaStatsd(object):
 
         # Create the aggregator (which is the point of communication between the server and reporting threads.
         aggregator = agg.MetricsAggregator(util.get_hostname(),
-                                           recent_point_threshold=statsd_config['recent_point_threshold'])
+                                           recent_point_threshold=statsd_config['recent_point_threshold'],
+                                           tenant_id=statsd_config.get('global_delegated_tenant', None))
 
         # Start the reporting thread.
         interval = int(statsd_config['monasca_statsd_interval'])
