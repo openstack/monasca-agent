@@ -56,7 +56,7 @@ class RabbitMQ(monasca_setup.detection.Plugin):
         :return:
         """
         # Set defaults and read config or use arguments
-        if self.args is None:
+        if self.args is None or not self.args:
             self.api_url = rabbitmq_api_url
             self.user = 'guest'
             self.password = 'guest'
