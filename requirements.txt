@@ -1,3 +1,7 @@
+# The order of packages is significant, because pip processes them in the order
+# of appearance. Changing the order has an impact on the overall integration
+# process, which may cause wedges in the gate later.
+
 requests>=2.10.0 # Apache-2.0
 oslo.concurrency>=3.8.0 # Apache-2.0
 oslo.config>=3.14.0,!=3.18.0 # Apache-2.0
@@ -10,7 +14,7 @@ httplib2>=0.7.5 # MIT
 netaddr>=0.7.13,!=0.7.16 # BSD
 ntplib>=0.3.2,<0.4
 psutil<3.1.0
-pymongo>=3.0.2,<=3.2.2,!=3.1 
+pymongo>=3.0.2,!=3.1
 python-memcached>=1.56 # PSF
 python-monascaclient>=1.1.0 # Apache-2.0
 redis>=2.10.0 # MIT
