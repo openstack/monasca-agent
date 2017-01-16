@@ -217,6 +217,9 @@ def parse_arguments(parser):
     parser.add_argument('--project_id', help="Keystone project id  for keystone authentication", default='')
     parser.add_argument('--monasca_url', help="Monasca API url, if not defined the url is pulled from keystone",
                         default='')
+    parser.add_argument('--service_type', help="Monasca API url service type in keystone catalog", default='')
+    parser.add_argument('--endpoint_type', help="Monasca API url endpoint type in keystone catalog", default='')
+    parser.add_argument('--region_name', help="Monasca API url region name in keystone catalog", default='')
     parser.add_argument('--system_only', help="Setup the service but only configure the base config and system " +
                                               "metrics (cpu, disk, load, memory, network).",
                         action="store_true", default=False)

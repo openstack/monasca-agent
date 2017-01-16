@@ -60,10 +60,25 @@ class Keystone(object):
         return kc_args
 
     def _get_ksclient(self):
-        """Get an endpoint and auth token from Keystone.
+        """Get a new keystone client object.
+
+        The client provides a monasca_url property whose value is pulled from
+        Keystone Service Catalog filtering by service_type, endpoint_type
+        and/or region_name.
 
         """
+        service_type = self.config.get('service_type', None)
+        endpoint_type = self.config.get('endpoint_type', None)
+        region_name = self.config.get('region_name', None)
+
         kc_args = self.get_credential_args()
+        if service_type:
+            kc_args.update({'service_type': service_type})
+        if endpoint_type:
+            kc_args.update({'endpoint_type': endpoint_type})
+        if region_name:
+            kc_args.update({'region_name': region_name})
+
         return ksclient.KSClient(**kc_args)
 
     def get_monasca_url(self):
