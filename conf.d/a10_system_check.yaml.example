@@ -1,0 +1,7 @@
+init_config:
+
+instances:
+    - name: a10_system_check
+        a10_device: a10_device_ip
+        a10_username: admin
+        a10_password: password

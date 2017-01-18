@@ -118,6 +118,7 @@ The following plugins are delivered via setup as part of the standard plugin che
 
 | Setup Plugin Name | Dot File  | Detail                 |
 | ----------------- | --------- | ---------------------- |
+| a10 |  |  |
 | apache | /root/.apache.cnf | Apache web server |
 | cacti |  |  |
 | cert_check |  |  |
@@ -289,6 +290,7 @@ These are the detection plugins included with the Monasca Agent.  See [Customiza
 
 | Detection Plugin Name | Type                 |
 | --------------------- | ---------------------- |
+| a10 | Plugin |
 | apache | Plugin |
 | barbican | ServicePlugin |
 | bind | Plugin |
@@ -440,6 +442,26 @@ These parameters may added to `instances` in the plugin `.yaml` configuration fi
     $ monasca-setup -d system -a 'cpu_idle_only=true net_bytes_only=true send_io_stats=false' --overwrite
 
 By default, all metrics are enabled.
+
+## A10
+This section describes the A10 System Check.
+
+```
+init_config:
+
+instances:
+    - name: a10_system_check
+        a10_device: a10_device_ip
+        a10_username: admin
+        a10_password: password
+```
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| a10.memory_total_mb | a10_device, service=networking  | Total memory presented in MB
+| a10.memory_used_mb |  a10_device, service=networking   | Memory used presented in  MB
+| a10.memory_free_mb |  a10_device, service=networking   | Free memory presented in MB
+| a10.memory_used |  a10_device, service=networking   | Realtime Memory Usage
 
 ## Apache
 This section describes the Apache Web Server check that can be performed by the Agent.  The Apache check gathers metrics on the Apache Web Server.  The Apache check requires a configuration file called apache.yaml to be available in the agent conf.d configuration directory.  The config file must contain the server url, username and password (If you are using authentication) that you are interested in monitoring.
