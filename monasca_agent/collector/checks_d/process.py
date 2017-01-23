@@ -4,7 +4,9 @@
 """
 from collections import defaultdict
 from collections import namedtuple
+
 import monasca_agent.collector.checks as checks
+from monasca_agent.common.psutil_wrapper import psutil
 
 ProcessStruct = namedtuple("Process", "name pid username cmdline")
 
@@ -25,16 +27,7 @@ class ProcessCheck(checks.AgentCheck):
         self._cached_processes = defaultdict(dict)
         self._current_process_list = None
 
-    @staticmethod
-    def is_psutil_version_later_than(v):
-        try:
-            import psutil
-            vers = psutil.version_info
-            return vers >= v
-        except Exception:
-            return False
-
-    def find_pids(self, search_string, psutil, username, exact_match=True):
+    def find_pids(self, search_string, username, exact_match=True):
         """Create a set of pids of selected processes.
 
         Search for search_string
@@ -67,7 +60,7 @@ class ProcessCheck(checks.AgentCheck):
         else:
             return value
 
-    def get_process_metrics(self, pids, psutil, name):
+    def get_process_metrics(self, pids, name):
         processes_to_remove = set(self._cached_processes[name].keys()) - pids
         for pid in processes_to_remove:
             del self._cached_processes[name][pid]
@@ -120,7 +113,7 @@ class ProcessCheck(checks.AgentCheck):
                         self.log.debug('monasca-agent user does not have ' +
                                        'access to I/O counters for process' +
                                        ' %d: %s'
-                                       % (pid, p.name))
+                                       % (pid, p.as_dict(['name'])['name']))
                         io_permission = False
                         total_read_count = None
                         total_write_count = None
@@ -142,10 +135,6 @@ class ProcessCheck(checks.AgentCheck):
 
     def prepare_run(self):
         """Collect the list of processes once before each run"""
-        try:
-            import psutil
-        except ImportError:
-            raise Exception('You need the "psutil" package to run this check')
 
         self._current_process_list = []
 
@@ -167,11 +156,6 @@ class ProcessCheck(checks.AgentCheck):
                     process_dict['name'], e))
 
     def check(self, instance):
-        try:
-            import psutil
-        except ImportError:
-            raise Exception('You need the "psutil" package to run this check')
-
         name = instance.get('name', None)
         exact_match = instance.get('exact_match', True)
         search_string = instance.get('search_string', None)
@@ -188,14 +172,14 @@ class ProcessCheck(checks.AgentCheck):
         else:
             dimensions = self._set_dimensions({'process_user': username, 'process_name': name}, instance)
 
-        pids = self.find_pids(search_string, psutil, username, exact_match=exact_match)
+        pids = self.find_pids(search_string, username, exact_match=exact_match)
 
         self.log.debug('ProcessCheck: process %s analysed' % name)
 
         self.gauge('process.pid_count', len(pids), dimensions=dimensions)
 
         if instance.get('detailed', False):
-            metrics = self.get_process_metrics(pids, psutil, name)
+            metrics = self.get_process_metrics(pids, name)
             for metric_name, metric_value in metrics.iteritems():
                 if metric_value is not None:
                     self.gauge(metric_name, metric_value, dimensions=dimensions)

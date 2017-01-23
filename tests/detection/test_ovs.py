@@ -20,9 +20,9 @@ LOG = logging.getLogger('monasca_setup.detection.plugins.ovs')
 class ps_util_get_proc:
     cmdLine = ['/etc/neutron/neutron.conf']
     detect_warning = False
-    def as_dict(self):
+    def as_dict(self, attrs=None):
         return {'name': 'neutron-openvsw',
-                'cmdline': ps_util_get_proc.cmdLine}
+                'cmdline': self.cmdline()}
 
     def cmdline(self):
         if not ps_util_get_proc.detect_warning:

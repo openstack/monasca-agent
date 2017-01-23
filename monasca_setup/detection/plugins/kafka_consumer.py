@@ -15,7 +15,7 @@ from monasca_setup.detection import Plugin
 from monasca_setup.detection import watch_process
 
 from monasca_setup.detection.utils import check_output
-from monasca_setup.detection.utils import find_addr_listening_on_port
+from monasca_setup.detection.utils import find_addr_listening_on_port_over_tcp
 
 log = logging.getLogger(__name__)
 
@@ -174,7 +174,7 @@ class Kafka(Plugin):
         return None
 
     def _find_kafka_connection(self):
-        listen_ip = find_addr_listening_on_port(self.port)
+        listen_ip = find_addr_listening_on_port_over_tcp(self.port)
         if listen_ip:
             log.info("\tKafka found listening on {:s}:{:d}".format(listen_ip, self.port))
         else:

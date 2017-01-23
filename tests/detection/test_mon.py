@@ -83,7 +83,8 @@ class FakeProcesses(object):
 
     def as_dict(self):
         return {'name': FakeProcesses.name,
-                'cmdline': FakeProcesses.cmdLine}
+                'cmdline': FakeProcesses.cmdLine,
+                'exe': self.exe()}
 
     def cmdline(self):
         return self.cmdLine
@@ -98,22 +99,22 @@ class FakeProcesses(object):
 class TestGetImplLang(unittest.TestCase):
     @mock.patch('psutil.Process')
     def test_should_return_python_lang_for_gunicorn_process(self, proc):
-        proc.exe.return_value = '/opt/monasca-api/bin/gunicorn'
+        proc.as_dict.return_value = {'exe': '/opt/monasca-api/bin/gunicorn'}
         self.assertEqual('python', mon._get_impl_lang(proc))
 
     @mock.patch('psutil.Process')
     def test_should_return_python_lang_for_python_process(self, proc):
-        proc.exe.return_value = '/usr/bin/python'
+        proc.as_dict.return_value = {'exe': '/usr/bin/python'}
         self.assertEqual('python', mon._get_impl_lang(proc))
 
     @mock.patch('psutil.Process')
     def test_should_return_java_lang_for_java_process(self, proc):
-        proc.exe.return_value = '/usr/bin/java'
+        proc.as_dict.return_value = {'exe': '/usr/bin/java'}
         self.assertEqual('java', mon._get_impl_lang(proc))
 
     @mock.patch('psutil.Process')
     def test_should_throw_error_for_unknown_impl(self, proc):
-        proc.exe.return_value = '/usr/bin/cat'
+        proc.as_dict.return_value = {'exe': '/usr/bin/cat'}
         self.assertRaises(Exception, mon._get_impl_lang, proc)
 
 

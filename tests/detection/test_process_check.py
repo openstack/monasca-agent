@@ -17,7 +17,7 @@ LOG = logging.getLogger('monasca_setup.detection.plugins.process')
 class PSUtilGetProc(object):
     cmdLine = ['monasca-api']
 
-    def as_dict(self):
+    def as_dict(self, attrs=None):
         return {'name': 'monasca-api',
                 'cmdline': PSUtilGetProc.cmdLine}
 

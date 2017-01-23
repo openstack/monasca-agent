@@ -2,11 +2,12 @@
 
 import ConfigParser
 import logging
-import psutil
 
+from monasca_agent.common.psutil_wrapper import psutil
 import monasca_setup.agent_config
 from monasca_setup.detection import Plugin
 from monasca_setup.detection.utils import find_process_name
+
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ class VCenter(Plugin):
         nova_conf = None
         for proc in psutil.process_iter():
             try:
-                cmd = proc.cmdline()
+                cmd = proc.as_dict(['cmdline'])['cmdline']
                 if len(cmd) > 2 and 'python' in cmd[0] and 'nova-compute' in cmd[1]:
                     params = [cmd.index(y) for y in cmd if 'hypervisor.conf' in y]
                     if not params:

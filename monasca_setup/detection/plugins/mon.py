@@ -39,7 +39,7 @@ def _get_impl_lang(process):
     :rtype: str
 
     """
-    p_exe = process.exe()
+    p_exe = process.as_dict()['exe']
     for lm in _PYTHON_LANG_MARKERS:
         if lm in p_exe:
             return 'python'

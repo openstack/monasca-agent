@@ -1,13 +1,14 @@
 # (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
 
 import logging
-import psutil
 import re
 import subprocess
 import sys
 
 import monasca_agent.collector.checks as checks
+from monasca_agent.common.psutil_wrapper import psutil
 import monasca_agent.common.util as util
+
 
 log = logging.getLogger(__name__)
 

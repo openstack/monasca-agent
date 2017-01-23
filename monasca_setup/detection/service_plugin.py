@@ -1,18 +1,18 @@
 # (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 
 import logging
-import psutil
 import urlparse
 
-from monasca_setup.detection.plugin import Plugin
-
 from monasca_setup import agent_config
+from monasca_setup.detection.plugin import Plugin
+from monasca_setup.detection.utils import find_addrs_listening_on_port
 from monasca_setup.detection.utils import find_process_cmdline
 from monasca_setup.detection.utils import service_api_check
 from monasca_setup.detection.utils import watch_directory
 from monasca_setup.detection.utils import watch_file_size
 from monasca_setup.detection.utils import watch_process
 from monasca_setup.detection.utils import watch_process_by_username
+
 
 log = logging.getLogger(__name__)
 
@@ -162,10 +162,7 @@ class ServicePlugin(Plugin):
             # Check if there is something listening on the host/port
             parsed = urlparse.urlparse(self.service_api_url)
             host, port = parsed.netloc.split(':')
-            listening = []
-            for connection in psutil.net_connections():
-                if connection.status == psutil.CONN_LISTEN and connection.laddr[1] == int(port):
-                    listening.append(connection.laddr[0])
+            listening = find_addrs_listening_on_port(port)
 
             if len(listening) > 0:
                 # If not listening on localhost or ips then use another local ip
