@@ -35,9 +35,11 @@ class AgentCheck(util.Dimensions):
         self.log = logging.getLogger('%s.%s' % (__name__, name))
 
         threshold = agent_config.get('recent_point_threshold', None)
+        tenant_id = agent_config.get('global_delegated_tenant', None)
         self.aggregator = (
             aggregator.MetricsAggregator(self.hostname,
-                                         recent_point_threshold=threshold))
+                                         recent_point_threshold=threshold,
+                                         tenant_id=tenant_id))
 
         self.instances = instances or []
         self.library_versions = None

@@ -106,6 +106,13 @@ Main:
   # https://github.com/DataDog/dd-agent/wiki/Network-Traffic-and-Proxy-Configuration
   # non_local_traffic: no
 
+  # Submits all metrics to this tenant unless specified by the metric.
+  # This is the equivalent of submitting delegated_tenant with all metrics, and when
+  # not set will submit metrics to the default tenant of the provided credentials.
+  # Used when deploying the agent to systems where the credentials of the monitored
+  # tenant are not known.
+  # global_delegated_tenant:
+
 Statsd:
   # ========================================================================== #
   # Monasca Statsd configuration                                                    #
