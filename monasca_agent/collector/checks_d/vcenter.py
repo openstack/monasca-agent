@@ -1,4 +1,4 @@
-# (C) Copyright 2016 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2016-2017 Hewlett Packard Enterprise Development LP
 """VCenter Only.
 
 Generic VCenter check. This check allows you to specify particular metrics that
@@ -61,6 +61,14 @@ class VCenterCheck(AgentCheck):
         self.session = None
         self.is_new_session = True
         self._resource_moid_dict = {}
+
+    def stop(self):
+        """To be executed when the agent is being stopped to clean resources.
+        """
+        if self.session is not None:
+            self.session.logout()
+            self.session = None
+            self.is_new_session = True
 
     def _propset_dict(self, propset):
         """Turns a propset list into a dictionary
