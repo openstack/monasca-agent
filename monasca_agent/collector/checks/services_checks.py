@@ -1,15 +1,15 @@
-# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2017 Hewlett Packard Enterprise Development Company LP
 
 import collections
+from concurrent import futures
 import Queue
 import threading
 
-from gevent import monkey
-from gevent import Timeout
-from multiprocessing.dummy import Pool as ThreadPool
+import eventlet
+from eventlet.green import time
+import multiprocessing
 
 import monasca_agent.collector.checks
-
 
 DEFAULT_TIMEOUT = 180
 DEFAULT_SIZE_POOL = 6
@@ -20,7 +20,6 @@ FAILURE = "FAILURE"
 up_down = collections.namedtuple('up_down', ['UP', 'DOWN'])
 Status = up_down('UP', 'DOWN')
 EventType = up_down("servicecheck.state_change.up", "servicecheck.state_change.down")
-monkey.patch_all()
 
 
 class ServicesCheck(monasca_agent.collector.checks.AgentCheck):
@@ -34,7 +33,7 @@ class ServicesCheck(monasca_agent.collector.checks.AgentCheck):
         The main agent loop will call the check function for each instance for
         each iteration of the loop.
         The check method will make an asynchronous call to the _process method in
-        one of the thread initiated in the thread pool created in this class constructor.
+        one of the thread pool executors created in this class constructor.
         The _process method will call the _check method of the inherited class
         which will perform the actual check.
 
@@ -57,23 +56,26 @@ class ServicesCheck(monasca_agent.collector.checks.AgentCheck):
         # The pool size should be the minimum between the number of instances
         # and the DEFAULT_SIZE_POOL. It can also be overridden by the 'threads_count'
         # parameter in the init_config of the check
-        default_size = min(self.instance_count(), DEFAULT_SIZE_POOL)
+        try:
+            default_size = min(self.instance_count(), multiprocessing.cpu_count() + 1)
+        except NotImplementedError:
+            default_size = min(self.instance_count(), DEFAULT_SIZE_POOL)
         self.pool_size = int(self.init_config.get('threads_count', default_size))
         self.timeout = int(self.agent_config.get('timeout', DEFAULT_TIMEOUT))
 
     def start_pool(self):
-        self.log.info("Starting Thread Pool")
-        self.pool = ThreadPool(self.pool_size)
-        if threading.activeCount() > MAX_ALLOWED_THREADS:
-            self.log.error("Thread count ({0}) exceeds maximum ({1})".format(threading.activeCount(),
-                                                                             MAX_ALLOWED_THREADS))
-        self.running_jobs = set()
+        if self.pool is None:
+            self.log.info("Starting Thread Pool Exceutor")
+            self.pool = futures.ThreadPoolExecutor(max_workers=self.pool_size)
+            if threading.activeCount() > MAX_ALLOWED_THREADS:
+                self.log.error('Thread count (%d) exceeds maximum (%d)' % (threading.activeCount(),
+                                                                           MAX_ALLOWED_THREADS))
+            self.running_jobs = {}
 
     def stop_pool(self):
         self.log.info("Stopping Thread Pool")
         if self.pool:
-            self.pool.close()
-            self.pool.join()
+            self.pool.shutdown(wait=True)
             self.pool = None
 
     def restart_pool(self):
@@ -81,80 +83,63 @@ class ServicesCheck(monasca_agent.collector.checks.AgentCheck):
         self.start_pool()
 
     def check(self, instance):
-        if not self.pool:
-            self.start_pool()
-        self._process_results()
+        self.start_pool()
         name = instance.get('name', None)
         if name is None:
             self.log.error('Each service check must have a name')
             return
 
-        if name not in self.running_jobs:
+        if (name not in self.running_jobs) or self.running_jobs[name].done():
             # A given instance should be processed one at a time
-            self.running_jobs.add(name)
-            self.pool.apply_async(self._process, args=(instance,))
+            self.running_jobs[name] = self.pool.submit(self._process, instance)
         else:
             self.log.info("Instance: %s skipped because it's already running." % name)
 
     def _process(self, instance):
         name = instance.get('name', None)
         try:
-            with Timeout(self.timeout):
+            with eventlet.timeout.Timeout(self.timeout):
                 return_value = self._check(instance)
             if not return_value:
                 return
             status, msg = return_value
-            result = (status, msg, name, instance)
-            # We put the results in the result queue
-            self.resultsq.put(result)
-        except Timeout:
-            self.log.error('ServiceCheck {0} timed out'.format(name))
+            self._process_result(status, msg, name, instance)
+        except eventlet.Timeout:
+            msg = 'ServiceCheck {0} timed out'.format(name)
+            self.log.error(msg)
+            self._process_result(FAILURE, msg, name, instance)
         except Exception:
-            self.log.exception('Failure in ServiceCheck {0}'.format(name))
-            result = (FAILURE, FAILURE, FAILURE, FAILURE)
-            self.resultsq.put(result)
+            msg = 'Failure in ServiceCheck {0}'.format(name)
+            self.log.exception(msg)
+            self._process_result(FAILURE, msg, name, instance)
         finally:
-            self.running_jobs.remove(name)
+            del self.running_jobs[name]
 
-    def _process_results(self):
-        for i in range(MAX_LOOP_ITERATIONS):
-            try:
-                # We want to fetch the result in a non blocking way
-                status, msg, name, queue_instance = self.resultsq.get_nowait()
-            except Queue.Empty:
-                break
+    def _process_result(self, status, msg, name, queue_instance):
+        if name not in self.statuses:
+            self.statuses[name] = []
 
-            if status == FAILURE:
-                self.nb_failures += 1
-                if self.nb_failures >= self.pool_size - 1:
-                    self.nb_failures = 0
-                    self.restart_pool()
-                continue
+        self.statuses[name].append(status)
 
-            if name not in self.statuses:
-                self.statuses[name] = []
+        window = int(queue_instance.get('window', 1))
 
-            self.statuses[name].append(status)
+        if window > 256:
+            self.log.warning("Maximum window size (256) exceeded, defaulting it to 256")
+            window = 256
 
-            window = int(queue_instance.get('window', 1))
+        threshold = queue_instance.get('threshold', 1)
 
-            if window > 256:
-                self.log.warning("Maximum window size (256) exceeded, defaulting it to 256")
-                window = 256
+        if len(self.statuses[name]) > window:
+            self.statuses[name].pop(0)
 
-            threshold = queue_instance.get('threshold', 1)
+        nb_failures = self.statuses[name].count(Status.DOWN)
 
-            if len(self.statuses[name]) > window:
-                self.statuses[name].pop(0)
-
-            nb_failures = self.statuses[name].count(Status.DOWN)
-
-            if nb_failures >= threshold:
-                if self.notified.get(name, Status.UP) != Status.DOWN:
-                    self.notified[name] = Status.DOWN
-            else:
-                if self.notified.get(name, Status.UP) != Status.UP:
-                    self.notified[name] = Status.UP
+        if nb_failures >= threshold:
+            if self.notified.get(name, Status.UP) != Status.DOWN:
+                self.notified[name] = Status.DOWN
+        else:
+            if self.notified.get(name, Status.UP) != Status.UP:
+                self.notified[name] = Status.UP
 
     def _check(self, instance):
         """This function should be implemented by inherited classes.

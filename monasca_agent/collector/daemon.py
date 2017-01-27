@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2017 Hewlett Packard Enterprise Development LP
 
 # Core modules
 import glob
@@ -53,20 +53,26 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
         self.start_event = start_event
 
     def _handle_sigterm(self, signum, frame):
-        log.debug("Caught sigterm. Stopping run loop.")
+        log.debug("Caught sigterm.")
+        self._stop(0)
+        sys.exit(0)
+
+    def _handle_sigusr1(self, signum, frame):
+        log.debug("Caught sigusrl.")
+        self._stop(120)
+        sys.exit(monasca_agent.common.daemon.AgentSupervisor.RESTART_EXIT_STATUS)
+
+    def _stop(self, timeout=0):
+        log.info("Stopping collector run loop.")
         self.run_forever = False
 
         if jmxfetch.JMXFetch.is_running():
             jmxfetch.JMXFetch.stop()
 
         if self.collector:
-            self.collector.stop()
-        log.debug("Collector is stopped.")
-        sys.exit(0)
+            self.collector.stop(timeout)
 
-    def _handle_sigusr1(self, signum, frame):
-        self._handle_sigterm(signum, frame)
-        self._do_restart()
+        log.info('collector stopped')
 
     def run(self, config):
         """Main loop of the collector.
@@ -93,6 +99,9 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
         # Initialize the auto-restarter
         self.restart_interval = int(util.get_collector_restart_interval())
         self.agent_start = time.time()
+
+        exitCode = 0
+        exitTimeout = 0
 
         # Run the main loop.
         while self.run_forever:
@@ -125,7 +134,10 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
 
             # Check if we should restart.
             if self.autorestart and self._should_restart():
-                self._do_restart()
+                self.run_forever = False
+                exitCode = monasca_agent.common.daemon.AgentSupervisor.RESTART_EXIT_STATUS
+                exitTimeout = 120
+                log.info('Startng an auto restart')
 
             # Only plan for the next loop if we will continue,
             # otherwise just exit quickly.
@@ -137,22 +149,17 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
                     log.info("Collection took {0} which is as long or longer then the configured collection frequency "
                              "of {1}. Starting collection again without waiting in result.".format(collection_time,
                                                                                                    check_frequency))
+        self._stop(exitTimeout)
 
         # Explicitly kill the process, because it might be running
         # as a daemon.
-        log.info("Exiting. Bye bye.")
-        sys.exit(0)
+        log.info("Exiting collector daemon, code %d." % exitCode)
+        os._exit(exitCode)
 
     def _should_restart(self):
         if time.time() - self.agent_start > self.restart_interval:
             return True
         return False
-
-    def _do_restart(self):
-        log.info("Running an auto-restart.")
-        if self.collector:
-            self.collector.stop()
-        sys.exit(monasca_agent.common.daemon.AgentSupervisor.RESTART_EXIT_STATUS)
 
 
 def main():

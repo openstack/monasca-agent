@@ -1,10 +1,11 @@
-# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2015-2017 Hewlett Packard Enterprise Development LP
 
 # Core modules
 import logging
 from multiprocessing.dummy import Pool
 import os
 import socket
+import sys
 import threading
 import time
 
@@ -264,7 +265,7 @@ class Collector(util.Dimensions):
 
         return measurements
 
-    def stop(self):
+    def stop(self, timeout=0):
         """Tell the collector to stop at the next logical point.
         """
         # This is called when the process is being killed, so
@@ -273,10 +274,39 @@ class Collector(util.Dimensions):
         # because the forwarder is quite possibly already killed
         # in which case we'll get a misleading error in the logs.
         # Best to not even try.
+
+        log.info("stopping the collector with timeout %d seconds" % timeout)
+
         self.continue_running = False
         for check_name in self.collection_times:
             check = self.collection_times[check_name]['check']
             check.stop()
+
+        for check_name in self.collection_results:
+            run_time = time.time() - self.collection_results[check_name]['start_time']
+            log.info('When exiting... Plugin %s still running after %d seconds' % (
+                check_name, run_time))
+
         self.pool.close()
-        # Can't call self.pool.join() because this is an event thread
-        # and that will cause a BlockingSwitchOutError
+
+        # Won't call join() if timeout is zero. If we are in an event thread
+        # a BlockingSwitchOutError occurs if wait
+
+        if (timeout > 0):
+            timer = util.Timer()
+            for worker in self.pool._pool:
+                t = timeout - timer.total()
+                if t <= 0:
+                    break
+                if worker.is_alive():
+                    try:
+                        worker.join(t)
+                    except Exception:
+                        log.error("Unexpected error: ", sys.exc_info()[0])
+
+        for worker in self.pool._pool:
+            if worker.is_alive():
+                # the worker didn't complete in the specified timeout.
+                # collector must honor the stop request to avoid agent stop/restart hang.
+                # os._exit() should be called after collector stops.
+                log.info('worker %s is still alive when collector stop times out.' % worker.name)
