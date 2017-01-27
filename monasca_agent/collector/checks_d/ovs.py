@@ -296,10 +296,11 @@ class OvsCheck(AgentCheck):
         auth_url = self.init_config.get('identity_uri')
         region_name = self.init_config.get('region_name')
 
-        nc = nova_client.Client(2, username,
-                                password,
-                                tenant_name,
-                                auth_url,
+        nc = nova_client.Client(2,
+                                username=username,
+                                password=password,
+                                project_name=tenant_name,
+                                auth_url=auth_url,
                                 endpoint_type='internalURL',
                                 service_type="compute",
                                 region_name=region_name)

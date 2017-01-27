@@ -128,10 +128,11 @@ class LibvirtCheck(AgentCheck):
         port_cache = None
         netns = None
         # Get a list of all instances from the Nova API
-        nova_client = client.Client(2, self.init_config.get('admin_user'),
-                                    self.init_config.get('admin_password'),
-                                    self.init_config.get('admin_tenant_name'),
-                                    self.init_config.get('identity_uri'),
+        nova_client = client.Client(2,
+                                    username=self.init_config.get('admin_user'),
+                                    password=self.init_config.get('admin_password'),
+                                    project_name=self.init_config.get('admin_tenant_name'),
+                                    auth_url=self.init_config.get('identity_uri'),
                                     endpoint_type='internalURL',
                                     service_type="compute",
                                     region_name=self.init_config.get('region_name'))
