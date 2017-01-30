@@ -121,9 +121,9 @@ Example commands to add the Agent user/project to the monitoring-delegate role:
 Once the Agent's user and project are assigned to the `monitoring-delegate` group, the Agent can submit metrics for other tenants.
 
 # Statsd
-The Monasca Agent ships with a Statsd daemon implementation called monasca-statsd. A statsd client can be used to send metrics to the Forwarder via the Statsd daemon.
+The Monasca Agent ships with a StatsD daemon implementation. A StatsD client can be used to send metrics to the Forwarder via the StatsD daemon.
 
-monasca-statsd will accept metrics submitted by functions in either the standard statsd Python client library, or the monasca-agent's [monasca-statsd Python client library](https://github.com/openstack/monasca-statsd). The advantage of using the python-monasca-statsd library is that it is possible to specify dimensions on submitted metrics. Dimensions are not handled by the standard statsd client.
+monasca-statsd will accept counters, gauges and timing values following the standard StatsD protocol. Dimensions are supported compatible to the [DogStatsD extension](http://docs.datadoghq.com/guides/dogstatsd/#metrics-1) for tags. Support for the [monasca-statsd Python client library](https://github.com/openstack/monasca-statsd) is deprecated and might be removed in the future.
 
 Statsd metrics are not bundled along with the metrics gathered by the Collector, but are flushed to the agent Forwarder on a separate schedule (every 10 seconds by default, rather than 60 seconds for Collector metrics).
 
@@ -136,6 +136,23 @@ statsd.increment('processed', 5)        # Increment 'processed' metric by 5
 statsd.timing('pipeline', 2468.34)      # Pipeline took 2468.34 ms to execute
 statsd.gauge('gaugething', 3.14159265)  # 'gauge' would be the preferred metric type for Monitoring
 ```
+
+## StatsD Protocol Compatiblity
+
+The moansca-statsd daemon supports the following parts of the StatsD protocol and its extensions:
+
+StatsD 1.0
+* counters
+* gauges
+* timings (no histograms)
+
+DogStatsD
+* dimensions/tags (`key:value`, tags without value will be mapped to `<tag>:True`)
+
+Monasca
+* rates
+
+## Examples
 
 The [monasca-statsd](https://github.com/openstack/monasca-statsd library provides a python based implementation
 of a statsd client but also adds the ability to add dimensions to the statsd metrics for the client.
