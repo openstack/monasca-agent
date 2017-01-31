@@ -6,6 +6,8 @@
   - [Examples](#examples)
       - [Adding a new instance](#adding-a-new-instance)
       - [Changing the current instance](#changing-the-current-instance)
+- [Connector](#connector)
+  - [Kubernetes Connector](#kubernetes-connector)
 - [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -135,7 +137,16 @@ output_config from modify_config:
 }
 ```
 
+# Connector
+## Kubernetes Connector
+Kubernetes Connector is a class within [monasca-collector utils](https://github.com/openstack/monasca-agent/blob/master/monasca_agent/collector/checks/utils.py)
+that is used for connecting to the Kubernetes API from within a container that is running in a k8 cluster.
+
+When a container is brought up in Kubernetes by default there are environmental variables passed in that include needed
+configurations to connect to the API. Also, the cacert and token that is tied to the serviceaccount the container is
+under is mounted to the container file system. This class processes both and allows requests to the Kubernetes API.
+
 # License
-(C) Copyright 2016 Hewlett Packard Enterprise Development LP
+(C) Copyright 2016,2017 Hewlett Packard Enterprise Development LP
 
 
