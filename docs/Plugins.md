@@ -57,6 +57,7 @@
     - [The monasca.json_plugin.status Metric](#the-monascajson_pluginstatus-metric)
   - [Kafka Checks](#kafka-checks)
   - [Kubernetes](#kubernetes)
+  - [Kubernetes API](#kubernetes_api)
   - [KyotoTycoon](#kyototycoon)
   - [Libvirt VM Monitoring](#libvirt-vm-monitoring)
   - [Open vSwitch Neutron Router Monitoring](#open-vswitch-neutron-router-monitoring)
@@ -155,6 +156,7 @@ The following plugins are delivered via setup as part of the standard plugin che
 | kafka_consumer |  |  |
 | kibana | **kibana_install_dir**/kibana.yml | Integration to Kibana |
 | kubernetes |  |  |
+| kubernetes_api |  |  |
 | kyototycoon |  |  |
 | libvirt |  |  |
 | lighttpd |  |  |
@@ -1303,6 +1305,18 @@ Sample configs:
 
 Without custom labels and host being manually set:
 
+## Kubernetes_API
+
+This plugin collects metrics from the kubernetes api on kubernetes components, nodes, deployments and replication controllers.
+
+When setting the kubernetes configuration there is a parameter "kubernetes_labels" where it will look for kubernetes tags that are user defined to use as dimensions for replication controller and deployment metrics.
+
+There are two ways you can configure the plugin to connect to the kubernetes api. Either by setting the host and port or by setting the derive_api_url to True. If deriving the plugin sets the kubernetes api url by looking at the environment variables. (This should be used if the agent is running in a kubernetes container)
+
+Sample configs:
+
+Without custom labels:
+
 ```
 init_config:
     # Timeout on GET requests
@@ -1316,6 +1330,13 @@ instances:
 ```
 
 With custom labels and host being manually set:
+instances:
+    # Set to the host that the plugin will use when connecting to the Kubernetes API
+    - host: "127.0.0.1"
+      kubernetes_api_port: 8080
+```
+
+With custom labels:
 
 ```
 init_config:
@@ -1331,6 +1352,14 @@ instances:
 ```
 
 With custom labels and derive host being set:
+instances:
+    # Set to the host that the plugin will use when connecting to the Kubernetes API
+    - host: "127.0.0.1"
+      kubernetes_api_port: 8080
+      kubernetes_labels: ['k8s-app', 'version']
+```
+
+With custom labels and derive api url set to True:
 
 ```
 init_config:
@@ -1460,6 +1489,36 @@ Pod Phase Mapping:
 | 2 | Pending |
 | 3 | Failed |
 | 4 | Unknown |
+
+instances:
+    - derive api url: True
+      kubernetes_labels: ['k8s-app', 'version']
+```
+
+Note this plugin only supports one instance in the config file.
+
+Metrics (Note for replication controller and deployment metrics they can also have custom dimensions set from the configuration option 'kubernetes_labels')
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| kubernetes.api.health_status | | Health status of the api
+| kubernetes.component_status | component_name | Status of cluster's components
+| kubernetes.node.out_of_disk | hostname | The node is out of disk
+| kubernetes.node.memory_pressure | hostname | Available memory on the node has satisfied an eviction threshold
+| kubernetes.node.disk_pressure | hostname | Available disk space and inodes on either the node’s root filesystem or image filesystem has satisfied an eviction threshold
+| kubernetes.node.ready_status | hostname | The ready status of the kubernetes node
+| kubernetes.node.allocatable.memory_bytes | hostname, unit | Total allocatable memory in bytes available for scheduling on the node
+| kubernetes.node.allocatable.cpu | hostname, unit | Total allocatable cpu cores available for scheduling on the node
+| kubernetes.node.allocatable.pods | hostname | Total allocatable pods available for scheduling on the node
+| kubernetes.node.capacity.memory_bytes | hostname, unit | Total memory on the node
+| kubernetes.node.capacity.cpu | hostname, unit | Total amount of cpu cores on the node
+| kubernetes.node.capacity.pods | hostname | Total amount of pods that could be run on the node
+| kubernetes.deployment.available_replicas | deployment, namespace  | The number of available replicas for the deployment
+| kubernetes.deployment.replicas | deployment, namespace  | The number of replicas for the deployment
+| kubernetes.deployment.unavailable_replicas | deployment, namespace  | The number of unavailable replicas for the deployment
+| kubernetes.deployment.updated_replicas | deployment, namespace  | The number of updated replicas for the deployment
+| kubernetes.replication.controller.ready_replicas | replication_controller, namespace | The number of ready replicas for the replication controller
+| kubernetes.replication.controller.replicas | replication_controller, namespace  | The number of replicas for the replication controller
 
 ## KyotoTycoon
 See [the example configuration](https://github.com/openstack/monasca-agent/blob/master/conf.d/kyototycoon.yaml.example) for how to configure the KyotoTycoon plugin.
