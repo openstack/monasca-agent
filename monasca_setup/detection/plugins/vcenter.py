@@ -1,4 +1,4 @@
-# (C) Copyright 2016 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2016-2017 Hewlett Packard Enterprise Development LP
 
 import ConfigParser
 import logging
@@ -88,7 +88,7 @@ class VCenter(Plugin):
                     instance = {
                         'vcenter_ip': nova_cfg.get(cfg_section, 'host_ip'),
                         'username': nova_cfg.get(cfg_section, 'host_username'),
-                        'password': nova_cfg.get(cfg_section, 'host_password'),
+                        'password': nova_cfg.get(cfg_section, 'host_password', raw=True),
                         'port': int(nova_cfg.get(cfg_section, 'host_port')),
                         'clusters': [nova_cfg.get(cfg_section, 'cluster_name')]
                     }
