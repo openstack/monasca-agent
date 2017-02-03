@@ -25,10 +25,7 @@ pip install -c"$localfile" openstack-requirements
 # the current repo. It is listed in constraints file and thus any
 # install will be constrained and we need to unconstrain it.
 
-# NOTE(dmllr): temporary local uncaping of psutil in upper-constraints
-# if it is still 1.x. Remove me when https://review.openstack.org/#/c/333717/
-# merges
-edit-constraints "$localfile" -- "$CLIENT_NAME" psutil===3.0.1
+edit-constraints "$localfile" -- "$CLIENT_NAME"
 
 pip install -c"$localfile" -U "$@"
 exit $?
