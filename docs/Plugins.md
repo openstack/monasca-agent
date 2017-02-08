@@ -73,6 +73,7 @@
   - [Postfix Checks](#postfix-checks)
   - [PostgreSQL](#postgresql)
   - [Process Checks](#process-checks)
+  - [Prometheus](#prometheus)
   - [RabbitMQ Checks](#rabbitmq-checks)
   - [RedisDB](#redisdb)
   - [Riak](#riak)
@@ -176,6 +177,7 @@ The following plugins are delivered via setup as part of the standard plugin che
 | postfix |  | Provides metrics on the number of messages in a given postfix queue|
 | postgres |  |  |
 | process |  |  |
+| prometheus |  |  |
 | rabbitmq | /root/.rabbitmq.cnf |
 | redisdb |  |  |
 | riak |  |  |
@@ -1866,7 +1868,7 @@ monasca-setup -d ProcessCheck -a "conf_file_path=/home/stack/myprocess.yaml"
 ```
 Example yaml input file format for process check by process names:
 ```
----
+
 process_config:
 - process_names:
   - monasca-notification
@@ -1876,7 +1878,7 @@ process_config:
 ```
 Example yaml input file format for multiple process_names entries:
 ```
----
+
 process_config:
 - process_names:
   - monasca-notification
@@ -1941,6 +1943,72 @@ The process checks return the following metrics ( if detailed is set to true, ot
 | process.pid_count  | process_name, service, component | Number of processes that exist with this process name
 
 On Linux, if the Agent is not run as root or the owner of the process the io metrics and the open_file_descriptors metric will fail to be reported if the mon-agent user does not have permission to get it for the process.
+
+## Prometheus Client
+This plugin is for scraping metrics from endpoints that are created by prometheus client libraries - https://prometheus.io/docs/instrumenting/clientlibs/
+
+It can be configured in two ways. One being manually setting all the endpoints that you want to scrape. The other being
+running in a Kubernetes environment where we autodetect on either services or pods based on annotations set.
+
+### Manually Configuring Endpoints
+In this instance the plugin goes to a configured list of prometheus client endpoints and scrapes the posted metrics from each.
+
+When configuring each endpoint you can define a set of dimensions that is attached to each metric being scraped.
+
+By default we grab the defined labels on each metric as dimensions.
+
+Example yaml file:
+
+```
+init_config:
+  # Timeout on connections to each endpoint
+  timeout: 3
+instances:
+  - metric_endpoint: "http://127.0.0.1:8000"
+    # Dimensions to add to every metric coming out of the plugin
+    default_dimensions:
+        app: my_app
+
+  - metric_endpoint: "http://127.0.0.1:9000"
+```
+
+### Running in a Kubernetes Environment with autodetection
+There are two ways for the autodetection to be set up. One for auto detecting based on pods and the other auto detecting
+for services. In both cases it is looking for the annotations set for the Kubernetes service or pod.
+
+The annotations the plugin is looking for are -
+* prometheus.io/scrape: Only scrape pods that have a value of 'true'
+* prometheus.io/path: If the metrics path is not '/metrics' override this.
+* prometheus.io/port: Scrape the pod on the indicated port instead of the default of '9102'.
+
+These annotations are pulled from the Kubelet for pod autodetection and the Kubernetes API for the service auto detection
+
+There is also configuration parameter of "kubernetes_labels" where it will look for Kubernetes tags to use as dimensions
+for metrics coming out. By default that will be set to "app"
+
+Example yaml file (by pod):
+
+```
+init_config:
+  timeout: 3
+  auto_detect_endpoints: True
+  detect_method: "pod"
+instances:
+- kubernetes_labels: ['app']
+```
+
+Example yaml file (by service):
+
+```
+init_config:
+  timeout: 3
+  auto_detect_endpoints: True
+  detect_method: "service"
+instances:
+- kubernetes_labels: ['app']
+```
+
+**NOTE** This Plugin can only have one configured instance
 
 ## RabbitMQ Checks
 This section describes the RabbitMQ check that can be performed by the Agent.  The RabbitMQ check gathers metrics on Nodes, Exchanges and Queues from the rabbit server.  The RabbitMQ check requires a configuration file called rabbitmq.yaml to be available in the agent conf.d configuration directory.  The config file must contain the names of the Exchanges and Queues that you are interested in monitoring.

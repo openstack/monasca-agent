@@ -1,6 +1,7 @@
 # (C) Copyright 2015,2017 Hewlett Packard Enterprise Development LP
 
 import base64
+import json
 import logging
 import math
 from numbers import Number
@@ -745,3 +746,70 @@ class DynamicCheckHelper(object):
         metric = re.sub(r"_\.", ".", metric)
 
         return metric
+
+
+def get_pod_dimensions(kubernetes_connector, pod_metadata, kubernetes_labels):
+    pod_name = pod_metadata['name']
+    pod_dimensions = {'pod_name': pod_name, 'namespace': pod_metadata['namespace']}
+    if "labels" in pod_metadata:
+        pod_labels = pod_metadata['labels']
+        for label in kubernetes_labels:
+            if label in pod_labels:
+                pod_dimensions[label] = pod_labels[label]
+    # Get owner of pod to set as a dimension
+    # Try to get from pod owner references
+    pod_owner_references = pod_metadata.get('ownerReferences', None)
+    if pod_owner_references:
+        try:
+            if len(pod_owner_references) > 1:
+                log.warn("More then one owner for pod {}".format(pod_name))
+            pod_owner_reference = pod_owner_references[0]
+            pod_owner_type = pod_owner_reference['kind']
+            pod_owner_name = pod_owner_reference['name']
+            _set_pod_owner_dimension(kubernetes_connector, pod_dimensions, pod_owner_type, pod_owner_name)
+        except Exception:
+            log.info("Could not get pod owner from ownerReferences for pod {}".format(pod_name))
+    # Try to get owner from annotations
+    else:
+        try:
+            pod_created_by = json.loads(pod_metadata['annotations']['kubernetes.io/created-by'])
+            pod_owner_type = pod_created_by['reference']['kind']
+            pod_owner_name = pod_created_by['reference']['name']
+            _set_pod_owner_dimension(kubernetes_connector, pod_dimensions, pod_owner_type, pod_owner_name)
+        except Exception:
+            log.info("Could not get pod owner from annotations for pod {}".format(pod_name))
+    return pod_dimensions
+
+
+def _get_deployment_name(kubernetes_connector, pod_owner_name, pod_namespace):
+    replica_set_endpoint = "/apis/extensions/v1beta1/namespaces/{}/replicasets/{}".format(pod_namespace, pod_owner_name)
+    try:
+        replica_set = kubernetes_connector.get_request(replica_set_endpoint)
+        replica_set_annotations = replica_set['metadata']['annotations']
+        if "deployment.kubernetes.io/revision" in replica_set_annotations:
+            return "-".join(pod_owner_name.split("-")[:-1])
+    except Exception as e:
+        log.warn("Could not connect to api to get replicaset data - {}".format(e))
+        return None
+    return None
+
+
+def _set_pod_owner_dimension(kubernetes_connector, pod_dimensions, pod_owner_type, pod_owner_name):
+    if pod_owner_type == "ReplicationController":
+        pod_dimensions['replication_controller'] = pod_owner_name
+    elif pod_owner_type == "ReplicaSet":
+        if not kubernetes_connector:
+            log.error("Can not set deployment name as connection information to API is not set. "
+                      "Setting ReplicaSet as dimension")
+            deployment_name = None
+        else:
+            deployment_name = _get_deployment_name(kubernetes_connector, pod_owner_name, pod_dimensions['namespace'])
+        if not deployment_name:
+            pod_dimensions['replica_set'] = pod_owner_name
+        else:
+            pod_dimensions['deployment'] = deployment_name
+    elif pod_owner_type == "DaemonSet":
+        pod_dimensions['daemon_set'] = pod_owner_name
+    else:
+        log.info("Unsupported pod owner kind {} as a dimension for pod {}".format(pod_owner_type,
+                                                                                  pod_dimensions))
