@@ -5,12 +5,8 @@ import unittest
 import os
 import binascii
 import re
-import logging
 import shutil
 from nose.plugins.skip import SkipTest
-
-log = logging.getLogger()
-
 
 class TestPostfix(unittest.TestCase):
     #

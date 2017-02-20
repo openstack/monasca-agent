@@ -1,12 +1,9 @@
 # (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
 
 import ast
-import logging
 
 import monasca_setup.agent_config
 import monasca_setup.detection
-
-log = logging.getLogger(__name__)
 
 
 class HttpCheck(monasca_setup.detection.ArgsPlugin):

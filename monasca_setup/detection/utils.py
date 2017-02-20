@@ -2,7 +2,6 @@
 
 """ Util functions to assist in detection.
 """
-import logging
 import subprocess
 from subprocess import CalledProcessError
 from subprocess import PIPE
@@ -10,9 +9,6 @@ from subprocess import Popen
 
 from monasca_agent.common.psutil_wrapper import psutil
 from monasca_setup import agent_config
-
-log = logging.getLogger(__name__)
-
 
 # check_output was introduced in python 2.7, function added
 # to accommodate python 2.6

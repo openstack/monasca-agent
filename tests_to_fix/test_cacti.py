@@ -2,10 +2,7 @@ from common import get_check
 
 import unittest
 import os
-import logging
 import shutil
-
-log = logging.getLogger()
 
 CONFIG = """
 init_config:
