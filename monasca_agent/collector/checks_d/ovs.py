@@ -135,6 +135,7 @@ class OvsCheck(AgentCheck):
         #
         tried_one_update = False
         host_router_max_bw = 0
+        active_routers = 0
         for ifx, value in ifx_deltas.iteritems():
 
             port_uuid = value['port_uuid']
@@ -172,6 +173,7 @@ class OvsCheck(AgentCheck):
                 ifx_dimensions = {'resource_id': device_uuid,
                                   'port_id': port_uuid,
                                   'router_name': router_name}
+                active_routers += 1
             else:
                 ifx_dimensions = {'resource_id': device_uuid,
                                   'port_id': port_uuid}
@@ -233,6 +235,7 @@ class OvsCheck(AgentCheck):
             self.gauge('ovs.vrouter.host_max_bw_kb', host_router_max_bw,
                        dimensions=dims_base)
 
+        self.gauge('ovs.vrouter.active_routers', active_routers, dimensions=dims_base)
         self._update_counter_cache(ctr_cache,
                                    math.ceil(time.time() - time_start), measure)
 

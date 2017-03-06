@@ -151,6 +151,7 @@ instances:
 | Name                       | Description                                                                                                                                                                         |
 | ---------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | ovs.vrouter.host_max_bw_kb | Maximum bandwidth possible for routers on the the host based on the instances using those routers (if `publish_router_capacity` is true).  Only published to the operations tenant. |
+| ovs.vrouter.active_routers | Count of active routers on this host (only published to the operations tenant)                                                                                                      |
 
 ## Mapping Metrics to Configuration Parameters
 Configuration parameters can be used to control which metrics are reported by ovs plugin. There are 4 parameters currently in ovs config file: use_rate_metrics, use_absolute_metrics, use_health_metrics and publish_router_capacity.
