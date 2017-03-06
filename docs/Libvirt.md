@@ -73,13 +73,13 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 
 `vm_disks_check_enable` enables collecting of VM Disk metrics (Default True). Please see "Mapping Metrics to Configuration Parameters" section below for what metrics are controlled by this flag.
 
-
 `vm_network_check_enable` enables collecting of VM Network metrics (Default True). Please see "Mapping Metrics to Configuration Parameters" section below for what metrics are controlled by this flag.
-
 
 `vm_ping_check_enable` enable host alive ping check (Default True). Please see "Mapping Metrics to Configuration Parameters" section below for what metrics are controlled by this flag.
 
 `vm_extended_disks_check_enable` enable collecting of extended Disk metrics (Default True). Please see "Mapping Metrics to Configuration Parameters" section below for what metrics are controlled by this flag.
+
+`host_aggregate_re` can be used to specify a regular expression with which to match nova host aggregate names.  If this hypervisor is a member of a host aggregate matching this regular expression, an additional dimension of `host_aggregate` will be published for the operations metrics (with a value of the host aggregate name).
 
 Example config:
 ```
@@ -100,6 +100,7 @@ init_config:
       /bin/ping -n -c1 -w1 -q
     alive_only: false
     network_use_bits: false
+    host_aggregate_re: M[34]
 instances:
     - {}
 ```
@@ -420,18 +421,19 @@ Please see table below for metrics in libvirt that are always enabled.
 ## VM Dimensions
 All metrics include `resource_id` and `zone` (availability zone) dimensions.  Because there is a separate set of metrics for the two target audiences (VM customers and Operations), other dimensions may differ.
 
-| Dimension Name | Customer Value            | Operations Value                                               |
-| -------------- | ------------------------- | -------------------------------------------------------------- |
-| hostname       | name of VM as provisioned | hypervisor's hostname                                          |
-| zone           | availability zone         | availability zone                                              |
-| resource_id    | resource ID of VM         | resource ID of VM                                              |
-| service        | "compute"                 | "compute"                                                      |
-| component      | "vm"                      | "vm"                                                           |
-| device         | name of net or disk dev   | name of net or disk dev                                        |
-| port_id        | port ID of the VM port    | port ID of the VM port                                         |
-| tenant_id      | (N/A)                     | owner of VM                                                    |
-| tenant_name    | (N/A)                     | name of the project owner of the VM (if configured to publish) |
-| vm_name        | (N/A)                     | name of the VM (if configured to publish)                      |
+| Dimension Name | Customer Value            | Operations Value                                                  |
+| -------------- | ------------------------- | ----------------------------------------------------------------- |
+| hostname       | name of VM as provisioned | hypervisor's hostname                                             |
+| zone           | availability zone         | availability zone                                                 |
+| resource_id    | resource ID of VM         | resource ID of VM                                                 |
+| service        | "compute"                 | "compute"                                                         |
+| component      | "vm"                      | "vm"                                                              |
+| device         | name of net or disk dev   | name of net or disk dev                                           |
+| port_id        | port ID of the VM port    | port ID of the VM port                                            |
+| tenant_id      | (N/A)                     | owner of VM                                                       |
+| tenant_name    | (N/A)                     | name of the project owner of the VM (if configured to publish)    |
+| vm_name        | (N/A)                     | name of the VM (if configured to publish)                         |
+| host_aggregate | (N/A)                     | host aggregate name of this hypervisor (if configured to publish) |
 
 ## Aggregate Metrics
 

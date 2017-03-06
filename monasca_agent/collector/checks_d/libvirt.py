@@ -20,6 +20,7 @@ import libvirt
 import math
 import monasca_agent.collector.checks.utils as utils
 import os
+import re
 import stat
 import subprocess
 import time
@@ -63,6 +64,7 @@ class LibvirtCheck(AgentCheck):
         self.use_bits = self.init_config.get('network_use_bits')
 
         self._collect_intervals = {}
+        self._host_aggregate = None
 
         self._set_collection_intervals('disk', 'disk_collection_period')
         self._set_collection_intervals('vnic', 'vnic_collection_period')
@@ -138,6 +140,8 @@ class LibvirtCheck(AgentCheck):
                                     region_name=self.init_config.get('region_name'))
         instances = nova_client.servers.list(search_opts={'all_tenants': 1,
                                                           'host': self.hostname})
+        self._get_this_host_aggregate(nova_client)
+
         # Lay the groundwork for fetching VM IPs and network namespaces
         if self.init_config.get('ping_check'):
             from neutronclient.v2_0 import client
@@ -703,6 +707,13 @@ class LibvirtCheck(AgentCheck):
                             dims_customer[metadata] = metadata_value
                 # Remove customer 'hostname' dimension, this will be replaced by the VM name
                 del(dims_customer['hostname'])
+                #
+                # Add this hypervisor's host aggregate as a dimension if
+                # configured to do so and we had a match on the regex for
+                # this host.
+                #
+                if self._host_aggregate:
+                    dims_operations['host_aggregate'] = self._host_aggregate
             except TypeError:
                 # Nova can potentially get into a state where it can't see an
                 # instance, but libvirt can.  This would cause TypeErrors as
@@ -812,3 +823,24 @@ class LibvirtCheck(AgentCheck):
                 if metadata_value:
                     dims[metadata] = metadata_value
         return dims
+
+    def _get_this_host_aggregate(self, nova_client):
+        """Determine the host aggregate for this hypervisor."""
+        host_agg_cfg_re = self.init_config.get('host_aggregate_re', None)
+        if not host_agg_cfg_re:
+            return
+
+        try:
+            agg_re = re.compile(host_agg_cfg_re)
+            aggs = nova_client.aggregates.list()
+            for idx, agg in enumerate(aggs):
+                if re.match(agg_re, aggs[idx].name) and self.hostname in aggs[idx].hosts:
+                    self._host_aggregate = str(aggs[idx].name)
+                    #
+                    # Not expecting multiple matches, if we've got a match we're done.
+                    #
+                    break
+
+        except Exception as e:
+            msg = "Failed to list host aggregates, won't publish aggregate dimension: '{0}'"
+            self.log.error(msg.format(e))
