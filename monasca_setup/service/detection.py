@@ -17,7 +17,11 @@ def detect_init(*args, **kwargs):
     """
     detected_os = platform.system()
     if detected_os == 'Linux':
-        supported_linux_flavors = ['ubuntu', 'debian', 'centos linux', 'red hat enterprise linux server']
+        supported_linux_flavors = [
+            'ubuntu', 'debian',
+            'centos linux', 'red hat enterprise linux server',
+            'suse linux enterprise server'
+        ]
         flavor = platform.linux_distribution()[0]
         if flavor.lower() not in supported_linux_flavors:
             log.warn('{0} is not a support Linux distribution'.format(flavor))
