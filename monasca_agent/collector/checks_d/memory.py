@@ -31,9 +31,6 @@ class Memory(checks.AgentCheck):
         self.gauge('mem.usable_mb',
                    int(mem_info.available / 1048576),
                    dimensions=dimensions)
-        self.gauge('mem.used_mb',
-                   int(mem_info.used / 1048576),
-                   dimensions=dimensions)
         self.gauge('mem.usable_perc',
                    float(100 - mem_info.percent),
                    dimensions=dimensions)
@@ -65,8 +62,15 @@ class Memory(checks.AgentCheck):
 
         if (hasattr(mem_info, 'buffers') and mem_info.buffers and
            hasattr(mem_info, 'cached') and mem_info.cached):
-            self.gauge('mem.used_real_mb',
-                       int((mem_info.used - mem_info.buffers - mem_info.cached) / 1048576),
+
+            mem_used_real = mem_info.used
+            if psutil.version_info < (4, 4, 0):
+                #
+                # pusutil versions prior to 4.4.0 didn't subtract buffers and
+                # cache, but starting in 4.4.0 psutil does.
+                #
+                mem_used_real = mem_used_real - mem_info.buffers - mem_info.cached
+            self.gauge('mem.used_real_mb', int(mem_used_real / 1048576),
                        dimensions=dimensions)
             count += 1
 

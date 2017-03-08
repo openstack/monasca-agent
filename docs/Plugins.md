@@ -377,6 +377,7 @@ This section documents the system metrics that are sent by the Agent.
 | mem.used_buffers |  | Number of buffers in Mbytes being used by the kernel for block io
 | mem.used_cached |  | Mbytes of memory used for the page cache
 | mem.used_shared  |  | Mbytes of memory shared between separate processes and typically used for inter-process communication
+| mem.used_real_mb |  | Mbytes of memory currently in use less mem.used_buffers and mem.used_cached
 
 ### Disk
 | Metric Name | Dimensions | Semantics |
