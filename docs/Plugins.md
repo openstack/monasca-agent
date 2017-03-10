@@ -704,7 +704,7 @@ Note this plugin only supports one instance in the config file.
 The docker check return the following metrics:
 
 | Metric Name | Metric Type | Dimensions | Optional_dimensions (set if add_kubernetes_dimensions is true and container is running under kubernetes) | Semantics |
-| ----------- | ---------- | --------- |
+| ----------- | ----------- | ---------- | -------------------------------------------------------------------------------------------------------- | --------- |
 | container.containers.running_count | Gauge | hostname | | Number of containers running on the host |
 | container.cpu.system_time  | Gauge| hostname, name, image | kubernetes_pod_name, kubernetes_namespace | The total time the CPU has executed system calls on behalf of the processes in the container |
 | container.cpu.system_time_sec  | Rate | hostname, name, image | kubernetes_pod_name, kubernetes_namespace | The rate the CPU is executing system calls on behalf of the processes in the container |
