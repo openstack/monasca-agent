@@ -1,0 +1,10 @@
+# (C) Copyright 2017 Hewlett Packard Enterprise Development LP
+init_config:
+  # Timeout on cAdvisor requests
+  # connection_timeout: 3
+
+instances:
+    # URL of cAdvisor to connect to.
+  - cadvisor_url: "http://127.0.0.1:4194"
+    # You can also set the plugin to determine cadvisor url from running within a kubernetes container
+    # kubernetes_detect_cadvisor: True
