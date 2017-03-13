@@ -1,4 +1,4 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015,2017 Hewlett Packard Enterprise Development LP
 
 
 class Infinity(Exception):
@@ -18,4 +18,12 @@ class NaN(CheckException):
 
 
 class PathNotFound(Exception):
+    pass
+
+
+class MissingEnvironmentVariables(Exception):
+    pass
+
+
+class KubernetesAPIConnectionError(Exception):
     pass
