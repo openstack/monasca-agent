@@ -56,6 +56,7 @@
     - [Custom JSON file locations](#custom-json-file-locations)
     - [The monasca.json_plugin.status Metric](#the-monascajson_pluginstatus-metric)
   - [Kafka Checks](#kafka-checks)
+  - [Kubernetes](#kubernetes)
   - [KyotoTycoon](#kyototycoon)
   - [Libvirt VM Monitoring](#libvirt-vm-monitoring)
   - [Open vSwitch Neutron Router Monitoring](#open-vswitch-neutron-router-monitoring)
@@ -153,6 +154,7 @@ The following plugins are delivered via setup as part of the standard plugin che
 | json_plugin | | |
 | kafka_consumer |  |  |
 | kibana | **kibana_install_dir**/kibana.yml | Integration to Kibana |
+| kubernetes |  |  |
 | kyototycoon |  |  |
 | libvirt |  |  |
 | lighttpd |  |  |
@@ -1275,6 +1277,188 @@ The Kafka checks return the following metrics:
 | kafka.broker_offset | topic, service, component, partition, hostname | broker offset |
 | kafka.consumer_offset | topic, service, component, partition, consumer_group, hostname | consumer offset |
 | kafka.consumer_lag | topic, service, component, partition, consumer_group, hostname | consumer offset lag from broker offset |
+
+## Kubernetes
+
+This plugin collects metrics about containers (optionally) and pods on a kubernetes node.
+
+The plugin collects metrics on a kubernetes node by going to the kubelet on the node to get all pod data. Included in that is containers configured under each pod and metadata about each.
+
+It then goes to cAdvisor to get all docker container metrics and metadata associated with it. The plugin then does a comparison of the containers collected from cAdvisor and the containers defined from the kubelet.
+
+If a container is defined to be apart of a pod it will take the metadata from the kubelet as dimensions (so it can get all of the kuberenetes associated tags), if it is not apart of a pod it will set the dimensions from the cAdvisor metadata.
+
+When setting the kubernetes configuration there is a parameter "kubernetes_labels" where it will look for kubernetes tags that are user defined to use as dimensions for pod/container metrics. By default it will look for the label 'app'.
+
+For each pod that we detect we will also aggregate container metrics that belong to that pod to output pod level metrics.
+
+The kubernetes node that the plugin will connect to can be configured in two different ways. The first being setting the host variable in the instance. The other being setting the derive_host to True under the instance. We derive the host by first using the kubernetes environment variables to get the api url (assuming we are running in a kubernetes container). Next we use the container's pod name and namespace (passed in as environment variables to the agents container - see kubernetes example yaml file) with the api url to hit the api to get the pods metadata including the host it is running on. That is the host we use.
+
+If derive_host is set to true the plugin will also hit the API when the owner of a Kubernetes pod is a replicaset (taken from the kubelet) to see if it is under a deployment.
+
+Also by default we will not report the container metrics due to throughput it generates. If you want the container metrics you can set the configuration parameter "report_container_metrics" to True.
+
+Sample configs:
+
+Without custom labels and host being manually set:
+
+```
+init_config:
+    # Timeout on GET requests
+    connection_timeout: 3
+    report_container_metrics: False
+instances:
+    # Set to the host that the plugin will use when connecting to cAdvisor/kubelet
+    - host: "127.0.0.1"
+      cadvisor_port: 4194
+      kublet_port: 10255
+```
+
+With custom labels and host being manually set:
+
+```
+init_config:
+    # Timeout on GET requests
+    connection_timeout: 3
+    report_container_metrics: False
+instances:
+    # Set to the host that the plugin will use when connecting to cAdvisor/kubelet
+    - host: "127.0.0.1"
+      cadvisor_port: 4194
+      kublet_port: 10255
+      kubernetes_labels: ['k8s-app', 'version']
+```
+
+With custom labels and derive host being set:
+
+```
+init_config:
+    # Timeout on GET requests
+    connection_timeout: 3
+    report_container_metrics: False
+instances:
+    - derive_host: True
+      cadvisor_port: 4194
+      kublet_port: 10255
+      kubernetes_labels: ['k8s-app', 'version']
+```
+
+**Note** this plugin only supports one instance in the config file.
+
+The kubernetes check returns the following metrics (note that for containers running under kubernetes and pod metrics
+ can also have dimensions set from the configuration option 'kubernetes_labels' which by default will include 'app')
+
+**Note** the container metrics will only be reported when the report_container_metrics is true
+
+Common Container metrics between containers running underneath kubernetes and standalone:
+
+| Metric Name | Dimensions if owned by a kubernetes pod | Dimensions if running standalone from kubernetes | Semantics |
+| ----------- | --------------------------------------- | ------------------------------------------------ | --------- |
+| container.cpu.system_time | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Cumulative system CPU time consumed in core seconds
+| container.cpu.system_time_sec | image, container_name, pod_name, namespace, unit  | image, container_name, hostname | Rate of system CPU time consumed in core seconds
+| container.cpu.total_time | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Cumulative CPU time consumed in core seconds
+| container.cpu.total_time_sec | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Rate of CPU time consumed in core seconds
+| container.cpu.user_time | image, container_name, pod_name, namespace, unit | image, container_name, hostname, unit | Cumulative user cpu time consumed in core seconds
+| container.cpu.user_time_sec | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Rate of user CPU time consumed in core seconds
+| container.fs.total_bytes | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Number of bytes available
+| container.fs.usage_bytes | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Number of bytes consumed
+| container.fs.writes | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Cumulative number of completed writes
+| container.fs.writes_sec | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Number of completed writes per a second
+| container.fs.reads | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Cumulative number of completed reads
+| container.fs.reads_sec | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit| Number of completed reads per a second
+| container.fs.io_current | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Number of i/o operations in progress
+| container.mem.cache_bytes | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Number of bytes of page cache memory
+| container.mem.rss_bytes | image, container_name, pod_name, namespace, unit | image, container_name, hostname, unit | Size of rss in bytes
+| container.mem.swap_bytes | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Swap usage in memory in bytes
+| container.mem.used_bytes | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Current memory in use in bytes
+| container.mem.fail_count | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Number of memory usage limit hits
+| container.net.in_bytes | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Total network bytes received
+| container.net.in_bytes_sec | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Number of network bytes received per second
+| container.net.in_dropped_packets | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Total inbound network packets dropped
+| container.net.in_dropped_packets_sec | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Number of inbound network packets dropped per second
+| container.net.in_errors | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Total network errors on incoming network traffic
+| container.net.in_errors_sec | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Number of network errors on incoming network traffic per second
+| container.net.in_packets | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Total network packets received
+| container.net.in_packets_sec | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Number of network packets received per second
+| container.net.out_bytes | image, container_name, pod_name, namespace, unit | image, container_name, hostname, unit | Total network bytes sent
+| container.net.out_bytes_sec | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Number of network bytes sent per second
+| container.net.out_dropped_packets | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Total outbound network packets dropped
+| container.net.out_dropped_packets_sec | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Number of outbound network packets dropped per second
+| container.net.out_errors | image, container_name, pod_name, namespace, unit | image, container_name, hostname, unit | Total network errors on outgoing network traffic
+| container.net.out_errors_sec | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Number of network errors on outgoing network traffic per second
+| container.net.out_packets | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Total network packets sent
+| container.net.out_packets_sec | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Number of network packets sent per second
+
+Container metrics specific to containers running under kubernetes:
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| container.ready_status | image, name, pod_name, namespace | Ready status of the container defined by the ready probe
+| container.restart_count | image, name, pod_name, namespace | Restart count of the container
+| container.cpu.limit | image, name, pod_name, namespace | Limit in CPU cores for the container
+| container.memory.limit_bytes | image, name, pod_name, namespace | Limit of memory in bytes for the container
+| container.request.cpu | image, name, pod_name, namespace | Amount of CPU cores requested by the container
+| container.request.memory_bytes | image, name, pod_name, namespace | Amount of memory in bytes requested by the container
+
+Kubelet Metrics:
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| kubelet.health_status | hostname | Health status of the kubelet api
+
+Pod Metrics:
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| pod.cpu.system_time | pod_name, namespace | Cumulative system CPU time consumed in core seconds
+| pod.cpu.system_time_sec | pod_name, namespace | Rate of system CPU time consumed in core seconds
+| pod.cpu.total_time | pod_name, namespace | Cumulative CPU time consumed in core seconds
+| pod.cpu.total_time_sec | pod_name, namespace | Rate of CPU time consumed in core seconds
+| pod.cpu.user_time | pod_name, namespace | Cumulative user cpu time consumed in core seconds
+| pod.cpu.user_time_sec | pod_name, namespace | Rate of user CPU time consumed in core seconds
+| pod.mem.cache_bytes | pod_name, namespace | Number of bytes of page cache memory
+| pod.mem.fail_count | pod_name, namespace | Number of memory usage limit hits
+| pod.mem.rss_bytes | pod_name, namespace | Size of rss in bytes
+| pod.mem.swap_bytes | pod_name, namespace | Swap usage in memory in bytes
+| pod.mem.used_bytes | pod_name, namespace | Current memory in use in bytes
+| pod.net.in_bytes | pod_name, namespace | Total network bytes received
+| pod.net.in_bytes_sec | pod_name, namespace | Number of network bytes received per second
+| pod.net.in_dropped_packets | pod_name, namespace | Total inbound network packets dropped
+| pod.net.in_dropped_packets_sec | pod_name, namespace | Number of inbound network packets dropped per second
+| pod.net.in_errors | pod_name, namespace | Total network errors on incoming network traffic
+| pod.net.in_errors_sec | pod_name, namespace |  Number of network errors on incoming network traffic per second
+| pod.net.in_packets | pod_name, namespace | Total network packets received
+| pod.net.in_packets_sec | pod_name, namespace | Number of network packets received per second
+| pod.net.out_bytes | pod_name, namespace | Total network bytes sent
+| pod.net.out_bytes_sec | pod_name, namespace | Number of network bytes sent per second
+| pod.net.out_dropped_packets | pod_name, namespace | Total outbound network packets dropped
+| pod.net.out_dropped_packets_sec | pod_name, namespace | Number of outbound network packets dropped per second
+| pod.net.out_errors | pod_name, namespace | Total network errors on outgoing network traffic
+| pod.net.out_errors_sec | pod_name, namespace | Number of network errors on outgoing network traffic per second
+| pod.net.out_packets | pod_name, namespace | Total network packets sent
+| pod.net.out_packets_sec | pod_name, namespace | Number of network packets sent per second
+| pod.restart_count | pod_name, namespace | Aggregated restart count of the pod's containers
+| pod.phase | pod_name, namespace | Current phase of the pod. See table below for mapping
+
+
+There is also additional Kubernetes dimensions for the Container and Pod metrics depending on the owner for the pod:
+
+| Owner | Dimension Name | Notes |
+| ----------- | ---------- | --------- |
+| ReplicationController | replication_controller |
+| ReplicaSet | replica_set |
+| DaemonSet | daemon_set |
+| Deployment| deployment | Only will be set if derive_host is set to true as it needs to connect to the API to see if the ReplicaSet is under a deployment
+
+Pod Phase Mapping:
+
+| Metric Value | Phase |
+| ------------ | ----- |
+| 0 | Succeeded |
+| 1 | Running |
+| 2 | Pending |
+| 3 | Failed |
+| 4 | Unknown |
 
 ## KyotoTycoon
 See [the example configuration](https://github.com/openstack/monasca-agent/blob/master/conf.d/kyototycoon.yaml.example) for how to configure the KyotoTycoon plugin.

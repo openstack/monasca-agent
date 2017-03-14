@@ -1,0 +1,28 @@
+# (C) Copyright 2017 Hewlett Packard Enterprise Development LP
+
+init_config:
+    # Timeout on GET requests endpoints
+    connection_timeout: 3
+    # Report container metrics. Defaults to false.
+    report_container_metrics: False
+instances:
+    # There are two options for getting the host that we use to connect to kubelet/cadvisor with. Either manually setting
+    # it via host or by setting derive_host to True. We derive the host by first using the kubernetes environment
+    # variables to get the api url (assuming we are running in a kubernetes container). Next we use the container's pod
+    # name and namespace (passed in as environment variables to the agents container - see kubernetes example yaml file)
+    # with the api url to hit the api to get the pods metadata including the host it is running on. That is the host we
+    # use.
+    # NOTE - this plugin only supports one instance.
+    - host: "127.0.0.1"
+
+      # Derive the host by querying the Kubernetes api for pod's (pod the agent is running in) metadata.
+      # derive_host: False
+
+      # Port of cadvisor to connect to defaults to 4194
+      # cadvisor_port: 4194
+
+      # Port of kubelet to connect to defaults to 10255
+      # kublet_port: 10255
+
+      # Set of kubernetes labels that we search for in the kubernetes metadata to set as dimensions
+      # kubernetes_labels: ['k8s-app', 'version']
