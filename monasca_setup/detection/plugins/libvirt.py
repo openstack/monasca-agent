@@ -69,6 +69,8 @@ class Libvirt(Plugin):
                 if len(cmd) > 2 and 'python' in cmd[0] and 'nova-compute' in cmd[1]:
                     conf_indexes = [cmd.index(y) for y in cmd if 'nova.conf' in y]
                     if not conf_indexes:
+                        if os.path.exists('/etc/nova/nova.conf'):
+                            nova_conf = "/etc/nova/nova.conf"
                         continue
                     param = conf_indexes[0]
                     if '=' in cmd[param]:
