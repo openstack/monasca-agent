@@ -22,9 +22,9 @@ def detect_init(*args, **kwargs):
             'centos linux', 'red hat enterprise linux server',
             'suse linux enterprise server'
         ]
-        flavor = platform.linux_distribution()[0]
+        flavor = platform.linux_distribution()[0].strip()
         if flavor.lower() not in supported_linux_flavors:
-            log.warn('{0} is not a support Linux distribution'.format(flavor))
+            log.warn('{0} is not a supported Linux distribution'.format(flavor))
         return detect_linux_init(*args, **kwargs)
     else:
         print("{0} is not currently supported by the Monasca Agent".format(detected_os))
