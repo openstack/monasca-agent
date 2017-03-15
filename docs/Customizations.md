@@ -207,6 +207,97 @@ The instances section is a list of instances that this check will be run against
 
 It is best practice to include a name for each instance as the monasca-setup program uses this to avoid duplicating instances.
 
+#### DynamicCheckHelper class
+
+The `DynamicCheckHelper` can be used by check plugins to map data from existing monitoring endpoints to Monasca metrics.
+
+Features
+* Adjust metric names to Monasca naming conventions
+* Map metric names and dimension keys
+* Provide metric type information
+* Map metadata to dimensions
+* Transform names and values using regular expressions
+* Filter values using regular expressions on attributes
+
+To support all these capabilities, an element 'mapping' needs to be added to the instance configuration. A default mapping can be supplied for convenience.
+
+Filtering and renaming of input measurements is performed through regular expressions that can be provided for metric-names and dimension values.
+
+##### Selecting and Renaming Metrics
+
+Metrics are specified by providing a list of names or regular expressions. For every metric type (gauge, rate, counter) a separate list is provided. If an incoming measurement does not match any of the listed names/regular expressions, it will be silently filtered out. 
+
+If match-groups are specified, the group-values are concatenated with '_' (underscore). If no match-group is specified, the name is taken as is. The resulting name is normalized according to Monasca naming standards for metrics. This implies that dots are replaced by underscores and *CamelCase* is transformed into *lower_case*. Special characters are eliminated, too.
+
+Example:
+
+```
+a) Simple mapping:
+
+   rates: [ 'FilesystemUsage' ]             # map rate metric 'FileystemUsage' to 'filesystem_usage'
+
+b) Mapping with simple regular expression
+
+   rates: [ '.*Usage' ]                     # map metrics ending with 'Usage' to '..._usage'
+
+b) Mapping with regular expression and match-groups
+
+   counters: [ '(.*Usage)\.stats\.(total)' ]   # map metrics ending with 'Usage.stats.total' to '..._usage_total'
+```
+
+##### Mapping Metadata to Dimensions
+ 
+The filtering and mapping Mapping of metadata attributes to dimensions is a little more complex. For each dimension, an entry of the following format is required:
+
+```
+component: app
+```
+
+This will map attribute `app` to dimension `component`.
+
+Complex mapping statements use regular expressions to filter and/or transform metadata attributes into dimensions.
+ 
+The following configuration attributes control the process:
+* *source\_key*: name of the incoming metadata attribute. Default: target dimension.
+* *regex*: Regular expression to match the incoming metadata attribute _value_ with. This is used for both filtering and transformation using match-groups. Default: `(.*)` (match any and copy value as is).
+* *separator*: This string will be used to concatenate the match-groups. Default is `-`(dash).
+
+Example:
+
+```
+service:
+   source_key: kubernetes.namespace
+   regex: prod-(.*)
+
+```
+
+The regular expression is applied to the dimension value. If the regular expression does not match, then the measurement is ignored. If match-groups are part of the regular expression then the regular expression is used for value transformation: The resulting dimension value is created by concatenating all match-groups (in braces) using the specified separator. If no match-group is specified, then the value is acting as a filter and just normalized. If the regex is a string constant (no wildcards), then it will not be mapped to a dimension at all.
+
+##### Metric Groups
+
+Both metrics and dimension can be defined globally or as part of a group.
+
+When a metric is specified in a group, then the group name is used as a prefix to the metric and the group-specific dimension mappings take precedence over the global ones. When several groups or the global mapping refer to the same input metric, then the Check plugin using the `DynCheckHelper` class needs to specify explicitly which group to select for mapping.
+
+Example:
+```
+instances:
+- name: kubernetes
+  mapping
+    dimensions:
+        pod_name: io.kubernetes.pod.name    # simple mapping
+        pod_basename:
+            source_key: label_name
+            regex: 'k8s_.*_.*\._(.*)_[0-9a-z\-]*'
+    rates:
+    - io.*
+    groups:
+      postgres:
+        gauges: [ 'pg_(database_size_gauge_average)', 'pg_(database_size)' ]
+        dimensions:
+          service: kubernetes_namespace
+          database: datname
+
 ##### Plugin Documentation
 Your plugin should include an example `yaml` configuration file to be placed in `/etc/monasca/agent/conf.d` which has the name of the plugin YAML file plus the extension '.example', so the example configuration file for the process plugin would be at `/etc/monasca/agent/conf.d/process.yaml.example. This file should include a set of example init_config and instances clauses that demonstrate how the plugin can be configured.
 
