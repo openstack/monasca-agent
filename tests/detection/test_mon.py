@@ -30,6 +30,12 @@ _JAVA_CMD_API = ('/usr/bin/java '
                  '-cp /opt/monasca/monasca-api.jar '
                  'monasca.api.MonApiApplication server '
                  '/etc/monasca/api-config.yml')
+_PYTHON_WSGI_CMD_API = ('/usr/sbin/httpd-prefork (wsgi:monasca-api)'
+                        '-f /etc/apache2/httpd.conf'
+                        '-DSYSCONFIG -DSYSTEMD'
+                        '-C PidFile /var/run/httpd.pid'
+                        '-C Include /etc/apache2/sysconfig.d/'
+                        '-DFOREGROUND -k start')
 
 _PYTHON_CMD_PERSISTER = ('/opt/monasca-persister/bin/python '
                          '/opt/monasca-persister/lib/python2.7/'
@@ -312,6 +318,19 @@ class TestMonAPIDetectionPlugin(unittest.TestCase):
     @mock.patch('monasca_setup.detection.plugins.mon._MonAPIPythonHelper')
     def test_should_use_python_helper_if_api_is_python(self, impl_helper):
         FakeProcesses.cmdLine = [_PYTHON_CMD_API]
+
+        self._mon_api._init_impl_helper = iih = mock.Mock(
+            return_value=impl_helper)
+
+        self._detect()
+
+        iih.assert_called_once_with('python')
+        self.assertTrue(impl_helper.load_configuration.called_once)
+        self.assertTrue(impl_helper.get_bound_port.called_once)
+
+    @mock.patch('monasca_setup.detection.plugins.mon._MonAPIPythonHelper')
+    def test_should_use_python_helper_if_api_is_wsgi(self, impl_helper):
+        FakeProcesses.cmdLine = [_PYTHON_WSGI_CMD_API]
 
         self._mon_api._init_impl_helper = iih = mock.Mock(
             return_value=impl_helper)

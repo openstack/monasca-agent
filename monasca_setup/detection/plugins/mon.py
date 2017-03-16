@@ -21,7 +21,7 @@ from monasca_setup.detection.utils import watch_process_by_username
 
 log = logging.getLogger(__name__)
 
-_PYTHON_LANG_MARKERS = 'python', 'gunicorn',
+_PYTHON_LANG_MARKERS = 'python', 'gunicorn', 'httpd', 'apache',
 """List of all strings that if found in process exe
 mean that application runs under Python"""
 _JAVA_LANG_MARKERS = 'java',
