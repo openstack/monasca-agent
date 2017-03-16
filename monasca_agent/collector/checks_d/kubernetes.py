@@ -2,10 +2,10 @@
 import json
 import logging
 import requests
-import six
 
 from monasca_agent.collector import checks
 from monasca_agent.collector.checks import utils
+from monasca_agent.common.util import rollup_dictionaries
 
 log = logging.getLogger(__name__)
 
@@ -49,6 +49,10 @@ CADVISOR_METRICS = {
         "tx_dropped": "net.out_dropped_packets",
         "rx_errors": "net.in_errors",
         "tx_errors": "net.out_errors",
+    },
+    "diskio_metrics": {
+        "Read": "io.read_bytes",
+        "Write": "io.write_bytes"
     }
 }
 
@@ -67,14 +71,16 @@ METRIC_TYPES_UNITS = {
     "fs.writes": (["gauge", "rate"], ["bytes", "bytes_per_second"]),
     "fs.reads": (["gauge", "rate"], ["bytes", "bytes_per_second"]),
     "fs.io_current": (["gauge"], ["bytes"]),
-    "net.in_bytes": (["gauge", "rate"], ["bytes", "bytes_per_second"]),
-    "net.out_bytes": (["gauge", "rate"], ["bytes", "bytes_per_second"]),
-    "net.in_packets": (["gauge", "rate"], ["packets", "packets_per_second"]),
-    "net.out_packets": (["gauge", "rate"], ["packets", "packets_per_second"]),
-    "net.in_dropped_packets": (["gauge", "rate"], ["packets", "packets_per_second"]),
-    "net.out_dropped_packets": (["gauge", "rate"], ["packets", "packets_per_second"]),
-    "net.in_errors": (["gauge", "rate"], ["errors", "errors_per_second"]),
-    "net.out_errors": (["gauge", "rate"], ["errors", "errors_per_second"])
+    "net.in_bytes": (["gauge", "rate"], ["total_bytes", "total_bytes_per_second"]),
+    "net.out_bytes": (["gauge", "rate"], ["total_bytes", "total_bytes_per_second"]),
+    "net.in_packets": (["gauge", "rate"], ["total_packets", "total_packets_per_second"]),
+    "net.out_packets": (["gauge", "rate"], ["total_packets", "total_packets_per_second"]),
+    "net.in_dropped_packets": (["gauge", "rate"], ["total_packets", "total_packets_per_second"]),
+    "net.out_dropped_packets": (["gauge", "rate"], ["total_packets", "total_packets_per_second"]),
+    "net.in_errors": (["gauge", "rate"], ["total_errors", "total_errors_per_second"]),
+    "net.out_errors": (["gauge", "rate"], ["total_errors", "total_errors_per_second"]),
+    "io.read_bytes": (["gauge", "rate"], ["total_bytes", "total_bytes_per_second"]),
+    "io.write_bytes": ("write_bytes", ["gauge", "rate"], ["total_bytes", "total_bytes_per_second"])
 }
 
 
@@ -321,7 +327,8 @@ class Kubernetes(checks.AgentCheck):
             if cadvisor_key in memory_data:
                 metric_value = memory_data[cadvisor_key]
                 if self.report_container_metrics:
-                    self._send_metrics("container." + metric_name, metric_value,
+                    self._send_metrics("container." + metric_name,
+                                       metric_value,
                                        container_dimensions,
                                        METRIC_TYPES_UNITS[metric_name][0],
                                        METRIC_TYPES_UNITS[metric_name][1])
@@ -336,34 +343,30 @@ class Kubernetes(checks.AgentCheck):
             file_dimensions['device'] = filesystem['device']
             for cadvisor_key, metric_name in filesystem_metrics.items():
                 if cadvisor_key in filesystem:
-                    self._send_metrics("container." + metric_name, filesystem[cadvisor_key], file_dimensions,
+                    self._send_metrics("container." + metric_name,
+                                       filesystem[cadvisor_key],
+                                       file_dimensions,
                                        METRIC_TYPES_UNITS[metric_name][0],
                                        METRIC_TYPES_UNITS[metric_name][1])
 
-    def _parse_network(self, network_data, container_dimensions, pod_key, pod_net_metrics):
+    def _parse_network(self, network_data, container_dimensions, pod_key, pod_metrics):
         network_interfaces = network_data['interfaces']
         network_metrics = CADVISOR_METRICS['network_metrics']
+        sum_network_interfaces = {}
         for interface in network_interfaces:
-            network_dimensions = container_dimensions.copy()
-            network_interface = interface['name']
-            network_dimensions['interface'] = network_interface
-            for cadvisor_key, metric_name in network_metrics.items():
-                if cadvisor_key in interface:
-                    metric_value = interface[cadvisor_key]
-                    if self.report_container_metrics:
-                        self._send_metrics("container." + metric_name, metric_value, network_dimensions,
-                                           METRIC_TYPES_UNITS[metric_name][0],
-                                           METRIC_TYPES_UNITS[metric_name][1])
-                    # Add metric to aggregated network metrics
-                    if pod_key:
-                        if pod_key not in pod_net_metrics:
-                            pod_net_metrics[pod_key] = {}
-                        if network_interface not in pod_net_metrics[pod_key]:
-                            pod_net_metrics[pod_key][network_interface] = {}
-                        if metric_name not in pod_net_metrics[pod_key][network_interface]:
-                            pod_net_metrics[pod_key][network_interface][metric_name] = metric_value
-                        else:
-                            pod_net_metrics[pod_key][network_interface][metric_name] += metric_value
+            sum_network_interfaces = rollup_dictionaries(
+                sum_network_interfaces, interface)
+        for cadvisor_key, metric_name in network_metrics.items():
+            if cadvisor_key in sum_network_interfaces:
+                metric_value = sum_network_interfaces[cadvisor_key]
+                if self.report_container_metrics:
+                    self._send_metrics("container." + metric_name,
+                                       metric_value,
+                                       container_dimensions,
+                                       METRIC_TYPES_UNITS[metric_name][0],
+                                       METRIC_TYPES_UNITS[metric_name][1])
+                self._add_pod_metric(metric_name, metric_value, pod_key,
+                                     pod_metrics)
 
     def _parse_cpu(self, cpu_data, container_dimensions, pod_key, pod_metrics):
         cpu_metrics = CADVISOR_METRICS['cpu_metrics']
@@ -373,10 +376,32 @@ class Kubernetes(checks.AgentCheck):
                 # convert nanoseconds to seconds
                 cpu_usage_sec = cpu_usage[cadvisor_key] / 1000000000
                 if self.report_container_metrics:
-                    self._send_metrics("container." + metric_name, cpu_usage_sec, container_dimensions,
+                    self._send_metrics("container." + metric_name,
+                                       cpu_usage_sec,
+                                       container_dimensions,
                                        METRIC_TYPES_UNITS[metric_name][0],
                                        METRIC_TYPES_UNITS[metric_name][1])
                 self._add_pod_metric(metric_name, cpu_usage_sec, pod_key, pod_metrics)
+
+    def _parse_diskio(self, diskio_data, container_dimensions, pod_key, pod_metrics):
+        diskio_services = diskio_data['io_service_bytes']
+        diskio_metrics = CADVISOR_METRICS['diskio_metrics']
+        sum_diskio_devices = {}
+        for disk_device in diskio_services:
+            sum_diskio_devices = rollup_dictionaries(
+                sum_diskio_devices, disk_device['stats'])
+
+        for cadvisor_key, metric_name in diskio_metrics.items():
+            if cadvisor_key in sum_diskio_devices:
+                metric_value = sum_diskio_devices[cadvisor_key]
+                if self.report_container_metrics:
+                    self._send_metrics("container." + metric_name,
+                                       metric_value,
+                                       container_dimensions,
+                                       METRIC_TYPES_UNITS[metric_name][0],
+                                       METRIC_TYPES_UNITS[metric_name][1])
+                self._add_pod_metric(metric_name, metric_value, pod_key,
+                                     pod_metrics)
 
     def _add_pod_metric(self, metric_name, metric_value, pod_key, pod_metrics):
             if pod_key:
@@ -430,45 +455,48 @@ class Kubernetes(checks.AgentCheck):
         except Exception as e:
             self.log.error("Error getting data from cadvisor - {}".format(e))
             return
-        # non-network pod metrics. Need by interface
         pod_metrics = {}
-        # network pod metrics
-        pod_network_metrics = {}
         for container, cadvisor_metrics in containers_metrics.items():
-            pod_key, container_dimensions = self._get_container_dimensions(container,
-                                                                           dimensions,
-                                                                           containers_spec[container],
-                                                                           container_dimension_map,
-                                                                           pod_dimension_map)
+            pod_key, container_dimensions = self._get_container_dimensions(
+                container,
+                dimensions,
+                containers_spec[container],
+                container_dimension_map,
+                pod_dimension_map)
             # Grab first set of metrics from return data
             cadvisor_metrics = cadvisor_metrics[0]
             if cadvisor_metrics['has_memory'] and cadvisor_metrics['memory']:
-                self._parse_memory(cadvisor_metrics['memory'], container_dimensions, pod_key, pod_metrics)
+                self._parse_memory(cadvisor_metrics['memory'],
+                                   container_dimensions,
+                                   pod_key,
+                                   pod_metrics)
             if cadvisor_metrics['has_filesystem'] and 'filesystem' in cadvisor_metrics \
                     and cadvisor_metrics['filesystem']:
-                self._parse_filesystem(cadvisor_metrics['filesystem'], container_dimensions)
+                self._parse_filesystem(cadvisor_metrics['filesystem'],
+                                       container_dimensions)
             if cadvisor_metrics['has_network'] and cadvisor_metrics['network']:
-                self._parse_network(cadvisor_metrics['network'], container_dimensions, pod_key, pod_network_metrics)
+                self._parse_network(cadvisor_metrics['network'],
+                                    container_dimensions,
+                                    pod_key,
+                                    pod_metrics)
             if cadvisor_metrics['has_cpu'] and cadvisor_metrics['cpu']:
-                self._parse_cpu(cadvisor_metrics['cpu'], container_dimensions, pod_key, pod_metrics)
+                self._parse_cpu(cadvisor_metrics['cpu'],
+                                container_dimensions,
+                                pod_key,
+                                pod_metrics)
+            if cadvisor_metrics['has_diskio'] and cadvisor_metrics['diskio']:
+                self._parse_diskio(cadvisor_metrics['diskio'],
+                                   container_dimensions,
+                                   pod_key,
+                                   pod_metrics)
         self.send_pod_metrics(pod_metrics, pod_dimension_map)
-        self.send_network_pod_metrics(pod_network_metrics, pod_dimension_map)
 
     def send_pod_metrics(self, pod_metrics_map, pod_dimension_map):
         for pod_key, pod_metrics in pod_metrics_map.items():
             pod_dimensions = pod_dimension_map[pod_key]
             for metric_name, metric_value in pod_metrics.items():
-                self._send_metrics("pod." + metric_name, metric_value, pod_dimensions,
+                self._send_metrics("pod." + metric_name,
+                                   metric_value,
+                                   pod_dimensions,
                                    METRIC_TYPES_UNITS[metric_name][0],
                                    METRIC_TYPES_UNITS[metric_name][1])
-
-    def send_network_pod_metrics(self, pod_network_metrics, pod_dimension_map):
-        for pod_key, network_interfaces in pod_network_metrics.items():
-            pod_dimensions = pod_dimension_map[pod_key]
-            for network_interface, metrics in network_interfaces.items():
-                pod_network_dimensions = pod_dimensions.copy()
-                pod_network_dimensions['interface'] = network_interface
-                for metric_name, metric_value in metrics.items():
-                    self._send_metrics("pod." + metric_name, metric_value, pod_network_dimensions,
-                                       METRIC_TYPES_UNITS[metric_name][0],
-                                       METRIC_TYPES_UNITS[metric_name][1])

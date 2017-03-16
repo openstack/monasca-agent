@@ -1,9 +1,9 @@
 # (C) Copyright 2017 Hewlett Packard Enterprise Development LP
 import requests
-import six
 
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.collector.checks import utils
+from monasca_agent.common.util import rollup_dictionaries
 
 DEFAULT_TIMEOUT = "3"
 
@@ -28,22 +28,28 @@ METRICS = {
     },
     'network_metrics': {
         "rx_bytes": ("in_bytes", ["gauge", "rate"],
-                     ["bytes", "bytes_per_second"]),
+                     ["total_bytes", "total_bytes_per_second"]),
         "tx_bytes": ("out_bytes", ["gauge", "rate"],
-                     ["bytes", "bytes_per_second"]),
+                     ["total_bytes", "total_bytes_per_second"]),
         "rx_packets": ("in_packets", ["gauge", "rate"],
-                       ["packets", "packets_per_second"]),
+                       ["total_packets", "total_packets_per_second"]),
         "tx_packets": ("out_packets", ["gauge", "rate"],
-                       ["packets", "packets_per_second"]),
+                       ["total_packets", "total_packets_per_second"]),
         "rx_dropped": ("in_dropped_packets", ["gauge", "rate"],
-                       ["packets", "packets_per_second"]),
+                       ["total_packets", "total_packets_per_second"]),
         "tx_dropped": ("out_dropped_packets", ["gauge", "rate"],
-                       ["packets", "packets_per_second"]),
+                       ["total_packets", "total_packets_per_second"]),
         "rx_errors": ("in_errors", ["gauge", "rate"],
-                      ["errors", "errors_per_second"]),
+                      ["total_errors", "total_errors_per_second"]),
         "tx_errors": ("out_errors", ["gauge", "rate"],
-                      ["errors", "errors_per_second"])
-    }
+                      ["total_errors", "total_errors_per_second"])
+    },
+    "diskio_metrics": {
+        "Read": ("read_bytes", ["gauge", "rate"],
+                 ["total_bytes", "total_bytes_per_second"]),
+        'Write': ("write_bytes", ["gauge", "rate"],
+                  ["total_bytes", "total_bytes_per_second"])
+    },
 }
 
 
@@ -54,8 +60,10 @@ class CadvisorHost(AgentCheck):
     def __init__(self, name, init_config, agent_config, instances=None):
         AgentCheck.__init__(self, name, init_config, agent_config, instances)
         if instances is not None and len(instances) > 1:
-            raise Exception('cAdvisor host check only supports one configured instance.')
-        self.connection_timeout = int(init_config.get('connection_timeout', DEFAULT_TIMEOUT))
+            raise Exception('cAdvisor host check only supports one configured'
+                            ' instance.')
+        self.connection_timeout = int(init_config.get('connection_timeout',
+                                                      DEFAULT_TIMEOUT))
         self.cadvisor_url = None
 
     def check(self, instance):
@@ -68,7 +76,8 @@ class CadvisorHost(AgentCheck):
                     host = kubernetes_connector.get_agent_pod_host()
                     cadvisor_url = "http://{}:4194".format(host)
                 else:
-                    exception_message = "Either cAdvisor url or kubernetes detect cAdvisor must be set when " \
+                    exception_message = "Either cAdvisor url or kubernetes " \
+                                        "detect cAdvisor must be set when " \
                                         "monitoring a Kubernetes Node."
                     self.log.error(exception_message)
                     raise Exception(exception_message)
@@ -95,7 +104,9 @@ class CadvisorHost(AgentCheck):
         memory_metrics = METRICS['memory_metrics']
         for cadvisor_key, (metric_name, metric_types, metric_units) in memory_metrics.items():
             if cadvisor_key in memory_data:
-                self._send_metrics("mem." + metric_name, memory_data[cadvisor_key], dimensions,
+                self._send_metrics("mem." + metric_name,
+                                   memory_data[cadvisor_key],
+                                   dimensions,
                                    metric_types, metric_units)
 
     def _parse_filesystem(self, filesystem_data, dimensions):
@@ -105,19 +116,40 @@ class CadvisorHost(AgentCheck):
             file_dimensions['device'] = filesystem['device']
             for cadvisor_key, (metric_name, metric_types, metric_units) in filesystem_metrics.items():
                 if cadvisor_key in filesystem:
-                    self._send_metrics("fs." + metric_name, filesystem[cadvisor_key], file_dimensions,
+                    self._send_metrics("fs." + metric_name,
+                                       filesystem[cadvisor_key],
+                                       file_dimensions,
                                        metric_types, metric_units)
 
     def _parse_network(self, network_data, dimensions):
         network_interfaces = network_data['interfaces']
         network_metrics = METRICS['network_metrics']
+        interface_sum = {}
+        # This function is to roll up network metrics for different interfaces
         for interface in network_interfaces:
-            network_dimensions = dimensions.copy()
-            network_dimensions['interface'] = interface['name']
-            for cadvisor_key, (metric_name, metric_types, metric_units) in network_metrics.items():
-                if cadvisor_key in interface:
-                    self._send_metrics("net." + metric_name, interface[cadvisor_key], network_dimensions,
-                                       metric_types, metric_units)
+            interface_sum = rollup_dictionaries(interface_sum, interface)
+
+        network_dimensions = dimensions.copy()
+        for cadvisor_key, (metric_name, metric_types, metric_units) in network_metrics.items():
+            if cadvisor_key in interface_sum:
+                self._send_metrics("net." + metric_name,
+                                   interface_sum[cadvisor_key],
+                                   network_dimensions,
+                                   metric_types,
+                                   metric_units)
+
+    def _parse_diskio(self, diskio_data, dimensions):
+        diskio_metrics = METRICS['diskio_metrics']
+        disk_io_sum = {}
+        for io_data in diskio_data['io_service_bytes']:
+            disk_io_sum = rollup_dictionaries(disk_io_sum, io_data['stats'])
+
+        for cadvisor_key, (metric_name, metric_types, metric_units) in diskio_metrics.items():
+            if cadvisor_key in disk_io_sum:
+                self._send_metrics("io." + metric_name, disk_io_sum[cadvisor_key],
+                                   dimensions,
+                                   metric_types,
+                                   metric_units)
 
     def _parse_cpu(self, cpu_data, dimensions):
         cpu_metrics = METRICS['cpu_metrics']
@@ -139,5 +171,7 @@ class CadvisorHost(AgentCheck):
                 self._parse_filesystem(cadvisor_metrics['filesystem'], host_dimensions)
             if cadvisor_metrics['has_network'] and cadvisor_metrics['network']:
                 self._parse_network(cadvisor_metrics['network'], host_dimensions)
+            if cadvisor_metrics['has_diskio'] and cadvisor_metrics['diskio']:
+                self._parse_diskio(cadvisor_metrics['diskio'], host_dimensions)
             if cadvisor_metrics['has_cpu'] and cadvisor_metrics['cpu']:
                 self._parse_cpu(cadvisor_metrics['cpu'], host_dimensions)

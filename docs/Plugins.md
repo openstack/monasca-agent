@@ -566,25 +566,29 @@ The cAdvisor host check returns the following metrics:
 | cpu.user_time_sec | hostname, unit | Rate of user CPU time consumed in core seconds per second
 | fs.total_bytes | hostname, device, unit | Number of bytes available
 | fs.usage_bytes | hostname, device, unit | Number of bytes consumed
+| io.read_bytes | hostname, unit | Total number of bytes read by all devices
+| io.read_bytes_sec | hostname, unit | Total number of bytes read by all devices per second
+| io.write_bytes | hostname, unit | Total number of bytes written by all devices
+| io.write_bytes_sec | hostname, unit | Total number of bytes written by all devices per second
 | mem.cache_bytes | hostname, unit | Number of bytes of page cache memory
 | mem.swap_bytes | hostname, unit | Swap usage in memory in bytes
 | mem.used_bytes | hostname, unit | Current memory in use in bytes
-| net.in_bytes | hostname, interface, unit | Total network bytes received
-| net.in_bytes_sec | hostname, interface, unit | Number of network bytes received per second
-| net.in_dropped_packets | hostname, interface, unit | Total inbound network packets dropped
-| net.in_dropped_packets_sec | hostname, interface, unit | Number of inbound network packets dropped per second
-| net.in_errors | hostname, interface, unit  | Total network errors on incoming network traffic
-| net.in_errors_sec | hostname, interface, unit | Number of network errors on incoming network traffic per second
-| net.in_packets | hostname, interface, unit | Total network packets received
-| net.in_packets_sec | hostname, interface, unit | Number of network packets received per second
-| net.out_bytes | hostname, interface, unit | Total network bytes sent
-| net.out_bytes_sec | hostname, interface, unit | Number of network bytes sent per second
-| net.out_dropped_packets | hostname, interface, unit | Total outbound network packets dropped
-| net.out_dropped_packets_sec | hostname, interface, unit | Number of outbound network packets dropped per second
-| net.out_errors | hostname, interface, unit | Total network errors on outgoing network traffic
-| net.out_errors_sec | hostname, interface, unit | Number of network errors on outgoing network traffic per second
-| net.out_packets | hostname, interface, unit | Total network packets sent
-| net.out_packets_sec | hostname, interface, unit | Number of network packets sent per second
+| net.in_bytes | hostname, interface, unit | Total network bytes received by all interfaces
+| net.in_bytes_sec | hostname, interface, unit | Total number of network bytes received by all interfaces per second
+| net.in_dropped_packets | hostname, interface, unit | Total inbound network packets dropped by all interfaces
+| net.in_dropped_packets_sec | hostname, interface, unit | Total number of inbound network packets dropped by all interfaces per second
+| net.in_errors | hostname, interface, unit  | Total network errors on incoming network traffic by all interfaces
+| net.in_errors_sec | hostname, interface, unit | Total number of network errors on incoming network traffic by all interfaces per second
+| net.in_packets | hostname, interface, unit | Total network packets received by all interfaces
+| net.in_packets_sec | hostname, interface, unit | Total number of network packets received by all interfaces per second
+| net.out_bytes | hostname, interface, unit | Total network bytes sent by all interfaces
+| net.out_bytes_sec | hostname, interface, unit | Total number of network bytes sent by all interfaces per second
+| net.out_dropped_packets | hostname, interface, unit | Total outbound network packets dropped by all interfaces
+| net.out_dropped_packets_sec | hostname, interface, unit | Total number of outbound network packets dropped by all interfaces per second
+| net.out_errors | hostname, interface, unit | Total network errors on outgoing network traffic by all interfaces
+| net.out_errors_sec | hostname, interface, unit | Total number of network errors on outgoing network traffic by all interfaces per second
+| net.out_packets | hostname, interface, unit | Total network packets sent by all interfaces
+| net.out_packets_sec | hostname, interface, unit | Total number of network packets sent by all interfaces per second
 
 ## Check_MK_Local
 The [Check_MK](http://mathias-kettner.com/check_mk.html) [Agent](http://mathias-kettner.com/checkmk_linuxagent.html) can be extended through a series of [local checks](http://mathias-kettner.com/checkmk_localchecks.html).  This plugin parses the `<<<local>>>` output of `check_mk_agent` and converts them into Monasca metrics.  It is installed by `monasca-setup` automatically when the `check_mk_agent` script is found to be installed on the system.
