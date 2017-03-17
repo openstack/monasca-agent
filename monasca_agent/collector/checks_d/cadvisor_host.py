@@ -1,6 +1,5 @@
 # (C) Copyright 2017 Hewlett Packard Enterprise Development LP
 import requests
-import six
 
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.collector.checks import utils

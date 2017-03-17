@@ -2,6 +2,10 @@
 init_config:
   # Timeout on cAdvisor requests
   # connection_timeout: 3
+  # white_list:
+  #  - cpu.system_time_sec
+  #  - mem.used_bytes
+  #  - net.in_bytes_sec
 
 instances:
     # URL of cAdvisor to connect to.

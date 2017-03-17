@@ -31,9 +31,9 @@ class AgentCheck(util.Dimensions):
         super(AgentCheck, self).__init__(agent_config)
         self.name = name
         self.init_config = init_config
+        self.white_list = init_config.get('white_list', None)
         self.hostname = util.get_hostname()
         self.log = logging.getLogger('%s.%s' % (__name__, name))
-
         threshold = agent_config.get('recent_point_threshold', None)
         tenant_id = agent_config.get('global_delegated_tenant', None)
         self.aggregator = (
@@ -49,6 +49,23 @@ class AgentCheck(util.Dimensions):
         """
         return len(self.instances)
 
+    def submit_metric(self, metric, value, metric_type, dimensions,
+                      delegated_tenant, hostname, device_name, value_meta,
+                      timestamp=None):
+        # If there is no white list, then report all the metrics
+        # If there is a white list, then only report the metrics listed in
+        # white list
+        if self.white_list is None or metric in self.white_list:
+            self.aggregator.submit_metric(metric,
+                                          value,
+                                          metric_type,
+                                          dimensions,
+                                          delegated_tenant,
+                                          hostname,
+                                          device_name,
+                                          value_meta,
+                                          timestamp)
+
     def gauge(self, metric, value, dimensions=None, delegated_tenant=None, hostname=None,
               device_name=None, timestamp=None, value_meta=None):
         """Record the value of a gauge, with optional dimensions, hostname, value metadata and device name.
@@ -62,15 +79,15 @@ class AgentCheck(util.Dimensions):
         :param timestamp: (optional) The timestamp for this metric value
         :param value_meta: Additional metadata about this value
         """
-        self.aggregator.submit_metric(metric,
-                                      value,
-                                      metrics_pkg.Gauge,
-                                      dimensions,
-                                      delegated_tenant,
-                                      hostname,
-                                      device_name,
-                                      value_meta,
-                                      timestamp)
+        self.submit_metric(metric,
+                           value,
+                           metrics_pkg.Gauge,
+                           dimensions,
+                           delegated_tenant,
+                           hostname,
+                           device_name,
+                           value_meta,
+                           timestamp)
 
     def increment(self, metric, value=1, dimensions=None, delegated_tenant=None,
                   hostname=None, device_name=None, value_meta=None):
@@ -84,14 +101,14 @@ class AgentCheck(util.Dimensions):
         :param device_name: (optional) The device name for this metric
         :param value_meta: Additional metadata about this value
         """
-        self.aggregator.submit_metric(metric,
-                                      value,
-                                      metrics_pkg.Counter,
-                                      dimensions,
-                                      delegated_tenant,
-                                      hostname,
-                                      device_name,
-                                      value_meta)
+        self.submit_metric(metric,
+                           value,
+                           metrics_pkg.Counter,
+                           dimensions,
+                           delegated_tenant,
+                           hostname,
+                           device_name,
+                           value_meta)
 
     def decrement(self, metric, value=1, dimensions=None, delegated_tenant=None,
                   hostname=None, device_name=None, value_meta=None):
@@ -106,14 +123,14 @@ class AgentCheck(util.Dimensions):
         :param value_meta: Additional metadata about this value
         """
         value *= -1
-        self.aggregator.submit_metric(metric,
-                                      value,
-                                      metrics_pkg.Counter,
-                                      dimensions,
-                                      delegated_tenant,
-                                      hostname,
-                                      device_name,
-                                      value_meta)
+        self.submit_metric(metric,
+                           value,
+                           metrics_pkg.Counter,
+                           dimensions,
+                           delegated_tenant,
+                           hostname,
+                           device_name,
+                           value_meta)
 
     def rate(self, metric, value, dimensions=None, delegated_tenant=None,
              hostname=None, device_name=None, value_meta=None):
@@ -130,14 +147,14 @@ class AgentCheck(util.Dimensions):
         :param device_name: (optional) The device name for this metric
         :param value_meta: Additional metadata about this value
         """
-        self.aggregator.submit_metric(metric,
-                                      value,
-                                      metrics_pkg.Rate,
-                                      dimensions,
-                                      delegated_tenant,
-                                      hostname,
-                                      device_name,
-                                      value_meta)
+        self.submit_metric(metric,
+                           value,
+                           metrics_pkg.Rate,
+                           dimensions,
+                           delegated_tenant,
+                           hostname,
+                           device_name,
+                           value_meta)
 
     def get_metrics(self, prettyprint=False):
         """Get all metrics, including the ones that are tagged.
