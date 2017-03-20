@@ -102,6 +102,15 @@ class FakeProcesses(object):
         return FakeProcesses.inetConnections
 
 
+class FakeWSGIWorkers(FakeProcesses):
+    def __init__(self, cmdline=None):
+        self.cmdLine = cmdline
+    def parent(self):
+        return FakeProcesses()
+    def connections(self, *args):
+        return []
+
+
 class TestGetImplLang(unittest.TestCase):
     @mock.patch('psutil.Process')
     def test_should_return_python_lang_for_gunicorn_process(self, proc):
@@ -330,12 +339,10 @@ class TestMonAPIDetectionPlugin(unittest.TestCase):
 
     @mock.patch('monasca_setup.detection.plugins.mon._MonAPIPythonHelper')
     def test_should_use_python_helper_if_api_is_wsgi(self, impl_helper):
-        FakeProcesses.cmdLine = [_PYTHON_WSGI_CMD_API]
-
         self._mon_api._init_impl_helper = iih = mock.Mock(
             return_value=impl_helper)
 
-        self._detect()
+        self._detect([FakeWSGIWorkers([_PYTHON_WSGI_CMD_API])])
 
         iih.assert_called_once_with('python')
         self.assertTrue(impl_helper.load_configuration.called_once)
@@ -543,12 +550,11 @@ class TestMonAPIDetectionPlugin(unittest.TestCase):
         self.assertNotEqual({}, conf)
         return conf
 
-    def _detect(self):
+    def _detect(self, retval=[FakeProcesses()]):
         self._mon_api.available = False
 
         process_iter = mock.patch.object(psutil, 'process_iter',
-                                         return_value=[FakeProcesses()])
-
+                                         return_value=retval)
         with process_iter as mock_process_iter:
             self._mon_api._detect()
             self.assertTrue(mock_process_iter.called)
