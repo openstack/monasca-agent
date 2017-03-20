@@ -21,10 +21,15 @@ from monasca_setup.detection.utils import watch_process_by_username
 
 log = logging.getLogger(__name__)
 
-_PYTHON_LANG_MARKERS = 'python', 'gunicorn', 'httpd', 'apache',
+_APACHE_MARKERS = 'httpd', 'apache',
+"""List of all strings in process command line that indicate application
+runs in Apache/mod_wsgi"""
+_PYTHON_LANG_MARKERS = ('python', 'gunicorn') + _APACHE_MARKERS
 """List of all strings that if found in process exe
 mean that application runs under Python"""
 _JAVA_LANG_MARKERS = 'java',
+"""List of all strings that if found in process exe
+mean that application runs under Java"""
 
 _DEFAULT_API_PORT = 8070
 """Default TCP port which monasca-api process should be available by"""
@@ -91,11 +96,36 @@ class MonAPI(monasca_setup.detection.Plugin):
                     return True
             return False
 
+        def correct_apache_listener(process):
+            """Sets api_process to the parent httpd process.
+
+            Method evaluates if process executable is correlated
+            with apache-mod_wsgi. If so, retrieves parent process.
+            Otherwise returns None
+
+            :param process: current process
+            :type process: psutil.Process
+            :returns: parent process or None
+            :rtype: (psutil.Process, None)
+
+            """
+
+            p_exe = process.as_dict()['exe']
+            for m in _APACHE_MARKERS:
+                if m in p_exe:
+                    return process.parent()
+            return None
+
         api_process = find_process_cmdline('monasca-api')
         process_found = api_process is not None
 
         if process_found:
             impl_lang = _get_impl_lang(api_process)
+            if impl_lang == 'python':
+                apache_process = correct_apache_listener(api_process)
+                if apache_process:
+                    log.info('\tmonasca-api runs under Apache WSGI')
+                    api_process = apache_process
             impl_helper = self._init_impl_helper(impl_lang)
 
             impl_helper.load_configuration()
