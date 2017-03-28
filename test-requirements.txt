@@ -5,3 +5,4 @@ hacking>=0.12.0,!=0.13.0,<0.14  # Apache-2.0
 flake8<2.6.0,>=2.5.4 # MIT
 nose # LGPL
 mock>=2.0 # BSD
+prometheus_client
