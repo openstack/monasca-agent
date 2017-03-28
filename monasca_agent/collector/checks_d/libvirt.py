@@ -778,7 +778,7 @@ class LibvirtCheck(AgentCheck):
                 self.gauge('vm.mem.resident_mb', float(memory_info.resident), dimensions=dims_operations)
             except KeyError:
                 self.log.debug("Balloon driver not active/available on guest {0} ({1})".format(inst_name,
-                                                                                               instance_cache.get(inst_name)['hostname']))
+                                                                                               instance_cache.get(inst_name)['hostname'].encode('utf8')))
             # Test instance's remote responsiveness (ping check) if possible
             if (self.init_config.get('vm_ping_check_enable')) and self.init_config.get('ping_check') and 'network' in instance_cache.get(inst_name):
                 for net in instance_cache.get(inst_name)['network']:
