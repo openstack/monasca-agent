@@ -41,7 +41,8 @@ def main(argv=None):
         log.info("Running in dry run mode, no changes will be made only reported")
 
     # Detect and if possibly enable the agent service
-    agent_service = detect_init(PREFIX_DIR, args.config_dir, args.log_dir, args.template_dir, username=args.user)
+    agent_service = detect_init(PREFIX_DIR, args.config_dir, args.log_dir, args.template_dir,
+                                username=args.user, name=args.agent_service_name)
 
     # Skip base setup if only installing plugins or running specific detection
     # plugins
@@ -291,6 +292,10 @@ def parse_arguments(parser):
     parser.add_argument('--monasca_statsd_port',
                         help="Statsd daemon port number",
                         default=8125)
+    parser.add_argument('--agent_service_name',
+                        help="agent's systemd/sysv service name",
+                        required=False,
+                        default='monasca-agent')
     return parser.parse_args()
 
 
