@@ -4,7 +4,7 @@
 
 requests>=2.10.0,!=2.12.2,!=2.13.0  # Apache-2.0
 oslo.concurrency>=3.8.0 # Apache-2.0
-oslo.config>=3.14.0,!=3.18.0 # Apache-2.0
+oslo.config>=3.22.0 # Apache-2.0
 oslo.i18n>=2.1.0 # Apache-2.0
 oslo.utils>=3.18.0 # Apache-2.0
 oslo.vmware>=2.11.0 # Apache-2.0
