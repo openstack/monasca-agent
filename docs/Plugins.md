@@ -431,6 +431,7 @@ instances:
 | net.out_errors_sec  | device | Number of network errors on outgoing network traffic per second
 | net.in_packets_dropped_sec  | device | Number of inbound network packets dropped per second
 | net.out_packets_dropped_sec  | device | Number of outbound network packets dropped per second
+| net.int_status | device | Network interface status
 
 ### Monasca Agent
 The Monasca Agent itself generates a small number of metrics.

@@ -53,6 +53,17 @@ class Network(checks.AgentCheck):
 
                 log.debug('Collected 8 network metrics for device {0}'.format(nic_name))
 
+        nic_stats = psutil.net_if_stats()
+        for nic_name in nic_stats.keys():
+            if self._is_nic_monitored(nic_name, excluded_ifaces, exclude_iface_re):
+                nic = nic_stats[nic_name]
+                if nic.isup:
+                    self.gauge('net.int_status', 0, device_name=nic_name, dimensions=dimensions)
+                else:
+                    self.gauge('net.int_status', 1, device_name=nic_name, dimensions=dimensions)
+
+                log.debug('Collected network interface status for device {0}'.format(nic_name))
+
     def _is_nic_monitored(self, nic_name, excluded_ifaces, exclude_iface_re):
         if nic_name in excluded_ifaces:
             return False
