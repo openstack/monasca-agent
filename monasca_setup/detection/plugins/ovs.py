@@ -3,11 +3,11 @@
 import ConfigParser
 import logging
 import os
-import psutil
 import re
 
-import monasca_setup.agent_config
-import monasca_setup.detection
+from monasca_setup import agent_config
+from monasca_setup import detection
+from monasca_setup.detection import utils
 
 log = logging.getLogger(__name__)
 
@@ -44,34 +44,68 @@ ignorable_args = ['admin_user', 'admin_password', 'admin_tenant_name',
 uri_version_re = re.compile('.*v2.0|.*v3.0|.*v1|.*v2')
 
 
-class Ovs(monasca_setup.detection.Plugin):
+class Ovs(detection.Plugin):
     """Detect OVS daemons and setup configuration to monitor
 
     """
+
+    PROC_NAME = 'neutron-openvsw'
+    """Name of the ovs process to look for"""
+    REQUIRED_CONF_SECTIONS = 'keystone_authtoken',
+    """Tuple of sections that must be part of neutron configuration file"""
+
     def _detect(self):
-        process_exist = (monasca_setup.detection.
-                         find_process_cmdline('neutron-openvsw'))
+        process_exist = utils.find_process_cmdline(Ovs.PROC_NAME)
         has_dependencies = self.dependencies_installed()
-        neutron_conf = self.get_ovs_config_file() if process_exist else ''
+        neutron_conf = self._get_ovs_config_file() if process_exist else ''
+        neutron_conf_exists = os.path.isfile(neutron_conf)
+        neutron_conf_valid = (neutron_conf_exists
+                              and self._is_neutron_conf_valid(neutron_conf))
 
         self.available = (process_exist is not None and
-                          os.path.isfile(neutron_conf) and has_dependencies)
+                          neutron_conf_valid and has_dependencies)
         if not self.available:
             if not process_exist:
-                log.error('OVS daemon process does not exist.')
-            elif not neutron_conf:
+                log.error('OVS daemon process [%s] does not exist.',
+                          Ovs.PROC_NAME)
+            elif not neutron_conf_exists:
                 log.error(('OVS daemon process exists but configuration '
                            'file was not found. Path to file does not exist '
                            'as a process parameter or was not '
                            'passed via args.'))
+            elif not neutron_conf_valid:
+                log.error(('OVS daemon process exists, configuration file was '
+                           'found but it looks like it does not contain '
+                           'one of following sections=%s. '
+                           'Check if neutron was not configured to load '
+                           'configuration from /etc/neutron/neutron.conf.d/.'),
+                          Ovs.REQUIRED_CONF_SECTIONS)
+                # NOTE(trebskit) the problem with that approach is that
+                # each setting that Ovs plugin require might be scattered
+                # through multiple files located inside
+                # /etc/neutron/neutron.conf.d/
+                # not to mention that it is still possible to have
+                # yet another configuration file passed as neutron CLI
+                # argument
             elif not has_dependencies:
                 log.error(('OVS daemon process exists but required '
                            'dependence python-neutronclient is '
                            'not installed.'))
         else:
+            log.info("\tUsing neutron configuration file {0}".format(neutron_conf))
             self.neutron_conf = neutron_conf
 
-    def get_ovs_config_file(self):
+    def _is_neutron_conf_valid(self, conf_file):
+        neutron_cfg = ConfigParser.SafeConfigParser()
+        neutron_cfg.read(conf_file)
+
+        for section in self.REQUIRED_CONF_SECTIONS:
+            if not neutron_cfg.has_section(section=section):
+                return False
+
+        return True
+
+    def _get_ovs_config_file(self):
         neutron_conf = None
         if self.args:
             for arg in self.args:
@@ -81,36 +115,26 @@ class Ovs(monasca_setup.detection.Plugin):
         # Walk through the list of processes, searching for 'neutron'
         # process with 'neutron.conf' inside one of the parameters.
         if not neutron_conf:
-            for proc in psutil.process_iter():
-                try:
-                    proc_dict = proc.as_dict()
-                    if proc_dict['name'] == 'neutron-openvsw':
-                        cmd = proc_dict['cmdline']
-                        neutron_config_params = [param for param in cmd if
-                                                 'neutron.conf' in param]
-                        if not neutron_config_params:
-                            continue
-                        if '=' in neutron_config_params[0]:
-                            neutron_conf = neutron_config_params[0].split('=')[
-                                1]
-                        else:
-                            neutron_conf = neutron_config_params[0]
-                except (IOError, psutil.NoSuchProcess):
-                    # Process has already terminated, ignore
-                    continue
+            proc = utils.find_process_name(Ovs.PROC_NAME)
+            proc_dict = proc.as_dict(attrs=['cmdline'])
+            cmd = proc_dict['cmdline']
+            neutron_config_params = [param for param in cmd if
+                                     'neutron.conf' in param]
+            if neutron_config_params:
+                if '=' in neutron_config_params[0]:
+                    neutron_conf = neutron_config_params[0].split('=')[1]
+                else:
+                    neutron_conf = neutron_config_params[0]
         return neutron_conf
 
     def build_config(self):
         """Build the config as a Plugins object and return.
 
         """
-        config = monasca_setup.agent_config.Plugins()
+        config = agent_config.Plugins()
         neutron_cfg = ConfigParser.SafeConfigParser()
-        log.info("\tUsing neutron configuration file {0}".format(self.neutron_conf))
+        log.info("\tUsing neutron configuration file %s", self.neutron_conf)
         neutron_cfg.read(self.neutron_conf)
-        cfg_needed = {'admin_user': 'admin_user',
-                      'admin_password': 'admin_password',
-                      'admin_tenant_name': 'admin_tenant_name'}
         cfg_section = 'keystone_authtoken'
 
         # Handle Devstack's slightly different neutron.conf names
@@ -121,6 +145,10 @@ class Ovs(monasca_setup.detection.Plugin):
             cfg_needed = {'admin_user': 'username',
                           'admin_password': 'password',
                           'admin_tenant_name': 'project_name'}
+        else:
+            cfg_needed = {'admin_user': 'admin_user',
+                          'admin_password': 'admin_password',
+                          'admin_tenant_name': 'admin_tenant_name'}
 
         # Start with plugin-specific configuration parameters
         init_config = {'cache_dir': cache_dir,
