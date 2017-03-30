@@ -43,7 +43,7 @@ class TestOvs(unittest.TestCase):
                               'http://10.10.10.10', 'region1']
             self.assertTrue(mock_detect.called)
 
-    def _detect(self, ovs_obj):
+    def _detect(self, ovs_obj, file_config_valid=True):
         ovs_obj.neutron_conf = None
         ovs_obj.available = False
         with contextlib.nested(
@@ -51,8 +51,10 @@ class TestOvs(unittest.TestCase):
                              return_value=[ps_util_get_proc()]),
                 patch.object(os.path, 'isfile', return_value=True),
                 patch.object(ovs_obj, 'dependencies_installed',
-                             return_value=True)) as (
-                mock_process_iter, mock_isfile, dependencies):
+                             return_value=True),
+                patch.object(ovs_obj, '_is_neutron_conf_valid',
+                             return_value=file_config_valid)) as (
+                mock_process_iter, mock_isfile, dependencies, _):
             ovs_obj._detect()
             self.assertTrue(mock_process_iter.called)
             if not ps_util_get_proc.cmdLine:
@@ -133,6 +135,11 @@ class TestOvs(unittest.TestCase):
         self.assertEqual(self.ovs_obj.neutron_conf,
                          '/etc/neutron/neutron.conf')
 
+    def test_detect_invalid_config_file(self):
+        self._detect(self.ovs_obj, file_config_valid=False)
+        self.assertFalse(self.ovs_obj.available)
+        self.assertIsNone(self.ovs_obj.neutron_conf)
+
     def test_detect_devstack(self):
         ps_util_get_proc.cmdLine = ['--config-file=/opt/stack/neutron.conf']
         self._detect(self.ovs_obj)
@@ -144,7 +151,7 @@ class TestOvs(unittest.TestCase):
             ps_util_get_proc.detect_warning = True
             self._detect(self.ovs_obj)
             self.assertFalse(self.ovs_obj.available)
-            self.assertEqual(self.ovs_obj.neutron_conf, None)
+            self.assertIsNone(self.ovs_obj.neutron_conf)
             self.assertTrue(mock_log_warn.called)
 
     def test_detect_conf_file_path_given(self):
@@ -155,8 +162,10 @@ class TestOvs(unittest.TestCase):
                              return_value=[ps_util_get_proc()]),
                 patch.object(os.path, 'isfile', return_value=True),
                 patch.object(self.ovs_obj, 'dependencies_installed',
+                             return_value=True),
+                patch.object(self.ovs_obj, '_is_neutron_conf_valid',
                              return_value=True)) as (
-                mock_process_iter, mock_isfile, dependencies):
+                mock_process_iter, mock_isfile, dependencies, _):
             self.ovs_obj._detect()
             self.assertTrue(mock_isfile.called)
             self.assertTrue(self.ovs_obj.available)
