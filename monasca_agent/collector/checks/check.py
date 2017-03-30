@@ -1,4 +1,4 @@
-# (C) Copyright 2015,2016 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2015-2017 Hewlett Packard Enterprise Development LP
 """Base class for Checks.
 
 If you are writing your own checks you should subclass the AgentCheck class.
@@ -214,8 +214,7 @@ class AgentCheck(util.Dimensions):
         """
         raise NotImplementedError()
 
-    @staticmethod
-    def stop():
+    def stop(self):
         """To be executed when the agent is being stopped to clean resources.
         """
         pass
