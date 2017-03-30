@@ -39,8 +39,13 @@ class Metric(object):
         raise NotImplementedError()
 
     def flush(self):
-        """Flush current sample. """
-        raise NotImplementedError()
+        if self.timestamp is None:
+            return []
+
+        envelope = self.measurement(self.value, self.timestamp)
+        self.timestamp = None
+        self.value = None
+        return [envelope]
 
 
 class Gauge(Metric):
@@ -53,35 +58,32 @@ class Gauge(Metric):
         self.value = value
         self.timestamp = timestamp
 
-    def flush(self):
-        # 0 is a valid value, so can't do: if not self.value:
-        if self.value is None:
-            return []
-
-        envelope = self.measurement(self.value, self.timestamp)
-        self.value = None
-        return [envelope]
-
 
 class Counter(Metric):
     """A metric that tracks a counter value. """
 
     def __init__(self, name, dimensions, tenant=None):
         super(Counter, self).__init__(name, dimensions, tenant)
-        self.value = 0
 
     def sample(self, value, sample_rate, timestamp):
         try:
-            self.value += value * int(1 / sample_rate)
+            inc = float(value) / sample_rate
+            if self.timestamp is None:
+                self.value = inc
+            else:
+                self.value += inc
             self.timestamp = timestamp
-        except TypeError:
-            log.error("metric {} value {} sample_rate {}".
-                      format(self.metric['name'], value, sample_rate))
+        except (TypeError, ValueError):
+            log.exception("illegal metric {} value {} sample_rate {}".
+                          format(self.metric['name'], value, sample_rate))
 
+    # redefine flush method to make counter an integer when sample rates <> 1.0 used
     def flush(self):
-        envelope = self.measurement(self.value, self.timestamp)
-        self.value = 0
-        return [envelope]
+        if self.timestamp:
+            self.value = int(self.value)
+            return super(Counter, self).flush()
+        else:
+            return []
 
 
 class Rate(Metric):
@@ -89,40 +91,43 @@ class Rate(Metric):
 
     def __init__(self, name, dimensions, tenant=None):
         super(Rate, self).__init__(name, dimensions, tenant)
-        self.samples = []
+        self.start_value = None
+        self.start_timestamp = None
 
     def sample(self, value, sample_rate, timestamp):
-        self.samples.append((int(timestamp), value))
-        self.timestamp = timestamp
-
-        if len(self.samples) < 2:
-            self.value = None
+        # set first value if missing
+        if self.start_timestamp is None:
+            self.start_timestamp = timestamp
+            self.start_value = value
+        # set second value otherwise
         else:
-            self.value = self._rate(self.samples[-2], self.samples[-1])
-            self.samples = self.samples[-1:]
+            self.timestamp = timestamp
+            self.value = value
 
-    def _rate(self, sample1, sample2):
-        delta_t = sample2[0] - sample1[0]
-        delta_v = sample2[1] - sample1[1]
-        rate = None
-        if delta_v < 0:
-            log.debug('Metric {0} has a rate < 0. New value = {1} and old '
-                      'value = {2}. Counter may have been Reset.'.
-                      format(self.metric['name'], sample2[1], sample1[1]))
-            return rate
-        try:
-            rate = delta_v / float(delta_t)
-        except ZeroDivisionError as e:
-            log.exception('Error in sampling metric {0}, time difference '
-                          'between current time and last_update time is '
-                          '0, returned {1}'.
-                          format(self.metric['name'], e))
-        return rate
-
+    # redefine flush method to calculate rate from metrics
     def flush(self):
-        if self.value is None:
+        # need at least two timestamps to determine rate
+        # is the second one is missing then the first is kept as start value for the subsequent interval
+        if self.start_timestamp is None or self.timestamp is None:
             return []
 
-        envelope = self.measurement(self.value, self.timestamp)
+        delta_t = self.timestamp - self.start_timestamp
+        delta_v = self.value - self.start_value
+        try:
+            rate = delta_v / float(delta_t)
+        except ZeroDivisionError:
+            log.warning('Conflicting values reported for metric %s with dimensions %s at time %d: (%f, %f)', self.metric['name'],
+                        self.metric['dimensions'], self.timestamp, self.start_value, self.value)
+
+            # skip this measurement, but keep value for next cycle
+            self.start_value = self.value
+            return []
+
+        # make it start value for next interval (even if it is None!)
+        self.start_value = self.value
+        self.start_timestamp = self.timestamp
+
+        envelope = self.measurement(rate, self.timestamp)
+        self.timestamp = None
         self.value = None
         return [envelope]
