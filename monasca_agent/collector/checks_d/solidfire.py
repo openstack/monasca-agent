@@ -43,7 +43,7 @@ class SolidFire(checks.AgentCheck):
         data.update(self._get_cluster_capacity())
 
         # Dump data upstream.
-        for key, value in data.iteritems():
+        for key, value in data.items():
             if data[key] is None:
                 continue
             self.gauge(key, value, dimensions)

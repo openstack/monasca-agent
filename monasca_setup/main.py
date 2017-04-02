@@ -120,7 +120,7 @@ def base_configuration(args):
     if args.dimensions:
         dimensions.update(dict(item.strip().split(":") for item in args.dimensions.split(",")))
 
-    args.dimensions = dict((name, value) for (name, value) in dimensions.iteritems())
+    args.dimensions = dict((name, value) for (name, value) in dimensions.items())
     write_template(os.path.join(args.template_dir, 'agent.yaml.template'),
                    os.path.join(args.config_dir, 'agent.yaml'),
                    {'args': args, 'hostname': socket.getfqdn()},
@@ -142,7 +142,7 @@ def modify_config(args, detected_config):
     """
     modified_config = False
 
-    for detection_plugin_name, new_config in detected_config.iteritems():
+    for detection_plugin_name, new_config in detected_config.items():
         if args.overwrite:
             modified_config = True
             if args.dry_run:

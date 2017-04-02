@@ -51,7 +51,7 @@ class KafkaCheck(checks.AgentCheck):
         consumer_groups = dict()
 
         try:
-            for group, topics in raw_val.iteritems():
+            for group, topics in raw_val.items():
                 assert isinstance(group, basestring)
                 if isinstance(topics, dict):
                     self.log.info("Found old config format, discarding partition list")
@@ -68,7 +68,7 @@ class KafkaCheck(checks.AgentCheck):
         # Query Kafka for consumer offsets
         consumer_offsets = {}
         topic_partitions = collections.defaultdict(set)
-        for consumer_group, topics in consumer_groups.iteritems():
+        for consumer_group, topics in consumer_groups.items():
             for topic in topics:
                 kafka_consumer = None
                 try:
@@ -99,7 +99,7 @@ class KafkaCheck(checks.AgentCheck):
         # Query Kafka for the broker offsets, done in a separate loop so only one query is done
         # per topic/partition even if multiple consumer groups watch the same topic
         broker_offsets = {}
-        for topic, partitions in topic_partitions.iteritems():
+        for topic, partitions in topic_partitions.items():
             offset_responses = []
             for p in partitions:
                 try:
@@ -131,7 +131,7 @@ class KafkaCheck(checks.AgentCheck):
         # Report the broker data if full output
         if full_output:
             broker_dimensions = dimensions.copy()
-            for (topic, partition), broker_offset in broker_offsets.iteritems():
+            for (topic, partition), broker_offset in broker_offsets.items():
                 broker_dimensions.update({'topic': topic, 'partition': str(partition)})
                 broker_offset = broker_offsets.get((topic, partition))
                 self.gauge('kafka.broker_offset', broker_offset,
@@ -139,9 +139,9 @@ class KafkaCheck(checks.AgentCheck):
 
         # Report the consumer data
         consumer_dimensions = dimensions.copy()
-        for (consumer_group, topic), offsets in consumer_offsets.iteritems():
+        for (consumer_group, topic), offsets in consumer_offsets.items():
             if per_partition:
-                for partition, consumer_offset in offsets.iteritems():
+                for partition, consumer_offset in offsets.items():
                     # Get the broker offset
                     broker_offset = broker_offsets.get((topic, partition))
                     # Report the consumer offset and lag
@@ -155,7 +155,7 @@ class KafkaCheck(checks.AgentCheck):
             else:
                 consumer_dimensions.update({'topic': topic, 'consumer_group': consumer_group})
                 total_lag = 0
-                for partition, consumer_offset in offsets.iteritems():
+                for partition, consumer_offset in offsets.items():
                     broker_offset = broker_offsets.get((topic, partition))
                     total_lag += broker_offset - consumer_offset
 

@@ -272,7 +272,7 @@ def main():
             print("#" * 80)
             print("\n")
             print("You have to specify one of the following commands:")
-            for command, desc in jmxfetch.JMX_LIST_COMMANDS.iteritems():
+            for command, desc in jmxfetch.JMX_LIST_COMMANDS.items():
                 print("      - %s [OPTIONAL: LIST OF CHECKS]: %s" % (command, desc))
             print("Example: sudo /etc/init.d/monasca-agent jmx list_matching_attributes tomcat jmx solr")
             print("\n")

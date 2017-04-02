@@ -93,7 +93,7 @@ class CadvisorHost(AgentCheck):
 
     def _parse_memory(self, memory_data, dimensions):
         memory_metrics = METRICS['memory_metrics']
-        for cadvisor_key, (metric_name, metric_types, metric_units) in six.iteritems(memory_metrics):
+        for cadvisor_key, (metric_name, metric_types, metric_units) in memory_metrics.items():
             if cadvisor_key in memory_data:
                 self._send_metrics("mem." + metric_name, memory_data[cadvisor_key], dimensions,
                                    metric_types, metric_units)
@@ -103,7 +103,7 @@ class CadvisorHost(AgentCheck):
         for filesystem in filesystem_data:
             file_dimensions = dimensions.copy()
             file_dimensions['device'] = filesystem['device']
-            for cadvisor_key, (metric_name, metric_types, metric_units) in six.iteritems(filesystem_metrics):
+            for cadvisor_key, (metric_name, metric_types, metric_units) in filesystem_metrics.items():
                 if cadvisor_key in filesystem:
                     self._send_metrics("fs." + metric_name, filesystem[cadvisor_key], file_dimensions,
                                        metric_types, metric_units)
@@ -114,7 +114,7 @@ class CadvisorHost(AgentCheck):
         for interface in network_interfaces:
             network_dimensions = dimensions.copy()
             network_dimensions['interface'] = interface['name']
-            for cadvisor_key, (metric_name, metric_types, metric_units) in six.iteritems(network_metrics):
+            for cadvisor_key, (metric_name, metric_types, metric_units) in network_metrics.items():
                 if cadvisor_key in interface:
                     self._send_metrics("net." + metric_name, interface[cadvisor_key], network_dimensions,
                                        metric_types, metric_units)
@@ -122,14 +122,14 @@ class CadvisorHost(AgentCheck):
     def _parse_cpu(self, cpu_data, dimensions):
         cpu_metrics = METRICS['cpu_metrics']
         cpu_usage = cpu_data['usage']
-        for cadvisor_key, (metric_name, metric_types, metric_units) in six.iteritems(cpu_metrics):
+        for cadvisor_key, (metric_name, metric_types, metric_units) in cpu_metrics.items():
             if cadvisor_key in cpu_usage:
                 # Convert nanoseconds to seconds
                 cpu_usage_sec = cpu_usage[cadvisor_key] / 1000000000.0
                 self._send_metrics("cpu." + metric_name, cpu_usage_sec, dimensions, metric_types, metric_units)
 
     def _parse_send_metrics(self, metrics, dimensions):
-        for host, cadvisor_metrics in six.iteritems(metrics):
+        for host, cadvisor_metrics in metrics.items():
             host_dimensions = dimensions.copy()
             # Grab first set of metrics from return data
             cadvisor_metrics = cadvisor_metrics[0]

@@ -145,7 +145,7 @@ class Vertica(checks.AgentCheck):
         results = self._results_to_dict(results)
         resource_metric_name = 'vertica.resource.'
         resource_metrics = results[0]
-        for metric_name, metric_value in resource_metrics.iteritems():
+        for metric_name, metric_value in resource_metrics.items():
             if metric_name in ['resource_rejections', 'disk_space_rejections']:
                 self.rate(resource_metric_name + metric_name, int(metric_value), dimensions=dimensions)
             else:

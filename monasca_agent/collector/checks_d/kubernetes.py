@@ -317,7 +317,7 @@ class Kubernetes(checks.AgentCheck):
 
     def _parse_memory(self, memory_data, container_dimensions, pod_key, pod_map):
         memory_metrics = CADVISOR_METRICS['memory_metrics']
-        for cadvisor_key, metric_name in six.iteritems(memory_metrics):
+        for cadvisor_key, metric_name in memory_metrics.items():
             if cadvisor_key in memory_data:
                 metric_value = memory_data[cadvisor_key]
                 if self.report_container_metrics:
@@ -334,7 +334,7 @@ class Kubernetes(checks.AgentCheck):
         for filesystem in filesystem_data:
             file_dimensions = container_dimensions.copy()
             file_dimensions['device'] = filesystem['device']
-            for cadvisor_key, metric_name in six.iteritems(filesystem_metrics):
+            for cadvisor_key, metric_name in filesystem_metrics.items():
                 if cadvisor_key in filesystem:
                     self._send_metrics("container." + metric_name, filesystem[cadvisor_key], file_dimensions,
                                        METRIC_TYPES_UNITS[metric_name][0],
@@ -347,7 +347,7 @@ class Kubernetes(checks.AgentCheck):
             network_dimensions = container_dimensions.copy()
             network_interface = interface['name']
             network_dimensions['interface'] = network_interface
-            for cadvisor_key, metric_name in six.iteritems(network_metrics):
+            for cadvisor_key, metric_name in network_metrics.items():
                 if cadvisor_key in interface:
                     metric_value = interface[cadvisor_key]
                     if self.report_container_metrics:
@@ -368,7 +368,7 @@ class Kubernetes(checks.AgentCheck):
     def _parse_cpu(self, cpu_data, container_dimensions, pod_key, pod_metrics):
         cpu_metrics = CADVISOR_METRICS['cpu_metrics']
         cpu_usage = cpu_data['usage']
-        for cadvisor_key, metric_name in six.iteritems(cpu_metrics):
+        for cadvisor_key, metric_name in cpu_metrics.items():
             if cadvisor_key in cpu_usage:
                 # convert nanoseconds to seconds
                 cpu_usage_sec = cpu_usage[cadvisor_key] / 1000000000
@@ -434,7 +434,7 @@ class Kubernetes(checks.AgentCheck):
         pod_metrics = {}
         # network pod metrics
         pod_network_metrics = {}
-        for container, cadvisor_metrics in six.iteritems(containers_metrics):
+        for container, cadvisor_metrics in containers_metrics.items():
             pod_key, container_dimensions = self._get_container_dimensions(container,
                                                                            dimensions,
                                                                            containers_spec[container],
@@ -455,20 +455,20 @@ class Kubernetes(checks.AgentCheck):
         self.send_network_pod_metrics(pod_network_metrics, pod_dimension_map)
 
     def send_pod_metrics(self, pod_metrics_map, pod_dimension_map):
-        for pod_key, pod_metrics in six.iteritems(pod_metrics_map):
+        for pod_key, pod_metrics in pod_metrics_map.items():
             pod_dimensions = pod_dimension_map[pod_key]
-            for metric_name, metric_value in six.iteritems(pod_metrics):
+            for metric_name, metric_value in pod_metrics.items():
                 self._send_metrics("pod." + metric_name, metric_value, pod_dimensions,
                                    METRIC_TYPES_UNITS[metric_name][0],
                                    METRIC_TYPES_UNITS[metric_name][1])
 
     def send_network_pod_metrics(self, pod_network_metrics, pod_dimension_map):
-        for pod_key, network_interfaces in six.iteritems(pod_network_metrics):
+        for pod_key, network_interfaces in pod_network_metrics.items():
             pod_dimensions = pod_dimension_map[pod_key]
-            for network_interface, metrics in six.iteritems(network_interfaces):
+            for network_interface, metrics in network_interfaces.items():
                 pod_network_dimensions = pod_dimensions.copy()
                 pod_network_dimensions['interface'] = network_interface
-                for metric_name, metric_value in six.iteritems(metrics):
+                for metric_name, metric_value in metrics.items():
                     self._send_metrics("pod." + metric_name, metric_value, pod_network_dimensions,
                                        METRIC_TYPES_UNITS[metric_name][0],
                                        METRIC_TYPES_UNITS[metric_name][1])

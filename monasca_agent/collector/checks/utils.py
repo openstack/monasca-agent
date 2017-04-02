@@ -260,7 +260,7 @@ class DynamicCheckHelper(object):
         :return: dictionary mapping source labels to applicable DimMapping objects
         """
         result = {}
-        for dim, spec in config.get('dimensions', {}).iteritems():
+        for dim, spec in config.get('dimensions', {}).items():
             if isinstance(spec, dict):
                 label = spec.get('source_key', dim)
                 sepa = spec.get('separator', '-')
@@ -310,7 +310,7 @@ class DynamicCheckHelper(object):
                     self._grp_metric_map[iname] = {}
                     self._grp_metric_cache[iname] = {}
                     self._grp_dimension_map[iname] = {}
-                    for grp, gspec in groups.iteritems():
+                    for grp, gspec in groups.items():
                         self._grp_metric_map[iname][grp] = gspec
                         self._grp_metric_cache[iname][grp] = {}
                         self._grp_dimension_map[iname][grp] = DynamicCheckHelper._build_dimension_map(gspec)
@@ -498,7 +498,7 @@ class DynamicCheckHelper(object):
         else:
             ext_labels = labels.copy()
 
-        for element, child in metric_dict.iteritems():
+        for element, child in metric_dict.items():
             # if child is a dictionary, then recurse
             if isinstance(child, dict) and curr_depth < max_depth:
                 self.push_metric_dict(instance, child, ext_labels, group, timestamp, fixed_dimensions,
@@ -542,7 +542,7 @@ class DynamicCheckHelper(object):
         """
         ext_labels = None
         # collect additional dimensions first from non-metrics
-        for element, child in metric_dict.iteritems():
+        for element, child in metric_dict.items():
             if isinstance(child, str) and len(self._get_mappings(instance_name, group, element)) > 0:
                 if not ext_labels:
                     ext_labels = labels.copy()
@@ -628,7 +628,7 @@ class DynamicCheckHelper(object):
         metric_list.extend(metric_map.get(DynamicCheckHelper.COUNTERS_KEY, []))
         # collect group specific metrics
         grp_metric_map = self._grp_metric_map.get(iname, {})
-        for gname, gmmap in grp_metric_map.iteritems():
+        for gname, gmmap in grp_metric_map.items():
             metric_list.extend(gmmap.get(DynamicCheckHelper.GAUGES_KEY, []))
             metric_list.extend(gmmap.get(DynamicCheckHelper.RATES_KEY, []))
             metric_list.extend(gmmap.get(DynamicCheckHelper.COUNTERS_KEY, []))
@@ -645,7 +645,7 @@ class DynamicCheckHelper(object):
         """
         dims = default_dimensions.copy()
         #  map all specified dimension all keys
-        for labelname, labelvalue in labels.iteritems():
+        for labelname, labelvalue in labels.items():
             mapping_arr = self._get_mappings(instance_name, group, labelname)
 
             target_dim = None

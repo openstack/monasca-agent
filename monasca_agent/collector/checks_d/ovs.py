@@ -84,7 +84,7 @@ class OvsCheck(AgentCheck):
 
             if ifx not in ctr_cache:
                 ctr_cache[ifx] = {}
-            for metric_name, idx in self._get_metrics_map(measure).iteritems():
+            for metric_name, idx in self._get_metrics_map(measure).items():
                 interface_stats_key = self._get_interface_stats_key(idx, metric_name, measure, ifx)
                 statistics_dict = interface_data[ifx]['statistics']
                 value = statistics_dict[interface_stats_key] if interface_stats_key in statistics_dict else 0
@@ -136,7 +136,7 @@ class OvsCheck(AgentCheck):
         tried_one_update = False
         host_router_max_bw = 0
         active_routers = 0
-        for ifx, value in ifx_deltas.iteritems():
+        for ifx, value in ifx_deltas.items():
 
             port_uuid = value['port_uuid']
             if port_uuid not in port_cache and not tried_one_update:
@@ -187,7 +187,7 @@ class OvsCheck(AgentCheck):
             if tenant_name:
                 ops_dimensions.update({'tenant_name': tenant_name})
 
-            for metric_name, idx in self._get_metrics_map(measure).iteritems():
+            for metric_name, idx in self._get_metrics_map(measure).items():
                 # POST to customer project
                 interface_stats_key = self._get_interface_stats_key(idx, metric_name, measure, ifx)
                 if interface_stats_key not in value:

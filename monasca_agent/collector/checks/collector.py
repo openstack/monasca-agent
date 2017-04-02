@@ -127,7 +127,7 @@ class Collector(util.Dimensions):
         collect_stats = []
         dimensions = {'component': 'monasca-agent', 'service': 'monitoring'}
         # Add in metrics on the collector run
-        for name, value in self.collection_metrics.iteritems():
+        for name, value in self.collection_metrics.items():
             metric = metrics.Metric(name,
                                     self._set_dimensions(dimensions),
                                     tenant=None)

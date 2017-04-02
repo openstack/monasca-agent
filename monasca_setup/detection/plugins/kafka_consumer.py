@@ -238,7 +238,7 @@ class Kafka(Plugin):
             # If it did, delete it after use so it doesn't become a consumer group
             if 'service_name' in self.args:
                 service_name += '_' + str(self.args.pop('service_name'))
-            for key, value in self.args.iteritems():
+            for key, value in self.args.items():
                 value_dict = {topic: [] for topic in value.split('/')}
                 consumers[key] = value_dict
             self.config['kafka_consumer'] = {'init_config': None,

@@ -142,8 +142,8 @@ class RabbitMQ(checks.AgentCheck):
             },
         }
 
-        for object_type, filters in specified.iteritems():
-            for filter_type, filter_objects in filters.iteritems():
+        for object_type, filters in specified.items():
+            for filter_type, filter_objects in filters.items():
                 if type(filter_objects) != list:
                     raise TypeError(
                         "{0} / {0}_regexes parameter must be a list".format(object_type))

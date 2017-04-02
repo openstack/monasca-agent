@@ -180,6 +180,6 @@ class ProcessCheck(checks.AgentCheck):
 
         if instance.get('detailed', False):
             metrics = self.get_process_metrics(pids, name)
-            for metric_name, metric_value in metrics.iteritems():
+            for metric_name, metric_value in metrics.items():
                 if metric_value is not None:
                     self.gauge(metric_name, metric_value, dimensions=dimensions)

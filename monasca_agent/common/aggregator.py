@@ -99,7 +99,7 @@ class MetricsAggregator(object):
             msg = "Too many valueMeta entries {0}, limit is {1}: {2} -> {3} valueMeta {4}"
             log.error(msg.format(len(value_meta), VALUE_META_MAX_NUMBER, name, dimensions, value_meta))
             return False
-        for key, value in value_meta.iteritems():
+        for key, value in value_meta.items():
             if not key:
                 log.error("valueMeta name cannot be empty: {0} -> {1}".format(name, dimensions))
                 return False
@@ -123,7 +123,7 @@ class MetricsAggregator(object):
                       delegated_tenant=None, hostname=None, device_name=None,
                       value_meta=None, timestamp=None, sample_rate=1):
         if dimensions:
-            for k, v in dimensions.iteritems():
+            for k, v in dimensions.items():
                 if not isinstance(k, (str, unicode)):
                     log.error("invalid dimension key {0} must be a string: {1} -> {2}".format(k, name, dimensions))
                     raise InvalidDimensionKey

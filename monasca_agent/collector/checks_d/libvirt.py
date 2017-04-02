@@ -598,7 +598,7 @@ class LibvirtCheck(AgentCheck):
 
     def prepare_run(self):
         """Check if it is time for measurements to be collected"""
-        for name, collection in self._collect_intervals.iteritems():
+        for name, collection in self._collect_intervals.items():
             if collection['period'] <= 0:
                 continue
 

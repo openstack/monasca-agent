@@ -183,7 +183,7 @@ class MySql(checks.AgentCheck):
                                dimensions=dimensions)
 
     def _rate_or_gauge_statuses(self, statuses, dbResults, dimensions):
-        for status, metric in statuses.iteritems():
+        for status, metric in statuses.items():
             metric_name, metric_type = metric
             value = self._collect_scalar(status, dbResults)
             if value is not None:

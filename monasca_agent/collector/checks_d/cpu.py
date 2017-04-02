@@ -51,7 +51,7 @@ class Cpu(checks.AgentCheck):
         # Call lscpu command to get cpu frequency
         self._add_cpu_freq(data)
 
-        for key, value in data.iteritems():
+        for key, value in data.items():
             if data[key] is None or instance.get('cpu_idle_only') and 'idle_perc' not in key:
                 continue
             self.gauge(key, value, dimensions)

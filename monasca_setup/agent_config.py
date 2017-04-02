@@ -42,7 +42,7 @@ def deep_merge(adict, other):
     """A recursive merge of two dictionaries including combining of any lists within the data structure.
 
     """
-    for key, value in other.iteritems():
+    for key, value in other.items():
         if key in adict:
             if isinstance(adict[key], dict) and isinstance(value, dict):
                 deep_merge(adict[key], value)

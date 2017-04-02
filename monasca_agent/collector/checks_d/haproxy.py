@@ -153,7 +153,7 @@ class HAProxy(AgentCheck):
     def _process_status_metric(self, hosts_statuses):
         agg_statuses = defaultdict(lambda: {'available': 0, 'unavailable': 0})
         status_dimensions = self.dimensions.copy()
-        for (service, status), count in hosts_statuses.iteritems():
+        for (service, status), count in hosts_statuses.items():
             status = status.lower()
 
             status_dimensions.update({'status': status, 'service': service})
@@ -165,7 +165,7 @@ class HAProxy(AgentCheck):
                 agg_statuses[service]['unavailable'] += count
 
         for service in agg_statuses:
-            for status, count in agg_statuses[service].iteritems():
+            for status, count in agg_statuses[service].items():
                 status_dimensions.update({'status': status, 'service': service})
                 self.gauge("haproxy.count_per_status", count, dimensions=status_dimensions)
 
