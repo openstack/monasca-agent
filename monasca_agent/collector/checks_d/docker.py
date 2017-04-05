@@ -67,7 +67,7 @@ class Docker(checks.AgentCheck):
             try:
                 container_dimensions = dimensions.copy()
                 container_id = container['Id']
-                container['name'] = self._get_container_name(container['Names'], container_id)
+                container_dimensions['name'] = self._get_container_name(container['Names'], container_id)
                 container_dimensions['image'] = container['Image']
                 container_labels = container['Labels']
                 if add_kubernetes_dimensions:
