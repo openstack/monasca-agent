@@ -48,6 +48,8 @@
   - [HTTP (endpoint status)](#http-endpoint-status)
   - [HTTP Metrics](#http-metrics)
   - [IIS](#iis)
+  - [InfluxDB](#influxdb)
+  - [InfluxDB Relay](#influxdb-relay)
   - [Jenkins](#jenkins)
   - [JsonPlugin](#jsonplugin)
     - [Simple Reporting](#simple-reporting)
@@ -1158,13 +1160,39 @@ Auto-detection for InfluxDB plugin comes with two checks enabled:
 ```python
 {
     'name': 'influxdb',
-    'url': '127.0.0.1:8086/ping'
+    'url': 'http://127.0.0.1:8086/ping'
 }
 ```
 
     InfluxDB does expose internal metrics on its own, however
     they are subject to extend influxdb auto-detection capabilities
     in future
+
+## InfluxDB-Relay
+**InfluxDB-Relay** does not expose any internal metrics on its own, however
+auto-detection plugin configures two checks on behalf of it:
+
+
+* process monitoring with following configuration
+```python
+{
+    'detailed': True,
+    'search_string': ['influxdb-relay'],
+    'exact_match': False,
+    'name': 'influxdb-relay',
+    'dimensions': {
+        'component': 'influxdb-relay',
+        'service': 'influxdb'
+    }
+}
+```
+* http_check monitoring
+```python
+{
+    'name': 'influxdb-relay',
+    'url': 'http://127.0.0.1:9096/ping'
+}
+```
 
 ## IIS
 See [the example configuration](https://github.com/openstack/monasca-agent/blob/master/conf.d/iis.yaml.example) for how to configure the IIS plugin.
