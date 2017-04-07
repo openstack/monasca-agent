@@ -1137,6 +1137,35 @@ instances:
               type: gauge
 ```
 
+## InfluxDB
+
+Auto-detection for InfluxDB plugin comes with two checks enabled:
+
+* process monitoring with following configuration
+```python
+{
+    'detailed': True,
+    'search_string': ['influxd'],
+    'exact_match': False,
+    'name': 'influxd',
+    'dimensions': {
+        'component': 'influxdb',
+        'service': 'influxdb'
+    }
+}
+```
+* http_check monitoring
+```python
+{
+    'name': 'influxdb',
+    'url': '127.0.0.1:8086/ping'
+}
+```
+
+    InfluxDB does expose internal metrics on its own, however
+    they are subject to extend influxdb auto-detection capabilities
+    in future
+
 ## IIS
 See [the example configuration](https://github.com/openstack/monasca-agent/blob/master/conf.d/iis.yaml.example) for how to configure the IIS plugin.
 

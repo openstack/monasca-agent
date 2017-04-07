@@ -321,26 +321,6 @@ def dropwizard_metrics(service, component, url, whitelist):
     return config
 
 
-class MonInfluxDB(monasca_setup.detection.Plugin):
-    """Detect InfluxDB and setup some simple checks."""
-
-    def _detect(self):
-        """Run detection, set self.available True if the service is detected.
-        """
-
-        if find_process_name('influxd') is not None:
-            self.available = True
-
-    def build_config(self):
-        """Build the config as a Plugins object and return."""
-        log.info("\tEnabling the Monasca InfluxDB check")
-        return watch_process(['influxd'], 'monitoring', 'influxd',
-                             exact_match=False)
-
-    def dependencies_installed(self):
-        return True
-
-
 class _DropwizardJavaHelper(object):
     """Mixing to locate configuration file for DropWizard app
 
