@@ -20,31 +20,45 @@ import psutil
 
 from monasca_setup.detection.plugins import mon
 
-_PYTHON_CMD_API = ('/opt/monasca-api/bin/gunicorn'
-                   ' -n monasca-api'
-                   ' -k eventlet --worker-connections=2000 '
-                   '--backlog=1000 '
-                   '--paste /etc/monasca/api-config.ini -w 9')
-_JAVA_CMD_API = ('/usr/bin/java '
-                 '-Dfile.encoding=UTF-8 -Xmx128m '
-                 '-cp /opt/monasca/monasca-api.jar '
-                 'monasca.api.MonApiApplication server '
-                 '/etc/monasca/api-config.yml')
-_PYTHON_WSGI_CMD_API = ('/usr/sbin/httpd-prefork (wsgi:monasca-api)'
-                        '-f /etc/apache2/httpd.conf'
-                        '-DSYSCONFIG -DSYSTEMD'
-                        '-C PidFile /var/run/httpd.pid'
-                        '-C Include /etc/apache2/sysconfig.d/'
-                        '-DFOREGROUND -k start')
 
-_PYTHON_CMD_PERSISTER = ('/opt/monasca-persister/bin/python '
-                         '/opt/monasca-persister/lib/python2.7/'
-                         'site-packages/monasca_persister/persister.py'
-                         ' --config-file /etc/monasca/persister.conf')
-_JAVA_CMD_PERSISTER = ('/usr/bin/java -Dfile.encoding=UTF-8 -Xmx128m '
-                       '-cp /opt/monasca/monasca-persister.jar '
-                       'monasca.persister.PersisterApplication server '
-                       '/etc/monasca/persister-config.yml')
+def _mock_python_cmd_api(paste_flag='--paste',
+                         paste_file='/etc/monasca/api-config.ini'):
+    return (('/opt/monasca-api/bin/gunicorn'
+             ' -n monasca-api'
+             ' -k eventlet --worker-connections=2000'
+             ' --backlog=1000'
+             ' %s %s -w 9') % (paste_flag, paste_file)).split(' ')
+
+
+def _mock_java_cmd_api(config_file='/etc/monasca/api-config.yml'):
+    return (('/usr/bin/java'
+             ' -Dfile.encoding=UTF-8 -Xmx128m '
+             ' -cp /opt/monasca/monasca-api.jar '
+             ' monasca.api.MonApiApplication server '
+             ' %s') % config_file).split(' ')
+
+
+def _mock_java_persister(config_file='/etc/monasca/persister-config.yml'):
+    return (('/usr/bin/java -Dfile.encoding=UTF-8 -Xmx128m '
+             ' -cp /opt/monasca/monasca-persister.jar '
+             ' monasca.persister.PersisterApplication server '
+             ' %s') % config_file).split(' ')
+
+_PYTHON_CMD_API = _mock_python_cmd_api()
+_JAVA_CMD_API = _mock_java_cmd_api()
+_JAVA_CMD_PERSISTER = _mock_java_persister()
+
+_PYTHON_WSGI_CMD_API = ('/usr/sbin/httpd-prefork (wsgi:monasca-api)'
+                        ' -f /etc/apache2/httpd.conf'
+                        ' -DSYSCONFIG -DSYSTEMD'
+                        ' -C PidFile /var/run/httpd.pid'
+                        ' -C Include /etc/apache2/sysconfig.d/'
+                        ' -DFOREGROUND -k start').split(' ')
+
+_PYTHON_CMD_PERSISTER = ('/opt/monasca-persister/bin/python'
+                         ' /opt/monasca-persister/lib/python2.7/'
+                         ' site-packages/monasca_persister/persister.py'
+                         ' --config-file /etc/monasca/persister.conf').split(' ')
 
 _JAVA_YML_CFG_BIT_API = '''
 hibernate:
@@ -146,18 +160,18 @@ class TestMonPersisterDetectionPlugin(unittest.TestCase):
         'monasca_setup.detection.plugins.mon._MonPersisterJavaHelper')
     def test_should_use_java_helper_if_persister_is_java(self,
                                                               impl_helper):
-        FakeProcesses.cmdLine = [_JAVA_CMD_PERSISTER]
+        FakeProcesses.cmdLine = _JAVA_CMD_PERSISTER
 
         self._mon_p._init_impl_helper = iih = mock.Mock(
             return_value=impl_helper)
 
         self._detect()
 
-        iih.assert_called_once_with('java')
+        iih.assert_called_once_with(_JAVA_CMD_PERSISTER, 'java')
         self.assertTrue(impl_helper.load_configuration.called_once)
 
     def test_should_detect_java_persister_has_config(self):
-        FakeProcesses.cmdLine = [_JAVA_CMD_PERSISTER]
+        FakeProcesses.cmdLine = _JAVA_CMD_PERSISTER
 
         yml_cfg = _JAVA_YML_CFG_BIT_PERSISTER.format(
             ah_threads=5,
@@ -176,6 +190,26 @@ class TestMonPersisterDetectionPlugin(unittest.TestCase):
 
         self.assertTrue(self._mon_p.available)
 
+    def test_should_use_config_file_from_cli_for_java(self):
+        extensions = 'yml', 'yaml'
+        for ext in extensions:
+            config_file = '/tmp/monasca-persister-abc.%s' % ext
+            cmdline = _mock_java_persister(config_file)
+
+            FakeProcesses.cmdLine = cmdline
+
+            helper = mon._MonPersisterJavaHelper(cmdline=cmdline)
+            helper._read_config_file = rcf = mock.Mock()
+
+            self._mon_p._init_impl_helper = iih = mock.Mock(
+                    return_value=helper
+            )
+            self._detect()
+
+            iih.assert_called_once_with(cmdline, 'java')
+            rcf.assert_called_once_with(config_file)
+            self.assertTrue(iih.get_bound_port.called_once)
+
     @mock.patch('six.moves.configparser.RawConfigParser')
     def test_should_detect_python_persister_has_config(self, _):
         # NOTE(trebskit) this cannot use mocking the read of the file
@@ -186,14 +220,14 @@ class TestMonPersisterDetectionPlugin(unittest.TestCase):
         #
         # to sum it up => ;-(((
 
-        FakeProcesses.cmdLine = [_PYTHON_CMD_PERSISTER]
+        FakeProcesses.cmdLine = _PYTHON_CMD_PERSISTER
         self._mon_p._init_impl_helper = mock.Mock(return_value=mock.Mock())
 
         self._detect()
         self.assertTrue(self._mon_p.available)
 
     def test_build_java_config(self):
-        FakeProcesses.cmdLine = [_JAVA_CMD_PERSISTER]
+        FakeProcesses.cmdLine = _JAVA_CMD_PERSISTER
 
         # note(trebskit) this is always set to 2
         jvm_metrics_count = 2
@@ -281,7 +315,7 @@ class TestMonPersisterDetectionPlugin(unittest.TestCase):
         }, process_instance['dimensions'])
 
     def test_build_python_config(self):
-        FakeProcesses.cmdLine = [_PYTHON_CMD_PERSISTER]
+        FakeProcesses.cmdLine = _PYTHON_CMD_PERSISTER
         self._detect()
         conf = self._build_config()
 
@@ -326,16 +360,56 @@ class TestMonAPIDetectionPlugin(unittest.TestCase):
 
     @mock.patch('monasca_setup.detection.plugins.mon._MonAPIPythonHelper')
     def test_should_use_python_helper_if_api_is_python(self, impl_helper):
-        FakeProcesses.cmdLine = [_PYTHON_CMD_API]
+        FakeProcesses.cmdLine = _PYTHON_CMD_API
 
         self._mon_api._init_impl_helper = iih = mock.Mock(
             return_value=impl_helper)
 
         self._detect()
 
-        iih.assert_called_once_with('python')
+        iih.assert_called_once_with(mock.ANY, 'python')
         self.assertTrue(impl_helper.load_configuration.called_once)
         self.assertTrue(impl_helper.get_bound_port.called_once)
+
+    def test_should_use_config_file_from_args_for_python(self):
+        FakeProcesses.cmdLine = _PYTHON_CMD_API
+        custom_conf_file = '/tmp/mon.ini'
+        plugin_args = {'paste-file': custom_conf_file}
+
+        helper = mon._MonAPIPythonHelper(args=plugin_args)
+        helper._read_config_file = rcf = mock.Mock()
+        helper.get_bound_port = mock.Mock(return_value=123)
+
+        self._mon_api._init_impl_helper = iih = mock.Mock(
+                return_value=helper
+        )
+        self._detect(args=plugin_args)
+
+        iih.assert_called_once_with(mock.ANY, 'python')
+        rcf.assert_called_once_with(custom_conf_file)
+        self.assertTrue(iih.get_bound_port.called_once)
+
+    def test_should_use_config_file_from_cmdline_for_python(self):
+        paste_flags = '--paste', '--paster'
+        for pf in paste_flags:
+            paste_file = '/tmp/monasca-api-paste.ini'
+            cmdline = _mock_python_cmd_api(paste_flag=pf,
+                                           paste_file=paste_file)
+
+            FakeProcesses.cmdLine = cmdline
+
+            helper = mon._MonAPIPythonHelper(cmdline=cmdline)
+            helper._read_config_file = rcf = mock.Mock()
+            helper.get_bound_port = mock.Mock(return_value=123)
+
+            self._mon_api._init_impl_helper = iih = mock.Mock(
+                    return_value=helper
+            )
+            self._detect()
+
+            iih.assert_called_once_with(cmdline, 'python')
+            rcf.assert_called_once_with(paste_file)
+            self.assertTrue(iih.get_bound_port.called_once)
 
     @mock.patch('monasca_setup.detection.plugins.mon._MonAPIPythonHelper')
     def test_should_use_python_helper_if_api_is_wsgi(self, impl_helper):
@@ -344,22 +418,43 @@ class TestMonAPIDetectionPlugin(unittest.TestCase):
 
         self._detect([FakeWSGIWorkers([_PYTHON_WSGI_CMD_API])])
 
-        iih.assert_called_once_with('python')
+        iih.assert_called_once_with(mock.ANY, 'python')
         self.assertTrue(impl_helper.load_configuration.called_once)
         self.assertTrue(impl_helper.get_bound_port.called_once)
 
     @mock.patch('monasca_setup.detection.plugins.mon._MonAPIJavaHelper')
     def test_should_use_java_helper_if_api_is_java(self, impl_helper):
-        FakeProcesses.cmdLine = [_JAVA_CMD_API]
+        FakeProcesses.cmdLine = _JAVA_CMD_API
 
         self._mon_api._init_impl_helper = iih = mock.Mock(
             return_value=impl_helper)
 
         self._detect()
 
-        iih.assert_called_once_with('java')
+        iih.assert_called_once_with(mock.ANY, 'java')
         self.assertTrue(impl_helper.load_configuration.called_once)
         self.assertTrue(impl_helper.get_bound_port.called_once)
+
+    def test_should_use_config_file_from_cli_for_java(self):
+        extensions = 'yml', 'yaml'
+        for ext in extensions:
+            config_file = '/tmp/monasca-api-foo-bar.%s' % ext
+            cmdline = _mock_java_cmd_api(config_file)
+
+            FakeProcesses.cmdLine = cmdline
+
+            helper = mon._MonAPIJavaHelper(cmdline=cmdline)
+            helper._read_config_file = rcf = mock.Mock()
+            helper.get_bound_port = mock.Mock(return_value=123)
+
+            self._mon_api._init_impl_helper = iih = mock.Mock(
+                    return_value=helper
+            )
+            self._detect()
+
+            iih.assert_called_once_with(cmdline, 'java')
+            rcf.assert_called_once_with(config_file)
+            self.assertTrue(iih.get_bound_port.called_once)
 
     def test_should_detect_java_api_has_config(self):
         app_port = random.randint(1000, 10000)
@@ -368,7 +463,7 @@ class TestMonAPIDetectionPlugin(unittest.TestCase):
         if admin_port % 2 != 0:
             admin_type += 's'
 
-        FakeProcesses.cmdLine = [_JAVA_CMD_API]
+        FakeProcesses.cmdLine = _JAVA_CMD_API
         FakeProcesses.inetConnections = [FakeInetConnection(app_port)]
 
         yml_cfg = _JAVA_YML_CFG_BIT_API.format(
@@ -392,7 +487,7 @@ class TestMonAPIDetectionPlugin(unittest.TestCase):
         expected_port = 6666
         actual_port = 6666
 
-        FakeProcesses.cmdLine = [_PYTHON_CMD_API]
+        FakeProcesses.cmdLine = _PYTHON_CMD_API
         FakeProcesses.inetConnections = [FakeInetConnection(actual_port)]
 
         # make sure we return the port as we would read from the cfg
@@ -414,7 +509,7 @@ class TestMonAPIDetectionPlugin(unittest.TestCase):
         actual_port = 8070
 
         # assume having python implementation
-        FakeProcesses.cmdLine = [_PYTHON_CMD_API]
+        FakeProcesses.cmdLine = _PYTHON_CMD_API
         FakeProcesses.inetConnections = [FakeInetConnection(actual_port)]
 
         # make sure we return the port as we would read from the cfg
@@ -436,16 +531,16 @@ class TestMonAPIDetectionPlugin(unittest.TestCase):
                                               'be configured.' % expected_port)
 
     def test_build_java_config_no_hibernate(self):
-        self._run_java_build_config(False)
+        self._run_java_build_config(hibernate_enabled=False)
 
     def test_build_java_config_with_hibernate(self):
-        self._run_java_build_config(True)
+        self._run_java_build_config(hibernate_enabled=True)
 
     @mock.patch('six.moves.configparser.RawConfigParser')
     def test_build_python_config(self, rcp):
         expected_port = 8070
 
-        FakeProcesses.cmdLine = [_PYTHON_CMD_API]
+        FakeProcesses.cmdLine = _PYTHON_CMD_API
         FakeProcesses.inetConnections = [FakeInetConnection(expected_port)]
 
         rcp.getint.return_value = expected_port
@@ -466,14 +561,14 @@ class TestMonAPIDetectionPlugin(unittest.TestCase):
             self.assertNotEqual({}, bit)
 
     def _run_java_build_config(self, hibernate_enabled):
-        FakeProcesses.cmdLine = [_JAVA_CMD_API]
+        FakeProcesses.cmdLine = _JAVA_CMD_API
         app_port = random.randint(1000, 10000)
         admin_port = random.randint(1000, 10000)
         admin_type = 'http'
         if admin_port % 2 != 0:
             admin_type += 's'
 
-        FakeProcesses.cmdLine = [_JAVA_CMD_API]
+        FakeProcesses.cmdLine = _JAVA_CMD_API
         FakeProcesses.inetConnections = [FakeInetConnection(app_port)]
 
         # note(trebskit) this is always set to 2
@@ -550,8 +645,9 @@ class TestMonAPIDetectionPlugin(unittest.TestCase):
         self.assertNotEqual({}, conf)
         return conf
 
-    def _detect(self, retval=[FakeProcesses()]):
+    def _detect(self, args=None, retval=[FakeProcesses()]):
         self._mon_api.available = False
+        self.args = args if args else {}
 
         process_iter = mock.patch.object(psutil, 'process_iter',
                                          return_value=retval)

@@ -8,6 +8,7 @@
 """
 
 import logging
+import re
 import yaml
 
 from six.moves import configparser
@@ -126,8 +127,9 @@ class MonAPI(monasca_setup.detection.Plugin):
                 if apache_process:
                     log.info('\tmonasca-api runs under Apache WSGI')
                     api_process = apache_process
-            impl_helper = self._init_impl_helper(impl_lang)
 
+            impl_helper = self._init_impl_helper(api_process.as_dict()['cmdline'],
+                                                 impl_lang)
             impl_helper.load_configuration()
 
             api_port = impl_helper.get_bound_port()
@@ -166,8 +168,7 @@ class MonAPI(monasca_setup.detection.Plugin):
     def dependencies_installed(self):
         return True
 
-    @staticmethod
-    def _init_impl_helper(impl_lang):
+    def _init_impl_helper(self, cmdline, impl_lang):
         """Returns appropriate helper implementation.
 
         :param impl_lang: implementation language, either `java` or `python`
@@ -177,9 +178,9 @@ class MonAPI(monasca_setup.detection.Plugin):
 
         """
         if impl_lang == 'java':
-            return _MonAPIJavaHelper()
+            return _MonAPIJavaHelper(cmdline=cmdline)
         else:
-            return _MonAPIPythonHelper()
+            return _MonAPIPythonHelper(cmdline=cmdline, args=self.args)
 
 
 class MonNotification(monasca_setup.detection.Plugin):
@@ -216,7 +217,10 @@ class MonPersister(monasca_setup.detection.Plugin):
 
         if process_found:
             impl_lang = _get_impl_lang(p_process)
-            impl_helper = self._init_impl_helper(impl_lang)
+            impl_helper = self._init_impl_helper(
+                p_process.as_dict()['cmdline'],
+                impl_lang
+            )
 
             if impl_helper is not None:
                 impl_helper.load_configuration()
@@ -252,7 +256,7 @@ class MonPersister(monasca_setup.detection.Plugin):
         return True
 
     @staticmethod
-    def _init_impl_helper(impl_lang):
+    def _init_impl_helper(cmdline, impl_lang):
         """Returns appropriate helper implementation.
 
         Note:
@@ -267,7 +271,7 @@ class MonPersister(monasca_setup.detection.Plugin):
 
         """
         if impl_lang == 'java':
-            return _MonPersisterJavaHelper()
+            return _MonPersisterJavaHelper(cmdline=cmdline)
         return None
 
 
@@ -337,15 +341,72 @@ class MonInfluxDB(monasca_setup.detection.Plugin):
         return True
 
 
-class _MonPersisterJavaHelper(object):
+class _DropwizardJavaHelper(object):
+    """Mixing to locate configuration file for DropWizard app
+
+    Class utilizes process of search the configuartion file
+    for:
+
+    * monasca-api [**Java**]
+    * monasca-persister [**Java**]
+    """
+
+    YAML_PATTERN = re.compile('.*\.ya?ml', re.IGNORECASE)
+
+    def __init__(self, cmdline=None):
+        self._cmdline = cmdline
+
+    def load_configuration(self):
+        """Loads java specific configuration.
+
+        Load java specific configuration from:
+
+        * :py:attr:`DEFAULT_CONFIG_FILE`
+
+        :return: True if both configuration files were successfully loaded
+        :rtype: bool
+
+        """
+        try:
+            config_file = self._get_config_file()
+            self._read_config_file(config_file)
+        except Exception as ex:
+            log.error('Failed to parse %s', config_file)
+            log.exception(ex)
+            raise ex
+
+    def _find_config_file_in_cmdline(self, cmdline):
+        # note(trebskit) file should be mentioned
+        # somewhere in the end of cmdline
+        for item in cmdline[::-1]:
+            if self.YAML_PATTERN.match(item):
+                return item
+        return None
+
+    def _read_config_file(self, config_file):
+        with open(config_file, 'r') as config:
+            self._cfg = yaml.safe_load(config.read())
+
+    def _get_config_file(self):
+        if self._cmdline:
+            config_file = self._find_config_file_in_cmdline(
+                cmdline=self._cmdline
+            )
+            if config_file:
+                log.debug('\tFound %s for java configuration from CLI',
+                          config_file)
+                return config_file
+
+        config_file = self.DEFAULT_CONFIG_FILE
+        log.debug('\tAssuming default configuration file=%s', config_file)
+        return config_file
+
+
+class _MonPersisterJavaHelper(_DropwizardJavaHelper):
     """Encapsulates Java specific configuration for monasca-persister"""
 
-    CONFIG_FILE = '/etc/monasca/persister-config.yml'
+    DEFAULT_CONFIG_FILE = '/etc/monasca/persister-config.yml'
     """Default location where plugin expects configuration file"""
-
-    def __init__(self):
-        super(_MonPersisterJavaHelper, self).__init__()
-        self._cfg = None
 
     def build_config(self):
         config = monasca_setup.agent_config.Plugins()
@@ -407,7 +468,7 @@ class _MonPersisterJavaHelper(object):
         elif database_type == 'vertica':
             self._add_vertica_metrics(whitelist)
         else:
-            log.warn('Failed finding database type in %s', self.CONFIG_FILE)
+            log.warn('Failed finding database type in %s', self.DEFAULT_CONFIG_FILE)
 
     def _collect_internal_metrics(self, whitelist):
         alarm_num_threads = self._cfg['alarmHistoryConfiguration']['numThreads']
@@ -497,34 +558,11 @@ class _MonPersisterJavaHelper(object):
                                                      admin_endpoint_port),
                 metrics))
 
-    def load_configuration(self):
-        """Loads java specific configuration.
 
-        Load java specific configuration from:
-
-        * :py:attr:`API_CONFIG_YML`
-
-        :return: True if both configuration files were successfully loaded
-        :rtype: bool
-
-        """
-        try:
-            with open(self.CONFIG_FILE, 'r') as config:
-                self._cfg = yaml.safe_load(config.read())
-        except Exception as ex:
-            log.error('Failed to parse %s', self.CONFIG_FILE)
-            log.exception(ex)
-            raise ex
-
-
-class _MonAPIJavaHelper(object):
+class _MonAPIJavaHelper(_DropwizardJavaHelper):
     """Encapsulates Java specific configuration for monasca-api"""
 
-    CONFIG_FILE = '/etc/monasca/api-config.yml'
-
-    def __init__(self):
-        super(_MonAPIJavaHelper, self).__init__()
-        self._api_config = None
+    DEFAULT_CONFIG_FILE = '/etc/monasca/api-config.yml'
 
     def build_config(self):
         """Builds monitoring configuration for monasca-api Java flavour.
@@ -582,7 +620,7 @@ class _MonAPIJavaHelper(object):
         return config
 
     def _monitor_endpoints(self, config, metrics):
-        admin_connector = self._api_config['server']['adminConnectors'][0]
+        admin_connector = self._cfg['server']['adminConnectors'][0]
 
         try:
             admin_endpoint_type = admin_connector['type']
@@ -610,34 +648,15 @@ class _MonAPIJavaHelper(object):
         # if not it means that configuration file was not found
         # or monasca-api Python implementation is running
 
-        api_config = getattr(self, '_api_config', None)
-        if api_config is None:
+        cfg = getattr(self, '_cfg', None)
+        if cfg is None:
             return False
 
-        hibernate_cfg = self._api_config.get('hibernate', None)
+        hibernate_cfg = cfg.get('hibernate', None)
         if hibernate_cfg is None:
             return False
 
         return hibernate_cfg.get('supportEnabled', False)
-
-    def load_configuration(self):
-        """Loads java specific configuration.
-
-        Load java specific configuration from:
-
-        * :py:attr:`API_CONFIG_YML`
-
-        :return: True if both configuration files were successfully loaded
-        :rtype: bool
-
-        """
-        try:
-            with open(self.CONFIG_FILE, 'r') as config:
-                self._api_config = yaml.safe_load(config.read())
-        except Exception as ex:
-            log.error('Failed to parse %s', self.CONFIG_FILE)
-            log.exception(ex)
-            raise ex
 
     def get_bound_port(self):
         """Returns port API is listening on.
@@ -655,13 +674,12 @@ class _MonAPIJavaHelper(object):
         :rtype: int
 
         """
-        if self._api_config is None:
+        if self._cfg is None:
             return _DEFAULT_API_PORT
         try:
-            return self._api_config['server']['applicationConnectors'][0]['port']
+            return self._cfg['server']['applicationConnectors'][0]['port']
         except Exception as ex:
-            log.error('Failed to read api port from '
-                      '/etc/monasca/api-config.yml')
+            log.error('Failed to read api port from configuration file')
             log.exception(ex)
             return _DEFAULT_API_PORT
 
@@ -669,10 +687,15 @@ class _MonAPIJavaHelper(object):
 class _MonAPIPythonHelper(object):
     """Encapsulates Python specific configuration for monasca-api"""
 
-    CONFIG_FILE = '/etc/monasca/api-config.ini'
+    DEFAULT_CONFIG_FILE = '/etc/monasca/api-config.ini'
+    PASTE_CLI_OPTS = '--paste', '--paster',
+    """Possible flags passed to gunicorn processed,
+    pointing at paste file"""
 
-    def __init__(self):
+    def __init__(self, cmdline=None, args=None):
         super(_MonAPIPythonHelper, self).__init__()
+        self._cmdline = cmdline
+        self._args = args
         self._paste_config = None
 
     def build_config(self):
@@ -688,12 +711,11 @@ class _MonAPIPythonHelper(object):
         and parses it with :py:class:`configparser.RawConfigParser`
 
         """
-        cp = configparser.RawConfigParser()
         try:
-            cp.readfp(open(self.CONFIG_FILE, 'r'))
-            self._paste_config = cp
+            config_file = self._get_config_file()
+            self._paste_config = self._read_config_file(config_file)
         except Exception as ex:
-            log.error('Failed to parse %s', self.CONFIG_FILE)
+            log.error('Failed to parse %s', config_file)
             log.exception(ex)
             raise ex
 
@@ -716,3 +738,51 @@ class _MonAPIPythonHelper(object):
         if not self._paste_config:
             return _DEFAULT_API_PORT
         return self._paste_config.getint('server:main', 'port')
+
+    def _read_config_file(self, config_file):
+        cp = configparser.RawConfigParser()
+        return cp.readfp(open(config_file, 'r'))
+
+    def _get_config_file(self):
+        """Method gets configuration file of Python monasca-api.
+
+        Method tries to examine following locations:
+
+        * cmdline of process (looking for either
+            of :py:attr:`_MonAPIPythonHelper.PASTE_CLI_OPTS`)
+        * this plugin args
+
+        loooking for location of configuration file
+
+        :param args: plugin arguments
+        :type args: dict
+
+        """
+
+        if self._cmdline:
+            # we're interested in PASTE_CLI_OPTS
+            for paste in self.PASTE_CLI_OPTS:
+                if paste in self._cmdline:
+                    pos = self._cmdline.index(paste)
+                    flag = self._cmdline[pos]
+                    config_file = self._cmdline[pos + 1]
+                    if config_file:
+                        log.debug(('\tFound %s=%s for python configuration '
+                                   'from CLI'),
+                                  flag, config_file)
+                        return config_file
+                else:
+                    log.warn(('\tCannot determine neither %s from process'
+                              'cmdline'), self.PASTE_CLI_OPTS)
+
+        if self._args and 'paste-file' in self._args:
+            # check if args mentions config file param
+            config_file = self._args.get('paste-file', None)
+            log.debug(('\tFound paste-file=%s for python configuration '
+                       'passed as plugin argument'), config_file)
+            return config_file
+
+        config_file = self.DEFAULT_CONFIG_FILE
+        log.debug('\tAssuming default paste_file=%s', config_file)
+
+        return config_file
