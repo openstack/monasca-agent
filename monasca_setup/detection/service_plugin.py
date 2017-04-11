@@ -73,7 +73,7 @@ class ServicePlugin(Plugin):
                     if 'component_name' in args_dict:
                         self.component_name = args_dict['component_name']
                     if 'file_dirs_names' in args_dict:
-                        self.file_dirs_names = args_dict['file_dirs_names']
+                        self.file_dirs_names = eval(args_dict['file_dirs_names'])
                     if 'directory_names' in args_dict:
                         self.directory_names = args_dict['directory_names'].split(',')
                     if 'service_api_url' in args_dict:
