@@ -1092,6 +1092,7 @@ instances:
        include_content: true
        collect_response_time: true
        match_pattern: '.*OK.*OK.*OK.*OK.*OK'
+       name: check_url
 ```
 
 The http_status checks return the following metrics:
