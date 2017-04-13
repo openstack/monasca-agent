@@ -1,4 +1,4 @@
-# (C) Copyright 2016 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2016-2017 Hewlett Packard Enterprise Development LP
 
 import fcntl
 import json
@@ -34,7 +34,8 @@ def _create_agent_conf():
             """.format(hostname=HOSTNAME)
         )
 
-    config = monasca_agent.common.config.Config(conf_file)
+    config_obj = monasca_agent.common.config.Config(conf_file)
+    config = config_obj.get_config(sections='Main')
     # clean up
     rmtree(tempdir, ignore_errors=True)
     return config
@@ -52,9 +53,9 @@ class MockJsonPlugin(json_plugin.JsonPlugin):
     def __init__(self):
         super(MockJsonPlugin, self).__init__(
             name='json_plugin',
-            init_config=_create_agent_conf(),
+            init_config={},
             instances=[],
-            agent_config={}
+            agent_config=_create_agent_conf()
         )
         self._metrics = []
 
