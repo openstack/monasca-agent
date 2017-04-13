@@ -1,7 +1,7 @@
 Team and repository tags
 ========================
 
-[![Team and repository tags](http://governance.openstack.org/badges/monasca-agent.svg)](http://governance.openstack.org/reference/tags/index.html)
+[![Team and repository tags](https://governance.openstack.org/badges/monasca-agent.svg)](https://governance.openstack.org/reference/tags/index.html)
 
 <!-- Change things from this point on -->
 
