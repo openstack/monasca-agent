@@ -75,7 +75,7 @@ class Kafka(Plugin):
                            'but neither %s nor %s '
                            'executable was found.'),
                           _KAFKA_CONSUMER_GROUP_COMMAND,
-                          _KAFKA_CONSUMER_GROUP_COMMAND)
+                          _KAFKA_ZOOKEEPER_SHELL_COMMAND)
 
     def _detect_consumers(self):
         """Using zookeeper and a kafka connection find the consumers and associated topics. """
