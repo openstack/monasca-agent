@@ -1,4 +1,4 @@
-# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2017 Hewlett Packard Enterprise Development LP
 
 import glob
 import hashlib
@@ -20,6 +20,9 @@ import traceback
 import uuid
 
 import logging
+
+from numbers import Number
+
 log = logging.getLogger(__name__)
 
 
@@ -697,3 +700,18 @@ def get_collector_restart_interval():
     restart_interval = agent_config.get('collector_restart_interval')
     restart_interval_in_sec = restart_interval * 60 * 60
     return restart_interval_in_sec
+
+
+def rollup_dictionaries(dict_sum, data):
+    # Add dictionaries. For example:
+    # data = {u'tx_dropped': 0, u'rx_packets': 18862, u'name': u'eth0',
+    # u'rx_bytes': 3808418, u'tx_errors': 0, u'rx_errors': 0,
+    # u'tx_bytes': 6100418, u'rx_dropped': 0, u'tx_packets': 60747}".
+    # When adding up dictionaries, only the keys with number type values can be
+    # added. Non-number type key value pairs should be ignored such as
+    # u'name': u'eth0'.
+    dict_sum = {k: dict_sum.get(k, 0) + data.get(k, 0)
+                for k in set(data) | set(dict_sum) if
+                isinstance(data.get(k, 0), Number) and
+                isinstance(dict_sum.get(k, 0), Number)}
+    return dict_sum
