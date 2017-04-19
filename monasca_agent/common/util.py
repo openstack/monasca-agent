@@ -1,4 +1,4 @@
-# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2015-2017 Hewlett Packard Enterprise Development LP
 
 import glob
 import hashlib
@@ -613,8 +613,12 @@ def initialize_logging(logger_name):
             # make sure the log directory is writable
             # NOTE: the entire directory needs to be writable so that rotation works
             if os.access(os.path.dirname(log_file), os.R_OK | os.W_OK):
-                file_handler = logging.handlers.RotatingFileHandler(
-                    log_file, maxBytes=LOGGING_MAX_BYTES, backupCount=1)
+                if logging_config['enable_logrotate']:
+                    file_handler = logging.handlers.RotatingFileHandler(
+                        log_file, maxBytes=LOGGING_MAX_BYTES, backupCount=1)
+                else:
+                    file_handler = logging.FileHandler(log_file)
+
                 formatter = logging.Formatter(log_format, log_date_format)
                 file_handler.setFormatter(formatter)
 

@@ -140,6 +140,7 @@ Logging:
   collector_log_file: {args.log_dir}/collector.log
   forwarder_log_file: {args.log_dir}/forwarder.log
   statsd_log_file: {args.log_dir}/statsd.log
+  enable_logrotate: {args.enable_logrotate}
 
   # if syslog is enabled but a host and port are not set, a local domain socket
   # connection will be attempted
