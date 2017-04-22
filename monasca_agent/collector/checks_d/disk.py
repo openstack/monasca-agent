@@ -42,7 +42,7 @@ class Disk(checks.AgentCheck):
             send_io_stats = True
             send_rollup_stats = False
             device_blacklist_re = None
-            fs_types_to_ignore = []
+            fs_types_to_ignore = set()
 
         partitions = psutil.disk_partitions(all=True)
         if send_io_stats:
@@ -120,12 +120,20 @@ class Disk(checks.AgentCheck):
 
     def _get_fs_exclusions(self, instance):
         """parse comma separated file system types to ignore list"""
-        file_system_list = []
+        file_system_list = set()
+
+        # automatically ignore filesystems not backed by a device
+        try:
+            for nodevfs in filter(lambda x: x.startswith('nodev\t'), file('/proc/filesystems')):
+                file_system_list.add(nodevfs.partition('\t')[2].strip())
+        except IOError:
+            log.debug('Failed reading /proc/filesystems')
+
         try:
             file_systems = instance.get('ignore_filesystem_types', None)
             if file_systems:
                 # Parse file system types
-                file_system_list.extend([x.strip() for x in file_systems.split(',')])
+                file_system_list.update(x.strip() for x in file_systems.split(','))
         except ValueError:
             log.info("Unable to process ignore_filesystem_types.")
 
