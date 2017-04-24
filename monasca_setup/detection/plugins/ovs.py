@@ -5,6 +5,8 @@ import logging
 import os
 import re
 
+from oslo_config import cfg
+
 from monasca_setup import agent_config
 from monasca_setup import detection
 from monasca_setup.detection import utils
@@ -62,6 +64,10 @@ class Ovs(detection.Plugin):
 
         self.available = (process_exist is not None and
                           neutron_conf_valid and has_dependencies)
+        self.cmd = ''
+        if process_exist:
+            self.cmd = process_exist.as_dict(attrs=['cmdline'])['cmdline']
+
         if not self.available:
             if not process_exist:
                 log.error('OVS daemon process [%s] does not exist.',
@@ -90,8 +96,19 @@ class Ovs(detection.Plugin):
                            'dependence python-neutronclient is '
                            'not installed.'))
         else:
-            log.info("\tUsing neutron configuration file {0}".format(
-                     neutron_conf))
+            for_opts = [{'opt': cfg.StrOpt('region', default='RegionOne'), 'group': 'service_auth'},
+                        {'opt': cfg.StrOpt('region_name'), 'group': 'nova'},
+                        {'opt': cfg.StrOpt('nova_region_name'), 'group': 'DEFAULT'},
+                        {'opt': cfg.StrOpt('username'), 'group': 'keystone_authtoken'},
+                        {'opt': cfg.StrOpt('password'), 'group': 'keystone_authtoken'},
+                        {'opt': cfg.StrOpt('project_name'), 'group': 'keystone_authtoken'},
+                        {'opt': cfg.StrOpt('auth_url'), 'group': 'keystone_authtoken'},
+                        {'opt': cfg.StrOpt('identity_uri'), 'group': 'keystone_authtoken'}]
+            self.conf = utils.load_oslo_configuration(from_cmd=self.cmd,
+                                                      in_project='neutron',
+                                                      for_opts=for_opts
+                                                      )
+            log.info("\tUsing neutron configuration file {0} for detection".format(neutron_conf))
             self.neutron_conf = neutron_conf
 
     def _is_neutron_conf_valid(self, conf_file):
@@ -131,9 +148,8 @@ class Ovs(detection.Plugin):
 
         """
         config = agent_config.Plugins()
-        neutron_cfg = ConfigParser.SafeConfigParser()
-        log.info("\tUsing neutron configuration file %s", self.neutron_conf)
-        neutron_cfg.read(self.neutron_conf)
+        log.info("\tUsing neutron configuration file {0} and configuration dir"
+                 " {1}".format(self.conf.default_config_files, self.conf.default_config_dirs))
         cfg_section = 'keystone_authtoken'
         cfg_needed = {'username': 'username',
                       'password': 'password',
@@ -151,25 +167,25 @@ class Ovs(detection.Plugin):
                        'publish_router_capacity': publish_router_capacity}
 
         for option in cfg_needed:
-            init_config[option] = neutron_cfg.get(cfg_section, cfg_needed[option])
+            init_config[option] = self.get_option(cfg_section, cfg_needed[option])
 
         # Create an identity URI (again, slightly different for Devstack)
-        if neutron_cfg.has_option(cfg_section, 'auth_url'):
-            init_config['auth_url'] = neutron_cfg.get(cfg_section, 'auth_url')
+        if self.has_option(cfg_section, 'auth_url'):
+            init_config['auth_url'] = self.get_option(cfg_section, 'auth_url')
         else:
-            init_config['auth_url'] = neutron_cfg.get(cfg_section, 'identity_uri')
+            init_config['auth_url'] = self.get_option(cfg_section, 'identity_uri')
 
         # Create an region_name (again, slightly different for Devstack)
-        if neutron_cfg.has_option('service_auth', 'region'):
-            init_config['region_name'] = str(neutron_cfg.get('service_auth', 'region'))
+        if self.has_option('service_auth', 'region'):
+            init_config['region_name'] = str(self.get_option('service_auth', 'region'))
         else:
             try:
-                init_config['region_name'] = str(neutron_cfg.get('nova', 'region_name'))
+                init_config['region_name'] = str(self.get_option('nova', 'region_name'))
             except ConfigParser.NoOptionError:
                 log.debug(('Option region_name was not found in nova '
                            'section, nova_region_name option from '
                            'DEFAULT section will be used.'))
-                init_config['region_name'] = str(neutron_cfg.get('DEFAULT',
+                init_config['region_name'] = str(self.get_option('DEFAULT',
                                                                  'nova_region_name'))
 
         # Handle monasca-setup detection arguments, which take precedence
@@ -205,3 +221,9 @@ class Ovs(detection.Plugin):
         except ImportError:
             return False
         return True
+
+    def has_option(self, section, option):
+        return option in self.conf.get(section)
+
+    def get_option(self, section, option):
+        return self.conf.get(section).get(option)
