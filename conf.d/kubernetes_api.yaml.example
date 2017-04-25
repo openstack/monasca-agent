@@ -1,0 +1,18 @@
+# (C) Copyright 2017 Hewlett Packard Enterprise Development LP
+
+init_config:
+    # Timeout on GET requests endpoints
+    connection_timeout: 3
+instances:
+    # There is two options for connecting to the api. Either by passing in the host the api is running on and the port
+    # it is bound to or by deriving the api url from the kubernetes environment variables (if the agent is running in
+    # a kubernetes container. You must set one or the other.
+    - host: "127.0.0.1"
+      # Port of kubernetes master to connect to defaults to 8080
+      # kubernetes_api_port: 8080
+
+      # Derive kubernetes api url from kubernetes environmental variables.
+      # derive_api_url: True
+
+      # Set of kubernetes labels that we search for in the kubernetes metadata to set as dimensions
+      # kubernetes_labels: ['k8s-app', 'version']
