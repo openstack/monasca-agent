@@ -101,7 +101,7 @@ class FakeProcesses(object):
         FakeInetConnection()
     ]
 
-    def as_dict(self):
+    def as_dict(self, attrs=None):
         return {'name': FakeProcesses.name,
                 'cmdline': FakeProcesses.cmdLine,
                 'exe': self.exe()}
