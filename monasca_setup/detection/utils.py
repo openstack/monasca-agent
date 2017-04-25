@@ -35,7 +35,7 @@ def find_process_cmdline(search_string):
     """
     for process in psutil.process_iter():
         try:
-            process_cmdline = ' '.join(process.as_dict()['cmdline'])
+            process_cmdline = ' '.join(process.as_dict(['cmdline'])['cmdline'])
             if (search_string in process_cmdline and
                'monasca-setup' not in process_cmdline):
                 return process
@@ -50,7 +50,7 @@ def find_process_name(pname):
     """
     for process in psutil.process_iter():
         try:
-            if pname == process.as_dict()['name']:
+            if pname == process.as_dict(['name'])['name']:
                 return process
         except psutil.NoSuchProcess:
             continue

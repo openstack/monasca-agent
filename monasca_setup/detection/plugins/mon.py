@@ -45,7 +45,7 @@ def _get_impl_lang(process):
     :rtype: str
 
     """
-    p_exe = process.as_dict()['exe']
+    p_exe = process.as_dict(['exe'])['exe']
     for lm in _PYTHON_LANG_MARKERS:
         if lm in p_exe:
             return 'python'
@@ -111,7 +111,7 @@ class MonAPI(monasca_setup.detection.Plugin):
 
             """
 
-            p_exe = process.as_dict()['exe']
+            p_exe = process.as_dict(['exe'])['exe']
             for m in _APACHE_MARKERS:
                 if m in p_exe:
                     return process.parent()
@@ -128,7 +128,7 @@ class MonAPI(monasca_setup.detection.Plugin):
                     log.info('\tmonasca-api runs under Apache WSGI')
                     api_process = apache_process
 
-            impl_helper = self._init_impl_helper(api_process.as_dict()['cmdline'],
+            impl_helper = self._init_impl_helper(api_process.as_dict(['cmdline'])['cmdline'],
                                                  impl_lang)
             impl_helper.load_configuration()
 
@@ -218,7 +218,7 @@ class MonPersister(monasca_setup.detection.Plugin):
         if process_found:
             impl_lang = _get_impl_lang(p_process)
             impl_helper = self._init_impl_helper(
-                p_process.as_dict()['cmdline'],
+                p_process.as_dict(['cmdline'])['cmdline'],
                 impl_lang
             )
 
