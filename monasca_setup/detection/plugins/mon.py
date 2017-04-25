@@ -13,6 +13,7 @@ import yaml
 
 from six.moves import configparser
 
+from monasca_agent.common.psutil_wrapper import psutil
 import monasca_setup.agent_config
 import monasca_setup.detection
 from monasca_setup.detection import find_process_cmdline
@@ -114,7 +115,10 @@ class MonAPI(monasca_setup.detection.Plugin):
             p_exe = process.as_dict()['exe']
             for m in _APACHE_MARKERS:
                 if m in p_exe:
-                    return process.parent()
+                    if psutil.version_info < (2, 0):
+                        return process.parent
+                    else:
+                        return process.parent()
             return None
 
         api_process = find_process_cmdline('monasca-api')
