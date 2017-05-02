@@ -1313,18 +1313,6 @@ Sample configs:
 
 Without custom labels and host being manually set:
 
-## Kubernetes_API
-
-This plugin collects metrics from the kubernetes api on kubernetes components, nodes, deployments and replication controllers.
-
-When setting the kubernetes configuration there is a parameter "kubernetes_labels" where it will look for kubernetes tags that are user defined to use as dimensions for replication controller and deployment metrics.
-
-There are two ways you can configure the plugin to connect to the kubernetes api. Either by setting the host and port or by setting the derive_api_url to True. If deriving the plugin sets the kubernetes api url by looking at the environment variables. (This should be used if the agent is running in a kubernetes container)
-
-Sample configs:
-
-Without custom labels:
-
 ```
 init_config:
     # Timeout on GET requests
@@ -1338,13 +1326,6 @@ instances:
 ```
 
 With custom labels and host being manually set:
-instances:
-    # Set to the host that the plugin will use when connecting to the Kubernetes API
-    - host: "127.0.0.1"
-      kubernetes_api_port: 8080
-```
-
-With custom labels:
 
 ```
 init_config:
@@ -1360,6 +1341,8 @@ instances:
 ```
 
 With custom labels and derive host being set:
+
+```
 instances:
     # Set to the host that the plugin will use when connecting to the Kubernetes API
     - host: "127.0.0.1"
@@ -1498,6 +1481,17 @@ Pod Phase Mapping:
 | 3 | Failed |
 | 4 | Unknown |
 
+## Kubernetes_API
+
+This plugin collects metrics from the kubernetes api on kubernetes components, nodes, deployments and replication controllers.
+
+When setting the kubernetes configuration there is a parameter "kubernetes_labels" where it will look for kubernetes tags that are user defined to use as dimensions for replication controller and deployment metrics.
+
+There are two ways you can configure the plugin to connect to the kubernetes api. Either by setting the host and port or by setting the derive_api_url to True. If deriving the plugin sets the kubernetes api url by looking at the environment variables. (This should be used if the agent is running in a kubernetes container)
+
+Sample configs:
+
+```
 instances:
     - derive api url: True
       kubernetes_labels: ['k8s-app', 'version']
