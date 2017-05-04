@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2015-2017 Hewlett Packard Enterprise Development LP
 
 """ Detect running daemons then configure and start the agent.
 """
@@ -296,6 +296,7 @@ def parse_arguments(parser):
                         help="agent's systemd/sysv service name",
                         required=False,
                         default='monasca-agent')
+    parser.add_argument('--enable_logrotate', help="Controls log file rotation", default=True)
     return parser.parse_args()
 
 

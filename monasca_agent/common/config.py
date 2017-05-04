@@ -1,4 +1,4 @@
-# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2015-2017 Hewlett Packard Enterprise Development LP
 
 import logging
 import os
@@ -82,6 +82,7 @@ class Config(object):
                                     'forwarder_log_file': DEFAULT_LOG_DIR + '/forwarder.log',
                                     'statsd_log_file': DEFAULT_LOG_DIR + '/statsd.log',
                                     'jmxfetch_log_file': DEFAULT_LOG_DIR + '/jmxfetch.log',
+                                    'enable_logrotate': True,
                                     'log_to_event_viewer': False,
                                     'log_to_syslog': False,
                                     'syslog_host': None,
