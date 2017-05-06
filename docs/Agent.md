@@ -36,10 +36,10 @@ The Agent is composed of the following components:
 | Component Name | Process Name | Description |
 | -------------- | ------------ | ----------- |
 | Supervisor | supervisord | Runs as root, launches all other processes as the user configured to run monasca-agent.  This process manages the lifecycle of the Collector, Forwarder and Statsd Daemon.  It allows Start, Stop and Restart of all the agent processes together. |
-| Collector | monasca-collector | Gathers system & application metrics on a configurable interval and sends them to the Forwarder process. The collector runs various plugins for collection of different plugins.| 
-| Forwarder | monasca-forwarder | Gathers data from the collector and statsd and submits it to Monasca API over SSL (tcp/17123) | 
-| Statsd Daemon | monasca-statsd | Statsd engine capable of handling dimensions associated with metrics submitted by a client that supports them. Also supports metrics from the standard statsd client. (udp/8125) | 
-| Monasca Setup | monasca-setup | The monasca-setup script configures the agent.  The Monasca Setup program can also auto-detect and configure certain agent plugins | 
+| Collector | monasca-collector | Gathers system & application metrics on a configurable interval and sends them to the Forwarder process. The collector runs various plugins for collection of different plugins.|
+| Forwarder | monasca-forwarder | Gathers data from the collector and statsd and submits it to Monasca API over SSL (tcp/17123) |
+| Statsd Daemon | monasca-statsd | Statsd engine capable of handling dimensions associated with metrics submitted by a client that supports them. Also supports metrics from the standard statsd client. (udp/8125) |
+| Monasca Setup | monasca-setup | The monasca-setup script configures the agent.  The Monasca Setup program can also auto-detect and configure certain agent plugins |
 
 # Installing
 The Agent (monasca-agent) is available for installation from the Python Package Index (PyPI). To install it, you first need `pip` installed on the node to be monitored. Instructions on installing pip may be found at https://pip.pypa.io/en/latest/installing.html.  The Agent will NOT run under any flavor of Windows or Mac OS at this time but has been tested thoroughly on Ubuntu and should work under most flavors of Linux.  Support may be added for Mac OS and Windows in the future.  Example of an Ubuntu or Debian based install:
@@ -111,6 +111,32 @@ All parameters require a '--' before the parameter such as '--verbose'. Run `mon
 | max_measurement_buffer_size | Integer value for the maximum number of measurements to buffer locally while unable to connect to the monasca-api. If the queue exceeds this value, measurements will be dropped in batches. A value of '-1' indicates no limit | 100000 |
 | backlog_send_rate | Integer value of how many batches of buffered measurements to send each time the forwarder flushes data | 1000 |
 | monasca_statsd_port | Integer value for statsd daemon port number | 8125 |
+
+#### A note around using monasca-agent with different versions of Keystone
+
+Keystone comes in two version: **v2.0** and **v3**. These versions differ between each
+other when it comes to the set of acceptable parameters that client library can send to Keystone API.
+
+monasca-agent can work with either of versions mentioned above.
+However there are certain limitations. Examine a list below to see what
+parameters should be provided via monasca-setup (or manually in agent.yaml) to
+successfully configure connectivity with Keystone.
+
+For **v2_0** arguments are:
+* ```username```
+* ```password```
+* ```project_id``` (internally mapped to **tenant_id**)
+* ```project_name``` (internally mapped to **tenant_name**)
+
+For **v3** arguments are:
+* ```username```
+* ```password```
+* ```project_id```
+* ```project_name```
+* ```project_domain_id```
+* ```project_domain_name```
+* ```user_domain_id```
+* ```user_domain_name```
 
 ### Providing Arguments to Detection plugins
 When running individual detection plugins you can specify arguments that augment the configuration created. In some instances the arguments just provide additional

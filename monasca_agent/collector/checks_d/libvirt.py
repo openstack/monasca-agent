@@ -1,6 +1,7 @@
 #!/bin/env python
 
 # (c) Copyright 2014-2016 Hewlett Packard Enterprise Development LP
+# Copyright 2017 Fujitsu LIMITED
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -29,15 +30,16 @@ from calendar import timegm
 from copy import deepcopy
 from datetime import datetime
 from datetime import timedelta
-from monasca_agent.collector.checks import AgentCheck
-from monasca_agent.collector.virt import inspector
-from monasca_agent.common import keystone
 from multiprocessing.dummy import Pool
 from netaddr import all_matching_cidrs
 from neutronclient.v2_0 import client as neutron_client
 from novaclient import client as n_client
 from novaclient.exceptions import NotFound
 
+from monasca_agent.collector.checks import AgentCheck
+from monasca_agent.collector.virt import inspector
+from monasca_agent.common import keystone
+from monasca_agent import version as ma_version
 
 DOM_STATES = {libvirt.VIR_DOMAIN_BLOCKED: 'VM is blocked',
               libvirt.VIR_DOMAIN_CRASHED: 'VM has crashed',
@@ -133,12 +135,14 @@ class LibvirtCheck(AgentCheck):
         port_cache = None
         netns = None
         # Get a list of all instances from the Nova API
-        session = keystone.get_session(self.init_config)
+        session = keystone.get_session(**self.init_config)
         nova_client = n_client.Client(
             "2.1", session=session,
             endpoint_type=self.init_config.get("endpoint_type", "publicURL"),
             service_type="compute",
-            region_name=self.init_config.get('region_name'))
+            region_name=self.init_config.get('region_name'),
+            client_name='monasca-agent[libvirt]',
+            client_version=ma_version.version_string)
         self._get_this_host_aggregate(nova_client)
         instances = nova_client.servers.list(
             search_opts={'all_tenants': 1, 'host': self.hostname})
@@ -147,7 +151,9 @@ class LibvirtCheck(AgentCheck):
             nu = neutron_client.Client(
                 session=session,
                 endpoint_type=self.init_config.get("endpoint_type", "publicURL"),
-                region_name=self.init_config.get('region_name'))
+                region_name=self.init_config.get('region_name'),
+                client_name='monasca-agent[libvirt]',
+                client_version=ma_version.version_string)
             port_cache = nu.list_ports()['ports']
             # Finding existing network namespaces is an indication that either
             # DVR agent_mode is enabled, or this is all-in-one (like devstack)

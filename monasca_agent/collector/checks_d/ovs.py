@@ -1,12 +1,11 @@
 #!/bin/env python
 
 # (C) Copyright 2016 Hewlett Packard Enterprise Development Company LP
+# Copyright 2017 Fujitsu LIMITED
 
-import datetime
+from copy import deepcopy
 import json
-import logging
 import math
-import monasca_agent.collector.checks.utils as utils
 import os
 import re
 import socket
@@ -14,11 +13,13 @@ import stat
 import subprocess
 import time
 
-from copy import deepcopy
-from monasca_agent.collector.checks import AgentCheck
-from monasca_agent.common import keystone
 from neutronclient.v2_0 import client as neutron_client
 from novaclient import client as nova_client
+
+from monasca_agent.collector.checks import AgentCheck
+import monasca_agent.collector.checks.utils as utils
+from monasca_agent.common import keystone
+from monasca_agent import version as ma_version
 
 OVS_CMD = """\
 %s --columns=name,external_ids,statistics,options \
@@ -56,7 +57,7 @@ class OvsCheck(AgentCheck):
         else:
             include_re = include_re + '|' + 'qg.*'
         self.include_iface_re = re.compile(include_re)
-        self.session = keystone.get_session(self.init_config)
+        self.session = keystone.get_session(**self.init_config)
 
     def check(self, instance):
         time_start = time.time()
@@ -299,7 +300,9 @@ class OvsCheck(AgentCheck):
         nc = nova_client.Client(2, session=self.session,
                                 endpoint_type=endpoint_type,
                                 service_type="compute",
-                                region_name=region_name)
+                                region_name=region_name,
+                                client_name='monasca-agent[ovs]',
+                                client_version=ma_version.version_string)
 
         return nc
 
@@ -308,7 +311,9 @@ class OvsCheck(AgentCheck):
         endpoint_type = self.init_config.get("endpoint_type", "publicURL")
         return neutron_client.Client(session=self.session,
                                      region_name=region_name,
-                                     endpoint_type=endpoint_type)
+                                     endpoint_type=endpoint_type,
+                                     client_name='monasca-agent[ovs]',
+                                     client_version=ma_version.version_string)
 
     def _run_command(self, command, input=None):
         self.log.debug("Executing command - {0}".format(command))
@@ -413,7 +418,7 @@ class OvsCheck(AgentCheck):
             self.log.debug("Retrieving Neutron router data")
             all_routers_data = self.neutron_client.list_routers()
         except Exception as e:
-            self.log.error("Unable to get neutron data: {0}".format(e))
+            self.log.exception("Unable to get neutron data: %s", str(e))
             return port_cache
 
         all_ports_data = all_ports_data['ports']

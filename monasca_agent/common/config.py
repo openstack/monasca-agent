@@ -1,13 +1,13 @@
 # (C) Copyright 2015-2017 Hewlett Packard Enterprise Development LP
+# Copyright 2017 Fujitsu LIMITED
 
 import logging
 import os
-import pkg_resources
 import six
 import yaml
 
-from monasca_agent.common.exceptions import PathNotFound
-import monasca_agent.common.singleton as singleton
+from monasca_agent.common import exceptions
+from monasca_agent.common import singleton
 from monasca_agent import version
 
 DEFAULT_CONFIG_FILE = '/etc/monasca/agent/agent.yaml'
@@ -62,7 +62,7 @@ class Config(object):
                                 'project_domain_name': '',
                                 'project_domain_id': '',
                                 'ca_file': '',
-                                'insecure': '',
+                                'insecure': False,
                                 'username': '',
                                 'password': '',
                                 'use_keystone': True,
@@ -126,7 +126,7 @@ class Config(object):
         path = os.path.join(os.path.dirname(self._configFile), 'conf.d')
         if os.path.exists(path):
             return path
-        raise PathNotFound(path)
+        raise exceptions.PathNotFound(path)
 
     def check_yaml(self, conf_path):
         f = open(conf_path)

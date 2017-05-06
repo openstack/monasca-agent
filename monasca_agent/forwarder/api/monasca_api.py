@@ -1,4 +1,5 @@
 # (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
+# Copyright 2017 Fujitsu LIMITED
 
 import collections
 import copy
@@ -7,7 +8,7 @@ import logging
 import random
 import time
 
-import monasca_agent.common.keystone as keystone
+from monasca_agent.common import keystone
 import monascaclient.client
 
 log = logging.getLogger(__name__)
@@ -27,7 +28,7 @@ class MonascaAPI(object):
     def __init__(self, config):
         """Initialize Mon api client connection."""
         self.config = config
-        self.url = config['url']
+        self.url = config.get('url', None)
         self.api_version = '2_0'
         self.keystone = keystone.Keystone(config)
         self.mon_client = None

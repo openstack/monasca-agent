@@ -11,13 +11,11 @@ import re
 import requests
 
 from monasca_agent.common import exceptions
+from monasca_agent.common import keystone
 
 log = logging.getLogger(__name__)
 
 DEFAULT_TIMEOUT = 20
-
-from keystoneclient.v2_0 import client as kc
-from monasca_agent.common import keystone
 
 
 def add_basic_auth(request, username, password):
@@ -28,14 +26,6 @@ def add_basic_auth(request, username, password):
     auth_str = base64.encodestring('%s:%s' % (username, password)).strip()
     request.add_header('Authorization', 'Basic %s' % auth_str)
     return request
-
-
-def get_keystone_client(config):
-    session = keystone.get_session(config)
-
-    return kc.Client(session=session,
-                     endpoint_type=config.get('endpoint_type', 'publicURL'),
-                     region_name=config.get('region_name'))
 
 
 def get_tenant_name(tenants, tenant_id):
@@ -51,8 +41,8 @@ def get_tenant_list(config, log):
     tenants = []
     try:
         log.debug("Retrieving Keystone tenant list")
-        keystone = get_keystone_client(config)
-        tenants = keystone.tenants.list()
+        client = keystone.get_client(**config)
+        tenants = client.tenants.list()
     except Exception as e:
         msg = "Unable to get tenant list from keystone: {0}"
         log.error(msg.format(e))

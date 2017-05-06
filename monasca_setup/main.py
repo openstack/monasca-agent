@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # (C) Copyright 2015-2017 Hewlett Packard Enterprise Development LP
+# Copyright 2017 Fujitsu LIMITED
 
 """ Detect running daemons then configure and start the agent.
 """
@@ -13,6 +14,8 @@ import pwd
 import socket
 import subprocess
 import sys
+
+import six
 
 import agent_config
 import monasca_setup.utils as utils
@@ -209,18 +212,23 @@ def parse_arguments(parser):
         '-u', '--username', help="Username used for keystone authentication. Required for basic configuration.")
     parser.add_argument(
         '-p', '--password', help="Password used for keystone authentication. Required for basic configuration.")
+
     parser.add_argument('--user_domain_id', help="User domain id for keystone authentication", default='')
     parser.add_argument('--user_domain_name', help="User domain name for keystone authentication", default='')
     parser.add_argument('--keystone_url', help="Keystone url. Required for basic configuration.")
+
     parser.add_argument('--project_name', help="Project name for keystone authentication", default='')
     parser.add_argument('--project_domain_id', help="Project domain id for keystone authentication", default='')
     parser.add_argument('--project_domain_name', help="Project domain name for keystone authentication", default='')
     parser.add_argument('--project_id', help="Keystone project id  for keystone authentication", default='')
+
     parser.add_argument('--monasca_url', help="Monasca API url, if not defined the url is pulled from keystone",
+                        type=six.text_type,
                         default='')
     parser.add_argument('--service_type', help="Monasca API url service type in keystone catalog", default='')
     parser.add_argument('--endpoint_type', help="Monasca API url endpoint type in keystone catalog", default='')
     parser.add_argument('--region_name', help="Monasca API url region name in keystone catalog", default='')
+
     parser.add_argument('--system_only', help="Setup the service but only configure the base config and system " +
                                               "metrics (cpu, disk, load, memory, network).",
                         action="store_true", default=False)
