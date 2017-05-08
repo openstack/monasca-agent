@@ -44,7 +44,7 @@ class JsonResponse(object):
 class PSUtilGetProc(object):
     cmdLine = ['kibana']
 
-    def as_dict(self):
+    def as_dict(self, attrs=None):
         return {'name': 'kibana',
                 'cmdline': PSUtilGetProc.cmdLine}
 
