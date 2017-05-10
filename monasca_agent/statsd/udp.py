@@ -16,6 +16,8 @@ metric_class = {
     'g': metrics_pkg.Gauge,
     'c': metrics_pkg.Counter,
     'r': metrics_pkg.Rate,
+    'ms': metrics_pkg.Gauge,
+    'h': metrics_pkg.Gauge
 }
 
 
@@ -47,6 +49,18 @@ class Server(object):
                 self.forward_udp_sock.connect((forward_to_host, forward_to_port))
             except Exception:
                 log.exception("Error while setting up connection to external statsd server")
+
+    @staticmethod
+    def _parse_service_check_packet(packet):
+        parts = packet.split('|')
+        name = parts[1]
+        status = int(parts[2])
+        dimensions = {}
+        for metadata in parts[3:]:
+            if metadata.startswith('#'):
+                dimensions = Server._parse_dogstatsd_tags(metadata)
+
+        return name, status, dimensions
 
     @staticmethod
     def _parse_metric_packet(packet):
@@ -87,11 +101,48 @@ class Server(object):
             if m[0] == '@':
                 sample_rate = float(m[1:])
                 assert 0 <= sample_rate <= 1
-            # Parse dimensions
-            elif m[0] == '#':
-                dimensions = ast.literal_eval(m[1:])
+            # Parse dimensions, supporting both Monasca and DogStatsd extensions
+            elif m[0] == '#' and len(m) > 2:
+                if m[1] == '{':
+                    dimensions = Server._parse_monasca_statsd_dims(m[1:])
+                else:
+                    dimensions = Server._parse_dogstatsd_tags(m[1:])
 
         return name, value, metric_type, dimensions, sample_rate
+
+    @staticmethod
+    def _parse_monasca_statsd_dims(dimensions):
+        dimensions = ast.literal_eval(dimensions)
+        return dimensions
+
+    @staticmethod
+    def _parse_dogstatsd_tags(statsd_msg):
+        dimensions = {}
+        s = ''
+        key = ''
+        for c in statsd_msg[1:]:
+            if c == ':':
+                key = s.strip()
+                s = ''
+            elif c == ',':
+                s = s.strip()
+                if len(key) > 0:
+                    if len(s) > 0:
+                        dimensions[key] = s
+                    else:
+                        dimensions[key] = '?'
+                elif len(s) > 0:
+                    # handle tags w/o value
+                    dimensions[s] = "True"
+                key = ''
+                s = ''
+            else:
+                s += c
+        s = s.strip()
+        if len(s) > 0 and len(key) > 0:
+            dimensions[key] = s
+
+        return dimensions
 
     def submit_packets(self, packets):
         for packet in packets.split("\n"):
@@ -101,11 +152,14 @@ class Server(object):
 
             if packet.startswith('_e'):
                 # Monasca api doesnt support events
+                log.warn("events not supported.")
                 continue
-
-            # todo it seems like this count should be done in the submit_metric method
-            self.aggregator.count += 1
-            name, value, mtype, dimensions, sample_rate = self._parse_metric_packet(packet)
+            elif packet.startswith('_sc'):
+                sample_rate = 1.0
+                mtype = 'g'
+                name, value, dimensions = self._parse_service_check_packet(packet)
+            else:
+                name, value, mtype, dimensions, sample_rate = self._parse_metric_packet(packet)
 
             if mtype not in metric_class:
                 log.warn("metric type {} not supported.".format(mtype))
