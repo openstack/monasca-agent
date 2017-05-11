@@ -155,18 +155,14 @@ def get_client(**kwargs):
 
     There are two ways to call this method:
 
-    using existing session object (:py:class:`keystoneauth1.session.Session`
+    using existing session object (:py:class:`keystoneauth1.session.Session`::
 
-    .. code-block:: python
+        >>> s = session.Session(**args)
+        >>> c = get_client(session=s)
 
-       s = session.Session(**args)
-       c = get_client(session=s)
+    initializing new keystone client from credentials::
 
-    initializing new keystone client from credentials
-
-    .. code-block:: python
-
-       c = get_client({'username':'mini-mon', 'password':'test', ...})
+        >>> c = get_client({'username':'mini-mon', 'password':'test', ...})
 
     :param kwargs: list of arguments passed to method
     :type kwargs: dict
@@ -273,9 +269,6 @@ class Keystone(object):
 
         return ks
 
-    def get_credential_args(self):
-        return self._config
-
     def get_monasca_url(self):
         """Retrieves monasca endpoint url.
 
@@ -318,3 +311,12 @@ class Keystone(object):
 
         """
         return self._init_client().auth_token
+
+    def get_session(self):
+        """Returns session of this client.
+
+        :return: session instance
+        :rtype: keystoneauth1.session.Session
+
+        """
+        return self._init_client().session
