@@ -1,12 +1,12 @@
 # (C) Copyright 2015-2017 Hewlett Packard Enterprise Development LP
 
+import argparse
 import glob
 import hashlib
 import imp
 import inspect
 import itertools
 import math
-import optparse
 import os
 import platform
 import re
@@ -444,21 +444,18 @@ def get_hostname():
         return hostname
 
 
-def get_parsed_args():
-    parser = optparse.OptionParser()
-    parser.add_option('-c', '--clean', action='store_true', default=False, dest='clean')
-    parser.add_option('-v', '--verbose', action='store_true', default=False, dest='verbose',
-                      help='Print out stacktraces for errors in checks')
-    parser.add_option('-f', '--config-file', default=None, dest='config_file',
-                      help='Location for an alternate config rather than '
-                           'using the default config location.')
+def get_parsed_args(prog=None):
+    parser = argparse.ArgumentParser(prog=prog)
+    parser.add_argument('-c', '--clean', action='store_true', default=False, dest='clean')
+    parser.add_argument('-v', '--verbose', action='store_true', default=False, dest='verbose',
+                        help='Print out stacktraces for errors in checks')
+    parser.add_argument('-f', '--config-file', default=None, dest='config_file',
+                        help='Location for an alternate config rather than '
+                             'using the default config location.')
 
-    try:
-        options, args = parser.parse_args()
-    except SystemExit:
-        # Ignore parse errors
-        options, args = optparse.Values({'clean': False}), []
-    return options, args
+    options = parser.parse_known_args(sys.argv[1:])
+
+    return options
 
 
 def load_check_directory():

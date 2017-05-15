@@ -1,12 +1,13 @@
 # -*- coding: latin-1 -*-
-import unittest
+
 import mock
 import os.path
 import tempfile
+import unittest
 
 from monasca_agent.common import config
 from monasca_agent.common.config import Config
-from monasca_agent.common.util import PidFile, is_valid_hostname
+from monasca_agent.common import util
 
 
 class TestConfig(unittest.TestCase):
@@ -30,7 +31,7 @@ class TestConfig(unittest.TestCase):
         pid_f.write(pid)
         pid_f.close()
 
-        p = PidFile(program, pid_dir)
+        p = util.PidFile(program, pid_dir)
 
         self.assertEqual(p.get_pid(), 666)
         # clean up
@@ -57,10 +58,10 @@ class TestConfig(unittest.TestCase):
         ]
 
         for hostname in valid_hostnames:
-            self.assertTrue(is_valid_hostname(hostname), hostname)
+            self.assertTrue(util.is_valid_hostname(hostname), hostname)
 
         for hostname in not_valid_hostnames:
-            self.assertFalse(is_valid_hostname(hostname), hostname)
+            self.assertFalse(util.is_valid_hostname(hostname), hostname)
 
     def testConfigIsSingleton(self):
         # create a temp conf file
@@ -112,6 +113,8 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(config.DEFAULT_CONFIG_FILE, conf._configFile)
         mock_os.path.exists.assert_called_once_with(config.DEFAULT_CONFIG_FILE)
 
-
-if __name__ == '__main__':
-    unittest.main()
+    def test_verify_common_config_opts(self):
+        opts = util.get_parsed_args(prog='test')
+        opts_dict = vars(opts[0])
+        self.assertItemsEqual(['config_file', 'clean', 'verbose'],
+                              opts_dict.keys())

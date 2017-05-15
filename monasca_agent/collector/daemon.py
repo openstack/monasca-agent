@@ -163,7 +163,7 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
 
 
 def main():
-    options, args = util.get_parsed_args()
+    options, args = util.get_parsed_args(prog='monasca-collector')
     config = cfg.Config()
     collector_config = config.get_config(['Main', 'Api', 'Logging'])
     autorestart = collector_config.get('autorestart', False)
