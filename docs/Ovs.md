@@ -31,15 +31,17 @@ NOTE: The `/usr/bin/ovs-vsctl` command requires sudo to run.  See notes in `ovs_
 This plugin is not currently automatically configured using the monasca-setup program -- it must be explicitly
 configured using the configuration file example below.
 
-`admin_password` password for the neutron user.
+`password` password for the neutron user.
 
-`admin_tenant_name` is the project/tenant to POST metrics with the `ovs.` prefix.
+`project_name` is the project/tenant to POST metrics with the `ovs.` prefix.
 
-`admin_user` is the username capable of making administrative neutron calls.
+`username` is the username capable of making administrative neutron calls.
 
 `neutron_refresh` is the number of seconds to wait before updating the neutron router cache file.  This requires two neutron calls to get port and router info, so we intentionally overload neutron by making these calls each time the agent wakes up.
 
-`identity_url` is the keystone endpoint for auth.
+`auth_url` is the keystone endpoint for auth.
+
+`endpoint_type` is the endpoint type for making neutron calls.
 
 `region_name` is used to add the region dimension to metrics.
 
@@ -67,11 +69,12 @@ Example config (`ovs.yaml`):
 ```
 ---
 init_config:
-  admin_password: password
-  admin_tenant_name: services
-  admin_user: neutron
+  password: password
+  project_name: services
+  username: neutron
   neutron_refresh: 14400
-  identity_uri: 'http://192.168.10.5:35357/v2.0'
+  auth_url: 'http://192.168.10.5/identity'
+  endpoint_type: 'publicURL'
   region_name: 'region1'
   cache_dir: /dev/shm
   network_use_bits: true

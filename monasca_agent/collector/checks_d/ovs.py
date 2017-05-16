@@ -16,6 +16,7 @@ import time
 
 from copy import deepcopy
 from monasca_agent.collector.checks import AgentCheck
+from monasca_agent.common import keystone
 from neutronclient.v2_0 import client as neutron_client
 from novaclient import client as nova_client
 
@@ -55,6 +56,7 @@ class OvsCheck(AgentCheck):
         else:
             include_re = include_re + '|' + 'qg.*'
         self.include_iface_re = re.compile(include_re)
+        self.session = keystone.get_session(self.init_config)
 
     def check(self, instance):
         time_start = time.time()
@@ -292,38 +294,21 @@ class OvsCheck(AgentCheck):
         return None
 
     def _get_nova_client(self):
-
-        username = self.init_config.get('admin_user')
-        password = self.init_config.get('admin_password')
-        tenant_name = self.init_config.get('admin_tenant_name')
-        auth_url = self.init_config.get('identity_uri')
         region_name = self.init_config.get('region_name')
-
-        nc = nova_client.Client(2,
-                                username=username,
-                                password=password,
-                                project_name=tenant_name,
-                                auth_url=auth_url,
-                                endpoint_type='internalURL',
+        endpoint_type = self.init_config.get("endpoint_type", "publicURL")
+        nc = nova_client.Client(2, session=self.session,
+                                endpoint_type=endpoint_type,
                                 service_type="compute",
                                 region_name=region_name)
 
         return nc
 
     def _get_neutron_client(self):
-
-        username = self.init_config.get('admin_user')
-        password = self.init_config.get('admin_password')
-        tenant_name = self.init_config.get('admin_tenant_name')
-        auth_url = self.init_config.get('identity_uri')
         region_name = self.init_config.get('region_name')
-
-        return neutron_client.Client(username=username,
-                                     password=password,
-                                     tenant_name=tenant_name,
-                                     auth_url=auth_url,
+        endpoint_type = self.init_config.get("endpoint_type", "publicURL")
+        return neutron_client.Client(session=self.session,
                                      region_name=region_name,
-                                     endpoint_type='internalURL')
+                                     endpoint_type=endpoint_type)
 
     def _run_command(self, command, input=None):
         self.log.debug("Executing command - {0}".format(command))

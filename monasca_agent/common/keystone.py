@@ -1,13 +1,29 @@
 # (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2017 KylinCloud
 
 import logging
 import six
 
+from keystoneauth1 import identity
+from keystoneauth1 import session
 from monascaclient import ksclient
 
 import monasca_agent.common.singleton as singleton
 
 log = logging.getLogger(__name__)
+
+
+def get_session(config):
+    auth = identity.Password(auth_url=config.get('auth_url'),
+                             username=config.get('username'),
+                             password=config.get('password'),
+                             project_name=config.get('project_name'),
+                             user_domain_name=config.get(
+                                 'user_domain_name', 'default'),
+                             project_domain_name=config.get(
+                                 'project_domain_name', 'default'))
+    sess = session.Session(auth=auth)
+    return sess
 
 
 # Make this a singleton class so we don't get the token every time
