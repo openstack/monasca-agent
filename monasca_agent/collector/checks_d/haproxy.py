@@ -50,7 +50,7 @@ class HAProxy(AgentCheck):
     }
 
     def check(self, instance):
-        self.dimensions = self._set_dimensions(None, instance)
+        self.dimensions = self._set_dimensions({'service': 'haproxy'}, instance)
         url = instance.get('url')
         username = instance.get('username')
         password = instance.get('password')
@@ -156,7 +156,7 @@ class HAProxy(AgentCheck):
         for (service, status), count in hosts_statuses.items():
             status = status.lower()
 
-            status_dimensions.update({'status': status, 'service': service})
+            status_dimensions.update({'status': status, 'component': service})
             self.gauge("haproxy.count_per_status", count, dimensions=status_dimensions)
 
             if 'up' in status:
@@ -166,7 +166,7 @@ class HAProxy(AgentCheck):
 
         for service in agg_statuses:
             for status, count in agg_statuses[service].items():
-                status_dimensions.update({'status': status, 'service': service})
+                status_dimensions.update({'status': status, 'component': service})
                 self.gauge("haproxy.count_per_status", count, dimensions=status_dimensions)
 
     def _process_metrics(self, data_list, service, url):
@@ -188,8 +188,7 @@ class HAProxy(AgentCheck):
 
             metric_dimensions.update({'type': service,
                                       'instance_url': url,
-                                      'service_name': service_name,
-                                      'service': 'haproxy'})
+                                      'component': service_name})
             if service == Services.BACKEND:
                 metric_dimensions.update({'backend': hostname})
 
