@@ -20,7 +20,7 @@ Mode: leader
 Node count: 487
 ```
 
-Tested with Zookeeper versions 3.0.0 to 3.4.5
+Tested with Zookeeper versions 3.0.0 to 3.4.10
 """
 
 import re
@@ -101,7 +101,7 @@ class Zookeeper(AgentCheck):
             raise Exception("Could not parse version from stat command output: %s" % start_line)
         else:
             version_tuple = match.groups()
-        has_connections_val = version_tuple >= ('3', '4', '4')
+        has_connections_val = map(int, version_tuple) >= [3, 4, 4]
 
         # Clients:
         buf.readline()  # skip the Clients: header
