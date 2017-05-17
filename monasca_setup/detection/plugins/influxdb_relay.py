@@ -39,6 +39,7 @@ class InfluxDBRelay(detection.Plugin):
         'bind_address': '127.0.0.1',
         'bind_port': 9096
     }
+    RELAY_NODE_ARG_NAME = 'influxdb_relay_node'
 
     def _detect(self):
         """Run detection, set self.available True if the service is detected.
@@ -84,10 +85,16 @@ class InfluxDBRelay(detection.Plugin):
 
     def _monitor_process(self):
         LOG.info("\tMonitoring the influxdb-relay process")
+
+        dimensions = {}
+        if self.args and self.args.get(self.RELAY_NODE_ARG_NAME):
+            dimensions.update({self.RELAY_NODE_ARG_NAME: self.args.get(self.RELAY_NODE_ARG_NAME)})
+
         return detection.watch_process([self.PROC_NAME],
                                        service='influxdb',
                                        component='influxdb-relay',
-                                       exact_match=False)
+                                       exact_match=False,
+                                       dimensions=dimensions)
 
     def _monitor_endpoint(self):
         config = agent_config.Plugins()
@@ -100,9 +107,17 @@ class InfluxDBRelay(detection.Plugin):
             listening = utils.find_addrs_listening_on_port(port)
             if listening:
                 LOG.info("\tMonitoring the influxdb-relay ping endpoint")
+
+                dimensions = {'service': 'influxdb',
+                              'component': 'influxdb-relay'}
+                if self.args and self.args.get(self.RELAY_NODE_ARG_NAME):
+                    dimensions.update(
+                        {self.RELAY_NODE_ARG_NAME: self.args.get(self.RELAY_NODE_ARG_NAME)})
+
                 instance = {
                     'name': 'influxdb-relay',
-                    'url': 'http://%s:%d/ping' % (host, port)
+                    'url': 'http://%s:%d/ping' % (host, port),
+                    'dimensions': dimensions
                 }
 
                 config['http_check'] = {

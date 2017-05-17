@@ -32,6 +32,7 @@ class InfluxDB(detection.Plugin):
         'bind_address': '127.0.0.1',
         'bind_port': 8086
     }
+    INFLUXDB_NODE_ARG_NAME = 'influxdb_node'
 
     def _detect(self):
         """Run detection, set self.available True if the service is detected.
@@ -80,10 +81,15 @@ class InfluxDB(detection.Plugin):
         return config
 
     def _monitor_process(self):
+        dimensions = {}
+        if self.args and self.args.get(self.INFLUXDB_NODE_ARG_NAME):
+            dimensions.update({self.INFLUXDB_NODE_ARG_NAME: self.args.get(self.INFLUXDB_NODE_ARG_NAME)})
+
         return detection.watch_process([self.PROC_NAME],
                                        service='influxdb',
                                        component='influxdb',
-                                       exact_match=False)
+                                       exact_match=False,
+                                       dimensions=dimensions)
 
     def _monitor_ping_endpoint(self):
         config = agent_config.Plugins()
@@ -93,13 +99,19 @@ class InfluxDB(detection.Plugin):
             host, port = self._explode_bind_address(http_conf)
             listening = utils.find_addrs_listening_on_port(port)
 
+            dimensions = {'service': 'influxdb', 'component': 'influxdb'}
+            if self.args and self.args.get(self.INFLUXDB_NODE_ARG_NAME):
+                dimensions.update(
+                    {self.INFLUXDB_NODE_ARG_NAME: self.args.get(self.INFLUXDB_NODE_ARG_NAME)})
+
             if listening:
                 config['http_check'] = {
                     'init_config': None,
                     'instances': [
                         {
                             'name': 'influxdb',
-                            'url': 'http://%s:%d/ping' % (host, port)
+                            'url': 'http://%s:%d/ping' % (host, port),
+                            'dimensions': dimensions
                         }
                     ]
                 }

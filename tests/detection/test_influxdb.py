@@ -151,6 +151,13 @@ class TestInfluxDBDetection(base.BaseTestCase):
         falop.return_value = False
         self._build_config(http_enabled=False)
 
+    @mock.patch('monasca_setup.detection.plugins.influxdb.'
+                'utils.find_addrs_listening_on_port')
+    def test_should_build_config_db_listens_with_influxdb_node_key(self, falop):
+        falop.return_value = True
+        self._ir.args = {'influxdb_node': 'test-key'}
+        self._build_config(process_up=True)
+
     def _build_config(self, http_enabled=True, process_up=True):
         """Verify built configuration
 
@@ -183,18 +190,35 @@ class TestInfluxDBDetection(base.BaseTestCase):
                     raise 'Untested monitored item %s' % key
 
     def _verify_http_conf(self, built_config, e_host_port):
+        dimensions = {
+            'component': 'influxdb',
+            'service': 'influxdb'
+        }
+        if self._ir.args and self._ir.args.get(self._ir.INFLUXDB_NODE_ARG_NAME):
+            dimensions.update(
+                {self._ir.INFLUXDB_NODE_ARG_NAME: self._ir.args.get(self._ir.INFLUXDB_NODE_ARG_NAME)})
+
         expected_http = {
             'init_config': None,
             'instances': [
                 {
                     'name': 'influxdb',
-                    'url': 'http://%s:%d/ping' % e_host_port
+                    'url': 'http://%s:%d/ping' % e_host_port,
+                    'dimensions': dimensions
                 }
             ]
         }
         self.assertDictEqual(expected_http, built_config)
 
     def _verify_process_conf(self, actual_config):
+        dimensions = {
+            'component': 'influxdb',
+            'service': 'influxdb'
+        }
+        if self._ir.args and self._ir.args.get(self._ir.INFLUXDB_NODE_ARG_NAME):
+            dimensions.update(
+                {self._ir.INFLUXDB_NODE_ARG_NAME: self._ir.args.get(self._ir.INFLUXDB_NODE_ARG_NAME)})
+
         expected_process = {
             'init_config': None,
             'instances': [
@@ -203,10 +227,7 @@ class TestInfluxDBDetection(base.BaseTestCase):
                     'search_string': ['influxd'],
                     'exact_match': False,
                     'name': 'influxd',
-                    'dimensions': {
-                        'component': 'influxdb',
-                        'service': 'influxdb'
-                    }
+                    'dimensions': dimensions
                 }
             ]
         }
