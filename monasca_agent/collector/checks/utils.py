@@ -108,7 +108,7 @@ class KubernetesConnector(object):
         """Set kubernetes API string from default container environment
         variables
         """
-        api_host = os.environ.get('KUBERNETES_SERVICE_HOST', "kubernetes")
+        api_host = os.environ.get('KUBERNETES_SERVICE_HOST', "kubernetes.default")
         api_port = os.environ.get('KUBERNETES_SERVICE_PORT', "443")
         self.api_url = "https://{}:{}".format(api_host, api_port)
 
