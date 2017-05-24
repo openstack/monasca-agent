@@ -49,8 +49,6 @@ class Load(checks.AgentCheck):
         # Split out the 3 load average values
         load = [res.replace(',', '.') for res in re.findall(r'([0-9]+[\.,]\d+)', uptime)]
 
-        dimensions = self._set_dimensions(None)
-
         #
         # Normalize the load averages by number of cores
         # so the metric is useful for alarming across
