@@ -1317,7 +1317,7 @@ The value_meta/msg reports problems such as:
 
 
 ## Kafka Checks
-This section describes the Kafka check that can be performed by the Agent.  The Kafka check requires a configuration file called kafka.yaml to be available in the agent conf.d configuration directory.
+This section describes the Kafka check that can be performed by the Agent.  The Kafka check requires a configuration file called kafka_consumer.yaml to be available in the agent conf.d configuration directory.
 
 Sample config:
 
