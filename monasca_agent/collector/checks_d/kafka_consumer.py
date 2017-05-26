@@ -5,12 +5,12 @@ import logging
 import monasca_agent.collector.checks as checks
 
 try:
-    import kafka.client as client
-    import kafka.common as common
-    import kafka.consumer as consumer
+    import monasca_common.kafka_lib.client as client
+    import monasca_common.kafka_lib.common as common
+    import monasca_common.kafka_lib.consumer as consumer
 except ImportError:
-    raise Exception('Missing python dependency: kafka (https://github.com/mumrah/kafka-python)')
-
+    raise Exception('Missing python dependency: monasca-common.\n Please '
+                    'install with: pip install monasca-agent[kafka_plugin]')
 
 log = logging.getLogger(__name__)
 
