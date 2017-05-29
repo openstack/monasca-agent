@@ -7,6 +7,8 @@ from subprocess import CalledProcessError
 from subprocess import PIPE
 from subprocess import Popen
 
+from oslo_config import cfg
+
 from monasca_agent.common.psutil_wrapper import psutil
 from monasca_setup import agent_config
 
@@ -87,6 +89,66 @@ def find_addr_listening_on_port_over_tcp(port):
     ip = find_addrs_listening_on_port(port, 'tcp')
     if ip:
         return ip[0].lstrip("::ffff:")
+
+
+# NOTE(trebskit) a little poetry never hurt anyone before...right ?
+def load_oslo_configuration(from_cmd, in_project,
+                            for_opts, of_prog=None):
+    """Loads configuration of an OpenStack project.
+
+    for_opts should be a :py:class:`list` containing dictionaries
+    with keys as expected by :py:class:meth:`cfg.ConfigOpts.register_opt`::
+
+        >>> for_opts = [
+        >>>     {'opt': cfg.StrOpt('region_name')},
+        >>>     {'opt': cfg.StrOpt('username'), 'group': 'keystoneauth'},
+        >>>     {'opt': cfg.StrOpt('password'), 'group': 'keystoneauth'},
+        >>> ]
+
+    Example::
+
+        >>> nova_proc = find_process_name('nova-compute')
+        >>> proc_cmd = nova_proc.as_dict(['cmdline'])['cmdline']
+        >>> load_oslo_configuration(
+        >>>     from_cmd=proc_cmd,
+        >>>     in_project='nova',
+        >>>     for_opts=for_opts
+        >>> )
+
+    which will load three [region_name, username and password] settings from
+    Nova configuration regardless of where those
+    settings are actually defined.
+
+    :param from_cmd: cmdline of a process, used also to retrieve arguments
+    :type from_cmd: list[basestring]
+    :param in_project: the project name as defined in its oslo setup
+    :type in_project: basestring
+    :param for_opts: list of dict containing options to look for inside config
+    :type for_opts: list[dict]
+    :param of_prog: program name within the project [optional]
+    :type of_prog: basestring
+    :return: oslo configuration object
+    :rtype: oslo_config.cfg.CONF
+    """
+
+    conf_holder = cfg.ConfigOpts()
+    for no in for_opts:
+        conf_holder.register_opt(**no)
+
+    # NOTE(trebskit) we need to remove everything from the beginning
+    # of the cmd arg list that is not an argument of the application
+    # we want to get configuration from, i.e.;
+    # /usr/bin/python, /usr/bin/python3
+    # and next actual binary of the program
+    # /usr/local/bin/nova-compute
+    args = from_cmd[2:]
+    conf_holder(
+        args=args,
+        project=in_project,
+        prog=of_prog
+    )
+
+    return conf_holder
 
 
 def watch_process(search_strings, service=None, component=None,

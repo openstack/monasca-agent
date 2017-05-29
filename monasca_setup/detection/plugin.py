@@ -63,7 +63,8 @@ class Plugin(object):
         """
         raise NotImplementedError
 
-    def literal_eval(self, testval):
+    @staticmethod
+    def literal_eval(testval):
         """Return a literal boolean value if applicable
 
         """
