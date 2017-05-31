@@ -62,8 +62,8 @@ class KibanaCheckTest(unittest.TestCase):
     def test_should_early_exit_if_all_metrics_disabled(self):
         with contextlib.nested(
                 mock.patch.object(util, 'get_hostname'),
-                mock.patch.object(LOG, 'warn')
-        ) as (_, mock_log_warn):
+                mock.patch.object(LOG, 'warning')
+        ) as (_, mock_log_warning):
             self.kibana_check._get_kibana_version = mock.Mock()
             self.kibana_check._get_data = mock.Mock()
             self.kibana_check._process_metrics = mock.Mock()
@@ -74,8 +74,8 @@ class KibanaCheckTest(unittest.TestCase):
             self.assertFalse(self.kibana_check._get_data.called)
             self.assertFalse(self.kibana_check._process_metrics.called)
 
-            self.assertEqual(mock_log_warn.call_count, 1)
-            self.assertEqual(mock_log_warn.call_args[0][0],
+            self.assertEqual(mock_log_warning.call_count, 1)
+            self.assertEqual(mock_log_warning.call_args[0][0],
                              'All metrics have been disabled in configuration '
                              'file, nothing to do.')
 
@@ -110,8 +110,8 @@ class KibanaCheckTest(unittest.TestCase):
     def test_empty_data_returned(self):
         with contextlib.nested(
                 mock.patch.object(util, 'get_hostname'),
-                mock.patch.object(LOG, 'warn')
-        ) as (_, mock_log_warn):
+                mock.patch.object(LOG, 'warning')
+        ) as (_, mock_log_warning):
             self.kibana_check._get_data = mock.Mock(return_value=None)
 
             self.kibana_check.check({
@@ -123,8 +123,8 @@ class KibanaCheckTest(unittest.TestCase):
                             'resp_time_max']
             })
 
-            self.assertEqual(mock_log_warn.call_count, 1)
-            self.assertEqual(mock_log_warn.call_args[0][0],
+            self.assertEqual(mock_log_warning.call_count, 1)
+            self.assertEqual(mock_log_warning.call_args[0][0],
                              'No stats data was collected from kibana')
 
     def test_process_metrics(self):
