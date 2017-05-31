@@ -90,7 +90,7 @@ def find_addr_listening_on_port_over_tcp(port):
 
 
 def watch_process(search_strings, service=None, component=None,
-                  exact_match=True, detailed=True, process_name=None):
+                  exact_match=True, detailed=True, process_name=None, dimensions=None):
     """Takes a list of process search strings and returns a Plugins object with the config set.
         This was built as a helper as many plugins setup process watching
     """
@@ -103,7 +103,7 @@ def watch_process(search_strings, service=None, component=None,
                   'exact_match': exact_match,
                   'search_string': search_strings}
 
-    dimensions = _get_dimensions(service, component)
+    dimensions = _get_dimensions(service, component, dimensions)
     if len(dimensions) > 0:
         parameters['dimensions'] = dimensions
 
@@ -112,7 +112,8 @@ def watch_process(search_strings, service=None, component=None,
     return config
 
 
-def watch_process_by_username(username, process_name, service=None, component=None, detailed=True):
+def watch_process_by_username(username, process_name, service=None,
+                              component=None, detailed=True, dimensions=None):
     """Takes a user and returns a Plugins object with the config set for a process check by user.
         This was built as a helper as many plugins setup process watching.
     """
@@ -122,7 +123,7 @@ def watch_process_by_username(username, process_name, service=None, component=No
                   'detailed': detailed,
                   'username': username}
 
-    dimensions = _get_dimensions(service, component)
+    dimensions = _get_dimensions(service, component, dimensions)
     if len(dimensions) > 0:
         parameters['dimensions'] = dimensions
 
@@ -132,7 +133,7 @@ def watch_process_by_username(username, process_name, service=None, component=No
 
 
 def watch_file_size(directory_name, file_names, file_recursive=False,
-                    service=None, component=None):
+                    service=None, component=None, dimensions=None):
     """Takes a directory, a list of files, recursive flag and returns a
         Plugins object with the config set.
     """
@@ -141,7 +142,7 @@ def watch_file_size(directory_name, file_names, file_recursive=False,
                   'file_names': file_names,
                   'recursive': file_recursive}
 
-    dimensions = _get_dimensions(service, component)
+    dimensions = _get_dimensions(service, component, dimensions)
     if len(dimensions) > 0:
         parameters['dimensions'] = dimensions
 
@@ -150,13 +151,13 @@ def watch_file_size(directory_name, file_names, file_recursive=False,
     return config
 
 
-def watch_directory(directory_name, service=None, component=None):
+def watch_directory(directory_name, service=None, component=None, dimensions=None):
     """Takes a directory name and returns a Plugins object with the config set.
     """
     config = agent_config.Plugins()
     parameters = {'directory': directory_name}
 
-    dimensions = _get_dimensions(service, component)
+    dimensions = _get_dimensions(service, component, dimensions)
     if len(dimensions) > 0:
         parameters['dimensions'] = dimensions
 
@@ -165,8 +166,8 @@ def watch_directory(directory_name, service=None, component=None):
     return config
 
 
-def service_api_check(name, url, pattern,
-                      use_keystone=True, service=None, component=None):
+def service_api_check(name, url, pattern, use_keystone=True,
+                      service=None, component=None, dimensions=None):
     """Setup a service api to be watched by the http_check plugin.
     """
     config = agent_config.Plugins()
@@ -176,7 +177,7 @@ def service_api_check(name, url, pattern,
                   'timeout': 10,
                   'use_keystone': use_keystone}
 
-    dimensions = _get_dimensions(service, component)
+    dimensions = _get_dimensions(service, component, dimensions)
     if len(dimensions) > 0:
         parameters['dimensions'] = dimensions
 
@@ -185,8 +186,9 @@ def service_api_check(name, url, pattern,
     return config
 
 
-def _get_dimensions(service, component):
-    dimensions = {}
+def _get_dimensions(service, component, dimensions=None):
+    if dimensions is None:
+        dimensions = {}
     # If service parameter is set in the plugin config, add the service dimension which
     # will override the service in the agent config
     if service:

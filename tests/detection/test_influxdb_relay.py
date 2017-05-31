@@ -146,6 +146,12 @@ class TestInfluxDBRelayDetection(base.BaseTestCase):
         falop.return_value = False
         self._build_config(process_up=False)
 
+    @mock.patch('monasca_setup.detection.plugins.influxdb_relay.'
+                'utils.find_addrs_listening_on_port')
+    def test_should_build_config_relay_listens_with_node_name(self, falop):
+        falop.return_value = True
+        self._ir.args = {'influxdb_relay_node': 'relay-node-name'}
+        self._build_config(process_up=True)
     def _build_config(self, process_up=True):
         """Verify built configuration
 
@@ -175,18 +181,35 @@ class TestInfluxDBRelayDetection(base.BaseTestCase):
                     raise 'Untested monitored item %s' % key
 
     def _verify_http_conf(self, built_config, e_host_port):
+        dimensions = {
+            'component': 'influxdb-relay',
+            'service': 'influxdb'
+        }
+        if self._ir.args and self._ir.args.get(self._ir.RELAY_NODE_ARG_NAME):
+            dimensions.update(
+                {self._ir.RELAY_NODE_ARG_NAME: self._ir.args.get(self._ir.RELAY_NODE_ARG_NAME)})
+
         expected_http = {
             'init_config': None,
             'instances': [
                 {
                     'name': 'influxdb-relay',
-                    'url': 'http://%s:%d/ping' % e_host_port
+                    'url': 'http://%s:%d/ping' % e_host_port,
+                    'dimensions': dimensions
                 }
             ]
         }
         self.assertDictEqual(expected_http, built_config)
 
     def _verify_process_conf(self, actual_config):
+        dimensions = {
+            'component': 'influxdb-relay',
+            'service': 'influxdb'
+        }
+        if self._ir.args and self._ir.args.get(self._ir.RELAY_NODE_ARG_NAME):
+            dimensions.update(
+                {self._ir.RELAY_NODE_ARG_NAME: self._ir.args.get(self._ir.RELAY_NODE_ARG_NAME)})
+
         expected_process = {
             'init_config': None,
             'instances': [
@@ -195,10 +218,7 @@ class TestInfluxDBRelayDetection(base.BaseTestCase):
                     'search_string': ['influxdb-relay'],
                     'exact_match': False,
                     'name': 'influxdb-relay',
-                    'dimensions': {
-                        'component': 'influxdb-relay',
-                        'service': 'influxdb'
-                    }
+                    'dimensions': dimensions
                 }
             ]
         }
