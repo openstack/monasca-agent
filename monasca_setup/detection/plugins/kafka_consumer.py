@@ -3,8 +3,8 @@
 
 import logging
 from os import path
-import subprocess as sp
 import re
+import subprocess as sp
 
 from subprocess import CalledProcessError
 from subprocess import STDOUT

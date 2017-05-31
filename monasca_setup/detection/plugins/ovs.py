@@ -91,7 +91,7 @@ class Ovs(detection.Plugin):
                            'not installed.'))
         else:
             log.info("\tUsing neutron configuration file {0}".format(
-                    neutron_conf))
+                     neutron_conf))
             self.neutron_conf = neutron_conf
 
     def _is_neutron_conf_valid(self, conf_file):
