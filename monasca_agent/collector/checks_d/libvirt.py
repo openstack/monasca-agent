@@ -756,7 +756,7 @@ class LibvirtCheck(AgentCheck):
                 if self.init_config.get('vm_network_check_enable'):
                     self._inspect_network(insp, inst, inst_name, instance_cache, metric_cache, dims_customer, dims_operations)
 
-            # Memory utilizaion
+            # Memory utilization
             # (req. balloon driver; Linux kernel param CONFIG_VIRTIO_BALLOON)
             try:
                 mem_stats = inst.memoryStats()

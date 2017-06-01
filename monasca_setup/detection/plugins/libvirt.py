@@ -29,7 +29,7 @@ metadata = ['scale_group']
 # Include scale group dimension for customer metrics.
 customer_metadata = ['scale_group']
 # List 'ping' commands (paths and parameters) in order of preference.
-# The plugin will use the first fuctional command. 127.0.0.1 will be appended.
+# The plugin will use the first functional command. 127.0.0.1 will be appended.
 ping_options = [["/usr/bin/fping", "-n", "-c1", "-t250", "-q"],
                 ["/sbin/fping", "-n", "-c1", "-t250", "-q"],
                 ["/bin/ping", "-n", "-c1", "-w1", "-q"]]
@@ -53,7 +53,7 @@ class Libvirt(Plugin):
     def _detect(self):
         """Set self.available True if the process and config file are detected
         """
-        # Detect Agent's OS username by getting the group owner of confg file
+        # Detect Agent's OS username by getting the group owner of config file
         try:
             gid = os.stat('/etc/monasca/agent/agent.yaml').st_gid
             self.agent_user = grp.getgrgid(gid)[0]
