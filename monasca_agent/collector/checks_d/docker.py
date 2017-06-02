@@ -43,7 +43,7 @@ class Docker(checks.AgentCheck):
     def check(self, instance):
         docker_url = instance.get('url', DEFAULT_BASE_URL)
         try:
-            docker_client = docker.Client(base_url=docker_url, version=self.docker_version,
+            docker_client = docker.APIClient(base_url=docker_url, version=self.docker_version,
                                           timeout=self.connection_timeout)
             running_containers = {container['Id']: container for container in self._get_containers(docker_client)}
         except Exception as e:
