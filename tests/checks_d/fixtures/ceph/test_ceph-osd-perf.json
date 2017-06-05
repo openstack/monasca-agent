@@ -1,0 +1,25 @@
+{
+    "osd_perf_infos": [
+        {
+            "id": 2,
+            "perf_stats": {
+                "commit_latency_ms": 25,
+                "apply_latency_ms": 1505
+            }
+        },
+        {
+            "id": 1,
+            "perf_stats": {
+                "commit_latency_ms": 25,
+                "apply_latency_ms": 1390
+            }
+        },
+        {
+            "id": 0,
+            "perf_stats": {
+                "commit_latency_ms": 31,
+                "apply_latency_ms": 862
+            }
+        }
+    ]
+}

@@ -1,0 +1,59 @@
+{
+    "nodes": [
+        {
+            "id": 0,
+            "name": "osd.0",
+            "type": "osd",
+            "type_id": 0,
+            "crush_weight": 0.999390,
+            "depth": 2,
+            "reweight": 1.000000,
+            "kb": 50,
+            "kb_used": 25,
+            "kb_avail": 25,
+            "utilization": 0.5,
+            "var": 1.008811,
+            "pgs": 192
+        },
+        {
+            "id": 1,
+            "name": "osd.1",
+            "type": "osd",
+            "type_id": 0,
+            "crush_weight": 0.999390,
+            "depth": 2,
+            "reweight": 1.000000,
+            "kb": 50,
+            "kb_used": 25,
+            "kb_avail": 25,
+            "utilization": 0.5,
+            "var": 0.998439,
+            "pgs": 192
+        },
+        {
+            "id": 2,
+            "name": "osd.2",
+            "type": "osd",
+            "type_id": 0,
+            "crush_weight": 0.999390,
+            "depth": 2,
+            "reweight": 1.000000,
+            "kb": 50,
+            "kb_used": 25,
+            "kb_avail": 25,
+            "utilization": 0.5,
+            "var": 0.992750,
+            "pgs": 192
+        }
+    ],
+    "stray": [],
+    "summary": {
+        "total_kb": 150,
+        "total_kb_used": 75,
+        "total_kb_avail": 75,
+        "average_utilization": 0.5,
+        "min_var": 0.992750,
+        "max_var": 1.008811,
+        "dev": 0.000022
+    }
+}
