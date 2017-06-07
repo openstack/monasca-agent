@@ -268,7 +268,6 @@ Example:
 service:
    source_key: kubernetes.namespace
    regex: prod-(.*)
-
 ```
 
 The regular expression is applied to the dimension value. If the regular expression does not match, then the measurement is ignored. If match-groups are part of the regular expression then the regular expression is used for value transformation: The resulting dimension value is created by concatenating all match-groups (in braces) using the specified separator. If no match-group is specified, then the value is acting as a filter and just normalized. If the regex is a string constant (no wildcards), then it will not be mapped to a dimension at all.
@@ -297,6 +296,7 @@ instances:
         dimensions:
           service: kubernetes_namespace
           database: datname
+```
 
 ##### Plugin Documentation
 Your plugin should include an example `yaml` configuration file to be placed in `/etc/monasca/agent/conf.d` which has the name of the plugin YAML file plus the extension '.example', so the example configuration file for the process plugin would be at `/etc/monasca/agent/conf.d/process.yaml.example. This file should include a set of example init_config and instances clauses that demonstrate how the plugin can be configured.
