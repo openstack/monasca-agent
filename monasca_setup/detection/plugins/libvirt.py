@@ -32,7 +32,8 @@ customer_metadata = ['scale_group']
 # The plugin will use the first fuctional command. 127.0.0.1 will be appended.
 ping_options = [["/usr/bin/fping", "-n", "-c1", "-t250", "-q"],
                 ["/sbin/fping", "-n", "-c1", "-t250", "-q"],
-                ["/bin/ping", "-n", "-c1", "-w1", "-q"]]
+                ["/bin/ping", "-n", "-c1", "-w1", "-q"],
+                ["/usr/bin/ping", "-n", "-c1", "-w1", "-q"]]
 # Path to 'ip' command (needed to execute ping within network namespaces)
 ip_cmd = "/sbin/ip"
 # How many ping commands to run concurrently
