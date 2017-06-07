@@ -22,7 +22,7 @@
 
 In Monasca, a metric type is uniquely identified by a name and a specific set of dimensions. The set of dimensions of a metric are a dictionary of (key, value) pairs. A measurement is a metric instance with a value and a timestamp. Measurements are searchable from the Monasca API by name and dimension (key, value).
 
-Optionally, a measurement may also contain extra data about the value, which is known as `value_meta`. `value_ meta`[wiki.openstack.org/wiki/Monasca/Value_Metadata](https://wiki.openstack.org/wiki/Monasca/Value_Metadata) are a dictionary of (key, value) pairs that contain textual data that relates to the value of the measurement. If value_meta is included with a measurement, it is returned when the measurement is read via the Monasca API. Unlike dimensions, value_meta is not searchable from the Monasca API, and it is ignored when computing statistics on measurements such as `average`.
+Optionally, a measurement may also contain extra data about the value, which is known as `value_meta`. [value_ meta](https://wiki.openstack.org/wiki/Monasca/Value_Metadata) is a dictionary of (key, value) pairs that contain textual data that relates to the value of the measurement. If value_meta is included with a measurement, it is returned when the measurement is read via the Monasca API. Unlike dimensions, value_meta is not searchable from the Monasca API, and it is ignored when computing statistics on measurements such as `average`.
 
 # Naming conventions
 
@@ -32,7 +32,7 @@ Optionally, a measurement may also contain extra data about the value, which is 
 Although metric names in the Monasca API can be any string the Monasca Agent uses several naming conventions as follows:
 
 * All lowercase characters.
-* '.' is used to hierarchically group. This is done for compatibility with Graphite as Graphite assumes a '.' as a delimiter.
+* '.' is used to hierarchically group. This is done for compatibility with Graphite which assumes a '.' as a delimiter.
 * '_' is used to separate words in long names that are not meant to be hierarchical.
 
 ### System Dimensions
@@ -40,19 +40,19 @@ Dimensions are a dictionary of (key, value) pairs that can be used to describe m
 
 This section documents some of the common naming conventions for dimensions that should observed by the monitoring agents/checks to improve consistency and make it easier to create alarms and perform queries.
 
-The agent will automatically add a hostname dimension, beyond that dimensions are optional. Dimensions can be defined in the primary agent config and
+The agent will automatically add a hostname dimension; beyond that, dimensions are optional. Dimensions can be defined in the primary agent config and
 applied to all metrics, set per plugin configuration or set during collection.
 
-The order of precedence for all dimensions is:
+The order of precedence (high to low) for all dimensions is:
 
-&nbsp;&nbsp;1) Any dimension defined in an Agent plugin config file.
+  1) Any dimension defined in an Agent plugin config file.
 
-&nbsp;&nbsp;2) Any dimension defined in the Agent config file.
+  2) Any dimension defined in the Agent config file.
 
-&nbsp;&nbsp;3) Any default dimension set in the plugin code itself.
+  3) Any default dimension set in the plugin code itself.
 
-1 being the highest precedence and 3 being the lowest.  If a dimension is defined in more than one place,
- the dimension will be set to the value of the highest precedence above.  This allows dimensions to be overridden at any level if desired.
+If a dimension is defined in more than one place, the dimension will be set to the value of the highest precedence above.
+This allows dimensions to be overridden at any level, if desired.
 
 #### Common Dimensions
 
@@ -91,10 +91,10 @@ Main:
 This section documents some of the naming conventions that are used for monitoring OpenStack.
 
 ### Metric Names
-Where applicable, each metric name will list the name of the service, such as "compute", component, such as "nova-api", and the check, such as "process_exists". For example, "nova.api.process_exists".
+Where applicable, each metric name will list the name of the service (e.g. "compute"), component (e.g. nova-api) and the check (e.g. "process_exists"). For example, "nova.api.process_exists".
 
 ### Dimensions
-This section documents the list of dimensions that are commonly used in monitoring OpenStack.
+This section documents dimensions that are commonly used in monitoring OpenStack.
 
 | Name | Description | Examples |
 | ---- | ----------- | -------- |
@@ -106,24 +106,24 @@ This section documents the list of dimensions that are commonly used in monitori
 | tenant_name | The tenant name of the owner of an OpenStack resource. | |
 
 # Cross-Tenant Metric Submission
-If the owner of the VM is to receive his or her own metrics, the Agent needs to be able to submit metrics on their behalf.  This is called cross-tenant metric submission.  For this to work, a Keystone role called "monitoring-delegate" needs to be created, and the Agent's Keystone username and project (tenant) assigned to it.  This username is contained as `username` in `/etc/monasca/agent/agent.yaml`, and passed to `monasca-setup` as the `-u` parameter.   The Agent's project name is contained in `agent.yaml` as the variable `project_name`, and passed to `monasca-setup` as the `--project-name` parameter.
+If the owner of the VM is to receive his or her own metrics, the Agent needs to be able to submit metrics on their behalf.  This is called cross-tenant metric submission.  For this to work, a Keystone role called "monitoring-delegate" needs to be created, and the Agent's Keystone username and project (tenant) assigned to it.  This username is contained as `username` in `/etc/monasca/agent/agent.yaml`, and passed to `monasca-setup` as the `-u` parameter. The Agent's project name is also contained in `agent.yaml` as `project_name`, and passed to `monasca-setup` as the `--project-name` parameter.
 
 In the below example, the Agent's Keystone username is "monasca-agent" and the Agent's Keystone project name is "mini-mon".
 
 Example commands to add the Agent user/project to the monitoring-delegate role:
 
     $ keystone role-create --name=monitoring-delegate
-    $ user_id=`keystone user-list |grep monasca-agent |cut -d'|' -f2`
-    $ role_id=`keystone role-list |grep monitoring-delegate |cut -d'|' -f2`
-    $ tenant_id=`keystone tenant-list |grep mini-mon |cut -d'|' -f2`
+    $ user_id=`keystone user-list | grep monasca-agent | cut -d'|' -f2`
+    $ role_id=`keystone role-list | grep monitoring-delegate | cut -d'|' -f2`
+    $ tenant_id=`keystone tenant-list | grep mini-mon | cut -d'|' -f2`
     $ keystone user-role-add --user=${user_id// /} --role=${role_id// /} --tenant_id=${tenant_id// /}
 
 Once the Agent's user and project are assigned to the `monitoring-delegate` group, the Agent can submit metrics for other tenants.
 
-# Statsd
+# StatsD
 The Monasca Agent ships with a StatsD daemon implementation. A StatsD client can be used to send metrics to the Forwarder via the StatsD daemon.
 
-monasca-statsd will accept counters, gauges and timing values following the standard StatsD protocol. Dimensions are supported compatible to the [DogStatsD extension](http://docs.datadoghq.com/guides/dogstatsd/#metrics-1) for tags. Support for the [monasca-statsd Python client library](https://github.com/openstack/monasca-statsd) is deprecated and might be removed in the future.
+monasca-statsd will accept counters, gauges and timing values following the standard StatsD protocol. Dimensions are supported and compatible with the [DogStatsD extension](http://docs.datadoghq.com/guides/dogstatsd/#metrics-1) for tags. Support for the [monasca-statsd Python client library](https://github.com/openstack/monasca-statsd) is deprecated and might be removed in the future.
 
 Statsd metrics are not bundled along with the metrics gathered by the Collector, but are flushed to the agent Forwarder on a separate schedule (every 10 seconds by default, rather than 60 seconds for Collector metrics).
 
@@ -154,7 +154,7 @@ Monasca
 
 ## Examples
 
-The [monasca-statsd](https://github.com/openstack/monasca-statsd library provides a python based implementation
+The [monasca-statsd](https://github.com/openstack/monasca-statsd) library provides a Python-based implementation
 of a statsd client but also adds the ability to add dimensions to the statsd metrics for the client.
 
 Here are some examples of how code can be instrumented using calls to monasca-statsd.
