@@ -142,7 +142,7 @@ class Collector(util.Dimensions):
     def run_single_check(self, check):
         """Run a single check
 
-        returns number of measurement collected, colleciton time
+        returns number of measurement collected, collection time
         """
 
         sub_timer = util.Timer()
