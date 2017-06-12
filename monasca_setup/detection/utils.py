@@ -1,8 +1,11 @@
 # (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
+# Copyright 2017 SUSE Linux GmbH
 
 """ Util functions to assist in detection.
 """
 import logging
+import os
+import pwd
 import subprocess
 from subprocess import CalledProcessError
 from subprocess import PIPE
@@ -13,6 +16,8 @@ from monasca_setup import agent_config
 
 log = logging.getLogger(__name__)
 
+_DEFAULT_AGENT_USER = 'mon-agent'
+_DETECTED_AGENT_USER = None
 
 # check_output was introduced in python 2.7, function added
 # to accommodate python 2.6
@@ -91,6 +96,39 @@ def find_addr_listening_on_port_over_tcp(port):
     ip = find_addrs_listening_on_port(port, 'tcp')
     if ip:
         return ip[0].lstrip("::ffff:")
+
+
+def get_agent_username():
+    """Determine the user monasca-agent runs as"""
+
+    global _DETECTED_AGENT_USER
+
+    # Use cached agent user in subsequent calls
+    if _DETECTED_AGENT_USER is not None:
+        return _DETECTED_AGENT_USER
+
+    # Try the owner of agent.yaml first
+    try:
+        uid = os.stat('/etc/monasca/agent/agent.yaml').st_uid
+    except OSError:
+        uid = None
+
+    if uid is not None:
+        _DETECTED_AGENT_USER = pwd.getpwuid(uid).pw_name
+        return _DETECTED_AGENT_USER
+
+    # No agent.yaml, so try to find a running monasca-agent process
+    agent_process = find_process_name('monasca-agent')
+
+    if agent_process is not None:
+        _DETECTED_AGENT_USER = agent_process.username()
+        return _DETECTED_AGENT_USER
+
+    # Fall back to static agent user
+    log.warn("Could not determine monasca-agent service user, falling "
+             "back to %s" % _DEFAULT_AGENT_USER)
+    _DETECTED_AGENT_USER = _DEFAULT_AGENT_USER
+    return _DETECTED_AGENT_USER
 
 
 def watch_process(search_strings, service=None, component=None,

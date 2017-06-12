@@ -1,4 +1,5 @@
 # (c) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
+# Copyright 2017 SUSE Linux GmbH
 
 import ConfigParser
 import grp
@@ -12,6 +13,7 @@ import sys
 from monasca_agent.common.psutil_wrapper import psutil
 import monasca_setup.agent_config
 from monasca_setup.detection import Plugin
+from monasca_setup.detection import utils
 
 
 log = logging.getLogger(__name__)
@@ -53,12 +55,7 @@ class Libvirt(Plugin):
     def _detect(self):
         """Set self.available True if the process and config file are detected
         """
-        # Detect Agent's OS username by getting the group owner of confg file
-        try:
-            gid = os.stat('/etc/monasca/agent/agent.yaml').st_gid
-            self.agent_user = grp.getgrgid(gid)[0]
-        except OSError:
-            self.agent_user = None
+        self.agent_user = utils.get_agent_username()
         # Try to detect the location of the Nova configuration file.
         # Walk through the list of processes, searching for 'nova-compute'
         # process with 'nova.conf' inside one of the parameters

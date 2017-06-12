@@ -1,9 +1,9 @@
 # (c) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 # Copyright 2017 Fujitsu LIMITED
+# Copyright 2017 SUSE Linux GmbH
 
 import logging
 import os
-import pwd
 import yaml
 
 from monasca_setup import agent_config
@@ -34,7 +34,7 @@ class Postfix(plugin.Plugin):
         try:
             has_process = (utils.find_process_cmdline(_POSTFIX_PROC_NAME)
                            is not None)
-            agent_user = self._get_agent_username() if has_process else None
+            agent_user = utils.get_agent_username() if has_process else None
             has_user = agent_user is not None
             has_sudoers = (self._has_sudoers(agent_user)
                            if agent_user else False)
@@ -74,12 +74,6 @@ class Postfix(plugin.Plugin):
 
     def dependencies_installed(self):
         return True
-
-    @staticmethod
-    def _get_agent_username():
-        uid = os.stat('/etc/monasca/agent/agent.yaml').st_uid
-        agent_user = pwd.getpwuid(uid).pw_name
-        return agent_user
 
     @staticmethod
     def _has_sudoers(agent_user):
