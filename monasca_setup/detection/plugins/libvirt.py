@@ -1,5 +1,6 @@
 # (c) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 # Copyright 2017 Fujitsu LIMITED
+# Copyright 2017 SUSE Linux GmbH
 
 import logging
 import os
@@ -75,7 +76,7 @@ class Libvirt(plugin.Plugin):
         has_deps = self.dependencies_installed() if nova_proc else None
         nova_conf = self._find_nova_conf(nova_proc) if has_deps else None
         has_cache_dir = self._has_cache_dir() if nova_conf else None
-        agent_user = self._get_agent_username() if has_cache_dir else None
+        agent_user = utils.get_agent_username() if has_cache_dir else None
 
         self.available = nova_conf and has_cache_dir
         if not self.available:
@@ -214,16 +215,6 @@ class Libvirt(plugin.Plugin):
     @staticmethod
     def _has_cache_dir():
         return os.path.isdir(cache_dir)
-
-    @staticmethod
-    def _get_agent_username():
-        agent_user = None
-        try:
-            uid = os.stat('/etc/monasca/agent/agent.yaml').st_uid
-            agent_user = pwd.getpwuid(uid).pw_name
-        except OSError:
-            log.exception('Failed to retrieve agent\'s username')
-        return agent_user
 
     @staticmethod
     def _find_nova_conf(nova_process):

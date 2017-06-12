@@ -1,5 +1,6 @@
 # (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 # Copyright 2016 FUJITSU LIMITED
+# Copyright 2017 SUSE Linux GmbH
 
 """Classes for monitoring the monitoring server stack.
 
@@ -17,6 +18,7 @@ import monasca_setup.agent_config
 import monasca_setup.detection
 from monasca_setup.detection import find_process_cmdline
 from monasca_setup.detection import find_process_name
+from monasca_setup.detection.utils import get_agent_username
 from monasca_setup.detection.utils import watch_process
 from monasca_setup.detection.utils import watch_process_by_username
 
@@ -71,8 +73,8 @@ class MonAgent(monasca_setup.detection.Plugin):
     def build_config(self):
         """Build the config as a Plugins object and return."""
         log.info("\tEnabling the Monasca Agent process check")
-        return watch_process_by_username('mon-agent', 'monasca-agent', 'monitoring',
-                                         'monasca-agent')
+        return watch_process_by_username(get_agent_username(), 'monasca-agent',
+                                         'monitoring', 'monasca-agent')
 
     def dependencies_installed(self):
         return True
@@ -193,8 +195,10 @@ class MonNotification(monasca_setup.detection.Plugin):
     def build_config(self):
         """Build the config as a Plugins object and return."""
         log.info("\tEnabling the Monasca Notification healthcheck")
-        return watch_process_by_username('mon-notification', 'monasca-notification', 'monitoring',
-                                         'monasca-notification')
+        notification_process = find_process_cmdline('monasca-notification')
+        notification_user = notification_process.as_dict(['username'])['username']
+        return watch_process_by_username(notification_user, 'monasca-notification',
+                                         'monitoring', 'monasca-notification')
 
     def dependencies_installed(self):
         return True
