@@ -8,6 +8,7 @@ import yaml
 
 from monasca_agent.common.exceptions import PathNotFound
 import monasca_agent.common.singleton as singleton
+from monasca_agent import version
 
 DEFAULT_CONFIG_FILE = '/etc/monasca/agent/agent.yaml'
 DEFAULT_LOG_DIR = '/var/log/monasca/agent'
@@ -108,7 +109,7 @@ class Config(object):
         return new_config
 
     def get_version(self):
-        return pkg_resources.require("monasca-agent")[0].version
+        return version.version_string
 
     def _read_config(self):
         """Read in the config file."""
