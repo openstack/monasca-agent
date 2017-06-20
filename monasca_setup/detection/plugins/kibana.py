@@ -1,5 +1,6 @@
 # Copyright 2016 FUJITSU LIMITED
 # (C) Copyright 2016 Hewlett Packard Enterprise Development LP
+# Copyright 2017 SUSE Linux GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -185,11 +186,10 @@ class Kibana(detection.Plugin):
     def _has_metrics_support(self, kibana_url):
         resp = self._get_metrics_request(kibana_url, method='HEAD')
         status_code = resp.status_code
-        # although Kibana will respond with 400:Bad Request
+        # Some Kibana versions may respond with 400:Bad Request
         # it means that URL is available but simply does
         # not support HEAD request
-        # Looks like guys from Kibana just support GET for this url
-        return status_code == 400
+        return (status_code == 400) or (status_code == 200)
 
     def _get_metrics_request(self, url, method='GET'):
         request_url = '%s/%s' % (url, _API_STATUS)
