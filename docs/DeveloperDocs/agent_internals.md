@@ -13,14 +13,14 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Modify_Config
-Modify_config is a function in "monasca_setup/main.py" (link: https://github
-.com/openstack/monasca-agent/blob/master/monasca_setup/main.py). It compares
-existing and detected configurations for each check plugin and writes out the
-plugin configurations if there are changes.
+Modify_config is a function in [monasca_setup/main.py](monasca_setup/main.py).
+It compares existing and detected configurations for each check plugin and
+writes out the plugin configurations if there are changes.
 
 ## Examples
-There are two examples shown here using http_check: one is to add a new
-instance, another is to detect endpoint change on existing http_check instance.
+There are two examples shown here using http_check to:
+* add a new instance
+* detect endpoint change on an existing http_check instance
 
 #### Adding a new instance
 old_config:
@@ -139,7 +139,7 @@ output_config from modify_config:
 
 # Connector
 ## Kubernetes Connector
-Kubernetes Connector is a class within [monasca-collector utils](https://github.com/openstack/monasca-agent/blob/master/monasca_agent/collector/checks/utils.py)
+Kubernetes Connector is a class within [monasca-collector utils](monasca_agent/collector/checks/utils.py)
 that is used for connecting to the Kubernetes API from within a container that is running in a k8 cluster.
 
 When a container is brought up in Kubernetes by default there are environmental variables passed in that include needed
