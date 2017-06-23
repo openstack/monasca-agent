@@ -106,7 +106,15 @@ This section documents dimensions that are commonly used in monitoring OpenStack
 | tenant_name | The tenant name of the owner of an OpenStack resource. | |
 
 # Cross-Tenant Metric Submission
-If the owner of the VM is to receive his or her own metrics, the Agent needs to be able to submit metrics on their behalf.  This is called cross-tenant metric submission.  For this to work, a Keystone role called "monitoring-delegate" needs to be created, and the Agent's Keystone username and project (tenant) assigned to it.  This username is contained as `username` in `/etc/monasca/agent/agent.yaml`, and passed to `monasca-setup` as the `-u` parameter. The Agent's project name is also contained in `agent.yaml` as `project_name`, and passed to `monasca-setup` as the `--project-name` parameter.
+If the owner of the VM is to receive his or her own metrics, the Agent needs to
+be able to submit metrics on their behalf.  This is called cross-tenant metric
+submission. To be allowed to do that, the Agent's Keystone username and project
+(tenant) has to be assigned to one of the `delegate_authorized_roles`. The
+authorized roles are configured in monasca-api. The Agent's username is
+contained as `username` in `/etc/monasca/agent/agent.yaml`, and passed to
+`monasca-setup` as the `-u` parameter. The Agent's project name is also
+contained in `agent.yaml` as `project_name`, and passed to `monasca-setup` as
+the `--project-name` parameter.
 
 In the below example, the Agent's Keystone username is "monasca-agent" and the Agent's Keystone project name is "mini-mon".
 
