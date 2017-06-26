@@ -6,6 +6,7 @@ import os
 import re
 
 from oslo_config import cfg
+from oslo_utils import importutils
 
 from monasca_setup import agent_config
 from monasca_setup import detection
@@ -93,8 +94,9 @@ class Ovs(detection.Plugin):
                 # argument
             elif not has_dependencies:
                 log.error(('OVS daemon process exists but required '
-                           'dependence python-neutronclient is '
-                           'not installed.'))
+                           'dependencies were not found.\n'
+                           'Run pip install monasca-agent[ovs] '
+                           'to install all dependencies.'))
         else:
             for_opts = [{'opt': cfg.StrOpt('region', default='RegionOne'), 'group': 'service_auth'},
                         {'opt': cfg.StrOpt('region_name'), 'group': 'nova'},
@@ -216,11 +218,8 @@ class Ovs(detection.Plugin):
         return config
 
     def dependencies_installed(self):
-        try:
-            import neutronclient.v2_0.client
-        except ImportError:
-            return False
-        return True
+        return (importutils.try_import('neutronclient', False) and
+                importutils.try_import('novaclient', False))
 
     def has_option(self, section, option):
         return option in self.conf.get(section)
