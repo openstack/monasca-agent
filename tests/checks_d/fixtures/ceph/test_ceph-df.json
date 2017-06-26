@@ -1,0 +1,46 @@
+{
+    "stats": {
+        "total_bytes": 150000,
+        "total_used_bytes": 90000,
+        "total_avail_bytes": 60000,
+        "total_objects": 50
+    },
+    "pools": [
+        {
+            "name": "images",
+            "id": 0,
+            "stats": {
+                "kb_used": 10,
+                "bytes_used": 10000,
+                "max_avail": 20000,
+                "objects": 20,
+                "quota_objects": 0,
+                "quota_bytes": 50000,
+                "dirty": 20,
+                "rd": 6000,
+                "rd_bytes": 20000,
+                "wr": 2000,
+                "wr_bytes": 20000,
+                "raw_bytes_used": 30000
+            }
+        },
+        {
+            "name": "vms",
+            "id": 1,
+            "stats": {
+                "kb_used": 20,
+                "bytes_used": 20000,
+                "max_avail": 20000,
+                "objects": 30,
+                "quota_objects": 0,
+                "quota_bytes": 0,
+                "dirty": 30,
+                "rd": 4000,
+                "rd_bytes": 80000,
+                "wr": 1000,
+                "wr_bytes": 20000,
+                "raw_bytes_used": 60000
+            }
+        }
+    ]
+}

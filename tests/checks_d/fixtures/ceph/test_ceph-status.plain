@@ -1,0 +1,13 @@
+    cluster fa0abca0-2533-46d0-93ca-80f48b598a2f
+     health HEALTH_OK
+     monmap e1: 1 mons at {mon0=172.29.239.35:6789/0,mon1=172.29.239.42:6789/0,mon2=172.29.239.29:6789/0}
+            election epoch 3, quorum 0,1,2 mon0,mon1,mon2
+     osdmap e18: 3 osds: 3 up, 3 in
+            flags sortbitwise,require_jewel_osds
+      pgmap v45: 192 pgs, 2 pools, 0 bytes data, 0 objects
+            105 MB used, 3070 GB / 3070 GB avail
+                 192 active+clean
+                 1 active+clean+scrubbing+deep
+  client io 630 kB/s rd, 272 MB/s wr, 263 op/s rd, 1964 op/s wr
+  cache io 100 MB/s flush, 1000 MB/s evict, 20 op/s promote
+  recovery io 1000 MB/s, 100 keys/s, 50 objects/s

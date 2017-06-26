@@ -28,6 +28,7 @@
   - [Cacti](#cacti)
   - [cAdvisor_host](#cadvisor_host)
   - [Check_MK_Local](#check_mk_local)
+  - [Ceph](#ceph)
   - [Certificate Expiration (HTTPS)](#certificate-expiration-https)
   - [Couch](#couch)
   - [Couchbase](#couchbase)
@@ -47,9 +48,9 @@
   - [Host Alive](#host-alive)
   - [HTTP (endpoint status)](#http-endpoint-status)
   - [HTTP Metrics](#http-metrics)
-  - [IIS](#iis)
   - [InfluxDB](#influxdb)
-  - [InfluxDB Relay](#influxdb-relay)
+  - [InfluxDB-Relay](#influxdb-relay)
+  - [IIS](#iis)
   - [Jenkins](#jenkins)
   - [JsonPlugin](#jsonplugin)
     - [Simple Reporting](#simple-reporting)
@@ -652,6 +653,126 @@ The `custom` section of `init_config` is optional and may be blank or removed en
   * *metric_name_base* - This represents the leftmost part of the metric name to use.  Status and any performance metrics are appended following a dot, so ".status" and ".response_time" would be examples.
 
 Because `check_mk_agent` can only return all local metrics at once, the `check_mk_local` plugin requires no instances to be defined in the configuration.  It runs `check_mk_agent` once and processes all the results.  This way, new `check_mk` local scripts can be added without having to modify the plugin configuration.
+
+## Ceph
+This section describes the Ceph check that can be performed by the Agent. The Ceph check gathers metrics from multiple ceph clusters. The Ceph check requires a configuration file called `ceph.yaml` to be available in the agent conf.d configuration directory. The config file must contain the cluster name that you are interested in monitoring (defaults to `ceph`). Also, it is possible to configure the agent to collect only specific metrics about the cluster (usage, stats, monitors, osds or pools).
+
+Requirements:
+  * ceph-common
+  * The user running monasca-agent must be able to execute ceph commands. This can be done by adding the monasca-agent user to the ceph group, and giving group read permission on the `ceph.client.admin.keyring` file.
+
+```
+  usermod -a -G ceph monasca-agent
+  chmod 0604 /etc/ceph/ceph.client.admin.keyring
+```
+
+Sample config:
+
+```
+init_config:
+
+instances:
+  - cluster_name: ceph
+    collect_usage_metrics: True
+    collect_stats_metrics: True
+    collect_mon_metrics: True
+    collect_osd_metrics: True
+    collect_pool_metrics: True
+```
+
+The Ceph checks return the following metrics:
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| ceph.cluster.total_bytes | hostname, ceph_cluster, service=ceph | Total capacity of the cluster in bytes |
+| ceph.cluster.total_used_bytes | hostname, ceph_cluster, service=ceph | Capacity of the cluster currently in use in bytes |
+| ceph.cluster.total_avail_bytes | hostname, ceph_cluster, service=ceph | Available space within the cluster in bytes |
+| ceph.cluster.objects.total_count | hostname, ceph_cluster, service=ceph | No. of rados objects within the cluster |
+| ceph.cluster.utilization_perc | hostname, ceph_cluster, service=ceph | Percentage of available storage on the cluster |
+| ceph.cluster.health_status | hostname, ceph_cluster, service=ceph | Health status of cluster, can vary between 3 states (err:2, warn:1, ok:0) |
+| ceph.cluster.osds.down_count | hostname, ceph_cluster, service=ceph | Number of OSDs that are in DOWN state |
+| ceph.cluster.osds.out_count | hostname, ceph_cluster, service=ceph | Number of OSDs that are in OUT state |
+| ceph.cluster.osds.up_count | hostname, ceph_cluster, service=ceph | Number of OSDs that are in UP state |
+| ceph.cluster.osds.in_count | hostname, ceph_cluster, service=ceph | Number of OSDs that are in IN state |
+| ceph.cluster.osds.total_count | hostname, ceph_cluster, service=ceph | Total number of OSDs in the cluster |
+| ceph.cluster.objects.degraded_count | hostname, ceph_cluster, service=ceph | Number of degraded objects across all PGs, includes replicas |
+| ceph.cluster.objects.misplaced_count | hostname, ceph_cluster, service=ceph | Number of misplaced objects across all PGs, includes replicas |
+| ceph.cluster.pgs.avg_per_osd | hostname, ceph_cluster, service=ceph | Average number of PGs per OSD in the cluster |
+| ceph.cluster.pgs.total_count | hostname, ceph_cluster, service=ceph | Total no. of PGs in the cluster |
+| ceph.cluster.pgs.scrubbing_count | hostname, ceph_cluster, service=ceph | Number of scrubbing PGs in the cluster |
+| ceph.cluster.pgs.deep_scrubbing_count | hostname, ceph_cluster, service=ceph | Number of deep scrubbing PGs in the cluster |
+| ceph.cluster.pgs.degraded_count | hostname, ceph_cluster, service=ceph | Number of PGs in a degraded state |
+| ceph.cluster.pgs.stuck_degraded_count | hostname, ceph_cluster, service=ceph | No. of PGs stuck in a degraded state |
+| ceph.cluster.pgs.unclean_count | hostname, ceph_cluster, service=ceph | Number of PGs in an unclean state |
+| ceph.cluster.pgs.stuck_unclean_count | hostname, ceph_cluster, service=ceph | Number of PGs stuck in an unclean state |
+| ceph.cluster.pgs.undersized_count | hostname, ceph_cluster, service=ceph | Number of undersized PGs in the cluster |
+| ceph.cluster.pgs.stuck_undersized_count | hostname, ceph_cluster, service=ceph | Number of stuck undersized PGs in the cluster |
+| ceph.cluster.pgs.stale_count | hostname, ceph_cluster, service=ceph | Number of stale PGs in the cluster |
+| ceph.cluster.pgs.stuck_stale_count | hostname, ceph_cluster, service=ceph | Number of stuck stale PGs in the cluster |
+| ceph.cluster.pgs.remapped_count | hostname, ceph_cluster, service=ceph | Number of PGs that are remapped and incurring cluster-wide movement |
+| ceph.cluster.recovery.bytes_per_sec | hostname, ceph_cluster, service=ceph | Rate of bytes being recovered in cluster per second |
+| ceph.cluster.recovery.keys_per_sec | hostname, ceph_cluster, service=ceph | Rate of keys being recovered in cluster per second |
+| ceph.cluster.recovery.objects_per_sec | hostname, ceph_cluster, service=ceph | Rate of objects being recovered in cluster per second |
+| ceph.cluster.client.read_bytes_per_sec | hostname, ceph_cluster, service=ceph | Rate of bytes being read by all clients per second |
+| ceph.cluster.client.write_bytes_per_sec | hostname, ceph_cluster, service=ceph | Rate of bytes being written by all clients per second |
+| ceph.cluster.client.read_ops | hostname, ceph_cluster, service=ceph | Total client read I/O ops on the cluster measured per second |
+| ceph.cluster.client.write_ops | hostname, ceph_cluster, service=ceph | Total client write I/O ops on the cluster measured per second |
+| ceph.cluster.cache.flush_bytes_per_sec | hostname, ceph_cluster, service=ceph | Rate of bytes being flushed from the cache pool per second |
+| ceph.cluster.cache.evict_bytes_per_sec | hostname, ceph_cluster, service=ceph | Rate of bytes being evicted from the cache pool per second |
+| ceph.cluster.cache.promote_ops | hostname, ceph_cluster, service=ceph | Total cache promote operations measured per second |
+| ceph.cluster.slow_requests_count | hostname, ceph_cluster, service=ceph | Number of slow requests |
+| ceph.cluster.quorum_size | hostname, ceph_cluster, service=ceph | Number of monitors in quorum |
+| ceph.monitor.total_bytes | hostname, ceph_cluster, monitor, service=ceph | Total storage capacity of the monitor node |
+| ceph.monitor.used_bytes | hostname, ceph_cluster, monitor, service=ceph | Storage of the monitor node that is currently allocated for use |
+| ceph.monitor.avail_bytes | hostname, ceph_cluster, monitor, service=ceph | Total unused storage capacity that the monitor node has left |
+| ceph.monitor.avail_perc | hostname, ceph_cluster, monitor, service=ceph | Percentage of total unused storage capacity that the monitor node has left |
+| ceph.monitor.store.total_bytes | hostname, ceph_cluster, monitor, service=ceph | Total capacity of the FileStore backing the monitor daemon |
+| ceph.monitor.store.sst_bytes | hostname, ceph_cluster, monitor, service=ceph | Capacity of the FileStore used only for raw SSTs |
+| ceph.monitor.store.log_bytes | hostname, ceph_cluster, monitor, service=ceph | Capacity of the FileStore used only for logging |
+| ceph.monitor.store.misc_bytes | hostname, ceph_cluster, monitor, service=ceph | Capacity of the FileStore used only for storing miscellaneous information |
+| ceph.monitor.skew | hostname, ceph_cluster, monitor, service=ceph | Monitor clock skew |
+| ceph.monitor.latency | hostname, ceph_cluster, monitor, service=ceph | Monitor's latency |
+| ceph.osd.crush_weight | hostname, ceph_cluster, osd, service=ceph | OSD crush weight |
+| ceph.osd.depth | hostname, ceph_cluster, osd, service=ceph | OSD depth |
+| ceph.osd.reweight | hostname, ceph_cluster, osd, service=ceph | OSD reweight |
+| ceph.osd.total_bytes | hostname, ceph_cluster, osd, service=ceph | OSD total bytes |
+| ceph.osd.used_bytes | hostname, ceph_cluster, osd, service=ceph | OSD used storage in bytes |
+| ceph.osd.avail_bytes | hostname, ceph_cluster, osd, service=ceph | OSD available storage in bytes |
+| ceph.osd.utilization_perc | hostname, ceph_cluster, osd, service=ceph | OSD utilization |
+| ceph.osd.variance | hostname, ceph_cluster, osd, service=ceph | OSD variance |
+| ceph.osd.pgs_count | hostname, ceph_cluster, osd, service=ceph | OSD placement group count |
+| ceph.osd.perf.commit_latency_seconds | hostname, ceph_cluster, osd, service=ceph | OSD commit latency in seconds |
+| ceph.osd.perf.apply_latency_seconds | hostname, ceph_cluster, osd, service=ceph | OSD apply latency in seconds |
+| ceph.osd.up | hostname, ceph_cluster, osd, service=ceph | OSD up status (up: 1, down: 0) |
+| ceph.osd.in | hostname, ceph_cluster, osd, service=ceph | OSD in status (in: 1, out: 0) |
+| ceph.osds.total_bytes | hostname, ceph_cluster, service=ceph | OSDs total storage in bytes |
+| ceph.osds.total_used_bytes | hostname, ceph_cluster, service=ceph | OSDs total used storage in bytes |
+| ceph.osds.total_avail_bytes | hostname, ceph_cluster, service=ceph | OSDs total available storage in bytes |
+| ceph.osds.avg_utilization_perc | hostname, ceph_cluster, osd, service=ceph | OSDs average utilization in percent |
+| ceph.pool.used_bytes | hostname, ceph_cluster, pool, service=ceph | Capacity of the pool that is currently under use |
+| ceph.pool.used_raw_bytes | hostname, ceph_cluster, pool, service=ceph | Raw capacity of the pool that is currently under use, this factors in the size |
+| ceph.pool.max_avail_bytes | hostname, ceph_cluster, pool, service=ceph | Free space for this ceph pool |
+| ceph.pool.objects_count | hostname, ceph_cluster, pool, service=ceph | Total no. of objects allocated within the pool |
+| ceph.pool.dirty_objects_count | hostname, ceph_cluster, pool, service=ceph | Total no. of dirty objects in a cache-tier pool |
+| ceph.pool.read_io | hostname, ceph_cluster, pool, service=ceph | Total read i/o calls for the pool |
+| ceph.pool.read_bytes | hostname, ceph_cluster, pool, service=ceph | Total read throughput for the pool |
+| ceph.pool.write_io | hostname, ceph_cluster, pool, service=ceph | Total write i/o calls for the pool |
+| ceph.pool.write | hostname, ceph_cluster, pool, service=ceph | Total write throughput for the pool |
+| ceph.pool.quota_max_bytes | hostname, ceph_cluster, pool, service=ceph | Quota maximum bytes for the pool |
+| ceph.pool.quota_max_objects | hostname, ceph_cluster, pool, service=ceph | Quota maximum objects for the pool |
+| ceph.pool.total_bytes | hostname, ceph_cluster, pool, service=ceph | Total capacity of the pool in bytes |
+| ceph.pool.utilization_perc | hostname, ceph_cluster, pool, service=ceph | Percentage of used storage for the pool |
+| ceph.pool.client.read_bytes_sec | hostname, ceph_cluster, pool, service=ceph | Read bytes per second on the pool |
+| ceph.pool.client.write_bytes_sec | hostname, ceph_cluster, pool, service=ceph | Write bytes per second on the pool |
+| ceph.pool.client.read_ops | hostname, ceph_cluster, pool, service=ceph | Read operations per second on the pool |
+| ceph.pool.client.write_ops | hostname, ceph_cluster, pool, service=ceph | Write operations per second on the pool |
+| ceph.pool.recovery.objects_per_sec | hostname, ceph_cluster, pool, service=ceph | Objects recovered per second on the pool |
+| ceph.pool.recovery.bytes_per_sec | hostname, ceph_cluster, pool, service=ceph | Bytes recovered per second on the pool |
+| ceph.pool.recovery.keys_per_sec | hostname, ceph_cluster, pool, service=ceph | Keys recovered per second on the pool |
+| ceph.pool.recovery.objects | hostname, ceph_cluster, pool, service=ceph | Objects recovered on the pool |
+| ceph.pool.recovery.bytes | hostname, ceph_cluster, pool, service=ceph | Bytes recovered on the pool |
+| ceph.pool.recovery.keys | hostname, ceph_cluster, pool, service=ceph | Keys recovered on the pool |
+| ceph.pools.count | hostname, ceph_cluster, service=ceph | Number of pools on the cluster |
 
 ## Certificate Expiration (HTTPS)
 An extension to the Agent provides the ability to determine the expiration date of the certificate for the URL. The metric is days until the certificate expires

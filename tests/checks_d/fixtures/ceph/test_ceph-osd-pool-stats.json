@@ -1,0 +1,28 @@
+[
+    {
+        "pool_name": "images",
+        "pool_id": 0,
+        "recovery": {},
+        "recovery_rate": {
+            "recovering_objects_per_sec": 3530,
+            "recovering_bytes_per_sec": 14462655,
+            "recovering_keys_per_sec": 0,
+            "num_objects_recovered": 7148,
+            "num_bytes_recovered": 29278208,
+            "num_keys_recovered": 0
+        },
+        "client_io_rate": {}
+    },
+    {
+        "pool_name": "vms",
+        "pool_id": 1,
+        "recovery": {},
+        "recovery_rate": {},
+        "client_io_rate": {
+            "read_bytes_sec": 16869,
+            "write_bytes_sec": 9341127,
+            "read_op_per_sec": 369,
+            "write_op_per_sec": 1364
+        }
+    }
+]
