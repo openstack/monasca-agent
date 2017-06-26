@@ -53,18 +53,41 @@ class AgentCheck(util.Dimensions):
                       delegated_tenant, hostname, device_name, value_meta,
                       timestamp=None):
         # If there is no white list, then report all the metrics
-        # If there is a white list, then only report the metrics listed in
-        # white list
-        if self.white_list is None or metric in self.white_list:
-            self.aggregator.submit_metric(metric,
-                                          value,
-                                          metric_type,
-                                          dimensions,
-                                          delegated_tenant,
-                                          hostname,
-                                          device_name,
-                                          value_meta,
-                                          timestamp)
+        dimensions_white_list = dimensions.copy()
+        if self.white_list:
+            if 'metrics' not in self.white_list.keys():
+                return
+            else:
+                metrics = self.white_list['metrics']
+                if metric not in metrics:
+                    return
+                # If there is a white list, then only report the metrics listed
+                # in white list. Also check if there are dimension key value
+                # pairs specified in the metrics section of white list, if
+                # there is make sure the keys are in dimensions before
+                # submitting the metric. If not, set to the corresponding
+                # value in white list.
+                dim_key_values = {}
+                if metrics.get(metric):
+                    dim_key_values = metrics.get(metric).values()[0]
+                else:
+                    # If white list has a "dimensions" section, set the key
+                    # value dimension pairs to all the metrics. But the
+                    # dimensions under "metrics" section has higher priority.
+                    if 'dimensions' in self.white_list.keys():
+                        dim_key_values = self.white_list['dimensions']
+                for dim_kv in dim_key_values.items():
+                    if dim_kv[0] not in dimensions_white_list.keys():
+                        dimensions_white_list[dim_kv[0]] = dim_kv[1]
+        self.aggregator.submit_metric(metric,
+                                      value,
+                                      metric_type,
+                                      dimensions_white_list,
+                                      delegated_tenant,
+                                      hostname,
+                                      device_name,
+                                      value_meta,
+                                      timestamp)
 
     def gauge(self, metric, value, dimensions=None, delegated_tenant=None, hostname=None,
               device_name=None, timestamp=None, value_meta=None):
