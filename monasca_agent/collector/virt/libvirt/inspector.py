@@ -206,7 +206,7 @@ class LibvirtInspector(virt_inspector.Inspector):
                 if disk_type == 'network':
                     log.debug('Inspection disk usage of network disk '
                               '%(instance_uuid)s unsupported by libvirt' % {
-                                  'instance_uuid': instance.id})
+                                  'instance_uuid': instance.ID()})
                     continue
                 target = disk.find('target')
                 device = target.get('dev')
