@@ -1,0 +1,20 @@
+# (C) Copyright 2017 Hewlett Packard Enterprise Development LP
+
+init_config:
+  timeout: 3
+  auto_detect_endpoints: True
+  # Detection method can be either service or pod. Default is pod
+  detect_method: "pod"
+
+instances:
+  # If configuring each metric_endpoint
+  - metric_endpoint: "http://127.0.0.1:8000"
+    # Dimensions to add to every metric coming out of the plugin
+    default_dimensions:
+        app: my_app
+
+  - metric_endpoint: "http://127.0.0.1:9000"
+
+  # Kubernetes labels to match on when using auto detection in a Kubernetes environment.
+  # There can only be one instance when auto_detection_endpoints is set to true
+  - kubernetes_labels: ['app']
