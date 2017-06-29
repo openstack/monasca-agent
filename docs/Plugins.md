@@ -1890,18 +1890,18 @@ instances contains the list of checks to run
 
 ```
 instances:
-  - service_name: load
+  - name: load
     check_command: check_load -r -w 2,1.5,1 -c 10,5,4
 
-  - service_name: disk
+  - name: disk
     check_command: check_disk -w 15\% -c 5\% -A -i /srv/node
     check_interval: 300
 ```
 
-* service_name is the name of the metric
+* 'name' value is the name of the metric
 * check_command is the full command to run.  Specifying the full path is optional if the checks are located somewhere in check_path.  These above examples are a copy-and-paste from existing service checks in /etc/cron.d/servicecheck-* files, so migration is fairly easy.
 
-* check_interval (optional) If unspecified, the checks will be run at the regular collector interval, which is 60 seconds by default. You may not want to run some checks that frequently, especially if they are resource-intensive, so check_interval lets you force a delay, in seconds, between iterations of that particular check.  The state for these are stored in temp_file_path with file names like nagios_wrapper_19fe42bc7cfdc37a2d88684013e66c7b.pck where the hash is an md5sum of the service_name (to accommodate odd characters that the filesystem may not like).
+* check_interval (optional) If unspecified, the checks will be run at the regular collector interval, which is 60 seconds by default. You may not want to run some checks that frequently, especially if they are resource-intensive, so check_interval lets you force a delay, in seconds, between iterations of that particular check.  The state for these are stored in temp_file_path with file names like nagios_wrapper_19fe42bc7cfdc37a2d88684013e66c7b.pck where the hash is an md5sum of the 'name' value (to accommodate odd characters that the filesystem may not like).
 
 ## Nginx
 See [the example configuration](https://github.com/openstack/monasca-agent/blob/master/conf.d/nginx.yaml.example) for how to configure the Nginx plugin.
