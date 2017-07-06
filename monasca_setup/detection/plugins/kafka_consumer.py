@@ -5,18 +5,17 @@ import logging
 from os import path
 import re
 import subprocess as sp
-
 from subprocess import CalledProcessError
 from subprocess import STDOUT
 
-from monasca_setup import agent_config
+from oslo_utils import importutils
 
+from monasca_setup import agent_config
 from monasca_setup.detection import find_process_cmdline
 from monasca_setup.detection import Plugin
-from monasca_setup.detection import watch_process
-
 from monasca_setup.detection.utils import check_output
 from monasca_setup.detection.utils import find_addr_listening_on_port_over_tcp
+from monasca_setup.detection import watch_process
 
 log = logging.getLogger(__name__)
 
@@ -71,8 +70,10 @@ class Kafka(Plugin):
                 log.error('Kafka process does not exist.')
             elif not has_dependencies:
                 log.error(('Kafka process exists but required '
-                           'dependency kafka-python is '
-                           'not installed.'))
+                           'dependency monasca-common is '
+                           'not installed.\n\t'
+                           'Please install with: '
+                           'pip install monasca-agent[kafka_plugin]'))
             elif not kafka_has_scripts:
                 log.error(('Kafka process exists, dependencies are installed '
                            'but neither %s nor %s '
@@ -314,9 +315,4 @@ class Kafka(Plugin):
         return self.config
 
     def dependencies_installed(self):
-        try:
-            import kafka
-        except ImportError:
-            return False
-
-        return True
+        return importutils.try_import('monasca_common', False)
