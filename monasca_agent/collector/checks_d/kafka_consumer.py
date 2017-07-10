@@ -2,6 +2,9 @@
 
 import collections
 import logging
+
+import six
+
 import monasca_agent.collector.checks as checks
 
 try:
@@ -52,12 +55,12 @@ class KafkaCheck(checks.AgentCheck):
 
         try:
             for group, topics in raw_val.items():
-                assert isinstance(group, basestring)
+                assert isinstance(group, six.string_types)
                 if isinstance(topics, dict):
                     self.log.info("Found old config format, discarding partition list")
                     topics = topics.keys()
                 assert isinstance(topics, list)
-                assert isinstance(topics[0], basestring)
+                assert isinstance(topics[0], six.string_types)
                 consumer_groups[group] = topics
             return consumer_groups
         except Exception as e:
