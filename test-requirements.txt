@@ -5,3 +5,4 @@ hacking>=0.12.0,<0.13  # Apache-2.0
 flake8<2.6.0,>=2.5.4 # MIT
 nose # LGPL
 mock>=2.0 # BSD
+oslotest>=1.10.0 # Apache-2.0
