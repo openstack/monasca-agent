@@ -191,6 +191,7 @@ The following plugins are delivered via setup as part of the standard plugin che
 | tcp_check |  |  |
 | varnish |  |  |
 | vcenter |  |  |
+| vcenter_slim |  | Tracks vm status only |
 | vertica | /root/.vertica.cnf |
 | wmi_check |  |  |
 | zk |  | Apache Zookeeper |
@@ -2373,6 +2374,34 @@ Below are the list of metrics collected by this plugin from the configured clust
     "role": "esx",
     "id": <cluster-name>-<vcenter-ip or fqdn>
 ```
+
+## VCenter Slim
+This plugin provides exclusively vm status metrics for VMware ESX clusters. Includes configuration for which annotations
+ to add to dimensions via allowed_keys (collects annotations with that key, if available) and key_map (replaces annotation key when creating dimension).
+ In the example below, the resulting metrics will have a dimension of 'tenant_id' with the value from the 'project_id' annotation.
+
+### Sample Config
+```
+init_config:
+  vcenter_ip: "127.0.0.1"
+  vcenter_user: "joe"
+  vcenter_password: "12345"
+  vcenter_port: 443
+  retry_count: 3
+  poll_interval: 0.5
+  vcenter_max_objects: 100000
+  allowed_keys:
+  - project_id
+  key_map:
+    project_id: tenant_id
+
+instances:
+  # this plugin doesn't support instances, this section will be ignored (but is still required for structure)
+```
+
+| Metric Name | Description |
+| ----------- | ----------- |
+| vm.status   | The connection status of the vm. Value is 0 if the vm can be managed normally, 1 for all other states |
 
 ## Vertica Checks
 This section describes the vertica check that can be performed by the Agent.  The vertica check requires a configuration file called vertica.yaml to be available in the agent conf.d configuration directory.
