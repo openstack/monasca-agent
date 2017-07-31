@@ -42,7 +42,10 @@ def get_tenant_list(config, log):
     try:
         log.debug("Retrieving Keystone tenant list")
         client = keystone.get_client(**config)
-        tenants = client.tenants.list()
+        if 'v2' in client.__module__:
+            tenants = client.tenants.list()
+        else:
+            tenants = client.projects.list()
     except Exception as e:
         msg = "Unable to get tenant list from keystone: {0}"
         log.error(msg.format(e))
