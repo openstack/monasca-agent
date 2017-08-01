@@ -79,7 +79,7 @@ If the owner of the VM is in a different tenant the Agent Cross-Tenant Metric Su
 
 `vm_ping_check_enable` enable host alive ping check (Default True). Please see "Mapping Metrics to Configuration Parameters" section below for what metrics are controlled by this flag.
 
-`vm_extended_disks_check_enable` enable collecting of extended Disk metrics (Default True). Please see "Mapping Metrics to Configuration Parameters" section below for what metrics are controlled by this flag.
+`vm_extended_disks_check_enable` enable collecting of extended Disk metrics (Default False). Please see "Mapping Metrics to Configuration Parameters" section below for what metrics are controlled by this flag.
 
 `host_aggregate_re` can be used to specify a regular expression with which to match nova host aggregate names.  If this hypervisor is a member of a host aggregate matching this regular expression, an additional dimension of `host_aggregate` will be published for the operations metrics (with a value of the host aggregate name).
 
@@ -101,9 +101,17 @@ init_config:
     vm_probation: 300
     ping_check: /opt/stack/venv/monasca_agent-20160224T213950Z/bin/ip netns exec NAMESPACE
       /bin/ping -n -c1 -w1 -q
+    max_ping_concurrency: 8
     alive_only: false
     network_use_bits: false
-    host_aggregate_re: M[34]
+    vm_cpu_check_enable: True
+    vm_disks_check_enable: True
+    vm_network_check_enable: True
+    vm_ping_check_enable: True
+    vm_extended_disks_check_enable: False
+    host_aggregate_re: None
+    disk_collection_period: 0
+    vnic_collection_period: 0
 instances:
     - {}
 ```
@@ -393,11 +401,11 @@ Configuration parameters can be used to control which metrics are reported by li
 | | vm.net.out_packets | net.out_packets |
 | | vm.net.out_packets_sec | net.out_packets_sec |
 | vm_ping_check_enable (default: True) | vm.ping_status | ping_status |
-| vm_extended_disks_check_enable (default: True) | vm.disk.allocation | disk.allocation |
+| vm_extended_disks_check_enable (default: False) | vm.disk.allocation | disk.allocation |
 | | vm.disk.capacity | disk.capacity |
 | | vm.disk.physical | disk.physical |
 | | vm.disk.allocation_total | disk.allocation_total |
-|vm_disks_check_enable(default: True) and vm_extended_disks_check_enable(default: True) | vm.io.errors_total | io.errors_total |
+|vm_disks_check_enable(default: True) and vm_extended_disks_check_enable(default: False) | vm.io.errors_total | io.errors_total |
 | | vm.io.errors_total_sec | io.errors_total_sec |
 | | vm.io.read_bytes_total | io.read_bytes_total |
 | | vm.io.read_bytes_total_sec | io.read_bytes_total_sec |
