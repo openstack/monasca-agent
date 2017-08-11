@@ -149,7 +149,14 @@ class KubernetesConnector(object):
         """Sends request to Kubernetes API with given endpoint.
         Will retry the request once, with updated token/cert, if unauthorized.
         """
-        request_url = "{}/{}".format(self.api_url, request_endpoint)
+        api_url = self.api_url
+        if api_url[-1] == '/':
+            api_url = api_url[:-1]
+
+        if request_endpoint[0] == '/':
+            request_endpoint = request_endpoint[1:]
+
+        request_url = "{}/{}".format(api_url, request_endpoint)
         result = requests.get(request_url,
                               timeout=self.connection_timeout,
                               headers=self.api_request_header,
