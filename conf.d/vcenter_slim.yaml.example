@@ -1,0 +1,27 @@
+init_config:
+
+# vcenter credentials. Port defaults to the value shown, while all others default to empty strings
+  vcenter_ip: "127.0.0.1"
+  vcenter_user: "joe"
+  vcenter_password: "12345"
+  vcenter_port: 443
+
+# number of retries to the vcenter api
+  retry_count: 3
+  poll_interval: 0.5
+
+# maximum number of objects to return from vcenter, this should be larger than the total number of vms running.
+  vcenter_max_objects: 100000
+
+# Sets the keys to be collected from the annotations on vms. By default this is empty, meaning no
+# annotations will be collected
+  allowed_keys:
+  - project_id
+
+# This can be used to change the name of a key when it is added to the metric dimensions. By default, all
+# keys will be recorded without modification
+  key_map:
+    project_id: tenant_id
+
+instances:
+# this plugin doesn't support instances, this section will be ignored (but is still required for structure)
