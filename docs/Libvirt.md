@@ -243,50 +243,57 @@ Example cache (pretty-printed excerpt, see next section for complete list of ava
 ```
 ## Per-Instance Metrics
 
-| Name                 | Description                            | Associated Dimensions  |
-| -------------------- | -------------------------------------- | ---------------------- |
-| cpu.utilization_perc | Overall CPU utilization (percentage)   |                        |
-| cpu.utilization_norm_perc | Normalized CPU utilization (percentage) |                  |
-| disk.allocation      | Total Disk allocation for a device     | 'device' (ie, 'hdd')   |
-| disk.capacity        | Total Disk capacity for a device       | 'device' (ie, 'hdd')   |
-| disk.physical        | Total Disk usage for a device          | 'device' (ie, 'hdd')   |
-| disk.allocation_total| Total Disk allocation across devices for instances |            |
-| disk.capacity_total  | Total Disk capacity across devices for instances |              |
-| disk.physical_total  | Total Disk usage across devices for instances |                 |
-| host_alive_status    | See [host_alive_status Codes](#host_alive_status-codes) below | |
-| io.read_ops_sec      | Disk I/O read operations per second    | 'device' (ie, 'hdd')   |
-| io.read_ops          | Disk I/O read operations val           | 'device' (ie, 'hdd')   |
-| io.read_bytes        | Disk I/O read bytes val                | 'device' (ie, 'hdd')   |
-| io.read_bytes_sec    | Disk I/O read bytes per second         | 'device' (ie, 'hdd')   |
-| io.read_bytes_total  | Total Disk I/O read bytes across all devices |                  |
-| io.read_bytes_total_sec | Total Disk I/O read bytes per second across devices |        |
-| io.read_ops_total | Total Disk I/O read operations across all devices |           |
-| io.read_ops_total_sec | Total Disk I/O read operations across all devices  per sec |  |
-| io.write_ops_sec     | Disk I/O write operations per second   | 'device' (ie, 'hdd')   |
-| io.write_ops         | Disk I/O write operations val          | 'device' (ie, 'hdd')   |
-| io.write_bytes       | Disk I/O write bytes val               | 'device' (ie, 'hdd')   |
-| io.write_bytes_sec   | Disk I/O write bytes per second        | 'device' (ie, 'hdd')   |
-| io.errors_sec        | Disk I/O errors per second             | 'device' (ie, 'hdd')   |
-| io.write_bytes_total | Total Disk I/O write bytes across all devices |                 |
-| io.write_bytes_total_sec | Total Disk I/O Write bytes per second across devices |      |
-| io.write_ops_total | Total Disk I/O write operations across all devices |         |
-| io.write_ops_total_sec | Total Disk I/O write operations across all devices  per sec |  |
-| net.in_packets_sec   | Network received packets per second    | 'device' (ie, 'vnet0') |
-| net.out_packets_sec  | Network transmitted packets per second | 'device' (ie, 'vnet0') |
-| net.in_bytes_sec     | Network received bytes per second      | 'device' (ie, 'vnet0') |
-| net.out_bytes_sec    | Network transmitted bytes per second   | 'device' (ie, 'vnet0') |
-| net.in_packets       | Network received total packets         | 'device' (ie, 'vnet0') |
-| net.out_packets      | Network transmitted total packets      | 'device' (ie, 'vnet0') |
-| net.in_bytes         | Network received total bytes           | 'device' (ie, 'vnet0') |
-| net.out_bytes        | Network transmitted total bytes        | 'device' (ie, 'vnet0') |
-| mem.free_mb          | Free memory in Mbytes                  |                        |
-| mem.total_mb         | Total memory in Mbytes                 |                        |
-| mem.used_mb          | Used memory in Mbytes                  |                        |
-| mem.free_perc        | Percent of memory free                 |                        |
-| mem.swap_used_mb     | Used swap space in Mbytes              |                        |
-| ping_status          | 0 for ping success, 1 for ping failure |                        |
-| cpu.time_ns          | Cumulative CPU time (in ns) |        |
-| mem.resident_mb      | Total memory used on host, an Operations-only metric |          |
+| Name                      | Description                                               | Associated Dimensions  |
+| ------------------------- | --------------------------------------------------------- | ---------------------- |
+| cpu.total_cores           | Total virtual cpus allocated to vm                        |                        |
+| cpu.used_cores            | Number of cpu cores used                                  |                        |
+| cpu.utilization_perc      | Overall CPU utilization (percentage)                      |                        |
+| cpu.utilization_norm_perc | Normalized CPU utilization (percentage)                   |                        |
+| disk.allocation           | Total Disk allocation for a device                        | 'device' (ie, 'hdd')   |
+| disk.capacity             | Total Disk capacity for a device                          | 'device' (ie, 'hdd')   |
+| disk.physical             | Total Disk usage for a device                             | 'device' (ie, 'hdd')   |
+| disk.allocation_total     | Total Disk allocation across devices for instances        |                        |
+| disk.capacity_total       | Total Disk capacity across devices for instances          |                        |
+| disk.physical_total       | Total Disk usage across devices for instances             |                        |
+| health_status             | Reports if vm is running (0) or not (1)                   |                        |
+| host_alive_status         | See [host_alive_status Codes](#host_alive_status-codes) below |                    |
+| io.read_ops_sec           | Disk I/O read operations per second                       | 'device' (ie, 'hdd')   |
+| io.read_ops               | Disk I/O read operations val                              | 'device' (ie, 'hdd')   |
+| io.read_bytes             | Disk I/O read bytes val                                   | 'device' (ie, 'hdd')   |
+| io.read_bytes_sec         | Disk I/O read bytes per second                            | 'device' (ie, 'hdd')   |
+| io.read_bytes_total       | Total Disk I/O read bytes across all devices              |                        |
+| io.read_bytes_total_sec   | Total Disk I/O read bytes per second across devices       |                        |
+| io.read_ops_total         | Total Disk I/O read operations across all devices         |                        |
+| io.read_ops_total_sec     | Total Disk I/O read operations across all devices per sec |                        |
+| io.write_ops_sec          | Disk I/O write operations per second                      | 'device' (ie, 'hdd')   |
+| io.write_ops              | Disk I/O write operations val                             | 'device' (ie, 'hdd')   |
+| io.write_bytes            | Disk I/O write bytes val                                  | 'device' (ie, 'hdd')   |
+| io.write_bytes_sec        | Disk I/O write bytes per second                           | 'device' (ie, 'hdd')   |
+| io.errors_sec             | Disk I/O errors per second                                | 'device' (ie, 'hdd')   |
+| io.write_bytes_total      | Total Disk I/O write bytes across all devices             |                        |
+| io.write_bytes_total_sec  | Total Disk I/O Write bytes per second across devices      |                        |
+| io.write_ops_total        | Total Disk I/O write operations across all devices        |                        |
+| io.write_ops_total_sec    | Total Disk I/O write operations across all devices  per sec |                      |
+| net.in_packets_sec        | Network received packets per second                       | 'device' (ie, 'vnet0') |
+| net.out_packets_sec       | Network transmitted packets per second                    | 'device' (ie, 'vnet0') |
+| net.in_bytes_sec          | Network received bytes per second                         | 'device' (ie, 'vnet0') |
+| net.out_bytes_sec         | Network transmitted bytes per second                      | 'device' (ie, 'vnet0') |
+| net.in_dropped_sec        | Network received packets dropped per second               | 'device' (ie, 'vnet0') |
+| net.out_dropped_sec       | Network transmitted packets dropped per second            | 'device' (ie, 'vnet0') |
+| net.in_errors_sec         | Network received packets with errors per second           | 'device' (ie, 'vnet0') |
+| net.out_errors_sec        | Network transmitted packets with errors per second        | 'device' (ie, 'vnet0') |
+| net.in_packets            | Network received total packets                            | 'device' (ie, 'vnet0') |
+| net.out_packets           | Network transmitted total packets                         | 'device' (ie, 'vnet0') |
+| net.in_bytes              | Network received total bytes                              | 'device' (ie, 'vnet0') |
+| net.out_bytes             | Network transmitted total bytes                           | 'device' (ie, 'vnet0') |
+| mem.free_gb               | Free memory in Gbytes                                     |                        |
+| mem.total_gb              | Total memory in Gbytes                                    |                        |
+| mem.used_gb               | Used memory in Gbytes                                     |                        |
+| mem.free_perc             | Percent of memory free                                    |                        |
+| mem.swap_used_gb          | Used swap space in Gbytes                                 |                        |
+| ping_status               | 0 for ping success, 1 for ping failure                    |                        |
+| cpu.time_ns               | Cumulative CPU time (in ns)                               |                        |
+| mem.resident_gb           | Total memory used on host, an Operations-only metric      |                        |
 
 ### host_alive_status Codes
 | Code | Description                          | value_meta 'detail'                    |
