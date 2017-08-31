@@ -191,19 +191,20 @@ class Prometheus(checks.AgentCheck):
         if self.detect_method == "pod" and not configured_ports:
             configured_ports = [9102]
         prometheus_endpoint = annotations.get("prometheus.io/path", "/metrics")
+        prometheus_endpoint = prometheus_endpoint.lstrip('/')
 
         endpoints = []
         for port in ports:
             for configured_port in configured_ports:
                 if port[pod_index] == configured_port:
                     # Build up list of ports and prometheus endpoints to return
-                    endpoints += "{}/{}".format(configured_port,
-                                                prometheus_endpoint)
+                    endpoints.append("{}/{}".format(configured_port,
+                                                    prometheus_endpoint))
 
         if len(ports) == 1 and not endpoints:
             self.log.info("Could not find matching port using only port "
                           "configured")
-            endpoints += "{}/{}".format(ports[pod_index], prometheus_endpoint)
+            endpoints.append("{}/{}".format(ports[pod_index], prometheus_endpoint))
 
         if not endpoints:
             self.log.error("Can not derive which port to use. Due to more "
