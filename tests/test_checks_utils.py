@@ -81,27 +81,27 @@ class TestDynamicCheckHelper(unittest.TestCase):
         metric4 = sorted(filter(lambda m: m['measurement']['name'] == 'dynhelper.testgroup.sec_auth_total', metrics))
         self.assertTrue(len(metric1) > 0,
                         'gauge dynhelper.messages_avg missing in metric list {0}'.format(repr(metrics)))
-        self.assertEquals(metric1[0]['measurement']['dimensions'],
+        self.assertEqual(metric1[0]['measurement']['dimensions'],
                           {'simple_dimension': 'simple_label_test', 'complex_dimension': 'monasca-api-a8109321',
                            'complex_dimension_rest': 'monasca-api-a8109321_postfix',
                            'hostname': metric1[0]['measurement']['dimensions'].get('hostname')})
         self.assertTrue(len(metric2) > 0,
                         'rate dynhelper.messages_total missing in metric list {0}'.format(repr(metrics)))
-        self.assertEquals(metric2[0]['measurement']['dimensions'],
+        self.assertEqual(metric2[0]['measurement']['dimensions'],
                           {'hostname': metric2[0]['measurement']['dimensions'].get('hostname')})
         self.assertTrue(len(metric3) > 0,
                         'rate dynhelper.testgroup.req_responses_ok missing in metric list {0}'.format(repr(metrics)))
-        self.assertEquals(metric3[0]['measurement']['dimensions'],
+        self.assertEqual(metric3[0]['measurement']['dimensions'],
                           {'simple_dimension': 'simple_label_test', 'complex_dimension': 'monasca-api-a8109321',
                            'complex_dimension_rest': 'monasca-api-a8109321_postfix',
                            'hostname': metric3[0]['measurement']['dimensions'].get('hostname')})
         self.assertTrue(len(metric4) == 2,
                         'rate dynhelper.testgroup.sec_auth_total missing in metric list {0}'.format(repr(metrics)))
-        self.assertEquals(metric4[0]['measurement']['dimensions'],
+        self.assertEqual(metric4[0]['measurement']['dimensions'],
                           {'simple_dimension': 'simple_label_test', 'complex_dimension': 'monasca-api-a8109321',
                            'complex_dimension_rest': 'monasca-api-a8109321_postfix',
                            'user': 'me', 'hostname': metric4[0]['measurement']['dimensions'].get('hostname')})
-        self.assertEquals(metric4[1]['measurement']['dimensions'],
+        self.assertEqual(metric4[1]['measurement']['dimensions'],
                           {'simple_dimension': 'simple_label_test', 'complex_dimension': 'monasca-api-a8109321',
                            'complex_dimension_rest': 'monasca-api-a8109321_postfix',
                            'user': 'you', 'hostname': metric4[1]['measurement']['dimensions'].get('hostname')})
