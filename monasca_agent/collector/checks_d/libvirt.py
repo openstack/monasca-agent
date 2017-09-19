@@ -401,14 +401,14 @@ class LibvirtCheck(AgentCheck):
         cpu_info = insp.inspect_cpus(inst)
 
         if 'cpu.time' in metric_cache[inst_name]:
-            # I have a prior value, so calculate the raw_perc & push the metric
+            # I have a prior value, so calculate the used_cores & push the metric
             cpu_diff = cpu_info.time - metric_cache[inst_name]['cpu.time']['value']
             time_diff = sample_time - float(metric_cache[inst_name]['cpu.time']['timestamp'])
             # Convert time_diff to nanoseconds, and calculate percentage
-            raw_perc = (cpu_diff / (time_diff * 1000000000)) * 100
+            used_cores = (cpu_diff / (time_diff * 1000000000))
             # Divide by the number of cores to normalize the percentage
-            normalized_perc = (raw_perc / cpu_info.number)
-            if raw_perc < 0:
+            normalized_perc = (used_cores / cpu_info.number) * 100
+            if used_cores < 0:
                 # Bad value, save current reading and skip
                 self.log.warn("Ignoring negative CPU sample for: "
                               "{0} new cpu time: {1} old cpu time: {2}"
@@ -418,7 +418,15 @@ class LibvirtCheck(AgentCheck):
                                                        'value': cpu_info.time}
                 return
 
-            self.gauge('cpu.utilization_perc', int(round(raw_perc, 0)),
+            self.gauge('cpu.total_cores', float(cpu_info.number),
+                       dimensions=dims_customer,
+                       delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                       hostname=instance_cache.get(inst_name)['hostname'])
+            self.gauge('cpu.used_cores', float(used_cores),
+                       dimensions=dims_customer,
+                       delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                       hostname=instance_cache.get(inst_name)['hostname'])
+            self.gauge('cpu.utilization_perc', int(round(used_cores * 100, 0)),
                        dimensions=dims_customer,
                        delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
                        hostname=instance_cache.get(inst_name)['hostname'])
@@ -426,7 +434,12 @@ class LibvirtCheck(AgentCheck):
                        dimensions=dims_customer,
                        delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
                        hostname=instance_cache.get(inst_name)['hostname'])
-            self.gauge('vm.cpu.utilization_perc', int(round(raw_perc, 0)),
+
+            self.gauge('vm.cpu.total_cores', float(cpu_info.number),
+                       dimensions=dims_operations)
+            self.gauge('vm.cpu.used_cores', float(used_cores),
+                       dimensions=dims_operations)
+            self.gauge('vm.cpu.utilization_perc', int(round(used_cores * 100, 0)),
                        dimensions=dims_operations)
             self.gauge('vm.cpu.utilization_norm_perc', int(round(normalized_perc, 0)),
                        dimensions=dims_operations)
@@ -580,6 +593,7 @@ class LibvirtCheck(AgentCheck):
         """
         inst_state = inst.state()
         dom_status = inst_state[0] - 1
+        health_status = 0 if dom_status == 0 else 1  # anything other than 'running' is considered unhealthy
         metatag = None
 
         if inst_state[0] in DOM_STATES:
@@ -596,6 +610,13 @@ class LibvirtCheck(AgentCheck):
         self.gauge('vm.host_alive_status', dom_status,
                    dimensions=dims_operations,
                    value_meta=metatag)
+
+        self.gauge('health_status', health_status,
+                   dimensions=dims_customer,
+                   delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
+                   hostname=instance_cache.get(inst_name)['hostname'])
+        self.gauge('vm.health_status', health_status,
+                   dimensions=dims_operations)
 
         return dom_status
 
@@ -766,10 +787,10 @@ class LibvirtCheck(AgentCheck):
             # (req. balloon driver; Linux kernel param CONFIG_VIRTIO_BALLOON)
             try:
                 mem_stats = inst.memoryStats()
-                mem_metrics = {'mem.free_mb': float(mem_stats['unused']) / 1024,
-                               'mem.swap_used_mb': float(mem_stats['swap_out']) / 1024,
-                               'mem.total_mb': float(mem_stats['available']) / 1024,
-                               'mem.used_mb': float(mem_stats['available'] - mem_stats['unused']) / 1024,
+                mem_metrics = {'mem.free_gb': float(mem_stats['unused']) / 1024 / 1024,
+                               'mem.swap_used_gb': float(mem_stats['swap_out']) / 1024 / 1024,
+                               'mem.total_gb': float(mem_stats['available']) / 1024 / 1024,
+                               'mem.used_gb': float(mem_stats['available'] - mem_stats['unused']) / 1024 / 1024,
                                'mem.free_perc': float(mem_stats['unused']) / float(mem_stats['available']) * 100}
                 for name in mem_metrics:
                     self.gauge(name, mem_metrics[name], dimensions=dims_customer,
@@ -778,7 +799,7 @@ class LibvirtCheck(AgentCheck):
                     self.gauge("vm.{0}".format(name), mem_metrics[name],
                                dimensions=dims_operations)
                 memory_info = insp.inspect_memory_resident(inst)
-                self.gauge('vm.mem.resident_mb', float(memory_info.resident), dimensions=dims_operations)
+                self.gauge('vm.mem.resident_gb', float(memory_info.resident) / 1024, dimensions=dims_operations)
             except KeyError:
                 self.log.debug("Balloon driver not active/available on guest {0} ({1})".format(inst_name,
                                                                                                instance_cache.get(inst_name)['hostname'].encode('utf8')))
