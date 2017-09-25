@@ -4,6 +4,8 @@ import json
 import logging
 import yaml
 
+import six
+
 import monasca_setup.agent_config
 import monasca_setup.detection
 from monasca_setup.detection.utils import find_process_cmdline
@@ -108,7 +110,7 @@ class ProcessCheck(monasca_setup.detection.Plugin):
                 if found_process_names:
                     process_item['found_process_names'] = found_process_names
                     if 'exact_match' in process_item:
-                        if isinstance(process_item['exact_match'], basestring):
+                        if isinstance(process_item['exact_match'], six.string_types):
                             process_item['exact_match'] = (process_item['exact_match'].lower() == 'true')
                     else:
                         process_item['exact_match'] = False
