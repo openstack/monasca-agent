@@ -79,15 +79,18 @@ class AgentCheck(util.Dimensions):
                 for dim_kv in dim_key_values.items():
                     if dim_kv[0] not in dimensions_white_list.keys():
                         dimensions_white_list[dim_kv[0]] = dim_kv[1]
-        self.aggregator.submit_metric(metric,
-                                      value,
-                                      metric_type,
-                                      dimensions_white_list,
-                                      delegated_tenant,
-                                      hostname,
-                                      device_name,
-                                      value_meta,
-                                      timestamp)
+        try:
+            self.aggregator.submit_metric(metric,
+                                          value,
+                                          metric_type,
+                                          dimensions_white_list,
+                                          delegated_tenant,
+                                          hostname,
+                                          device_name,
+                                          value_meta,
+                                          timestamp)
+        except Exception as e:
+            self.log.exception("invalid metric: {}".format(e))
 
     def gauge(self, metric, value, dimensions=None, delegated_tenant=None, hostname=None,
               device_name=None, timestamp=None, value_meta=None):
