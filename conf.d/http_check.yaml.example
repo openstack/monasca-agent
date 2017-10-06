@@ -22,6 +22,7 @@ instances:
 #        use_keystone: True
 #        keystone_config:
 #            keystone_url: http://endpoint.com/v3/
+#            project_name: project
 #            username: user
 #            password: password
 
