@@ -10,8 +10,8 @@ import monasca_setup.detection
 log = logging.getLogger(__name__)
 
 # Process name is apache2 on Debian derivatives, on RHEL derivatives it's httpd,
-# on openSUSE/SLES it might be httpd-prefork
-APACHE_PROCESS_NAMES = ('apache2', 'httpd', 'httpd-prefork')
+# on openSUSE/SLES it might be httpd-prefork or httpd-worker
+APACHE_PROCESS_NAMES = ('apache2', 'httpd', 'httpd-prefork', 'httpd-worker')
 DEFAULT_APACHE_CONFIG = '/root/.apache.cnf'
 CONFIG_ARG_KEYS = set(["url", "user", "password", "use_server_status_metrics"])
 
