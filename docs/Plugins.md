@@ -665,8 +665,12 @@ Requirements:
 
 ```
   usermod -a -G ceph monasca-agent
-  chmod 0604 /etc/ceph/ceph.client.admin.keyring
+  chmod 0640 /etc/ceph/ceph.client.admin.keyring
 ```
+
+Alternatively, you can configure monasca-agent to use sudo using the `use_sudo`
+option. The example configuration below assumes you added the `monasca-agent`
+user to the `ceph` group which does not require using sudo.
 
 Sample config:
 
@@ -675,6 +679,7 @@ init_config:
 
 instances:
   - cluster_name: ceph
+    use_sudo: False
     collect_usage_metrics: True
     collect_stats_metrics: True
     collect_mon_metrics: True

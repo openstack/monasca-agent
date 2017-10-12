@@ -129,6 +129,9 @@ class Ceph(checks.AgentCheck):
     def _ceph_cmd(self, args, format='plain'):
         cmd = 'ceph --cluster {0} -f {1} {2}'.format(self.CLUSTER, format,
                                                      args)
+        if self.instance.get('use_sudo', False):
+            cmd = "sudo " + cmd
+
         try:
             output = subprocess.check_output(cmd, shell=True,
                                              stderr=subprocess.STDOUT)
