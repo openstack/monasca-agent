@@ -62,6 +62,15 @@ class MockCephCheck(ceph.Ceph):
             agent_config={}
         )
 
+    def _ceph_cmd(self, *args):
+        if hasattr(self, 'instance'):
+            return super(MockCephCheck, self)._ceph_cmd(*args)
+        else:
+            self.instance = { 'use_sudo': False }
+            ret = super(MockCephCheck, self)._ceph_cmd(*args)
+            del self.instance
+            return ret
+
 
 class CephCheckTest(unittest.TestCase):
     maxDiff = None
@@ -99,6 +108,21 @@ class CephCheckTest(unittest.TestCase):
             self.ceph_check._ceph_cmd('foo', 'json')
             self.assertEqual("Unable to execute ceph command 'ceph --cluster"
                              "ceph -f json foo': Invalid command", e.output)
+
+    def test_ceph_cmd_sudo(self):
+        self.ceph_check.check({
+            'use_sudo': True,
+        })
+
+        expect_cmd = 'sudo ceph --cluster ceph -f json df detail'
+
+        with mock.patch('subprocess.check_output') as ceph_cmd_call:
+            try:
+                self.ceph_check._ceph_cmd('df detail', 'json')
+            except Exception as e:
+                pass
+            ceph_cmd_call.assert_called_with(expect_cmd, shell=True,
+                                             stderr=subprocess.STDOUT)
 
     def test_parse_ceph_status(self):
         self.assertEqual(0, self.ceph_check._parse_ceph_status('HEALTH_OK'))
