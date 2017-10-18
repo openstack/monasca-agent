@@ -139,7 +139,7 @@ class LibvirtCheck(AgentCheck):
             region_name=self.init_config.get('region_name'))
 
         instances = nova_client.servers.list(
-            search_opts={'all_tenants': 1, 'host': self.hostname})
+            search_opts={'all_tenants': 1, 'host': self.hostname.split('.')[0]})
         # Lay the groundwork for fetching VM IPs and network namespaces
         if self.init_config.get('ping_check'):
             nu = neutron_client.Client(
