@@ -585,6 +585,7 @@ The cAdvisor host check returns the following metrics:
 | mem.cache_bytes | hostname, unit | Number of bytes of page cache memory
 | mem.swap_bytes | hostname, unit | Swap usage in memory in bytes
 | mem.used_bytes | hostname, unit | Current memory in use in bytes
+| mem.working_set_bytes | hostname, unit | Current working set of memory in bytes (total minus cache)
 | net.in_bytes | hostname, interface, unit | Total network bytes received by all interfaces
 | net.in_bytes_sec | hostname, interface, unit | Total number of network bytes received by all interfaces per second
 | net.in_dropped_packets | hostname, interface, unit | Total inbound network packets dropped by all interfaces
@@ -1578,6 +1579,7 @@ Common Container metrics between containers running underneath kubernetes and st
 | container.mem.rss_bytes | image, container_name, pod_name, namespace, unit | image, container_name, hostname, unit | Size of rss in bytes
 | container.mem.swap_bytes | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Swap usage in memory in bytes
 | container.mem.used_bytes | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Current memory in use in bytes
+| container.mem.working_set_bytes | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Current working set memory in bytes (total minus cache)
 | container.mem.fail_count | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Number of memory usage limit hits
 | container.net.in_bytes | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Total network bytes received
 | container.net.in_bytes_sec | image, container_name, pod_name, namespace, unit  | image, container_name, hostname, unit | Number of network bytes received per second
@@ -1628,6 +1630,7 @@ Pod Metrics:
 | pod.mem.rss_bytes | pod_name, namespace | Size of rss in bytes
 | pod.mem.swap_bytes | pod_name, namespace | Swap usage in memory in bytes
 | pod.mem.used_bytes | pod_name, namespace | Current memory in use in bytes
+| pod.mem.working_set_bytes | pod_name, namespace | Current working set memory in bytes (total minus cache)
 | pod.net.in_bytes | pod_name, namespace | Total network bytes received
 | pod.net.in_bytes_sec | pod_name, namespace | Number of network bytes received per second
 | pod.net.in_dropped_packets | pod_name, namespace | Total inbound network packets dropped
@@ -1656,6 +1659,7 @@ There is also additional Kubernetes dimensions for the Container and Pod metrics
 | ReplicaSet | replica_set |
 | DaemonSet | daemon_set |
 | Deployment| deployment | Only will be set if derive_host is set to true as it needs to connect to the API to see if the ReplicaSet is under a deployment
+| Job | job |
 
 Pod Phase Mapping:
 

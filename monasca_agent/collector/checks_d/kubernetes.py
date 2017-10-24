@@ -32,6 +32,7 @@ CADVISOR_METRICS = {
         "cache": "mem.cache_bytes",
         "usage": "mem.used_bytes",
         "failcnt": "mem.fail_count",
+        "working_set": "mem.working_set"
     },
     "filesystem_metrics": {
         "capacity": "fs.total_bytes",
@@ -66,6 +67,7 @@ METRIC_TYPES_UNITS = {
     "mem.cache_bytes": (["gauge"], ["bytes"]),
     "mem.used_bytes": (["gauge"], ["bytes"]),
     "mem.fail_count": (["gauge"], ["count"]),
+    "mem.working_set": (["gauge"], ["bytes"]),
     "fs.total_bytes": (["gauge"], ["bytes"]),
     "fs.usage_bytes": (["gauge"], ["bytes"]),
     "fs.writes": (["gauge", "rate"], ["bytes", "bytes_per_second"]),
