@@ -1,0 +1,12 @@
+- project:
+    name: openstack/monasca-agent
+    check:
+      jobs:
+        - monasca-tempest-python-mysql:
+            voting: false
+        - monasca-tempest-python-postgresql:
+            voting: false
+        - monasca-tempest-java-mysql:
+            voting: false
+        - monasca-tempest-java-postgresql:
+            voting: false
