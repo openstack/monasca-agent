@@ -2164,6 +2164,8 @@ The annotations the plugin is looking for are -
 * prometheus.io/scrape: Only scrape pods that have a value of 'true'
 * prometheus.io/path: If the metrics path is not '/metrics' override this.
 * prometheus.io/port: Scrape the pod on the indicated port instead of the default of '9102'.
+* monasca.io/usek8slabels: Attach Kubernetes labels of the pod that is being scraped. Default to 'true'
+* monasca.io/whitelist: Yaml list of metric names to whitelist against on detected endpoint
 
 These annotations are pulled from the Kubelet for pod autodetection and the Kubernetes API for the service auto detection
 
@@ -2190,6 +2192,19 @@ init_config:
   detect_method: "service"
 instances:
 - kubernetes_labels: ['app']
+```
+
+Example k8s manifest annotation section:
+
+```
+annotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  monasca.io/usek8slabels: "false"
+  monasca.io/whitelist: |
+    - storage
+    - cpu
+    - memory
 ```
 
 **NOTE** This Plugin can only have one configured instance
