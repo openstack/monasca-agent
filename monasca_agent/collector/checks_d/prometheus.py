@@ -2,6 +2,7 @@
 import math
 import requests
 import six
+import yaml
 
 from prometheus_client.parser import text_string_to_metric_families
 
@@ -24,6 +25,11 @@ class Prometheus(checks.AgentCheck):
     'prometheus.io/scrape': Only scrape pods that have a value of 'true'
     'prometheus.io/path': If the metrics path is not '/metrics' override this.
     'prometheus.io/port': Scrape the pod on the indicated port instead of the default of '9102'.
+
+    Additional settings for prometheus endpoints
+    'monasca.io/usek8slabels': Attach kubernetes labels of the pod that is being scraped. Default to 'true'
+    'monasca.io/whitelist': Yaml list of metric names to whitelist against on detected endpoint
+
     """
 
     def __init__(self, name, init_config, agent_config, instances=None):
@@ -63,16 +69,17 @@ class Prometheus(checks.AgentCheck):
                         self.log.error("Could not obtain current host from Kubernetes API {}. "
                                        "Skipping check".format(e))
                         return
-                metric_endpoints = self._get_metric_endpoints_by_pod(dimensions)
+                metric_endpoints, endpoints_whitelist = self._get_metric_endpoints_by_pod(dimensions)
             # Detect by service
             else:
-                metric_endpoints = self._get_metric_endpoints_by_service(dimensions)
+                metric_endpoints, endpoints_whitelist = self._get_metric_endpoints_by_service(dimensions)
             for metric_endpoint, endpoint_dimensions in six.iteritems(metric_endpoints):
                 endpoint_dimensions.update(dimensions)
-                self.report_endpoint_metrics(metric_endpoint, endpoint_dimensions)
+                self.report_endpoint_metrics(metric_endpoint, endpoint_dimensions, endpoints_whitelist[metric_endpoint])
 
     def _get_metric_endpoints_by_pod(self, dimensions):
         scrape_endpoints = {}
+        endpoint_whitelist = {}
         # Grab running pods from local Kubelet
         try:
             pods = requests.get(self.kubelet_url, timeout=self.connection_timeout).json()
@@ -111,12 +118,21 @@ class Prometheus(checks.AgentCheck):
                 # Loop through list of ports and build list of endpoints
 
                 pod_dimensions = dimensions.copy()
-                pod_dimensions.update(utils.get_pod_dimensions(
-                    self.kubernetes_connector, pod['metadata'],
-                    self.kubernetes_labels))
+                try:
+                    use_k8s_labels, whitelist = self._get_monasca_settings(pod_annotations)
+                except Exception as e:
+                    error_message = "Error parsing monasca annotations on endpoints {} with error - {}. " \
+                                    "Skipping scraping metrics".format(endpoints, e)
+                    self.log.error(error_message)
+                    continue
+                if use_k8s_labels:
+                    pod_dimensions.update(utils.get_pod_dimensions(
+                        self.kubernetes_connector, pod['metadata'],
+                        self.kubernetes_labels))
                 for endpoint in endpoints:
                     scrape_endpoint = "http://{}:{}".format(pod_ip, endpoint)
                     scrape_endpoints[scrape_endpoint] = pod_dimensions
+                    endpoint_whitelist[scrape_endpoint] = whitelist
                     self.log.info("Detected pod endpoint - {} with metadata "
                                   "of {}".format(scrape_endpoint,
                                                  pod_dimensions))
@@ -124,10 +140,11 @@ class Prometheus(checks.AgentCheck):
                 self.log.warn("Error parsing {} to detect for scraping - {}".format(pod, e))
                 continue
 
-        return scrape_endpoints
+        return scrape_endpoints, endpoint_whitelist
 
     def _get_metric_endpoints_by_service(self, dimensions):
         scrape_endpoints = {}
+        endpoint_whitelist = {}
         # Grab services from Kubernetes API
         try:
             services = self.kubernetes_connector.get_request("/api/v1/services")
@@ -160,15 +177,31 @@ class Prometheus(checks.AgentCheck):
             # Add service endpoint to scrape endpoints
             cluster_ip = service_spec['clusterIP']
             service_dimensions = dimensions.copy()
-            service_dimensions.update(
-                self._get_service_dimensions(service_metadata))
+            try:
+                use_k8s_labels, whitelist = self._get_monasca_settings(service_annotations)
+            except Exception as e:
+                error_message = "Error parsing monasca annotations on endpoints {} with error - {}. " \
+                                "Skipping scraping metrics".format(endpoints, e)
+                self.log.error(error_message)
+                continue
+            if use_k8s_labels:
+                service_dimensions.update(
+                    self._get_service_dimensions(service_metadata))
             for endpoint in endpoints:
                 scrape_endpoint = "http://{}:{}".format(cluster_ip, endpoint)
                 scrape_endpoints[scrape_endpoint] = service_dimensions
+                endpoint_whitelist[scrape_endpoint] = whitelist
                 self.log.info("Detected service endpoint - {} with metadata "
                               "of {}".format(scrape_endpoint,
                                              service_dimensions))
-        return scrape_endpoints
+        return scrape_endpoints, endpoint_whitelist
+
+    def _get_monasca_settings(self, annotations):
+        use_k8s_labels = annotations.get("monasca.io/usek8slabels", "true").lower() == "true"
+        whitelist = None
+        if "monasca.io/whitelist" in annotations:
+            whitelist = yaml.safe_load(annotations["monasca.io/whitelist"])
+        return use_k8s_labels, whitelist
 
     def _get_service_dimensions(self, service_metadata):
         service_dimensions = {'service_name': service_metadata['name'],
@@ -213,7 +246,7 @@ class Prometheus(checks.AgentCheck):
                            "scraping".format(self.detect_method, name))
         return endpoints
 
-    def _send_metrics(self, metric_families, dimensions):
+    def _send_metrics(self, metric_families, dimensions, endpoint_whitelist):
         for metric_family in metric_families:
             for metric in metric_family.samples:
                 metric_dimensions = dimensions.copy()
@@ -223,13 +256,15 @@ class Prometheus(checks.AgentCheck):
                 if math.isnan(metric_value):
                     self.log.debug('filtering out NaN value provided for metric %s{%s}', metric_name, metric_labels)
                     continue
+                if endpoint_whitelist is not None and metric_name not in endpoint_whitelist:
+                    continue
                 # remove empty string dimensions from prometheus labels
                 for dim_key, dim_value in metric_labels.items():
                     if len(dim_value) > 0:
                         metric_dimensions[dim_key] = dim_value
                 self.gauge(metric_name, metric_value, dimensions=metric_dimensions, hostname="SUPPRESS")
 
-    def report_endpoint_metrics(self, metric_endpoint, endpoint_dimensions):
+    def report_endpoint_metrics(self, metric_endpoint, endpoint_dimensions, endpoint_whitelist):
         # Hit metric endpoint
         try:
             result = requests.get(metric_endpoint, timeout=self.connection_timeout)
@@ -240,7 +275,7 @@ class Prometheus(checks.AgentCheck):
             if "text/plain" in result_content_type:
                 try:
                     metric_families = text_string_to_metric_families(result.text)
-                    self._send_metrics(metric_families, endpoint_dimensions)
+                    self._send_metrics(metric_families, endpoint_dimensions, endpoint_whitelist)
                 except Exception as e:
                     self.log.error("Error parsing data from {} with error {}".format(metric_endpoint, e))
             else:
