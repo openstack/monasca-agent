@@ -808,6 +808,8 @@ def _set_pod_owner_dimension(kubernetes_connector, pod_dimensions, pod_owner_typ
             pod_dimensions['deployment'] = deployment_name
     elif pod_owner_type == "DaemonSet":
         pod_dimensions['daemon_set'] = pod_owner_name
+    elif pod_owner_type == "Job":
+        pod_dimensions['job'] = pod_owner_name
     else:
         log.info("Unsupported pod owner kind {} as a dimension for pod {}".format(pod_owner_type,
                                                                                   pod_dimensions))

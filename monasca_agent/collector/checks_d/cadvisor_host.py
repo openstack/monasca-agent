@@ -21,6 +21,7 @@ METRICS = {
         "swap": ("swap_bytes", ["gauge"], ["bytes"]),
         "cache": ("cache_bytes", ["gauge"], ["bytes"]),
         "usage": ("used_bytes", ["gauge"], ["bytes"]),
+        "working_set": ("working_set", ["gauge"], ["bytes"])
     },
     "filesystem_metrics": {
         "capacity": ("total_bytes", ["gauge"], ["bytes"]),
