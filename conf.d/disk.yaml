@@ -23,5 +23,5 @@ instances:
       # device_blacklist_re: .*\/dev\/mapper\/lxc-box.*
 
       # For disk metrics it is also possible to ignore entire filesystem types
-      ignore_filesystem_types: iso9660,tmpfs
+      ignore_filesystem_types: iso9660,tmpfs,nsfs
       device_blacklist_re: .*freezer_backup_snap.*
