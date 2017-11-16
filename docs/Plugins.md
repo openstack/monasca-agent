@@ -2170,6 +2170,7 @@ The annotations the plugin is looking for are -
 * prometheus.io/port: Scrape the pod on the indicated port instead of the default of '9102'.
 * monasca.io/usek8slabels: Attach Kubernetes labels of the pod that is being scraped. Default to 'true'
 * monasca.io/whitelist: Yaml list of metric names to whitelist against on detected endpoint
+* monasca.io/metric_types: Yaml dictionary where key is metric name and value is desired type from 'rate' or 'counter'. Metric name will be appended with '_rate' or '_counter' respectively. If not specified, the scraped value will be passed without modification.
 
 These annotations are pulled from the Kubelet for pod autodetection and the Kubernetes API for the service auto detection
 
@@ -2209,6 +2210,7 @@ annotations:
     - storage
     - cpu
     - memory
+  monasca.io/metric_types: "{storage: rate}"
 ```
 
 **NOTE** This Plugin can only have one configured instance
