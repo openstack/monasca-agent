@@ -48,6 +48,16 @@ DOM_STATES = {libvirt.VIR_DOMAIN_BLOCKED: 'VM is blocked',
               libvirt.VIR_DOMAIN_PMSUSPENDED: 'VM is in power management (s3) suspend',
               libvirt.VIR_DOMAIN_SHUTDOWN: 'VM is shutting down',
               libvirt.VIR_DOMAIN_SHUTOFF: 'VM has been shut off (other reason)'}
+
+DOM_ALIVE_NAMES = {libvirt.VIR_DOMAIN_BLOCKED: 'blocked',
+                   libvirt.VIR_DOMAIN_CRASHED: 'crashed',
+                   libvirt.VIR_DOMAIN_NONE: 'nostate',
+                   libvirt.VIR_DOMAIN_PAUSED: 'paused',
+                   libvirt.VIR_DOMAIN_PMSUSPENDED: 'suspended',
+                   libvirt.VIR_DOMAIN_RUNNING: 'running',
+                   libvirt.VIR_DOMAIN_SHUTDOWN: 'shuttingdown',
+                   libvirt.VIR_DOMAIN_SHUTOFF: 'shutoff'}  # shut off/nova suspend
+
 DOM_SHUTOFF_STATES = {libvirt.VIR_DOMAIN_SHUTOFF_UNKNOWN: 'VM has been shutoff (reason unknown)',
                       libvirt.VIR_DOMAIN_SHUTOFF_SHUTDOWN: 'VM has been shut down',
                       libvirt.VIR_DOMAIN_SHUTOFF_DESTROYED: 'VM has been destroyed (forced off)',
@@ -618,7 +628,7 @@ class LibvirtCheck(AgentCheck):
         self.gauge('vm.health_status', health_status,
                    dimensions=dims_operations)
 
-        return dom_status
+        return inst_state[0]
 
     def prepare_run(self):
         """Check if it is time for measurements to be collected"""
@@ -691,6 +701,16 @@ class LibvirtCheck(AgentCheck):
         # Build dimensions for both the customer and for operations
         dims_base = self._set_dimensions({'service': 'compute', 'component': 'vm'}, instance)
 
+        # Initialize aggregate alive status data structure (separate from
+        # aggregate gauges because every possible value needs to be counted
+        # separately)
+        agg_alive_counts = {}
+        for code in DOM_ALIVE_NAMES:
+            agg_alive_counts[code] = 0
+
+        # Per host total VM count
+        vm_count = 0
+
         # Define aggregate gauges, gauge name to metric name
         agg_gauges = {'vcpus': 'nova.vm.cpu.total_allocated',
                       'ram': 'nova.vm.mem.total_allocated_mb',
@@ -757,9 +777,15 @@ class LibvirtCheck(AgentCheck):
                                                                                          vm_probation_remaining))
                 continue
 
+            vm_dom_state = self._inspect_state(insp, inst, inst_name,
+                                               instance_cache, dims_customer,
+                                               dims_operations)
+
+            agg_alive_counts[vm_dom_state] += 1
+            vm_count += 1
+
             # Skip further processing on VMs that are not in an active state
-            if self._inspect_state(insp, inst, inst_name, instance_cache,
-                                   dims_customer, dims_operations) != 0:
+            if vm_dom_state != libvirt.VIR_DOMAIN_RUNNING:
                 continue
 
             # Skip the remainder of the checks if alive_only is True in the config
@@ -816,6 +842,10 @@ class LibvirtCheck(AgentCheck):
         for gauge in agg_gauges:
             self.gauge(agg_gauges[gauge], agg_values[gauge], dimensions=dims_base)
 
+        # Publish aggregate VM counts
+
+        self._gauge_agg_alive_counts(agg_alive_counts, vm_count, dims_base)
+
         # Check results of ping tests
         self._check_ping_results(ping_results)
 
@@ -832,6 +862,23 @@ class LibvirtCheck(AgentCheck):
             #
             rate_value = -1
         return rate_value
+
+    def _gauge_agg_alive_counts(self, agg_alive_counts, vm_count, dims_base):
+        count_pfx = "nova.vm."
+        total_frac = (float(vm_count) / 100)
+        self.gauge(count_pfx + 'total_count', vm_count, dimensions=dims_base)
+
+        for agg in agg_alive_counts:
+            self.gauge(count_pfx + DOM_ALIVE_NAMES[agg] + "_count",
+                       agg_alive_counts[agg],
+                       dimensions=dims_base)
+            if total_frac != 0:
+                self.gauge(count_pfx + DOM_ALIVE_NAMES[agg] + "_perc",
+                           agg_alive_counts[agg] / total_frac,
+                           dimensions=dims_base)
+            else:
+                self.gauge(count_pfx + DOM_ALIVE_NAMES[agg] + "_perc",
+                           0, dimensions=dims_base)
 
     def _update_dims_with_metadata(self, instance_cache, inst_name, dim_operations):
         """Update operations dimensions with metadata."""

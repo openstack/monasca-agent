@@ -457,11 +457,28 @@ All metrics include `resource_id` and `zone` (availability zone) dimensions.  Be
 
 In addition to per-instance metrics, the Libvirt plugin will publish aggregate metrics across all instances.
 
-| Name                            | Description                                        |
-| ------------------------------- | -------------------------------------------------- |
-| nova.vm.cpu.total_allocated     | Total CPUs allocated across all VMs                |
-| nova.vm.disk.total_allocated_gb | Total Gbytes of disk space allocated to all VMs |
-| nova.vm.mem.total_allocated_mb  | Total Mbytes of memory allocated to all VMs     |
+| Name                                      | Description                                                 |
+| ----------------------------------------- | ----------------------------------------------------------- |
+| nova.vm.cpu.total_allocated               | Total CPUs allocated across all VMs                         |
+| nova.vm.disk.total_allocated_gb           | Total Gbytes of disk space allocated to all VMs             |
+| nova.vm.mem.total_allocated_mb            | Total Mbytes of memory allocated to all VMs                 |
+| nova.vm.total_count                       | Total number of VMs on host                                 |
+| nova.vm.blocked_count                     | Total number of VMs in state blocked on host                |
+| nova.vm.blocked_perc                      | Percentage of VMs in state blocked on host                  |
+| nova.vm.crashed_count                     | Total number of VMs in state crashed on host                |
+| nova.vm.crashed_perc                      | Percentage of VMs in state crashed on host                  |
+| nova.vm.nostate_count                     | Total number of VMs with no state on host                   |
+| nova.vm.nostate_perc                      | Percentage of VMs with no state on host                     |
+| nova.vm.paused_count                      | Total number of VMs in state paused on host                 |
+| nova.vm.paused_perc                       | Percentage of VMs in state paused on host                   |
+| nova.vm.suspended_count                   | Total number of VMs in state suspended on host              |
+| nova.vm.suspended_perc                    | Percentage of VMs in state suspended on host                |
+| nova.vm.running_count                     | Total number of VMs in state running on host                |
+| nova.vm.running_perc                      | Percentage of VMs in state running on host                  |
+| nova.vm.shutingdown_count                 | Total number of VMs in state shutting down on host          |
+| nova.vm.shutingdown_perc                  | Percentage of VMs in state shutting down on host            |
+| nova.vm.shutoff_count                     | Total number of VMs in state shutoff/Nova suspended on host |
+| nova.vm.shutoff_perc                      | Percentage of VMs in state shutoff/Nova suspended on host   |
 
 Aggregate dimensions include hostname and component from the Operations Value column above.
 
