@@ -132,6 +132,7 @@ class Kibana(detection.Plugin):
                 },
                 'instances': [
                     {
+                        "name": kibana_url,
                         'metrics': metrics
                     }
                 ]
