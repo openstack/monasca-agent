@@ -205,7 +205,13 @@ In the init_config section you can specify an arbitrary number of global name:va
 ##### instances
 The instances section is a list of instances that this check will be run against. Your actual check() method is run once per instance. The name:value pairs for each instance specify details about the instance that are necessary for the check.
 
-It is best practice to include a name for each instance as the monasca-setup program uses this to avoid duplicating instances.
+It is vitally important to have a `name` attribute with a unique value for each
+instance as the `monasca-setup` program uses this to avoid duplicating
+instances. If any of the instances does not have a `name` attribute,
+`monasca-setup` will duplicate it every time it runs, causing not only a
+cluttered configuration file but also a multiplication of metrics sent by the
+plugin. See https://storyboard.openstack.org/#!/story/2001311 for an example of
+the plugin where this problem occurred.
 
 #### DynamicCheckHelper class
 
