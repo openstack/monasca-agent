@@ -289,6 +289,8 @@ class Kubernetes(checks.AgentCheck):
                                        METRIC_TYPES_UNITS[metric_name][1])
 
     def _parse_network(self, network_data, container_dimensions, pod_key, pod_metrics):
+        if 'interfaces' not in network_data:
+            return
         network_interfaces = network_data['interfaces']
         network_metrics = CADVISOR_METRICS['network_metrics']
         sum_network_interfaces = {}
