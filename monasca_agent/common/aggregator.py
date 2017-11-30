@@ -1,13 +1,11 @@
-# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2015-2017 Hewlett Packard Enterprise Development LP
 """ Aggregation classes used by the collector and statsd to batch messages sent to the forwarder.
 """
 import json
 import logging
-import re
 from time import time
 
-import monasca_agent.common.metrics as metrics_pkg
-
+import monasca_common.validation.metrics as metric_validator
 
 log = logging.getLogger(__name__)
 
@@ -18,33 +16,7 @@ log = logging.getLogger(__name__)
 # does not support submitting values for the past, and all values get
 # submitted for the timestamp passed into the flush() function.
 RECENT_POINT_THRESHOLD_DEFAULT = 3600
-VALUE_META_MAX_NUMBER = 16
 VALUE_META_VALUE_MAX_LENGTH = 2048
-VALUE_META_NAME_MAX_LENGTH = 255
-
-invalid_chars = "<>={}(),\"\\\\;&"
-restricted_dimension_chars = re.compile('[' + invalid_chars + ']')
-restricted_name_chars = re.compile('[' + invalid_chars + ' ' + ']')
-
-
-class InvalidMetricName(Exception):
-    pass
-
-
-class InvalidDimensionKey(Exception):
-    pass
-
-
-class InvalidDimensionValue(Exception):
-    pass
-
-
-class InvalidValue(Exception):
-    pass
-
-
-class InvalidValueMeta(Exception):
-    pass
 
 
 class MetricsAggregator(object):
@@ -94,76 +66,19 @@ class MetricsAggregator(object):
             return 0
         return round(float(self.count) / interval, 2)
 
-    def _valid_value_meta(self, value_meta, name, dimensions):
-        if len(value_meta) > VALUE_META_MAX_NUMBER:
-            msg = "Too many valueMeta entries {0}, limit is {1}: {2} -> {3} valueMeta {4}"
-            log.error(msg.format(len(value_meta), VALUE_META_MAX_NUMBER, name, dimensions, value_meta))
-            return False
-        for key, value in value_meta.items():
-            if not key:
-                log.error("valueMeta name cannot be empty: {0} -> {1}".format(name, dimensions))
-                return False
-            if len(key) > VALUE_META_NAME_MAX_LENGTH:
-                msg = "valueMeta name {0} must be {1} characters or less: {2} -> {3}"
-                log.error(msg.format(key, VALUE_META_NAME_MAX_LENGTH, name, dimensions))
-                return False
-
-        try:
-            if get_value_meta_overage(value_meta):
-                msg = "valueMeta name value combinations must be {0} characters or less: {1} -> {2} valueMeta {3}"
-                log.error(msg.format(VALUE_META_VALUE_MAX_LENGTH, name, dimensions, value_meta))
-                return False
-        except Exception:
-                log.error("Unable to serialize valueMeta into JSON: {2} -> {3}".format(name, dimensions))
-                return False
-
-        return True
-
     def submit_metric(self, name, value, metric_class, dimensions=None,
                       delegated_tenant=None, hostname=None, device_name=None,
                       value_meta=None, timestamp=None, sample_rate=1):
+        # validate dimensions, name, value and value meta
         if dimensions:
-            for k, v in dimensions.items():
-                if not isinstance(k, (str, unicode)):
-                    log.error("invalid dimension key {0} must be a string: {1} -> {2}".format(k, name, dimensions))
-                    raise InvalidDimensionKey
-                if len(k) > 255 or len(k) < 1:
-                    log.error("invalid length for dimension key {0}: {1} -> {2}".format(k, name, dimensions))
-                    raise InvalidDimensionKey
-                if restricted_dimension_chars.search(k) or re.match('^_', k):
-                    log.error("invalid characters in dimension key {0}: {1} -> {2}".format(k, name, dimensions))
-                    raise InvalidDimensionKey
+            metric_validator.validate_dimensions(dimensions)
 
-                if not isinstance(v, (str, unicode)):
-                    log.error("invalid dimension value {0} for key {1} must be a string: {2} -> {3}".format(v, k, name,
-                                                                                                            dimensions))
-                    raise InvalidDimensionValue
-                if len(v) > 255 or len(v) < 1:
-                    log.error("invalid length dimension value {0} for key {1}: {2} -> {3}".format(v, k, name,
-                                                                                                  dimensions))
-                    raise InvalidDimensionValue
-                if restricted_dimension_chars.search(v):
-                    log.error("invalid characters in dimension value {0} for key {1}: {2} -> {3}".format(v, k, name,
-                                                                                                         dimensions))
-                    raise InvalidDimensionValue
+        metric_validator.validate_name(name)
 
-        if not isinstance(name, (str, unicode)):
-            log.error("invalid metric name must be a string: {0} -> {1}".format(name, dimensions))
-            raise InvalidMetricName
-        if len(name) > 255 or len(name) < 1:
-            log.error("invalid length for metric name: {0} -> {1}".format(name, dimensions))
-            raise InvalidMetricName
-        if restricted_name_chars.search(name):
-            log.error("invalid characters in metric name: {0} -> {1}".format(name, dimensions))
-            raise InvalidMetricName
-
-        if not isinstance(value, (int, long, float)):
-            log.error("invalid value {0} is not of number type for metric {1}".format(value, name))
-            raise InvalidValue
+        metric_validator.validate_value(value)
 
         if value_meta:
-            if not self._valid_value_meta(value_meta, name, dimensions):
-                raise InvalidValueMeta
+            metric_validator.validate_value_meta(value_meta)
 
         hostname_to_post = self.get_hostname_to_post(hostname)
 
