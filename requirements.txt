@@ -27,3 +27,4 @@ futures>=3.0.0;python_version=='2.7' or python_version=='2.6' # BSD
 # https://github.com/eventlet/eventlet/issues/401 is resolved
 eventlet!=0.18.3,!=0.20.1,<0.21.0,>=0.18.2 # MIT
 keystoneauth1>=3.2.0 # Apache-2.0
+monasca-common>=1.4.0  # Apache-2.0
