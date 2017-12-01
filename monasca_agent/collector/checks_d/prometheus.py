@@ -2,6 +2,7 @@
 import math
 import requests
 import six
+import time
 import yaml
 
 from prometheus_client.parser import text_string_to_metric_families
@@ -29,7 +30,9 @@ class Prometheus(checks.AgentCheck):
     Additional settings for prometheus endpoints
     'monasca.io/usek8slabels': Attach kubernetes labels of the pod that is being scraped. Default to 'true'
     'monasca.io/whitelist': Yaml list of metric names to whitelist against on detected endpoint
-
+    'monasca.io/report_pod_label_owner': If the metrics that are scraped contain pod as a label key we will attempt to get the
+    pod owner and attach that to the metric as another dimension. Very useful for other scraping from other solutions
+    that monitor k8s (Ex. kube-state-metrics). Default to 'false'
     """
 
     def __init__(self, name, init_config, agent_config, instances=None):
@@ -44,6 +47,8 @@ class Prometheus(checks.AgentCheck):
                 raise Exception('Prometheus Client only supports one configured instance if auto detection is set')
             if self.detect_method not in ['pod', 'service']:
                 raise Exception('Invalid detect method {}. Must be either pod or service')
+            self.k8s_pod_cache = None
+            self.cache_start_time = None
 
     def check(self, instance):
         dimensions = self._set_dimensions(None, instance)
@@ -60,6 +65,16 @@ class Prometheus(checks.AgentCheck):
             self.kubernetes_labels = instance.get('kubernetes_labels', KUBERNETES_LABELS)
             if not self.kubernetes_connector:
                 self.kubernetes_connector = utils.KubernetesConnector(self.connection_timeout)
+            # Check if we need to clear pod cache so it does not build up over time
+            if self.k8s_pod_cache is not None:
+                if not self.cache_start_time:
+                    self.cache_start_time = time.time()
+                else:
+                    current_time = time.time()
+                    if (current_time - self.cache_start_time) > 86400:
+                        self.cache_start_time = current_time
+                        self.k8s_pod_cache = {}
+                        self.initialize_pod_cache()
             if self.detect_method == "pod":
                 if not self.kubelet_url:
                     try:
@@ -69,19 +84,17 @@ class Prometheus(checks.AgentCheck):
                         self.log.error("Could not obtain current host from Kubernetes API {}. "
                                        "Skipping check".format(e))
                         return
-                metric_endpoints, endpoints_whitelist, endpoint_metric_types = self._get_metric_endpoints_by_pod(dimensions)
+                prometheus_endpoints = self._get_metric_endpoints_by_pod(dimensions)
             # Detect by service
             else:
-                metric_endpoints, endpoints_whitelist, endpoint_metric_types = self._get_metric_endpoints_by_service(dimensions)
-            for metric_endpoint, endpoint_dimensions in six.iteritems(metric_endpoints):
-                endpoint_dimensions.update(dimensions)
-                self.report_endpoint_metrics(metric_endpoint, endpoint_dimensions,
-                                             endpoints_whitelist[metric_endpoint], endpoint_metric_types[metric_endpoint])
+                prometheus_endpoints = self._get_metric_endpoints_by_service(dimensions)
+            for prometheus_endpoint in prometheus_endpoints:
+                self.report_endpoint_metrics(prometheus_endpoint.scrape_endpoint, prometheus_endpoint.dimensions,
+                                             prometheus_endpoint.whitelist, prometheus_endpoint.metric_types,
+                                             prometheus_endpoint.report_pod_label_owner)
 
     def _get_metric_endpoints_by_pod(self, dimensions):
-        scrape_endpoints = {}
-        endpoint_whitelist = {}
-        endpoint_metric_types = {}
+        prometheus_endpoints = []
         # Grab running pods from local Kubelet
         try:
             pods = requests.get(self.kubelet_url, timeout=self.connection_timeout).json()
@@ -121,21 +134,26 @@ class Prometheus(checks.AgentCheck):
 
                 pod_dimensions = dimensions.copy()
                 try:
-                    use_k8s_labels, whitelist, metric_types = self._get_monasca_settings(pod_name, pod_annotations)
+                    use_k8s_labels, whitelist, metric_types, report_pod_label_owner = \
+                        self._get_monasca_settings(pod_name, pod_annotations)
                 except Exception as e:
                     error_message = "Error parsing monasca annotations on endpoints {} with error - {}. " \
                                     "Skipping scraping metrics".format(endpoints, e)
                     self.log.error(error_message)
                     continue
+                # set global_pod_cache
+                if report_pod_label_owner and self.k8s_pod_cache is None:
+                    self.k8s_pod_cache = {}
+                    self.initialize_pod_cache()
                 if use_k8s_labels:
                     pod_dimensions.update(utils.get_pod_dimensions(
                         self.kubernetes_connector, pod['metadata'],
                         self.kubernetes_labels))
                 for endpoint in endpoints:
                     scrape_endpoint = "http://{}:{}".format(pod_ip, endpoint)
-                    scrape_endpoints[scrape_endpoint] = pod_dimensions
-                    endpoint_whitelist[scrape_endpoint] = whitelist
-                    endpoint_metric_types[scrape_endpoint] = metric_types
+                    prometheus_endpoint = PrometheusEndpoint(scrape_endpoint, pod_dimensions, whitelist, metric_types,
+                                                             report_pod_label_owner)
+                    prometheus_endpoints.append(prometheus_endpoint)
                     self.log.info("Detected pod endpoint - {} with metadata "
                                   "of {}".format(scrape_endpoint,
                                                  pod_dimensions))
@@ -143,12 +161,10 @@ class Prometheus(checks.AgentCheck):
                 self.log.warn("Error parsing {} to detect for scraping - {}".format(pod, e))
                 continue
 
-        return scrape_endpoints, endpoint_whitelist, endpoint_metric_types
+        return prometheus_endpoints
 
     def _get_metric_endpoints_by_service(self, dimensions):
-        scrape_endpoints = {}
-        endpoint_whitelist = {}
-        endpoint_metric_types = {}
+        prometheus_endpoints = []
         # Grab services from Kubernetes API
         try:
             services = self.kubernetes_connector.get_request("/api/v1/services")
@@ -182,26 +198,31 @@ class Prometheus(checks.AgentCheck):
             cluster_ip = service_spec['clusterIP']
             service_dimensions = dimensions.copy()
             try:
-                use_k8s_labels, whitelist, metric_types = self._get_monasca_settings(service_name, service_annotations)
+                use_k8s_labels, whitelist, metric_types, report_pod_label_owner = \
+                    self._get_monasca_settings(service_name, service_annotations)
             except Exception as e:
                 error_message = "Error parsing monasca annotations on endpoints {} with error - {}. " \
                                 "Skipping scraping metrics".format(endpoints, e)
                 self.log.error(error_message)
                 continue
+                # set global_pod_cache
+            if report_pod_label_owner and self.k8s_pod_cache is None:
+                self.k8s_pod_cache = {}
+                self.initialize_pod_cache()
             if use_k8s_labels:
                 service_dimensions.update(
                     self._get_service_dimensions(service_metadata))
             for endpoint in endpoints:
                 scrape_endpoint = "http://{}:{}".format(cluster_ip, endpoint)
-                scrape_endpoints[scrape_endpoint] = service_dimensions
-                endpoint_whitelist[scrape_endpoint] = whitelist
-                endpoint_metric_types[scrape_endpoint] = metric_types
+                prometheus_endpoint = PrometheusEndpoint(scrape_endpoint, service_dimensions, whitelist, metric_types,
+                                                         report_pod_label_owner)
+                prometheus_endpoints.append(prometheus_endpoint)
                 self.log.info("Detected service endpoint - {} with metadata "
                               "of {}".format(scrape_endpoint,
                                              service_dimensions))
-        return scrape_endpoints, endpoint_whitelist, endpoint_metric_types
+        return prometheus_endpoints
 
-    def _get_monasca_settings(self, service_name, annotations):
+    def _get_monasca_settings(self, resource_name, annotations):
         use_k8s_labels = annotations.get("monasca.io/usek8slabels", "true").lower() == "true"
         whitelist = None
         if "monasca.io/whitelist" in annotations:
@@ -212,9 +233,11 @@ class Prometheus(checks.AgentCheck):
             for typ in metric_types:
                 if metric_types[typ] not in ['rate', 'counter']:
                     self.log.warn("Ignoring unknown metric type '{}' configured for '{}' on endpoint '{}'".format(
-                        typ, metric_types[typ], service_name))
+                        typ, metric_types[typ], resource_name))
                     del metric_types[typ]
-        return use_k8s_labels, whitelist, metric_types
+        report_pod_label_owner_annotation = annotations.get("monasca.io/report_pod_label_owner", "false").lower()
+        report_pod_label_owner = True if report_pod_label_owner_annotation == "true" else False
+        return use_k8s_labels, whitelist, metric_types, report_pod_label_owner
 
     def _get_service_dimensions(self, service_metadata):
         service_dimensions = {'service_name': service_metadata['name'],
@@ -260,7 +283,8 @@ class Prometheus(checks.AgentCheck):
                            "{} {} skipped for scraping".format(self.detect_method, name))
         return endpoints
 
-    def _send_metrics(self, metric_families, dimensions, endpoint_whitelist, endpoint_metric_types):
+    def _send_metrics(self, metric_families, dimensions, endpoint_whitelist, endpoint_metric_types,
+                      report_pod_label_owner):
         for metric_family in metric_families:
             for metric in metric_family.samples:
                 metric_dimensions = dimensions.copy()
@@ -286,10 +310,23 @@ class Prometheus(checks.AgentCheck):
                     elif typ == "counter":
                         metric_func = self.increment
                         metric_name += "_counter"
+                if report_pod_label_owner:
+                    if "pod" in metric_dimensions and "namespace" in metric_dimensions:
+                        pod_name = metric_dimensions["pod"]
+                        if pod_name in self.k8s_pod_cache:
+                            pod_owner, pod_owner_name = self.k8s_pod_cache[pod_name]
+                            metric_dimensions[pod_owner] = pod_owner_name
+                        else:
+                            pod_owner_pair = self.get_pod_owner(pod_name, metric_dimensions['namespace'])
+                            if pod_owner_pair:
+                                pod_owner = pod_owner_pair[0]
+                                pod_owner_name = pod_owner_pair[1]
+                                metric_dimensions[pod_owner] = pod_owner_name
+                                self.k8s_pod_cache[pod_name] = pod_owner, pod_owner_name
                 metric_func(metric_name, metric_value, dimensions=metric_dimensions, hostname="SUPPRESS")
 
     def report_endpoint_metrics(self, metric_endpoint, endpoint_dimensions, endpoint_whitelist=None,
-                                endpoint_metric_types=None):
+                                endpoint_metric_types=None, report_pod_label_owner=False):
         # Hit metric endpoint
         try:
             result = requests.get(metric_endpoint, timeout=self.connection_timeout)
@@ -300,8 +337,53 @@ class Prometheus(checks.AgentCheck):
             if "text/plain" in result_content_type:
                 try:
                     metric_families = text_string_to_metric_families(result.text)
-                    self._send_metrics(metric_families, endpoint_dimensions, endpoint_whitelist, endpoint_metric_types)
+                    self._send_metrics(metric_families, endpoint_dimensions, endpoint_whitelist, endpoint_metric_types,
+                                       report_pod_label_owner)
                 except Exception as e:
                     self.log.error("Error parsing data from {} with error {}".format(metric_endpoint, e))
             else:
                 self.log.error("Unsupported content type - {}".format(result_content_type))
+
+    def get_pod_owner(self, pod_name, namespace):
+        try:
+            pod = self.kubernetes_connector.get_request("/api/v1/namespaces/{}/pods/{}".format(namespace, pod_name))
+            pod_metadata = pod['metadata']
+            pod_owner, pod_owner_name = utils.get_pod_owner(self.kubernetes_connector, pod_metadata)
+            if not pod_owner:
+                self.log.info("Could not get pod owner for pod {}".format(pod_name))
+                return None
+            return pod_owner, pod_owner_name
+        except Exception as e:
+            self.log.info("Could not get pod {} from Kubernetes API with error - {}".format(pod_name, e))
+            return None
+
+    def initialize_pod_cache(self):
+        self.k8s_pod_cache = {}
+        try:
+            pods = self.kubernetes_connector.get_request("/api/v1/pods")
+        except Exception as e:
+            exception_message = "Could not get pods from Kubernetes API with error - {}".format(e)
+            self.log.exception(exception_message)
+            raise Exception(exception_message)
+        for pod in pods['items']:
+            pod_metadata = pod['metadata']
+            pod_name = pod_metadata['name']
+            try:
+                pod_owner, pod_owner_name = utils.get_pod_owner(self.kubernetes_connector, pod_metadata)
+            except Exception as e:
+                self.log.info("Error attempting to get pod {} owner with error {}".format(pod_name, e))
+                continue
+            if not pod_owner:
+                self.log.info("Could not get pod owner for pod {}".format(pod_name))
+                continue
+            self.k8s_pod_cache[pod_name] = (pod_owner, pod_owner_name)
+
+
+# Class to hold prometheus endpoint metadata
+class PrometheusEndpoint(object):
+    def __init__(self, scrape_endpoint, dimensions, whitelist, metric_types, report_pod_label_owner):
+        self.scrape_endpoint = scrape_endpoint
+        self.dimensions = dimensions
+        self.whitelist = whitelist
+        self.metric_types = metric_types
+        self.report_pod_label_owner = report_pod_label_owner

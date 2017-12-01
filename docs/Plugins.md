@@ -2234,6 +2234,7 @@ The annotations the plugin is looking for are -
 * monasca.io/usek8slabels: Attach Kubernetes labels of the pod that is being scraped. Default to 'true'
 * monasca.io/whitelist: Yaml list of metric names to whitelist against on detected endpoint
 * monasca.io/metric_types: Yaml dictionary where key is metric name and value is desired type from 'rate' or 'counter'. Metric name will be appended with '_rate' or '_counter' respectively. If not specified, the scraped value will be passed without modification.
+* monasca.io/report_pod_label_owner: If the metrics that are scraped contain pod as a label key we will attempt to get the pod owner and attach that to the metric as another dimension. Very useful for other scraping from other solutions that monitor k8s (Ex. kube-state-metrics). Default to 'false'
 
 These annotations are pulled from the Kubelet for pod autodetection and the Kubernetes API for the service auto detection
 

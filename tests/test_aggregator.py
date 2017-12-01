@@ -166,14 +166,13 @@ class TestMetricsAggregator(unittest.TestCase):
                            value_meta=value_meta,
                            exception=metric_validator.InvalidDimensionValue)
 
-    def testInvalidDimensionKeyRestrictedCharacters(self):
+    def testValidDimensionKeyParenthesesCharacter(self):
         dimensions = {'A': 'B', 'B': 'C', '(D)': 'E'}
         value_meta = {"This is a test": "test, test, test"}
         self.submit_metric("Foo",
                            5,
                            dimensions=dimensions,
-                           value_meta=value_meta,
-                           exception=metric_validator.InvalidDimensionKey)
+                           value_meta=value_meta)
 
     def testInvalidDimensionValueRestrictedCharacters(self):
         dimensions = {'A': 'B;', 'B': 'C', 'D': 'E'}

@@ -29,7 +29,7 @@ class TestAgentCheck(unittest.TestCase):
                             value_meta=None)
         self.assertEqual(len(check.aggregator.metrics), 1)
 
-        dimensions = {'A': '()', 'B': 'C', 'D': 'E'}
+        dimensions = {'A': '{}', 'B': 'C', 'D': 'E'}
         check.submit_metric("Bar",
                             5,
                             metrics_pkg.Gauge,

@@ -754,62 +754,86 @@ def get_pod_dimensions(kubernetes_connector, pod_metadata, kubernetes_labels):
         for label in kubernetes_labels:
             if label in pod_labels:
                 pod_dimensions[label] = pod_labels[label]
-    # Get owner of pod to set as a dimension
-    # Try to get from pod owner references
-    pod_owner_references = pod_metadata.get('ownerReferences', None)
-    if pod_owner_references:
-        try:
-            if len(pod_owner_references) > 1:
-                log.warn("More then one owner for pod {}".format(pod_name))
-            pod_owner_reference = pod_owner_references[0]
-            pod_owner_type = pod_owner_reference['kind']
-            pod_owner_name = pod_owner_reference['name']
-            _set_pod_owner_dimension(kubernetes_connector, pod_dimensions, pod_owner_type, pod_owner_name)
-        except Exception:
-            log.info("Could not get pod owner from ownerReferences for pod {}".format(pod_name))
-    # Try to get owner from annotations
-    else:
-        try:
-            pod_created_by = json.loads(pod_metadata['annotations']['kubernetes.io/created-by'])
-            pod_owner_type = pod_created_by['reference']['kind']
-            pod_owner_name = pod_created_by['reference']['name']
-            _set_pod_owner_dimension(kubernetes_connector, pod_dimensions, pod_owner_type, pod_owner_name)
-        except Exception:
-            log.info("Could not get pod owner from annotations for pod {}".format(pod_name))
+    pod_owner_dimension_set = get_pod_owner(kubernetes_connector, pod_metadata)
+    if pod_owner_dimension_set:
+        pod_dimensions[pod_owner_dimension_set[0]] = pod_owner_dimension_set[1]
     return pod_dimensions
 
 
-def _get_deployment_name(kubernetes_connector, pod_owner_name, pod_namespace):
-    replica_set_endpoint = "/apis/extensions/v1beta1/namespaces/{}/replicasets/{}".format(pod_namespace, pod_owner_name)
+def _attempt_to_get_owner_name(kubernetes_connector, resource_endpoint):
     try:
-        replica_set = kubernetes_connector.get_request(replica_set_endpoint)
-        replica_set_annotations = replica_set['metadata']['annotations']
-        if "deployment.kubernetes.io/revision" in replica_set_annotations:
-            return "-".join(pod_owner_name.split("-")[:-1])
+        resource = kubernetes_connector.get_request(resource_endpoint)
+        resource_metadata = resource['metadata']
+        pod_owner_pair = _parse_manifest_for_owner(resource_metadata)
+        return None if not pod_owner_pair else pod_owner_pair[1]
     except Exception as e:
-        log.warn("Could not connect to api to get replicaset data - {}".format(e))
+        log.info("Could not connect to api to get owner data - {}".format(e))
         return None
     return None
 
 
-def _set_pod_owner_dimension(kubernetes_connector, pod_dimensions, pod_owner_type, pod_owner_name):
+def _parse_manifest_for_owner(resource_metadata):
+    resource_name = resource_metadata['name']
+    owner_references = resource_metadata.get('ownerReferences', None)
+    if owner_references:
+        try:
+            if len(owner_references) > 1:
+                log.warn("More then one owner for resource {}".format(resource_name))
+            owner_reference = owner_references[0]
+            resource_owner_type = owner_reference['kind']
+            resource_owner_name = owner_reference['name']
+            return resource_owner_type, resource_owner_name
+        except Exception:
+            log.info("Could not get owner from ownerReferences for resource {}".format(resource_name))
+    # Try to get owner from annotations
+    else:
+        try:
+            resource_created_by = json.loads(resource_metadata['annotations']['kubernetes.io/created-by'])
+            resource_owner_type = resource_created_by['reference']['kind']
+            resource_owner_name = resource_created_by['reference']['name']
+            return resource_owner_type, resource_owner_name
+        except Exception:
+            log.info("Could not get resource owner from annotations for resource {}".format(resource_name))
+    return None
+
+
+def _get_pod_owner_pair(kubernetes_connector, pod_owner_type, pod_owner_name, pod_namespace):
     if pod_owner_type == "ReplicationController":
-        pod_dimensions['replication_controller'] = pod_owner_name
+        return 'replication_controller', pod_owner_name
     elif pod_owner_type == "ReplicaSet":
         if not kubernetes_connector:
-            log.error("Can not set deployment name as connection information to API is not set. "
-                      "Setting ReplicaSet as dimension")
+            log.info("Can not set deployment name as connection information to API is not set. "
+                     "Setting ReplicaSet as dimension")
             deployment_name = None
         else:
-            deployment_name = _get_deployment_name(kubernetes_connector, pod_owner_name, pod_dimensions['namespace'])
+            replicaset_endpoint = "/apis/extensions/v1beta1/namespaces/{}/replicasets/{}".format(pod_namespace, pod_owner_name)
+            deployment_name = _attempt_to_get_owner_name(kubernetes_connector, replicaset_endpoint)
         if not deployment_name:
-            pod_dimensions['replica_set'] = pod_owner_name
+            return 'replica_set', pod_owner_name
         else:
-            pod_dimensions['deployment'] = deployment_name
+            return 'deployment', deployment_name
     elif pod_owner_type == "DaemonSet":
-        pod_dimensions['daemon_set'] = pod_owner_name
+        return 'daemon_set', pod_owner_name
     elif pod_owner_type == "Job":
-        pod_dimensions['job'] = pod_owner_name
+        if not kubernetes_connector:
+            log.info("Can not set cronjob name as connection information to API is not set. "
+                     "Setting job as dimension")
+            cronjob_name = None
+        else:
+            job_endpoint = "/apis/batch/v1/namespaces/{}/jobs/{}".format(pod_namespace, pod_owner_name)
+            cronjob_name = _attempt_to_get_owner_name(kubernetes_connector, job_endpoint)
+        if not cronjob_name:
+            return 'job', pod_owner_name
+        else:
+            return 'cronjob', cronjob_name
     else:
-        log.info("Unsupported pod owner kind {} as a dimension for pod {}".format(pod_owner_type,
-                                                                                  pod_dimensions))
+        log.warn("Unsupported pod owner kind {}".format(pod_owner_type))
+        return None
+
+
+def get_pod_owner(kubernetes_connector, pod_metadata):
+    pod_namespace = pod_metadata['namespace']
+    owner_pair = _parse_manifest_for_owner(pod_metadata)
+    if owner_pair:
+        return _get_pod_owner_pair(kubernetes_connector, owner_pair[0], owner_pair[1], pod_namespace)
+    return None
