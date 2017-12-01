@@ -253,10 +253,11 @@ class Prometheus(checks.AgentCheck):
             endpoints.append("{}/{}".format(ports[pod_index], prometheus_endpoint))
 
         if not endpoints:
-            self.log.error("Can not derive which port to use. Due to more "
-                           "then one port configured and none of them "
-                           "selected via configurations. {} {} skipped for "
-                           "scraping".format(self.detect_method, name))
+            self.log.error("Can not derive which port to use. Due to either "
+                           "no port being exposed or more than one port "
+                           "configured and none of them selected via "
+                           "configurations. "
+                           "{} {} skipped for scraping".format(self.detect_method, name))
         return endpoints
 
     def _send_metrics(self, metric_families, dimensions, endpoint_whitelist, endpoint_metric_types):
