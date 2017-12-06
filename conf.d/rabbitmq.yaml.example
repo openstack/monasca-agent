@@ -52,16 +52,16 @@ instances:
         - queue1
         - queue2
        whitelist:
-         queue:
+         queues:
           - message_stats/deliver_details/rate
           - message_stats/publish_details/rate
           - message_stats/redeliver_details/rate
-         exchange:
+         exchanges:
           - message_stats/publish_out
           - message_stats/publish_out_details/rate
           - message_stats/publish_in
           - message_stats/publish_in_details/rate
-         node:
+         nodes:
           - fd_used
           - mem_used
           - run_queue
