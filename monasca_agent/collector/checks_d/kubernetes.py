@@ -1,5 +1,4 @@
 # (C) Copyright 2017 Hewlett Packard Enterprise Development LP
-import json
 import logging
 import requests
 
@@ -96,6 +95,7 @@ class Kubernetes(checks.AgentCheck):
         self.connection_timeout = int(init_config.get('connection_timeout', DEFAULT_TIMEOUT))
         self.host = None
         self.report_container_metrics = init_config.get('report_container_metrics', REPORT_CONTAINER_METRICS)
+        self.report_container_mem_percent = init_config.get('report_container_mem_percent', True)
         self.kubernetes_connector = None
 
     def prepare_run(self):
@@ -118,6 +118,7 @@ class Kubernetes(checks.AgentCheck):
         kubernetes_labels = instance.get('kubernetes_labels', ["app"])
         container_dimension_map = {}
         pod_dimensions_map = {}
+        memory_limit_map = {}
         dimensions = self._set_dimensions(None, instance)
         # Remove hostname from dimensions as the majority of the metrics are not tied to the hostname.
         del dimensions['hostname']
@@ -132,11 +133,13 @@ class Kubernetes(checks.AgentCheck):
                                kubernetes_labels,
                                dimensions,
                                container_dimension_map,
-                               pod_dimensions_map)
+                               pod_dimensions_map,
+                               memory_limit_map)
             self._process_containers(cadvisor,
                                      dimensions,
                                      container_dimension_map,
-                                     pod_dimensions_map)
+                                     pod_dimensions_map,
+                                     memory_limit_map)
 
     def _get_urls(self, instance):
         base_url = "http://{}".format(self.host)
@@ -164,7 +167,8 @@ class Kubernetes(checks.AgentCheck):
                     break
             return api_health
 
-    def _process_pods(self, pods, kubernetes_labels, dimensions, container_dimension_map, pod_dimensions_map):
+    def _process_pods(self, pods, kubernetes_labels, dimensions, container_dimension_map, pod_dimensions_map,
+                      memory_limit_map):
         for pod in pods:
             pod_status = pod['status']
             pod_spec = pod['spec']
@@ -200,13 +204,13 @@ class Kubernetes(checks.AgentCheck):
                 pod_retry_count += container_restart_count
 
             # Report limit/request metrics
-            if self.report_container_metrics:
-                self._report_container_limits(pod_containers, container_dimension_map, name2id)
+            if self.report_container_metrics or self.report_container_mem_percent:
+                self._report_container_limits(pod_containers, container_dimension_map, name2id, memory_limit_map)
 
             self.gauge("pod.restart_count", pod_retry_count, pod_dimensions, hostname="SUPPRESS")
             self.gauge("pod.phase", POD_PHASE.get(pod_status['phase']), pod_dimensions, hostname="SUPPRESS")
 
-    def _report_container_limits(self, pod_containers, container_dimension_map, name2id):
+    def _report_container_limits(self, pod_containers, container_dimension_map, name2id, memory_limit_map):
         for container in pod_containers:
             container_name = container['name']
             container_dimensions = container_dimension_map[name2id[container_name]]
@@ -215,12 +219,18 @@ class Kubernetes(checks.AgentCheck):
                 if 'cpu' in container_limits:
                     cpu_limit = container_limits['cpu']
                     cpu_value = self._convert_cpu_to_cores(cpu_limit)
-                    self.gauge("container.cpu.limit", cpu_value, container_dimensions, hostname="SUPPRESS")
+                    if self.report_container_metrics:
+                        self.gauge("container.cpu.limit", cpu_value, container_dimensions, hostname="SUPPRESS")
                 if 'memory' in container_limits:
                     memory_limit = container_limits['memory']
                     memory_in_bytes = utils.convert_memory_string_to_bytes(memory_limit)
-                    self.gauge("container.memory.limit_bytes", memory_in_bytes, container_dimensions,
-                               hostname="SUPPRESS")
+                    if self.report_container_metrics:
+                        self.gauge("container.memory.limit_bytes", memory_in_bytes, container_dimensions,
+                                   hostname="SUPPRESS")
+                    if self.report_container_mem_percent:
+                        container_key = container_name + " " + container_dimensions["namespace"]
+                        if container_key not in memory_limit_map:
+                            memory_limit_map[container_key] = memory_in_bytes
             except KeyError:
                 self.log.exception("Unable to report container limits for {}".format(container_name))
             try:
@@ -228,12 +238,14 @@ class Kubernetes(checks.AgentCheck):
                 if 'cpu' in container_requests:
                     cpu_request = container_requests['cpu']
                     cpu_value = self._convert_cpu_to_cores(cpu_request)
-                    self.gauge("container.request.cpu", cpu_value, container_dimensions, hostname="SUPPRESS")
+                    if self.report_container_metrics:
+                        self.gauge("container.request.cpu", cpu_value, container_dimensions, hostname="SUPPRESS")
                 if 'memory' in container_requests:
                     memory_request = container_requests['memory']
                     memory_in_bytes = utils.convert_memory_string_to_bytes(memory_request)
-                    self.gauge("container.request.memory_bytes", memory_in_bytes, container_dimensions,
-                               hostname="SUPPRESS")
+                    if self.report_container_metrics:
+                        self.gauge("container.request.memory_bytes", memory_in_bytes, container_dimensions,
+                                   hostname="SUPPRESS")
             except KeyError:
                 self.log.exception("Unable to report container requests for {}".format(container_name))
 
@@ -260,7 +272,7 @@ class Kubernetes(checks.AgentCheck):
                 self.gauge(metric_name, value, dimensions,
                            hostname="SUPPRESS" if "pod_name" in dimensions else None)
 
-    def _parse_memory(self, memory_data, container_dimensions, pod_key, pod_map):
+    def _parse_memory(self, memory_data, container_dimensions, pod_key, pod_map, memory_limit_map):
         memory_metrics = CADVISOR_METRICS['memory_metrics']
         for cadvisor_key, metric_name in memory_metrics.items():
             if cadvisor_key in memory_data:
@@ -272,6 +284,16 @@ class Kubernetes(checks.AgentCheck):
                                        METRIC_TYPES_UNITS[metric_name][0],
                                        METRIC_TYPES_UNITS[metric_name][1])
                 self._add_pod_metric(metric_name, metric_value, pod_key, pod_map)
+                if self.report_container_mem_percent and cadvisor_key == "working_set":
+                    if "container_name" in container_dimensions and "namespace" in container_dimensions:
+                        container_key = container_dimensions["container_name"] + " " + container_dimensions["namespace"]
+                        if container_key not in memory_limit_map:
+                            continue
+                        memory_limit = memory_limit_map[container_key]
+                        memory_usage = metric_value
+                        memory_usage_percent = (memory_usage / memory_limit) * 100
+                        self.gauge("container.mem.usage_percent", memory_usage_percent, container_dimensions,
+                                   hostname="SUPPRESS")
 
     def _parse_filesystem(self, filesystem_data, container_dimensions):
         if not self.report_container_metrics:
@@ -387,7 +409,8 @@ class Kubernetes(checks.AgentCheck):
                         pod_key = None
             return pod_key, container_dimensions
 
-    def _process_containers(self, cadvisor_url, dimensions, container_dimension_map, pod_dimension_map):
+    def _process_containers(self, cadvisor_url, dimensions, container_dimension_map, pod_dimension_map,
+                            memory_limit_map):
         try:
             cadvisor_spec_url = cadvisor_url + CADVISOR_SPEC_URL
             cadvisor_metric_url = cadvisor_url + CADVISOR_METRIC_URL
@@ -410,7 +433,8 @@ class Kubernetes(checks.AgentCheck):
                 self._parse_memory(cadvisor_metrics['memory'],
                                    container_dimensions,
                                    pod_key,
-                                   pod_metrics)
+                                   pod_metrics,
+                                   memory_limit_map)
             if cadvisor_metrics['has_filesystem'] and 'filesystem' in cadvisor_metrics \
                     and cadvisor_metrics['filesystem']:
                 self._parse_filesystem(cadvisor_metrics['filesystem'],

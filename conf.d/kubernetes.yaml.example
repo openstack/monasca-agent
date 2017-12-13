@@ -5,6 +5,8 @@ init_config:
     connection_timeout: 3
     # Report container metrics. Defaults to false.
     report_container_metrics: False
+    # Report container usage percent if running in kubernetes. Defaults to true.
+    report_container_mem_percent: True
 instances:
     # There are two options for getting the host that we use to connect to kubelet/cadvisor with. Either manually setting
     # it via host or by setting derive_host to True. We derive the host by first using the kubernetes environment

@@ -1557,7 +1557,7 @@ instances:
 The kubernetes check returns the following metrics (note that for containers running under kubernetes and pod metrics
  can also have dimensions set from the configuration option 'kubernetes_labels' which by default will include 'app')
 
-**Note** the container metrics will only be reported when the report_container_metrics is true
+**Note** the container metrics will only be reported when the report_container_metrics is True with the exception of container.mem.usage_percent which will be reported based on the flag report_container_mem_percent.
 
 Common Container metrics between containers running underneath kubernetes and standalone:
 
@@ -1609,6 +1609,7 @@ Container metrics specific to containers running under kubernetes:
 | container.memory.limit_bytes | image, name, pod_name, namespace | Limit of memory in bytes for the container
 | container.request.cpu | image, name, pod_name, namespace | Amount of CPU cores requested by the container
 | container.request.memory_bytes | image, name, pod_name, namespace | Amount of memory in bytes requested by the container
+| container.mem.usage_percent | image, name, pod_name, namespace | Percentage of memory used out of defined container limit.
 
 Kubelet Metrics:
 
