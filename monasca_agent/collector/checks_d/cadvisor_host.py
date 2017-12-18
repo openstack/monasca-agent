@@ -1,6 +1,9 @@
 # (C) Copyright 2017 Hewlett Packard Enterprise Development LP
 import requests
 
+from urlparse import urlparse
+from urlparse import urlunparse
+
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.collector.checks import utils
 from monasca_agent.common.util import rollup_dictionaries
@@ -66,6 +69,26 @@ class CadvisorHost(AgentCheck):
         self.connection_timeout = int(init_config.get('connection_timeout',
                                                       DEFAULT_TIMEOUT))
         self.cadvisor_url = None
+        self.cadvisor_machine_url = None
+        self.total_mem = 0
+        self.num_cores = 0
+
+    def _parse_machine_info(self, machine_info):
+        topo_info = machine_info['topology']
+        # Grab first set of info from return data
+        topo_info = topo_info[0]
+        # Store info about total machine memory
+        if topo_info['memory']:
+            self.total_mem = topo_info['memory']
+            self.log.debug("host memory = {}".format(self.total_mem))
+        else:
+            self.log.warn("Failed to retrieve host memory size")
+        # Store information about number of cores (incl. threads)
+        if machine_info['num_cores']:
+            self.num_cores = int(machine_info['num_cores'])
+            self.log.debug("number of cores of machine: {}".format(self.num_cores))
+        else:
+            self.log.warn("Failed to retrieve number of cores of host")
 
     def check(self, instance):
         if not self.cadvisor_url:
@@ -89,6 +112,17 @@ class CadvisorHost(AgentCheck):
         except Exception as e:
             self.log.error("Error communicating with cAdvisor to collect data - {}".format(e))
         else:
+            # Retrieve machine info only once
+            if not self.cadvisor_machine_url:
+                # Replace path in current cadvisor_url
+                result = urlparse(self.cadvisor_url)
+                self.cadvisor_machine_url = urlunparse(result._replace(path="api/v2.0/machine"))
+                try:
+                    machine_info = requests.get(self.cadvisor_machine_url).json()
+                except Exception as ex:
+                    self.log.error("Error communicating with cAdvisor to collect machine data - {}".format(ex))
+                else:
+                    self._parse_machine_info(machine_info)
             self._parse_send_metrics(host_metrics, dimensions)
 
     def _send_metrics(self, metric_name, value, dimensions, metric_types,
@@ -103,24 +137,52 @@ class CadvisorHost(AgentCheck):
 
     def _parse_memory(self, memory_data, dimensions):
         memory_metrics = METRICS['memory_metrics']
+        used_mem = -1
         for cadvisor_key, (metric_name, metric_types, metric_units) in memory_metrics.items():
             if cadvisor_key in memory_data:
                 self._send_metrics("mem." + metric_name,
                                    memory_data[cadvisor_key],
                                    dimensions,
                                    metric_types, metric_units)
+                if cadvisor_key == "usage":
+                    used_mem = int(memory_data[cadvisor_key])
+        # Calculate memory used percent
+        if used_mem < 0:
+            self.log.warn("no value for used memory, memory usage (percent) couldn't be calculated")
+        elif self.total_mem > 0:
+            used_mem_perc = (float(used_mem) / float(self.total_mem)) * 100
+            # Send metric percent used
+            self._send_metrics("mem.used_perc",
+                               used_mem_perc,
+                               dimensions,
+                               metric_types, metric_units)
 
     def _parse_filesystem(self, filesystem_data, dimensions):
         filesystem_metrics = METRICS['filesystem_metrics']
         for filesystem in filesystem_data:
             file_dimensions = dimensions.copy()
             file_dimensions['device'] = filesystem['device']
+            usage_fs = -1
+            capacity_fs = 0
             for cadvisor_key, (metric_name, metric_types, metric_units) in filesystem_metrics.items():
                 if cadvisor_key in filesystem:
                     self._send_metrics("fs." + metric_name,
                                        filesystem[cadvisor_key],
                                        file_dimensions,
                                        metric_types, metric_units)
+                if cadvisor_key == "usage":
+                    usage_fs = int(filesystem[cadvisor_key])
+                elif cadvisor_key == "capacity":
+                    capacity_fs = int(filesystem[cadvisor_key])
+            if usage_fs < 0:
+                self.log.warn("no value for usage size of {}, file system usage (percent) couldn't be calculated".format(filesystem['device']))
+            elif capacity_fs > 0:
+                self._send_metrics("fs.usage_perc",
+                                   (float(usage_fs) / capacity_fs) * 100,
+                                   file_dimensions,
+                                   ["gauge"], ["percent"])
+            else:
+                self.log.warn("no value for capacity of {}, file system usage (percent) couldn't be calculated".format(filesystem['device']))
 
     def _parse_network(self, network_data, dimensions):
         network_interfaces = network_data['interfaces']
@@ -160,6 +222,9 @@ class CadvisorHost(AgentCheck):
                 # Convert nanoseconds to seconds
                 cpu_usage_sec = cpu_usage[cadvisor_key] / 1000000000.0
                 self._send_metrics("cpu." + metric_name, cpu_usage_sec, dimensions, metric_types, metric_units)
+                # Provide metrics for number of cores if given
+                if self.num_cores > 0:
+                    self._send_metrics("cpu.num_cores", self.num_cores, dimensions, ["gauge"], ["number_of_cores"])
 
     def _parse_send_metrics(self, metrics, dimensions):
         for host, cadvisor_metrics in metrics.items():
