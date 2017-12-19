@@ -1,4 +1,5 @@
 # Copyright 2017 FUJITSU LIMITED
+# Copyright 2017 OP5 AB
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -13,6 +14,7 @@
 # under the License.
 
 import mock
+import os
 
 from oslotest import base
 from oslo_config import cfg
@@ -40,8 +42,8 @@ class TestDetectionUtilsOsloConf(base.BaseTestCase):
         opts = [
             {'opt': cfg.StrOpt('region_name')}
         ]
-        args = ['python', 'foo-api', '--config-dir', '/foo/bar',
-                '--config-dir', '/tmp/foo']
+        args = ['python', 'foo-api', '--config-file', '/foo/bar/file',
+                '--config-dir', '/foo/bar']
 
         self._run_load_oslo_test(co, opts, args)
 
@@ -67,14 +69,18 @@ class TestDetectionUtilsOsloConf(base.BaseTestCase):
         # test ensures that each instance created via load_oslo_configuration
         # contains different values of the same opts
 
-        cmd_1 = ['python', 'test', '--foo', '1']
-        cmd_2 = ['python', 'test', '--foo', '2']
+        file_1, file_2 = self.create_tempfiles([('', ''), ('', '')])
+        base_dir = os.path.dirname(file_1)
+        os.makedirs(base_dir + '/1')
+        os.makedirs(base_dir + '/2')
+
+        cmd_1 = ['python', 'test', '--config-dir', base_dir + '/1']
+        cmd_2 = ['python', 'test', '--config-dir', base_dir + '/2']
+        cmd_3 = ['python', 'test', '--config-file', file_1]
+        cmd_4 = ['python', 'test', '--config-file', file_2]
 
         opts = [
-            {
-                'opt': cfg.IntOpt(name='foo', default=-1),
-                'cli': True
-            }
+            {'opt': cfg.StrOpt('region_name')}
         ]
 
         cfg_1 = utils.load_oslo_configuration(
@@ -90,19 +96,76 @@ class TestDetectionUtilsOsloConf(base.BaseTestCase):
                 for_opts=opts
         )
         cfg_3 = utils.load_oslo_configuration(
-                from_cmd=[],
+                from_cmd=cmd_3,
+                in_project=self.PROJECT,
+                of_prog=self.PROG,
+                for_opts=opts
+        )
+        cfg_4 = utils.load_oslo_configuration(
+                from_cmd=cmd_4,
                 in_project=self.PROJECT,
                 of_prog=self.PROG,
                 for_opts=opts
         )
 
         self.assertIsNot(cfg_1, cfg_2)
-        self.assertIsNot(cfg_2, cfg_3)
-        self.assertIsNot(cfg_1, cfg_3)
+        self.assertIsNot(cfg_3, cfg_4)
+        self.assertNotEqual(cfg_1, cfg_2)
+        self.assertNotEqual(cfg_3, cfg_4)
 
-        self.assertNotEqual(cfg_1.foo, cfg_2.foo)
-        self.assertNotEqual(cfg_2.foo, cfg_3.foo)
-        self.assertNotEqual(cfg_1.foo, cfg_3.foo)
+    def test_just_keep_built_in_options(self):
+        # test ensures that non built-in oslo.config options to
+        # load_oslo_configuration is skipped
+
+        cmd_1 = ['python', 'test']
+        cmd_2 = ['python', 'test', '--log-file', '/var/log/test/test.log']
+
+        opts = [
+            {'opt': cfg.StrOpt('region_name')}
+        ]
+
+        cfg_1 = utils.load_oslo_configuration(
+            from_cmd=cmd_1,
+            in_project=self.PROJECT,
+            of_prog=self.PROG,
+            for_opts=opts
+        )
+        cfg_2 = utils.load_oslo_configuration(
+            from_cmd=cmd_2,
+            in_project=self.PROJECT,
+            of_prog=self.PROG,
+            for_opts=opts
+        )
+
+        self.assertIsNot(cfg_1, cfg_2)
+        self.assertEqual(cfg_1, cfg_2)
+
+    def test_parsing_different_command_styles(self):
+        # test ensures that options sent to load_oslo_configuration with
+        # different command styles generates the same output
+
+        cmd_1 = ['python', 'test', '--config-dir', '.']
+        cmd_2 = ['python', 'test', '--config-dir=.']
+
+        opts = [
+            {'opt': cfg.StrOpt('region_name')}
+        ]
+
+        cfg_1 = utils.load_oslo_configuration(
+            from_cmd=cmd_1,
+            in_project=self.PROJECT,
+            of_prog=self.PROG,
+            for_opts=opts
+        )
+        cfg_2 = utils.load_oslo_configuration(
+            from_cmd=cmd_2,
+            in_project=self.PROJECT,
+            of_prog=self.PROG,
+            for_opts=opts
+        )
+
+        self.assertIsNot(cfg_1, cfg_2)
+        self.assertEqual(cfg_1, cfg_2)
 
     def _run_load_oslo_test(self, config_opts, opts, args):
         actual_args = args[2:]

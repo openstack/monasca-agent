@@ -1,8 +1,10 @@
 # (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 # Copyright 2017 SUSE Linux GmbH
+# Copyright 2017 OP5 AB
 
 """ Util functions to assist in detection.
 """
+import argparse
 import logging
 import os
 import pwd
@@ -133,7 +135,6 @@ def get_agent_username():
     return _DETECTED_AGENT_USER
 
 
-# NOTE(trebskit) a little poetry never hurt anyone before...right ?
 def load_oslo_configuration(from_cmd, in_project,
                             for_opts, of_prog=None):
     """Loads configuration of an OpenStack project.
@@ -183,7 +184,19 @@ def load_oslo_configuration(from_cmd, in_project,
     # /usr/bin/python, /usr/bin/python3
     # and next actual binary of the program
     # /usr/local/bin/nova-compute
-    args = from_cmd[2:]
+    # NOTE(tobiajo) Just keep built-in options for oslo.config
+    args = []
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config-file')
+    parser.add_argument('--config-dir')
+    namespace, _ = parser.parse_known_args(from_cmd[2:])
+    if namespace.config_file:
+        args.append('--config-file')
+        args.append(namespace.config_file)
+    if namespace.config_dir:
+        args.append('--config-dir')
+        args.append(namespace.config_dir)
+
     conf_holder(
         args=args,
         project=in_project,
