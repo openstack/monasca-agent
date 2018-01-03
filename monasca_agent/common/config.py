@@ -1,4 +1,4 @@
-# (C) Copyright 2015-2017 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2015-2018 Hewlett Packard Enterprise Development LP
 # Copyright 2017 Fujitsu LIMITED
 
 import logging
@@ -71,7 +71,8 @@ class Config(object):
                                 'max_buffer_size': 1000,
                                 'max_measurement_buffer_size': -1,
                                 'write_timeout': 10,
-                                'backlog_send_rate': 5},
+                                'backlog_send_rate': 5,
+                                'max_batch_size': 0},
                         'Statsd': {'recent_point_threshold': None,
                                    'monasca_statsd_interval': 20,
                                    'monasca_statsd_forward_host': None,

@@ -1,4 +1,4 @@
-# (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2015-2016,2018 Hewlett Packard Enterprise Development LP
 # Copyright 2017 Fujitsu LIMITED
 
 import collections
@@ -34,6 +34,7 @@ class MonascaAPI(object):
         self._log_interval_remaining = 1
         self._current_number_measurements = 0
         self._max_buffer_size = int(config['max_buffer_size'])
+        self._max_batch_size = int(config['max_batch_size'])
         self._max_measurement_buffer_size = int(
             config['max_measurement_buffer_size'])
 
@@ -115,6 +116,9 @@ class MonascaAPI(object):
             measurement = envelope['measurement']
             tenant = envelope['tenant_id']
             tenant_group.setdefault(tenant, []).append(copy.deepcopy(measurement))
+            if self._max_batch_size and len(tenant_group[tenant]) >= self._max_batch_size:
+                self._post(tenant_group[tenant], tenant)
+                del tenant_group[tenant]
 
         for tenant in tenant_group:
             self._post(tenant_group[tenant], tenant)

@@ -110,6 +110,7 @@ All parameters require a '--' before the parameter such as '--verbose'. Run `mon
 | detection_args_json | A JSON string can be passed to the detection plugin. | '{"process_config":{"process_names":["monasca-api","monasca-notification"],"dimensions":{"service":"monitoring"}}}' |
 | max_measurement_buffer_size | Integer value for the maximum number of measurements to buffer locally while unable to connect to the monasca-api. If the queue exceeds this value, measurements will be dropped in batches. A value of '-1' indicates no limit | 100000 |
 | backlog_send_rate | Integer value of how many batches of buffered measurements to send each time the forwarder flushes data | 1000 |
+| max_batch_size | Maximum batch size of measurements to write to monasca-api, 0 is no limit | 0 |
 | monasca_statsd_port | Integer value for statsd daemon port number | 8125 |
 
 #### A note around using monasca-agent with different versions of Keystone
@@ -280,4 +281,4 @@ If there is some problem with multiple plugins that end up blocking the entire t
 
 Some of the plugins have their own thread pools to handle asynchronous checks. The collector thread pool is separate and has no special interaction with those thread pools.
 # License
-(C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
+(C) Copyright 2015-2016, 2018 Hewlett Packard Enterprise Development LP

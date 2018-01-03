@@ -57,6 +57,8 @@ Api:
   max_measurement_buffer_size: {args.max_measurement_buffer_size}
   # Maximum number of messages to send at one time when communication with the monasca-api is restored
   backlog_send_rate: {args.backlog_send_rate}
+  # Maximum batch size of measurements to write to monasca-api, 0 is no limit
+  max_batch_size: {args.max_batch_size}
 
   # Publish extra metrics to the API by adding this number of 'amplifier' dimensions.
   # For load testing purposes only; set to 0 for production use.

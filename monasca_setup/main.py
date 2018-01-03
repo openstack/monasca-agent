@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# (C) Copyright 2015-2017 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2015-2018 Hewlett Packard Enterprise Development LP
 # Copyright 2017 Fujitsu LIMITED
 
 """ Detect running daemons then configure and start the agent.
@@ -289,6 +289,10 @@ def parse_arguments(parser):
                         help="Maximum number of batches of measurements to"
                              " buffer while unable to communicate with monasca-api",
                         default=1000)
+    parser.add_argument('--max_batch_size',
+                        help="Maximum batch size of measurements to"
+                             " write to monasca-api, 0 is no limit",
+                        default=0)
     parser.add_argument('--max_measurement_buffer_size',
                         help="Maximum number of measurements to buffer when unable to communicate"
                              " with the monasca-api",
