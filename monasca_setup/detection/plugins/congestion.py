@@ -2,10 +2,12 @@
 
 import ConfigParser
 import logging
+import os
+
 from monasca_agent.common.psutil_wrapper import psutil
 import monasca_setup.agent_config
 import monasca_setup.detection
-import os
+
 log = logging.getLogger(__name__)
 
 # Directory to use for metric caches
