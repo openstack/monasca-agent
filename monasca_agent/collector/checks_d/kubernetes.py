@@ -1,4 +1,4 @@
-# (C) Copyright 2017 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2017,2018 Hewlett Packard Enterprise Development LP
 import logging
 import requests
 
@@ -214,13 +214,21 @@ class Kubernetes(checks.AgentCheck):
         for container in pod_containers:
             container_name = container['name']
             container_dimensions = container_dimension_map[name2id[container_name]]
-            try:
-                container_limits = container['resources']['limits']
+            if 'resources' not in container:
+                self.log.debug("Container {} does not have limits or requests set")
+                continue
+            container_resources = container['resources']
+            if 'limits' not in container_resources:
+                self.log.debug("Container {} does not have limits set", container_name)
+            else:
+                container_limits = container_resources['limits']
                 if 'cpu' in container_limits:
                     cpu_limit = container_limits['cpu']
                     cpu_value = self._convert_cpu_to_cores(cpu_limit)
                     if self.report_container_metrics:
                         self.gauge("container.cpu.limit", cpu_value, container_dimensions, hostname="SUPPRESS")
+                else:
+                    self.log.debug("Container {} does not have cpu limit set", container_name)
                 if 'memory' in container_limits:
                     memory_limit = container_limits['memory']
                     memory_in_bytes = utils.convert_memory_string_to_bytes(memory_limit)
@@ -231,23 +239,27 @@ class Kubernetes(checks.AgentCheck):
                         container_key = container_name + " " + container_dimensions["namespace"]
                         if container_key not in memory_limit_map:
                             memory_limit_map[container_key] = memory_in_bytes
-            except KeyError:
-                self.log.exception("Unable to report container limits for {}".format(container_name))
-            try:
-                container_requests = container['resources']['requests']
+                else:
+                    self.log.debug("Container {} does not have memory limit set", container_name)
+            if 'requests' not in container_resources:
+                self.log.debug("Container {} does not have requests set", container_name)
+            else:
+                container_requests = container_resources['requests']
                 if 'cpu' in container_requests:
                     cpu_request = container_requests['cpu']
                     cpu_value = self._convert_cpu_to_cores(cpu_request)
                     if self.report_container_metrics:
                         self.gauge("container.request.cpu", cpu_value, container_dimensions, hostname="SUPPRESS")
+                else:
+                    self.log.debug("Container {} does not have cpu request set", container_name)
                 if 'memory' in container_requests:
                     memory_request = container_requests['memory']
                     memory_in_bytes = utils.convert_memory_string_to_bytes(memory_request)
                     if self.report_container_metrics:
                         self.gauge("container.request.memory_bytes", memory_in_bytes, container_dimensions,
                                    hostname="SUPPRESS")
-            except KeyError:
-                self.log.exception("Unable to report container requests for {}".format(container_name))
+                else:
+                    self.log.debug("Container {} does not have memory request set", container_name)
 
     def _convert_cpu_to_cores(self, cpu_string):
         """Kubernetes reports cores in millicores in some instances.
