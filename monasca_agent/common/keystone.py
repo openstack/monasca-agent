@@ -139,8 +139,7 @@ def get_session(**kwargs):
                            app_version=ma_version.version_string,
                            user_agent='monasca-agent',
                            timeout=kwargs.get('keystone_timeout', None),
-                           verify=not kwargs.get('insecure', False),
-                           cert=kwargs.get('ca_file', None))
+                           verify=kwargs.get('verify', True))
     return sess
 
 
@@ -223,8 +222,7 @@ def get_args(config):
         'endpoint_type': config.get('endpoint_type', _DEFAULT_ENDPOINT_TYPE),
         'region_name': config.get('region_name', None),
         'keystone_timeout': config.get('keystone_timeout', None),
-        'insecure': config.get('insecure', False),
-        'ca_file': config.get('ca_file', None),
+        'verify': False if config.get('insecure') else config.get('ca_file', None),
         'reauthenticate': config.get('reauthenticate', True)
     }
     clean_args = _sanitize_args(raw_args)
