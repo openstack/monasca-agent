@@ -98,13 +98,12 @@ def get_session(**kwargs):
                       numerical value indicating some amount (or fraction)
                       of seconds or 0 for no timeout. (optional, defaults
                       to 0)
-    :param bool insecure: Should request be verified or not
-                      (optional, defaults to False)
-    :param union(string,tuple) ca_file: A client certificate to pass to
-                 requests. These are of the same form as requests expects.
-                 Either a single filename containing both the certificate
-                 and key or a tuple containing the path to the certificate
-                 then a path to the key. (optional)
+    :param verify: The verification arguments to pass to requests. These are of
+                   the same form as requests expects, so True or False to
+                   verify (or not) against system certificates or a path to a
+                   bundle or CA certs to check against or None for requests to
+                   attempt to locate and use certificates. (optional, defaults
+                   to True)
     :param bool reauthenticate: Should reauthenticate if token expires
                         (optional, defaults to True)
     :return: session instance
