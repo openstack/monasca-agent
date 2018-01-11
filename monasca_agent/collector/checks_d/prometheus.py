@@ -1,4 +1,4 @@
-# (C) Copyright 2017 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2017-2018 Hewlett Packard Enterprise Development LP
 import math
 import requests
 import six
@@ -316,12 +316,14 @@ class Prometheus(checks.AgentCheck):
                         if pod_name in self.k8s_pod_cache:
                             pod_owner, pod_owner_name = self.k8s_pod_cache[pod_name]
                             metric_dimensions[pod_owner] = pod_owner_name
+                            metric_dimensions["owner_type"] = pod_owner
                         else:
                             pod_owner_pair = self.get_pod_owner(pod_name, metric_dimensions['namespace'])
                             if pod_owner_pair:
                                 pod_owner = pod_owner_pair[0]
                                 pod_owner_name = pod_owner_pair[1]
                                 metric_dimensions[pod_owner] = pod_owner_name
+                                metric_dimensions["owner_type"] = pod_owner
                                 self.k8s_pod_cache[pod_name] = pod_owner, pod_owner_name
                 metric_func(metric_name, metric_value, dimensions=metric_dimensions, hostname="SUPPRESS")
 
