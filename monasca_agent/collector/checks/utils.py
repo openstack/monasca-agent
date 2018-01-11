@@ -1,4 +1,4 @@
-# (C) Copyright 2015,2017 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2015,2017-2018 Hewlett Packard Enterprise Development LP
 # (C) Copyright 2017 KylinCloud
 
 import base64
@@ -757,6 +757,7 @@ def get_pod_dimensions(kubernetes_connector, pod_metadata, kubernetes_labels):
     pod_owner_dimension_set = get_pod_owner(kubernetes_connector, pod_metadata)
     if pod_owner_dimension_set:
         pod_dimensions[pod_owner_dimension_set[0]] = pod_owner_dimension_set[1]
+        pod_dimensions["owner_type"] = pod_owner_dimension_set[0]
     return pod_dimensions
 
 
