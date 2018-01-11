@@ -6,13 +6,14 @@ from copy import deepcopy
 import json
 import logging
 import math
-from monasca_agent.collector.checks import AgentCheck
-from monasca_agent.common import keystone
-from novaclient import client as nova_client
 import os
 import stat
 import subprocess
 import time
+
+from monasca_agent.collector.checks import AgentCheck
+from monasca_agent.common import keystone
+from novaclient import client as nova_client
 
 log = logging.getLogger(__name__)
 prerouting_chain = "PREROUTING"
@@ -53,7 +54,7 @@ class Congestion(AgentCheck):
         """Extend check method to collect and update congestion metrics.
         """
         dimensions = self._set_dimensions({'service': 'networking',
-                                           'component': 'Neutron'}, instance)
+                                           'component': 'neutron'}, instance)
         self.sample_time = float("{:9f}".format(time.time()))
         """Check iptables information and verify/install the ECN rule for
         specific hypervisor"""
@@ -138,7 +139,7 @@ class Congestion(AgentCheck):
         """Ensures that the ECN marking is enable on each tap interface
         """
         tos_rule = "TOS --set-tos 0x02/0xff"
-        tos_tap = False
+        taps = None
         """Collect tap intefaces attached to linux bridge"""
         try:
             taps = subprocess.check_output(
@@ -146,21 +147,24 @@ class Congestion(AgentCheck):
                 shell=True, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             self.log.error(e.output)
-        taps = filter(None, taps.split('\n'))
-        """Collect installed rules in Forward chain"""
-        forw_rules = self._get_rule(forward_chain)
-        for tap in taps:
-            for rule in forw_rules:
-                """Check if the rule was applied to tap interface"""
-                if (tap + " -j " + tos_rule) in rule:
-                    tos_tap = True
-                    break
-            if not tos_tap:
-                """Enable ECN"""
-                match = "physdev --physdev-out " + tap
-                self._add_rule(forward_chain, None, match, tos_rule)
-                self.log.info("ECN is enabled for %s interface.", tap)
-                break
+        if taps:
+            taps = filter(None, taps.split('\n'))
+            """Collect installed rules in Forward chain"""
+            forw_rules = self._get_rule(forward_chain)
+            for tap in taps:
+                tap = tap + " --physdev-is-bridged"
+                if not self._find_tap(tap, forw_rules, tos_rule):
+                    """Enable ECN"""
+                    match = "physdev --physdev-in " + tap
+                    self._add_rule(forward_chain, None, match, tos_rule)
+                    self.log.info("ECN is enabled for %s interface.", tap)
+
+    def _find_tap(self, tap, chain, tos_rule):
+        for rule in chain:
+            """Check if the rule was applied to tap interface"""
+            if (tap + " -j " + tos_rule) in rule:
+                return True
+        return False
 
     def _add_chain(self, chain):
         """This method adds 'chain' into iptables.
