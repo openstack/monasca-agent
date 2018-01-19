@@ -572,6 +572,7 @@ The cAdvisor host check returns the following metrics:
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
+| cpu.num_cores | hostname, unit | Number of cores of host
 | cpu.system_time | hostname, unit | Cumulative system CPU time consumed in core seconds
 | cpu.system_time_sec | hostname, unit | Rate of system CPU time consumed in core seconds per second
 | cpu.total_time | hostname, unit | Cumulative CPU time consumed in core seconds
@@ -580,6 +581,7 @@ The cAdvisor host check returns the following metrics:
 | cpu.user_time_sec | hostname, unit | Rate of user CPU time consumed in core seconds per second
 | fs.total_bytes | hostname, device, unit | Number of bytes available
 | fs.usage_bytes | hostname, device, unit | Number of bytes consumed
+| fs.usage_perc | hostname, device, unit | Usage of fs as percentage
 | io.read_bytes | hostname, unit | Total number of bytes read by all devices
 | io.read_bytes_sec | hostname, unit | Total number of bytes read by all devices per second
 | io.write_bytes | hostname, unit | Total number of bytes written by all devices
@@ -587,6 +589,7 @@ The cAdvisor host check returns the following metrics:
 | mem.cache_bytes | hostname, unit | Number of bytes of page cache memory
 | mem.swap_bytes | hostname, unit | Swap usage in memory in bytes
 | mem.used_bytes | hostname, unit | Current memory in use in bytes
+| mem.used_perc | hostname, unit | Current memory usage as percentage
 | mem.working_set_bytes | hostname, unit | Current working set of memory in bytes (total minus cache)
 | net.in_bytes | hostname, interface, unit | Total network bytes received by all interfaces
 | net.in_bytes_sec | hostname, interface, unit | Total number of network bytes received by all interfaces per second
