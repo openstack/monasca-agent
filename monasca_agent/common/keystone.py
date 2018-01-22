@@ -309,6 +309,14 @@ class Keystone(object):
         """
         return self._init_client().auth_token
 
+    def refresh_token(self):
+        """Gets a new keystone client object and token
+        This method should be called if the token has expired
+
+        """
+        self._keystone_client = None
+        return self.get_token()
+
     def get_session(self):
         """Returns session of this client.
 
