@@ -26,15 +26,6 @@ from numbers import Number
 log = logging.getLogger(__name__)
 
 
-# Tornado
-try:
-    from tornado import ioloop
-    from tornado import version_info as tornado_version
-except ImportError:
-    # We are likely running the agent without the forwarder and tornado is not installed
-    # Generate a warning
-    log.warn('Tornado web server is not installed.  Metrics will not be forwarded to the Monasca API!')
-
 VALID_HOSTNAME_RFC_1123_PATTERN = re.compile(
     r"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$")
 MAX_HOSTNAME_LEN = 255
@@ -277,13 +268,6 @@ def plural(count):
     if count == 1:
         return ""
     return "s"
-
-
-def get_tornado_ioloop():
-    if tornado_version[0] == 3:
-        return ioloop.IOLoop.current()
-    else:
-        return ioloop.IOLoop.instance()
 
 
 def get_uuid():
