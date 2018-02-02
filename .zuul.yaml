@@ -1,5 +1,4 @@
 - project:
-    name: openstack/monasca-agent
     check:
       jobs:
         - monasca-tempest-python-mysql:
