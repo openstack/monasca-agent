@@ -14,7 +14,6 @@ import sys
 
 # set up logging before importing any other components
 import monasca_agent.common.util as util
-
 util.initialize_logging('forwarder')
 
 import os
@@ -30,7 +29,6 @@ import tornado.web
 
 # agent import
 import monasca_agent.common.config as cfg
-import monasca_agent.common.util as util
 import monasca_agent.forwarder.api.monasca_api as mon
 
 log = logging.getLogger('forwarder')
@@ -69,7 +67,7 @@ class Forwarder(tornado.web.Application):
         self._unflushed_iterations = 0
         self._endpoint = mon.MonascaAPI(agent_config)
 
-        self._ioloop = None
+        self._ioloop = tornado.ioloop.IOLoop.instance()
 
         self._port = int(port)
         self._flush_interval = FLUSH_INTERVAL * 1000
@@ -163,21 +161,16 @@ class Forwarder(tornado.web.Application):
         http_server = tornado.httpserver.HTTPServer(self)
         self._bind_http_server(http_server)
 
-        self._ioloop = util.get_tornado_ioloop()
-
         callback = tornado.ioloop.PeriodicCallback(self.flush,
-                                                   self._flush_interval,
-                                                   io_loop=self._ioloop)
+                                                   self._flush_interval)
 
         callback.start()
 
         self._ioloop.start()
 
-        log.info("Stopped")
-
     def stop(self):
-        if self._ioloop:
-            self._ioloop.stop()
+        self._ioloop.stop()
+        log.info("Stopped")
 
 
 def init_forwarder(skip_ssl_validation=False, use_simple_http_client=False):
