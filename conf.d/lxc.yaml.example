@@ -16,5 +16,6 @@ instances:
     - container: all
       cpu: True
       mem: True
+      swap: True
       blkio: True
       net: True

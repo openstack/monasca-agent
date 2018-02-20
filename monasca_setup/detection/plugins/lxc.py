@@ -52,6 +52,7 @@ class LXC(monasca_setup.detection.Plugin):
                                   'state': True,
                                   'cpu': True,
                                   'mem': True,
+                                  'swap': True,
                                   'blkio': True,
                                   'net': True
                                   }]}
