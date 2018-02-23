@@ -144,19 +144,21 @@ class Libvirt(plugin.Plugin):
                     'required for ping checks.')
                 return
 
-            # Copy system 'ip' command to local directory
-            copy(ip_cmd, sys.path[0])
+            # TODO(dmllr) Find a better rundir or avoid copying the binary
+            # alltogether. see https://storyboard.openstack.org/#!/story/2001593
+            monasca_rundir = sys.path[0]
+            monasca_ip = "{0}/monasca-agent-ip".format(monasca_rundir)
+            # Copy system 'ip' command to monasca_rundir
+            copy(ip_cmd, monasca_ip)
 
             # Restrict permissions on the local 'ip' command
-            os.chown("{0}/ip".format(sys.path[0]),
-                     *self._get_user_uid_gid(self._agent_user))
-            os.chmod("{0}/ip".format(sys.path[0]),
-                     0o700)
+            os.chown(monasca_ip, *self._get_user_uid_gid(self._agent_user))
+            os.chmod(monasca_ip, 0o700)
 
             # Set capabilities on 'ip' which will allow
             # self.agent_user to exec commands in namespaces
             setcap_cmd = ['/sbin/setcap', 'cap_sys_admin+ep',
-                          "{0}/ip".format(sys.path[0])]
+                          monasca_ip]
             subprocess.Popen(setcap_cmd, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
             # Verify that the capabilities were set
@@ -166,8 +168,8 @@ class Libvirt(plugin.Plugin):
             for ping_cmd in ping_options:
                 if os.path.isfile(ping_cmd[0]):
                     init_config[
-                        'ping_check'] = "{0}/ip netns exec NAMESPACE {1}".format(
-                            sys.path[0],
+                        'ping_check'] = "{0} netns exec NAMESPACE {1}".format(
+                            monasca_ip,
                             ' '.join(ping_cmd))
                     log.info(
                         "\tEnabling ping checks using {0}".format(ping_cmd[0]))

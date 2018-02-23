@@ -329,7 +329,7 @@ The monasca-setup detection plugin for libvirt performs the following tests and 
 1. Ability to determine the name of the user under which monasca-agent processes run (eg, `mon-agent`)
 2. Availability of the `python-neutronclient` library (by attempting to import `client` from `neutronclient.v2_0`)
 3. A separate enhanced-capabilities `ip` command exists:
-   a. The detection plugin copies `/sbin/ip` to `sys.path[0]` (see the [configuration](#configuration) section above for an example)
+   a. The detection plugin copies `/sbin/ip` to `sys.path[0]/monasca-agent-ip` (see the [configuration](#configuration) section above for an example)
    b. Permissions on the copy are changed to the `mon-agent` user (or whichever Agent user is configured), mode 0700.
    c. The `/sbin/setcap` command is called, applying `cap_sys_admin+ep` to the copy, as `cap_sys_admin` is the only capability which provides `setns`, necessary to execute commands in a separate namespace.
    d. The detection plugin confirms that the enhanced capabilities were successfully applied
