@@ -273,7 +273,7 @@ class Prometheus(checks.AgentCheck):
         if len(ports) == 1 and not endpoints:
             self.log.info("Could not find matching port using only port "
                           "configured")
-            endpoints.append("{}/{}".format(ports[pod_index], prometheus_endpoint))
+            endpoints.append("{}/{}".format(ports[0][pod_index], prometheus_endpoint))
 
         if not endpoints:
             self.log.error("Can not derive which port to use. Due to either "
@@ -281,6 +281,7 @@ class Prometheus(checks.AgentCheck):
                            "configured and none of them selected via "
                            "configurations. "
                            "{} {} skipped for scraping".format(self.detect_method, name))
+        self.log.debug("Found prometheus endpoints '{}'".format(endpoints))
         return endpoints
 
     def _send_metrics(self, metric_families, dimensions, endpoint_whitelist, endpoint_metric_types,
