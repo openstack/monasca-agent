@@ -34,7 +34,7 @@ class Congestion(monasca_setup.detection.Plugin):
         """Run detection, set self.available True if the service is
            detected.
         """
-        self.available = True
+        self.available = False
         # Start with plugin-specific configuration parameters
         # Try to detect the location of the Nova configuration file.
         # Walk through the list of processes, searching for 'nova-compute'
