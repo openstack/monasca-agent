@@ -153,7 +153,7 @@ instances:
 
 | Name                       | Description                                                                                                                                                                         |
 | ---------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ovs.vrouter.host_max_bw_kb | Maximum bandwidth possible for routers on the the host based on the instances using those routers (if `publish_router_capacity` is true).  Only published to the operations tenant. |
+| ovs.vrouter.host_max_bw_kb | Maximum bandwidth possible for routers on the host based on the instances using those routers (if `publish_router_capacity` is true).  Only published to the operations tenant.     |
 | ovs.vrouter.active_routers | Count of active routers on this host (only published to the operations tenant)                                                                                                      |
 
 ## Mapping Metrics to Configuration Parameters
