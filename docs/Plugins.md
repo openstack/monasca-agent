@@ -1852,6 +1852,7 @@ instances:
     - container: all
       cpu: True
       mem: True
+      swap: True
       blkio: True
       net: True
 ```
@@ -1860,6 +1861,11 @@ The LXC checks return the following metrics:
 
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |
+| blkio.read | hostname, container_name, service=lxc | number of bytes read from the disk to the cgroup(container) |
+| blkio.write | hostname, container_name, service=lxc | number of bytes written from the cgroup(container) to the disk |
+| blkio.async | hostname, container_name, service=lxc | number of asynchronous bytes |
+| blkio.sync | hostname, container_name, service=lxc | number of synchronous bytes |
+| blkio.total | hostname, container_name, service=lxc | total number of bytes |
 | cpuacct.usage | hostname, container_name, service=lxc | reports the total CPU time (in nanoseconds) consumed |
 | cpuacct.usage_percpu.cpu{X} | hostname, container_name, service=lxc | reports the total CPU time (in nanoseconds) consumed by cpu X |
 | cpuacct.user |  hostname, container_name, service=lxc| CPU time consumed by tasks in user mode. Unit defined by the USER_HZ variable |
@@ -1877,6 +1883,8 @@ The LXC checks return the following metrics:
 | memory.unevictable | hostname, container_name, service=lxc | memory that cannot be reclaimed, in bytes |
 | memory.hierarchical_memory_limit | hostname, container_name, service=lxc | memory limit for the hierarchy that contains the memory cgroup, in bytes |
 | memory.hierarchical_memsw_limit | hostname, container_name, service=lxc | memory plus swap limit for the hierarchy that contains the memory cgroup, in bytes |
+| memory.usage_in_bytes | hostname, container_name, service=lxc | memory usage, in bytes |
+| memory.memsw.usage_in_bytes | hostname, container_name, service=lxc | swap memory usage, in bytes |
 | net.rx.bytes | hostname, container_name, service=lxc, iface | number of received bytes |
 | net.rx.packets | hostname, container_name, service=lxc, iface | number of received packets |
 | net.rx.errs | hostname, container_name, service=lxc, iface | number of received error packets |
@@ -1893,11 +1901,7 @@ The LXC checks return the following metrics:
 | net.tx.frame | hostname, container_name, service=lxc, iface | number of transferred frame packets |
 | net.tx.compressed | hostname, container_name, service=lxc, iface| number of transferred compressed bytes |
 | net.tx.multicast | hostname, container_name, service=lxc, iface | number of transferred multicast packets |
-| blkio.read | hostname, container_name, service=lxc | number of bytes read from the disk to the cgroup(container) |
-| blkio.write | hostname, container_name, service=lxc | number of bytes written from the cgroup(container) to the disk |
-| blkio.async | hostname, container_name, service=lxc | number of asynchronous bytes |
-| blkio.sync | hostname, container_name, service=lxc | number of synchronous bytes |
-| blkio.total | hostname, container_name, service=lxc | total number of bytes |
+| running_containers| hostname, service=lxc | number of running containers |
 
 ## Mcache
 See [the example configuration](https://github.com/openstack/monasca-agent/blob/master/conf.d/mcache.yaml.example) for how to configure the Mcache plugin.
