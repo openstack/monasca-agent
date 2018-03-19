@@ -424,7 +424,18 @@ Configuration parameters can be used to control which metrics are reported by li
 | | vm.io.write_ops_total_sec | io.write_ops_total_sec |
 
 ### Untunable Metrics
-Please see table below for metrics in libvirt that are always enabled.
+#### Prerequisite
+By default, the memory statistics feature is disabled in qemu. You need to add
+stats period in order to enable them.
+* Enable stats period of memballoon device. Add default
+`mem_stats_period_seconds=10` into `/etc/nova/nova.conf` file. Restart
+nova-compute service: `sudo systemctl restart openstack-nova-compute`
+* Make sure your image includes the suitable balloon driver, particularly
+for Windows guests, most modern Linuxes have it build in. For `cirros`
+distribution, it's available from version 0.4.0.
+
+#### Untunable Metrics List
+Please see table below for metrics in libvirt.
 
 | Admin Metric Name | Tenant Metric Name |
 | ----------------- | ------------------ |
