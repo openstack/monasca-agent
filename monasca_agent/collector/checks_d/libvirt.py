@@ -72,6 +72,7 @@ class LibvirtCheck(AgentCheck):
 
         self._collect_intervals = {}
         self._host_aggregate = None
+        self._nova_host = None
 
         self._set_collection_intervals('disk', 'disk_collection_period')
         self._set_collection_intervals('vnic', 'vnic_collection_period')
@@ -126,6 +127,29 @@ class LibvirtCheck(AgentCheck):
                                                     [rule['remote_ip_prefix']]))):
                                 return True
 
+    def _get_nova_host(self, nova_client):
+        if not self._nova_host:
+            # Find `nova-compute` on current node
+            services = nova_client.services.list(host=self.hostname,
+                                                 binary='nova-compute')
+            if not services:
+                # Catch the case when `nova-compute` is registered with
+                # unqualified hostname
+                services = nova_client.services.list(
+                    host=self.hostname.split('.')[0], binary='nova-compute')
+            if services:
+                self._nova_host = services[0].host
+                self.log.info("Found 'nova-compute' registered with host: {}"
+                              .format(self._nova_host))
+
+        if self._nova_host:
+            return self._nova_host
+        else:
+            self.log.warn("No 'nova-compute' service found on host: {}"
+                          .format(self.hostname))
+            # Return hostname as fallback value
+            return self.hostname
+
     def _update_instance_cache(self):
         """Collect instance_id, project_id, and AZ for all instance UUIDs
         """
@@ -145,7 +169,8 @@ class LibvirtCheck(AgentCheck):
             client_version=ma_version.version_string)
         self._get_this_host_aggregate(nova_client)
         instances = nova_client.servers.list(
-            search_opts={'all_tenants': 1, 'host': self.hostname.split('.')[0]})
+            search_opts={'all_tenants': 1,
+                         'host': self._get_nova_host(nova_client)})
         # Lay the groundwork for fetching VM IPs and network namespaces
         if self.init_config.get('ping_check'):
             nu = neutron_client.Client(
