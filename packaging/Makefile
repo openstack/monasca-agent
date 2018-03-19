@@ -69,9 +69,6 @@ install_deb: install_full
 	mkdir -p $(BUILD)/etc/init.d
 	cp monasca-agent-deb/monasca-agent.init $(BUILD)/etc/init.d/monasca-agent
 	chmod 755 $(BUILD)/etc/init.d/monasca-agent
-	# Install supervisor config.
-	cp monasca-agent-deb/supervisor.conf $(BUILD)/etc/monasca/agent/supervisor.conf
-
 
 # Make the monasca agent debian package that includes supervisor, the forwarder
 # etc.
@@ -81,7 +78,6 @@ $(FPM_BUILD) -t deb \
 -n monasca-agent \
 -d "python (>= 2.6)" \
 -d "python-tornado (>= 2.3)" \
--d "supervisor (>= 3.0)" \
 -d "adduser" \
 -d "sysstat" \
 -d "python-pycurl" \

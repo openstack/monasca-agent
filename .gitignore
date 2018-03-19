@@ -19,3 +19,6 @@ htmlcov/
 cover/
 .stestr
 virtenv/
+Pipfile
+Pipfile.lock
+.vscode

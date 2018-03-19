@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 
 
 class Plugin(object):
-    """Abstract class implemented by the monasca-agent plugin detection classes. """
+    """Abstract class for the monasca-agent plugin detection."""
 
     def __init__(self, template_dir, overwrite=True, args=None):
         self.available = False
@@ -32,7 +32,8 @@ class Plugin(object):
         self.overwrite = overwrite
         if args is not None and isinstance(args, str):
             try:
-                # Turn 'hostname=host type=ping' to dictionary {'hostname': 'host', 'type': 'ping'}
+                # Turn 'hostname=host type=ping' to dictionary
+                # {'hostname': 'host', 'type': 'ping'}
                 self.args = dict([a.split('=') for a in args.split()])
             except Exception:
                 log.exception('Error parsing detection arguments')
@@ -44,21 +45,25 @@ class Plugin(object):
         self._detect()
 
     def _detect(self):
-        """Run detection, set self.available True if the service is detected.
+        """Run detection.
 
+        Set self.available True if the service is detected.
         """
         raise NotImplementedError
 
     def build_config(self):
-        """Build the config as a Plugins object and return.
-
-        """
+        """Build the config as a Plugins object and return."""
         raise NotImplementedError
 
     def build_config_with_name(self):
-        """Builds the config and then adds a field 'built_by' to each instance in the config.
+        """Build the config and then add 'built_by' field.
+
+           Build the config and then add 'built_by' field to each instance in
+           the config.
+
            built_by is set to the plugin name
-        :return: An agent_config.Plugins object
+
+           :return: An agent_config.Plugins object
         """
         conf = self.build_config()
         if conf is None:

@@ -1,0 +1,15 @@
+[Unit]
+Description=Monasca Agent - Statsd
+PartOf=monasca-agent.target
+After=monasca-forwarder.service
+Wants=monasca-forwarder.service
+
+[Service]
+Type=simple
+User={monasca_user}
+Group={monasca_user}
+Restart=always
+ExecStart={prefix}/bin/monasca-statsd
+
+[Install]
+WantedBy=multi-user.target

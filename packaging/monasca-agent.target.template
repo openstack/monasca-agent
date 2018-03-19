@@ -1,0 +1,6 @@
+[Unit]
+Description=Monasca Agent
+Wants=monasca-collector.service monasca-forwarder.service monasca-statsd.service
+
+[Install]
+WantedBy=multi-user.target
