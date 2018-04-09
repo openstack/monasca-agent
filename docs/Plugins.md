@@ -1218,20 +1218,38 @@ This section describes the http endpoint check that can be performed by the Agen
 
 The Agent supports additional functionality through the use of Python scripts. A YAML file (http_check.yaml) contains the list of URLs to check (among other optional parameters). A Python script (http_check.py) runs checks each host in turn, returning a 0 on success and a 1 on failure in the result sent through the Forwarder and on the Monitoring API.
 
-Similar to other checks, the configuration is done in YAML, and consists of two keys: init_config and instances.  The former is not used by http_check, while the later contains one or more URLs to check, plus optional parameters like a timeout, username/password, pattern to match against the HTTP response body, whether or not to include the HTTP response in the metric (as a 'detail' dimension), whether or not to also record the response time, and more.
-If the endpoint being checked requires authentication, there are two options. First, a username and password supplied in the instance options will be used by the check for authentication. Alternately, the check can retrieve a keystone token for authentication. Specific keystone information can be provided for each check, otherwise the information from the agent config will be used.
+Similar to other checks, the configuration is done in YAML, and consists of two
+keys: `init_config` and `instances`. In the former, you can provide Keystone
+configuration for checks to retrieve token for authentication that will be used
+for all checks. While the later contains one or more URLs to check, plus
+optional parameters like a timeout, username/password, pattern to match against
+the HTTP response body, whether or not to include the HTTP response
+in the metric (as a 'detail' dimension), whether or not to also record
+the response time, and more.
+If the endpoint being checked requires authentication, there are two options.
+First, a username and password supplied in the instance options will be used
+by the check for authentication. Alternately, the check can retrieve
+a keystone token for authentication. Specific keystone information can
+be provided for all checks in `init_config` section, or if it's not
+provided there, the information from the agent config will be used.
+DEPRECATED: providing Keystone configuration in each instance.
 
 Sample config:
 
 ```
 init_config:
+    keystone_config:
+        keystone_url: http://endpoint.com/v3/
+        project_name: project
+        username: user
+        password: password
 
 instances:
-       url: http://192.168.0.254/healthcheck
-       timeout: 1
-       include_content: true
-       collect_response_time: true
-       match_pattern: '.*OK.*OK.*OK.*OK.*OK'
+    url: http://192.168.0.254/healthcheck
+    timeout: 1
+    include_content: true
+    collect_response_time: true
+    match_pattern: '.*OK.*OK.*OK.*OK.*OK'
 ```
 
 The http_status checks return the following metrics:
