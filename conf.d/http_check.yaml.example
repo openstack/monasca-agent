@@ -1,6 +1,16 @@
 # (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
 
 init_config:
+     # If your service uses keystone for authentication, you can optionally
+     # specify the information to collect a token to be used in the check.
+     # This information should follow the same guidelines presented in
+     # agent.yaml.template
+     # https://github.com/openstack/monasca-agent/blob/master/agent.yaml.template
+#    keystone_config:
+#        keystone_url: http://endpoint.com/v3/
+#        project_name: project
+#        username: user
+#        password: password
 
 instances:
 #    -   name: Some Service Name
@@ -12,19 +22,10 @@ instances:
 #        username: user
 #        password: pass
 
-         # If your service uses keystone for authentication, you can optionally
-         # specify the information to collect a token to be used in the check.
-         # This information should follow the same guidelines presented in
-         # agent.yaml.template
-         # https://github.com/openstack/monasca-agent/blob/master/agent.yaml.template
-         # If use_keystone=True and keystone_config is not specified, the keystone information
+         # If use_keystone=True then Keystone information from `init_config`
+         # will be used, and if it's not there then Keystone configuration
          # from the agent config will be used.
 #        use_keystone: True
-#        keystone_config:
-#            keystone_url: http://endpoint.com/v3/
-#            project_name: project
-#            username: user
-#            password: password
 
          # The (optional) match_pattern parameter will instruct the check
          # to match the HTTP response body against a regular-expression-
