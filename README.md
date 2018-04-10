@@ -1,7 +1,7 @@
 Team and repository tags
 ========================
 
-[![Team and repository tags](https://governance.openstack.org/badges/monasca-agent.svg)](https://governance.openstack.org/reference/tags/index.html)
+[![Team and repository tags](https://governance.openstack.org/tc/badges/monasca-agent.svg)](https://governance.openstack.org/tc/reference/tags/index.html)
 
 <!-- Change things from this point on -->
 
@@ -21,8 +21,7 @@ The Monasca Agent is a modern Python monitoring agent for gathering metrics and 
 * System metrics such as cpu and memory utilization.
 * Nagios plugins. The Monasca Agent can run Nagios plugins and send the status code returned by the plugin as a metric to the Monasca API.
 * Statsd. The Monasca Agent supports an integrated Statsd daemon which can be used by applications via a statsd client library.
-* Host alive. The Monasca Agent can perform active checks on a host to determine if it is alive using ping (ICMP) or 
-SSH.
+* Host alive. The Monasca Agent can perform active checks on a host to determine if it is alive using ping (ICMP) or SSH.
 * Process checks. The Monasca Agent can check a process and return several metrics on the process such as number of instances, memory, io and threads.
 * Http Endpoint checks. The Monasca Agent can perform active checks on http endpoints by sending an HTTP request to an API.
 * Service checks. The Agent can check service such as MySQL, RabbitMQ, and many more.
