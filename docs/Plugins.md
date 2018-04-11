@@ -1769,6 +1769,7 @@ There is also additional Kubernetes dimensions for the Container and Pod metrics
 | ReplicationController | replication_controller |
 | ReplicaSet | replica_set |
 | DaemonSet | daemon_set |
+| StatefulSet | stateful_set |
 | Deployment| deployment | Only will be set if derive_host is set to true as it needs to connect to the API to see if the ReplicaSet is under a deployment
 | Job | job |
 
