@@ -88,14 +88,18 @@ class KafkaCheck(checks.AgentCheck):
                         kafka_consumer.stop()
                     continue
 
-                # Remember the topic partitions encountered so that we can look up their broker offsets later
+                # Remember the topic partitions encountered so that we can look up their
+                # broker offsets later
                 topic_partitions[topic].update(set(partitions))
                 consumer_offsets[(consumer_group, topic)] = {}
                 for partition in partitions:
                     try:
-                        consumer_offsets[(consumer_group, topic)][partition] = kafka_consumer.offsets[partition]
+                        consumer_offsets[(consumer_group,
+                                          topic)][partition] = kafka_consumer.offsets[partition]
                     except KeyError:
-                        self.log.error('Error fetching consumer offset for {0} partition {1}'.format(topic, partition))
+                        self.log.error(
+                            'Error fetching consumer offset for {0} partition {1}'.format(
+                                topic, partition))
 
                 kafka_consumer.stop()
 
@@ -106,7 +110,8 @@ class KafkaCheck(checks.AgentCheck):
             offset_responses = []
             for p in partitions:
                 try:
-                    response = kafka_conn.send_offset_request([common.OffsetRequest(topic, p, -1, 1)])
+                    response = kafka_conn.send_offset_request(
+                        [common.OffsetRequest(topic, p, -1, 1)])
                     offset_responses.append(response[0])
                 except common.KafkaError as e:
                     self.log.error("Error fetching broker offset: {0}".format(e))

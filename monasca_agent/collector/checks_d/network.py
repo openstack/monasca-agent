@@ -37,19 +37,59 @@ class Network(checks.AgentCheck):
             if self._is_nic_monitored(nic_name, excluded_ifaces, exclude_iface_re):
                 nic = nics[nic_name]
                 if instance.get('use_bits'):
-                    self.rate('net.in_bits_sec', nic.bytes_recv * 8, device_name=nic_name, dimensions=dimensions)
-                    self.rate('net.out_bits_sec', nic.bytes_sent * 8, device_name=nic_name, dimensions=dimensions)
+                    self.rate(
+                        'net.in_bits_sec',
+                        nic.bytes_recv * 8,
+                        device_name=nic_name,
+                        dimensions=dimensions)
+                    self.rate(
+                        'net.out_bits_sec',
+                        nic.bytes_sent * 8,
+                        device_name=nic_name,
+                        dimensions=dimensions)
                 else:
-                    self.rate('net.in_bytes_sec', nic.bytes_recv, device_name=nic_name, dimensions=dimensions)
-                    self.rate('net.out_bytes_sec', nic.bytes_sent, device_name=nic_name, dimensions=dimensions)
+                    self.rate(
+                        'net.in_bytes_sec',
+                        nic.bytes_recv,
+                        device_name=nic_name,
+                        dimensions=dimensions)
+                    self.rate(
+                        'net.out_bytes_sec',
+                        nic.bytes_sent,
+                        device_name=nic_name,
+                        dimensions=dimensions)
                 if instance.get('net_bytes_only'):
                     continue
-                self.rate('net.in_packets_sec', nic.packets_recv, device_name=nic_name, dimensions=dimensions)
-                self.rate('net.out_packets_sec', nic.packets_sent, device_name=nic_name, dimensions=dimensions)
-                self.rate('net.in_errors_sec', nic.errin, device_name=nic_name, dimensions=dimensions)
-                self.rate('net.out_errors_sec', nic.errout, device_name=nic_name, dimensions=dimensions)
-                self.rate('net.in_packets_dropped_sec', nic.dropin, device_name=nic_name, dimensions=dimensions)
-                self.rate('net.out_packets_dropped_sec', nic.dropout, device_name=nic_name, dimensions=dimensions)
+                self.rate(
+                    'net.in_packets_sec',
+                    nic.packets_recv,
+                    device_name=nic_name,
+                    dimensions=dimensions)
+                self.rate(
+                    'net.out_packets_sec',
+                    nic.packets_sent,
+                    device_name=nic_name,
+                    dimensions=dimensions)
+                self.rate(
+                    'net.in_errors_sec',
+                    nic.errin,
+                    device_name=nic_name,
+                    dimensions=dimensions)
+                self.rate(
+                    'net.out_errors_sec',
+                    nic.errout,
+                    device_name=nic_name,
+                    dimensions=dimensions)
+                self.rate(
+                    'net.in_packets_dropped_sec',
+                    nic.dropin,
+                    device_name=nic_name,
+                    dimensions=dimensions)
+                self.rate(
+                    'net.out_packets_dropped_sec',
+                    nic.dropout,
+                    device_name=nic_name,
+                    dimensions=dimensions)
 
                 log.debug('Collected 8 network metrics for device {0}'.format(nic_name))
 

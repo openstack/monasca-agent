@@ -176,8 +176,8 @@ class KubernetesConnector(object):
 
 
 class DynamicCheckHelper(object):
-    """Supplements existing check class with reusable functionality to transform third-party metrics into Monasca ones
-    in a configurable way
+    """Supplements existing check class with reusable functionality to transform
+    third-party metrics into Monasca ones in a configurable way
     """
 
     COUNTERS_KEY = 'counters'
@@ -211,15 +211,18 @@ class DynamicCheckHelper(object):
 
         * Replace \\x?? values with _
         * Replace illegal characters
-          - according to ANTLR grammar: ( '}' | '{' | '&' | '|' | '>' | '<' | '=' | ',' | ')' | '(' | ' ' | '"' )
+          - according to ANTLR grammar:
+          ( '}' | '{' | '&' | '|' | '>' | '<' | '=' | ',' | ')' | '(' | ' ' | '"' )
           - according to Python API validation: "<>={}(),\"\\\\|;&"
         * Truncate to 255 chars
         :param value: input value
         :return: valid dimension value
         """
 
-        return re.sub(r'[|\\;,&=\']', '-', re.sub(r'[(}>]', ']', re.sub(r'[({<]', '[', value.replace(r'\x2d', '-').
-                                                                        replace(r'\x7e', '~'))))[:255]
+        return re.sub(r'[|\\;,&=\']', '-',
+                      re.sub(r'[(}>]', ']',
+                             re.sub(r'[({<]', '[', value.replace(r'\x2d', '-').
+                                    replace(r'\x7e', '~'))))[:255]
 
     class DimMapping(object):
         """Describes how to transform dictionary like metadata attached to a metric into Monasca dimensions
@@ -239,14 +242,16 @@ class DynamicCheckHelper(object):
         def map_value(self, source_value):
             """Transform source value into target dimension value
             :param source_value: label value to transform
-            :return: transformed dimension value or None if the regular expression did not match. An empty
-            result (caused by the regex having no match-groups) indicates that the label is used for filtering
+            :return: transformed dimension value or None if the regular
+            expression did not match. An empty result (caused by the regex
+            having no match-groups) indicates that the label is used for filtering
             but not mapped to a dimension.
             """
             if self.cregex:
                 match_groups = self.cregex.match(source_value)
                 if match_groups:
-                    return DynamicCheckHelper._normalize_dim_value(self.separator.join(match_groups.groups()))
+                    return DynamicCheckHelper._normalize_dim_value(
+                        self.separator.join(match_groups.groups()))
                 else:
                     return None
             else:
@@ -312,15 +317,21 @@ class DynamicCheckHelper(object):
                     for grp, gspec in groups.items():
                         self._grp_metric_map[iname][grp] = gspec
                         self._grp_metric_cache[iname][grp] = {}
-                        self._grp_dimension_map[iname][grp] = DynamicCheckHelper._build_dimension_map(gspec)
-                    # add the global mappings as pseudo group, so that it is considered when searching for metrics
+                        self._grp_dimension_map[iname][grp] =\
+                            DynamicCheckHelper._build_dimension_map(gspec)
+                    # add the global mappings as pseudo group, so that it is considered when
+                    # searching for metrics
                     self._groups[iname].append(DynamicCheckHelper.DEFAULT_GROUP)
-                    self._grp_metric_map[iname][DynamicCheckHelper.DEFAULT_GROUP] = self._metric_map[iname]
-                    self._grp_metric_cache[iname][DynamicCheckHelper.DEFAULT_GROUP] = self._metric_cache[iname]
-                    self._grp_dimension_map[iname][DynamicCheckHelper.DEFAULT_GROUP] = self._dimension_map[iname]
+                    self._grp_metric_map[iname][DynamicCheckHelper.DEFAULT_GROUP] =\
+                        self._metric_map[iname]
+                    self._grp_metric_cache[iname][DynamicCheckHelper.DEFAULT_GROUP] =\
+                        self._metric_cache[iname]
+                    self._grp_dimension_map[iname][DynamicCheckHelper.DEFAULT_GROUP] =\
+                        self._dimension_map[iname]
 
             else:
-                raise exceptions.CheckException('instance %s is not supported: no element "mapping" found!', iname)
+                raise exceptions.CheckException(
+                    'instance %s is not supported: no element "mapping" found!', iname)
 
     def _get_group(self, instance, metric):
         """Search the group for a metric. Can be used only when metric names unambiguous across groups.
@@ -361,10 +372,22 @@ class DynamicCheckHelper(object):
             return DynamicCheckHelper._lookup_metric(metric, metric_cache, metric_map)
 
     def is_enabled_metric(self, instance, metric, group=None):
-        return self._fetch_metric_spec(instance, metric, group).metric_type != DynamicCheckHelper.SKIP
+        return self._fetch_metric_spec(
+            instance, metric, group).metric_type != DynamicCheckHelper.SKIP
 
-    def push_metric_dict(self, instance, metric_dict, labels=None, group=None, timestamp=None, fixed_dimensions=None,
-                         default_dimensions=None, max_depth=0, curr_depth=0, prefix='', index=-1):
+    def push_metric_dict(
+            self,
+            instance,
+            metric_dict,
+            labels=None,
+            group=None,
+            timestamp=None,
+            fixed_dimensions=None,
+            default_dimensions=None,
+            max_depth=0,
+            curr_depth=0,
+            prefix='',
+            index=-1):
         """This will extract metrics and dimensions from a dictionary.
 
         The following mappings are applied:
@@ -389,8 +412,9 @@ class DynamicCheckHelper(object):
 
                 server_requests=12
 
-        Mapping of textual values to dimensions to distinguish array elements. Make sure that tests attributes
-        are sufficient to distinguish the array elements. If not use the build-in 'index' dimension.
+        Mapping of textual values to dimensions to distinguish array elements. Make sure that tests
+        attributes are sufficient to distinguish the array elements. If not use the build-in
+        'index' dimension.
 
             Input:
 
@@ -430,8 +454,10 @@ class DynamicCheckHelper(object):
                 server_requests{server_role=slave, node_name=server2} = 500.0
 
 
-        Distinguish array elements where no textual attribute are available or no mapping has been configured for them.
-        In that case an 'index' dimension will be attached to the metric which has to be mapped properly.
+        Distinguish array elements where no textual attribute are available or no mapping has been
+        configured for them.
+        In that case an 'index' dimension will be attached to the metric which has to be mapped
+        properly.
 
             Input:
 
@@ -470,7 +496,8 @@ class DynamicCheckHelper(object):
         :param group: group to use for mapping labels and prefixing
         :param timestamp: timestamp to report for the measurement
         :param fixed_dimensions: dimensions which are always added with fixed values
-        :param default_dimensions: dimensions to be added, can be overwritten by actual data in metric_dict
+        :param default_dimensions: dimensions to be added, can be overwritten by actual data in
+            metric_dict
         :param max_depth: max. depth to recurse
         :param curr_depth: depth of recursion
         :param prefix: prefix to prepend to any metric
@@ -478,7 +505,8 @@ class DynamicCheckHelper(object):
         """
 
         # when traversing through an array, each element must be distinguished with dimensions
-        # therefore additional dimensions need to be calculated from the siblings of the actual number valued fields
+        # therefore additional dimensions need to be calculated from the siblings
+        # of the actual number valued fields
         if default_dimensions is None:
             default_dimensions = {}
         if fixed_dimensions is None:
@@ -486,7 +514,8 @@ class DynamicCheckHelper(object):
         if labels is None:
             labels = {}
         if index != -1:
-            ext_labels = self.extract_dist_labels(instance['name'], group, metric_dict, labels.copy(), index)
+            ext_labels = self.extract_dist_labels(
+                instance['name'], group, metric_dict, labels.copy(), index)
             if not ext_labels:
                 log.debug(
                     "skipping array due to lack of mapped dimensions for group %s "
@@ -500,49 +529,92 @@ class DynamicCheckHelper(object):
         for element, child in metric_dict.items():
             # if child is a dictionary, then recurse
             if isinstance(child, dict) and curr_depth < max_depth:
-                self.push_metric_dict(instance, child, ext_labels, group, timestamp, fixed_dimensions,
-                                      default_dimensions, max_depth, curr_depth + 1, prefix + element + '_')
-            # if child is a number, assume that it is a metric (it will be filtered out by the rate/gauge names)
+                self.push_metric_dict(
+                    instance,
+                    child,
+                    ext_labels,
+                    group,
+                    timestamp,
+                    fixed_dimensions,
+                    default_dimensions,
+                    max_depth,
+                    curr_depth + 1,
+                    prefix + element + '_')
+            # if child is a number, assume that it is a metric (it will be filtered
+            # out by the rate/gauge names)
             elif isinstance(child, Number):
-                self.push_metric(instance, prefix + element, float(child), ext_labels, group, timestamp,
-                                 fixed_dimensions,
-                                 default_dimensions)
-            # if it is a list, then each array needs to be added. Additional dimensions must be found in order to
-            # distinguish the measurements.
+                self.push_metric(
+                    instance,
+                    prefix + element,
+                    float(child),
+                    ext_labels,
+                    group,
+                    timestamp,
+                    fixed_dimensions,
+                    default_dimensions)
+            # if it is a list, then each array needs to be added. Additional dimensions must be
+            # found in order to distinguish the measurements.
             elif isinstance(child, list):
                 for i, child_element in enumerate(child):
                     if isinstance(child_element, dict):
                         if curr_depth < max_depth:
-                            self.push_metric_dict(instance, child_element, ext_labels, group, timestamp,
-                                                  fixed_dimensions, default_dimensions, max_depth, curr_depth + 1,
-                                                  prefix + element + '_', index=i)
+                            self.push_metric_dict(
+                                instance,
+                                child_element,
+                                ext_labels,
+                                group,
+                                timestamp,
+                                fixed_dimensions,
+                                default_dimensions,
+                                max_depth,
+                                curr_depth + 1,
+                                prefix + element + '_',
+                                index=i)
                     elif isinstance(child_element, Number):
                         if len(self._get_mappings(instance['name'], group, 'index')) > 0:
                             idx_labels = ext_labels.copy()
                             idx_labels['index'] = str(i)
-                            self.push_metric(instance, prefix + element, float(child_element), idx_labels, group,
-                                             timestamp, fixed_dimensions, default_dimensions)
+                            self.push_metric(
+                                instance,
+                                prefix + element,
+                                float(child_element),
+                                idx_labels,
+                                group,
+                                timestamp,
+                                fixed_dimensions,
+                                default_dimensions)
                         else:
-                            log.debug("skipping array due to lack of mapped 'index' dimensions for group %s",
-                                      group if group else '<root>')
+                            log.debug(
+                                "skipping array due to lack of mapped 'index' dimensions"
+                                "for group %s",
+                                group if group else '<root>')
                     else:
-                        log.debug('nested arrays are not supported for configurable extraction of element %s', element)
+                        log.debug(
+                            'nested arrays are not supported for configurable extraction of'
+                            'element %s', element)
 
     def extract_dist_labels(self, instance_name, group, metric_dict, labels, index):
-        """Extract additional distinguishing labels from metric dictionary. All top-level attributes which are
-        strings and for which a dimension mapping is available will be transformed into dimensions.
+        """Extract additional distinguishing labels from metric dictionary. All top-level
+        attributes which are strings and for which a dimension mapping is available will be
+        transformed into dimensions.
         :param instance_name: instance to be used
         :param group: metric group or None for root/unspecified group
         :param metric_dict: input dictionary containing the metric at the top-level
         :param labels: labels dictionary to extend with the additional found metrics
-        :param index: index value to be used as fallback if no labels can be derived from string-valued attributes
-            or the derived labels are not mapped in the config.
+        :param index: index value to be used as fallback if no labels can be derived from
+            string-valued attributes or the derived labels are not mapped in the config.
         :return: Extended labels, already including the 'labels' passed into this method
         """
         ext_labels = None
         # collect additional dimensions first from non-metrics
         for element, child in metric_dict.items():
-            if isinstance(child, str) and len(self._get_mappings(instance_name, group, element)) > 0:
+            if isinstance(
+                child,
+                str) and len(
+                self._get_mappings(
+                    instance_name,
+                    group,
+                    element)) > 0:
                 if not ext_labels:
                     ext_labels = labels.copy()
                 ext_labels[element] = child
@@ -554,9 +626,18 @@ class DynamicCheckHelper(object):
 
         return ext_labels
 
-    def push_metric(self, instance, metric, value, labels=None, group=None, timestamp=None, fixed_dimensions=None,
-                    default_dimensions=None):
-        """Pushes a meter using the configured mapping information to determine metric_type and map the name and dimensions
+    def push_metric(
+            self,
+            instance,
+            metric,
+            value,
+            labels=None,
+            group=None,
+            timestamp=None,
+            fixed_dimensions=None,
+            default_dimensions=None):
+        """Pushes a meter using the configured mapping information to determine metric_type
+        and map the name and dimensions
 
         :param instance: instance containing the check configuration
         :param value: metric value (float)
@@ -602,7 +683,12 @@ class DynamicCheckHelper(object):
         if fixed_dimensions:
             dims.update(fixed_dimensions)
 
-        log.debug('push %s %s = %s {%s}', metric_entry.metric_type, metric_entry.metric_name, value, dims)
+        log.debug(
+            'push %s %s = %s {%s}',
+            metric_entry.metric_type,
+            metric_entry.metric_name,
+            value,
+            dims)
 
         if metric_entry.metric_type == DynamicCheckHelper.RATE:
             self._check.rate(metric_name, float(value), dimensions=dims)
@@ -640,7 +726,8 @@ class DynamicCheckHelper(object):
         :param group:
         :param instance_name:
         :param labels:
-        :return: mapped dimensions or None if the dimensions filter did not match and the metric needs to be filtered
+        :return: mapped dimensions or None if the dimensions filter did not match
+            and the metric needs to be filtered
         """
         dims = default_dimensions.copy()
         #  map all specified dimension all keys
@@ -663,8 +750,8 @@ class DynamicCheckHelper(object):
                             # else the dimension will not map
                 except (IndexError, AttributeError):  # probably the regex was faulty
                     log.exception(
-                        'dimension %s value could not be mapped from %s: regex for mapped dimension %s '
-                        'does not match %s',
+                        'dimension %s value could not be mapped from %s: regex for mapped'
+                        'dimension %s does not match %s',
                         target_dim, labelvalue, labelname, map_spec.regex)
                     return None
 
@@ -687,17 +774,19 @@ class DynamicCheckHelper(object):
 
         :param metric: incoming metric name
         :param metric_type: GAUGE, RATE, COUNTER
-        :param metric_map: dictionary with mapping configuration for a metric group or the entire instance
+        :param metric_map: dictionary with mapping configuration for a metric group or
+            the entire instance
         :return: new MetricSpec entry or None if metric is not listed as metric_type
         """
         re_list = metric_map.get(DynamicCheckHelper.CONFIG_SECTIONS[metric_type], [])
         for rx in re_list:
             match_groups = re.match(rx, metric)
             if match_groups:
-                metric_entry = DynamicCheckHelper.MetricSpec(metric_type=metric_type,
-                                                             metric_name=DynamicCheckHelper._normalize_metricname(
-                                                                 metric,
-                                                                 match_groups))
+                metric_entry = DynamicCheckHelper.MetricSpec(
+                    metric_type=metric_type,
+                    metric_name=DynamicCheckHelper._normalize_metricname(
+                        metric,
+                        match_groups))
                 return metric_entry
 
         return None
@@ -713,14 +802,15 @@ class DynamicCheckHelper(object):
         i = DynamicCheckHelper.GAUGE
         metric_entry = metric_cache.get(metric, None)
         while not metric_entry and i < len(DynamicCheckHelper.METRIC_TYPES):
-            metric_entry = DynamicCheckHelper._create_metric_spec(metric, DynamicCheckHelper.METRIC_TYPES[i],
-                                                                  metric_map)
+            metric_entry = DynamicCheckHelper._create_metric_spec(
+                metric, DynamicCheckHelper.METRIC_TYPES[i], metric_map)
             i += 1
 
         if not metric_entry:
             # fall-through
-            metric_entry = DynamicCheckHelper.MetricSpec(metric_type=DynamicCheckHelper.SKIP,
-                                                         metric_name=DynamicCheckHelper._normalize_metricname(metric))
+            metric_entry = DynamicCheckHelper.MetricSpec(
+                metric_type=DynamicCheckHelper.SKIP,
+                metric_name=DynamicCheckHelper._normalize_metricname(metric))
 
         metric_cache[metric] = metric_entry
 
@@ -732,7 +822,14 @@ class DynamicCheckHelper(object):
         if match_groups and match_groups.lastindex > 0:
             metric = '_'.join(match_groups.groups())
 
-        metric = re.sub('(?!^)([A-Z]+)', r'_\1', metric.replace('.', '_')).replace('__', '_').lower()
+        metric = re.sub(
+            '(?!^)([A-Z]+)',
+            r'_\1',
+            metric.replace(
+                '.',
+                '_')).replace(
+            '__',
+            '_').lower()
         metric = re.sub(r"[,+*\-/()\[\]{}]", "_", metric)
         # Eliminate multiple _
         metric = re.sub(r"__+", "_", metric)
@@ -785,16 +882,19 @@ def _parse_manifest_for_owner(resource_metadata):
             resource_owner_name = owner_reference['name']
             return resource_owner_type, resource_owner_name
         except Exception:
-            log.info("Could not get owner from ownerReferences for resource {}".format(resource_name))
+            log.info("Could not get owner from ownerReferences"
+                     "for resource {}".format(resource_name))
     # Try to get owner from annotations
     else:
         try:
-            resource_created_by = json.loads(resource_metadata['annotations']['kubernetes.io/created-by'])
+            resource_created_by = json.loads(
+                resource_metadata['annotations']['kubernetes.io/created-by'])
             resource_owner_type = resource_created_by['reference']['kind']
             resource_owner_name = resource_created_by['reference']['name']
             return resource_owner_type, resource_owner_name
         except Exception:
-            log.info("Could not get resource owner from annotations for resource {}".format(resource_name))
+            log.info("Could not get resource owner from annotations"
+                     "for resource {}".format(resource_name))
     return None
 
 
@@ -807,7 +907,8 @@ def _get_pod_owner_pair(kubernetes_connector, pod_owner_type, pod_owner_name, po
                      "Setting ReplicaSet as dimension")
             deployment_name = None
         else:
-            replicaset_endpoint = "/apis/extensions/v1beta1/namespaces/{}/replicasets/{}".format(pod_namespace, pod_owner_name)
+            replicaset_endpoint = "/apis/extensions/v1beta1/namespaces/{}/replicasets/{}".format(
+                pod_namespace, pod_owner_name)
             deployment_name = _attempt_to_get_owner_name(kubernetes_connector, replicaset_endpoint)
         if not deployment_name:
             return 'replica_set', pod_owner_name
@@ -821,7 +922,8 @@ def _get_pod_owner_pair(kubernetes_connector, pod_owner_type, pod_owner_name, po
                      "Setting job as dimension")
             cronjob_name = None
         else:
-            job_endpoint = "/apis/batch/v1/namespaces/{}/jobs/{}".format(pod_namespace, pod_owner_name)
+            job_endpoint = "/apis/batch/v1/namespaces/{}/jobs/{}".format(
+                pod_namespace, pod_owner_name)
             cronjob_name = _attempt_to_get_owner_name(kubernetes_connector, job_endpoint)
         if not cronjob_name:
             return 'job', pod_owner_name
@@ -836,5 +938,9 @@ def get_pod_owner(kubernetes_connector, pod_metadata):
     pod_namespace = pod_metadata['namespace']
     owner_pair = _parse_manifest_for_owner(pod_metadata)
     if owner_pair:
-        return _get_pod_owner_pair(kubernetes_connector, owner_pair[0], owner_pair[1], pod_namespace)
+        return _get_pod_owner_pair(
+            kubernetes_connector,
+            owner_pair[0],
+            owner_pair[1],
+            pod_namespace)
     return None

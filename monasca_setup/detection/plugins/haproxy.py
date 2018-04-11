@@ -26,9 +26,17 @@ class HAProxy(monasca_setup.detection.Plugin):
         config = monasca_setup.agent_config.Plugins()
         log.info("\tEnabling HAProxy process watching")
 
-        config.merge(monasca_setup.detection.watch_process(['haproxy'], 'haproxy', exact_match=False))
+        config.merge(
+            monasca_setup.detection.watch_process(
+                ['haproxy'],
+                'haproxy',
+                exact_match=False))
         if monasca_setup.detection.find_process_cmdline('keepalived') is not None:
-            config.merge(monasca_setup.detection.watch_process(['keepalived'], 'haproxy', exact_match=False))
+            config.merge(
+                monasca_setup.detection.watch_process(
+                    ['keepalived'],
+                    'haproxy',
+                    exact_match=False))
 
         proxy_cfgfile = '/etc/haproxy/haproxy.cfg'
         if os.path.exists(proxy_cfgfile):
@@ -57,11 +65,17 @@ class HAProxy(monasca_setup.detection.Plugin):
                     password = auth[1].strip()
 
             if url is None:
-                log.warn('Unable to parse haproxy config for stats url, skipping HAProxy check plugin configuration')
+                log.warn(
+                    'Unable to parse haproxy config for stats url, skipping HAProxy check plugin'
+                    'configuration')
             else:
                 log.info('Enabling the HAProxy check plugin')
-                instance_config = {'name': url, 'url': url, 'status_check': False, 'collect_service_stats_only': True,
-                                   'collect_status_metrics': False}
+                instance_config = {
+                    'name': url,
+                    'url': url,
+                    'status_check': False,
+                    'collect_service_stats_only': True,
+                    'collect_status_metrics': False}
                 if user is not None:
                     instance_config['username'] = user
                 if password is not None:

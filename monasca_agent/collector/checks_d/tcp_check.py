@@ -78,13 +78,18 @@ class TCPCheck(ServicesCheck):
             length = int((time.time() - start) * 1000)
             if "timed out" in str(e):
 
-                # The connection timed out because it took more time than the system tcp stack allows
+                # The connection timed out because it took more time than the system tcp
+                # stack allows
                 self.log.warning(
-                    "The connection timed out because it took more time than the system tcp stack allows. You might want to change this setting to allow longer timeouts")
+                    "The connection timed out because it took more time than"
+                    "the system tcp stack allows. You might want to change this"
+                    "setting to allow longer timeouts")
                 self.log.info("System tcp timeout. Assuming that the checked system is down")
                 return Status.DOWN, """Socket error: %s.
-                 The connection timed out after %s ms because it took more time than the system tcp stack allows.
-                 You might want to change this setting to allow longer timeouts""" % (str(e), length)
+                The connection timed out after %s ms
+                because it took more time than the system tcp stack allows.
+                You might want to change this setting to allow longer timeouts
+                """ % (str(e), length)
             else:
                 self.log.info("%s:%s is DOWN (%s). Connection failed after %s ms" %
                               (addr, port, str(e), length))

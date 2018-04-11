@@ -125,7 +125,8 @@ class Redis(AgentCheck):
 
             except TypeError:
                 raise Exception(
-                    "You need a redis library that supports authenticated connections. Try sudo easy_install redis.")
+                    "You need a redis library that supports authenticated connections."
+                    "Try sudo easy_install redis.")
 
         return self.connections[key]
 
@@ -152,7 +153,8 @@ class Redis(AgentCheck):
             import redis
 
             raise Exception(
-                """Unable to run the info command. This is probably an issue with your version of the python-redis library.
+                """Unable to run the info command. This is probably an issue with your version
+                of the python-redis library.
                 Minimum required version: 2.4.11
                 Your current version: %s
                 Please upgrade to a newer version by running sudo easy_install redis""" %
@@ -189,11 +191,13 @@ class Redis(AgentCheck):
 
     def check(self, instance):
         try:
-            import redis
+            import redis  # noqa
         except ImportError:
             raise Exception(
-                'Python Redis Module can not be imported. Please check the installation instruction on the Datadog Website')
+                'Python Redis Module can not be imported. Please check the installation'
+                'instruction on the Datadog Website')
 
-        if ("host" not in instance or "port" not in instance) and "unix_socket_path" not in instance:
+        if ("host" not in instance or "port" not in instance) \
+                and "unix_socket_path" not in instance:
             raise Exception("You must specify a host/port couple or a unix_socket_path")
         self._check_db(instance)

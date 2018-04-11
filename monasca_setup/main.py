@@ -30,9 +30,10 @@ PREFIX_DIR = os.path.dirname(os.path.dirname(os.path.realpath(sys.argv[0])))
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description='Configure and setup the agent. In a full run it will detect running' +
-                                                 ' daemons then configure and start the agent.',
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description='Configure and setup the agent. In a full run it will detect running' +
+        ' daemons then configure and start the agent.',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     args = parse_arguments(parser)
 
     if args.verbose:
@@ -55,7 +56,8 @@ def main(argv=None):
 
         # Verify required options
         if args.username is None or args.password is None or args.keystone_url is None:
-            log.error('Username, password and keystone_url are required when running full configuration.')
+            log.error('Username, password and keystone_url are required when running full'
+                      'configuration.')
             parser.print_help()
             sys.exit(1)
         base_configuration(args)
@@ -76,18 +78,22 @@ def main(argv=None):
     if args.remove:  # Remove entries for each plugin from the various plugin config files
         changes = remove_config(args, plugin_names)
     else:
-        # Run detection for all the plugins, halting on any failures if plugins were specified in the arguments
+        # Run detection for all the plugins, halting on any failures if plugins
+        # were specified in the arguments
         detected_config = plugin_detection(plugins, args.template_dir, args.detection_args,
                                            args.detection_args_json,
                                            skip_failed=(args.detection_plugins is None))
         if detected_config is None:
-            return 1  # Indicates detection problem, skip remaining steps and give non-zero exit code
+            # Indicates detection problem, skip remaining steps and give non-zero exit code
+            return 1
 
         changes = modify_config(args, detected_config)
 
     # Don't restart if only doing detection plugins and no changes found
     if args.detection_plugins is not None and not changes:
-        log.info('No changes found for plugins {0}, skipping restart of Monasca Agent'.format(plugin_names))
+        log.info(
+            'No changes found for plugins {0}, skipping restart of'
+            'Monasca Agent'.format(plugin_names))
         return 0
     elif args.dry_run:
         log.info('Running in dry mode, skipping changes and restart of Monasca Agent')
@@ -151,9 +157,11 @@ def modify_config(args, detected_config):
             if args.dry_run:
                 continue
             else:
-                agent_config.save_plugin_config(args.config_dir, detection_plugin_name, args.user, new_config)
+                agent_config.save_plugin_config(
+                    args.config_dir, detection_plugin_name, args.user, new_config)
         else:
-            config = agent_config.read_plugin_config_from_disk(args.config_dir, detection_plugin_name)
+            config = agent_config.read_plugin_config_from_disk(
+                args.config_dir, detection_plugin_name)
             # merge old and new config, new has precedence
             if config is not None:
                 # For HttpCheck, if the new input url has the same host and
@@ -196,7 +204,8 @@ def modify_config(args, detected_config):
                 log.info("Changes would be made to the config file for the {0}"
                          " check plugin".format(detection_plugin_name))
             else:
-                agent_config.save_plugin_config(args.config_dir, detection_plugin_name, args.user, new_config)
+                agent_config.save_plugin_config(
+                    args.config_dir, detection_plugin_name, args.user, new_config)
     return modified_config
 
 
@@ -209,82 +218,167 @@ def validate_positive(value):
 
 def parse_arguments(parser):
     parser.add_argument(
-        '-u', '--username', help="Username used for keystone authentication. Required for basic configuration.")
+        '-u',
+        '--username',
+        help="Username used for keystone authentication. Required for basic configuration.")
     parser.add_argument(
-        '-p', '--password', help="Password used for keystone authentication. Required for basic configuration.")
+        '-p',
+        '--password',
+        help="Password used for keystone authentication. Required for basic configuration.")
 
-    parser.add_argument('--user_domain_id', help="User domain id for keystone authentication", default='')
-    parser.add_argument('--user_domain_name', help="User domain name for keystone authentication", default='')
+    parser.add_argument(
+        '--user_domain_id',
+        help="User domain id for keystone authentication",
+        default='')
+    parser.add_argument(
+        '--user_domain_name',
+        help="User domain name for keystone authentication",
+        default='')
     parser.add_argument('--keystone_url', help="Keystone url. Required for basic configuration.")
 
-    parser.add_argument('--project_name', help="Project name for keystone authentication", default='')
-    parser.add_argument('--project_domain_id', help="Project domain id for keystone authentication", default='')
-    parser.add_argument('--project_domain_name', help="Project domain name for keystone authentication", default='')
-    parser.add_argument('--project_id', help="Keystone project id  for keystone authentication", default='')
+    parser.add_argument(
+        '--project_name',
+        help="Project name for keystone authentication",
+        default='')
+    parser.add_argument(
+        '--project_domain_id',
+        help="Project domain id for keystone authentication",
+        default='')
+    parser.add_argument(
+        '--project_domain_name',
+        help="Project domain name for keystone authentication",
+        default='')
+    parser.add_argument(
+        '--project_id',
+        help="Keystone project id  for keystone authentication",
+        default='')
 
-    parser.add_argument('--monasca_url', help="Monasca API url, if not defined the url is pulled from keystone",
-                        type=six.text_type,
-                        default='')
-    parser.add_argument('--service_type', help="Monasca API url service type in keystone catalog", default='')
-    parser.add_argument('--endpoint_type', help="Monasca API url endpoint type in keystone catalog", default='')
-    parser.add_argument('--region_name', help="Monasca API url region name in keystone catalog", default='')
+    parser.add_argument(
+        '--monasca_url',
+        help="Monasca API url, if not defined the url is pulled from keystone",
+        type=six.text_type,
+        default='')
+    parser.add_argument(
+        '--service_type',
+        help="Monasca API url service type in keystone catalog",
+        default='')
+    parser.add_argument(
+        '--endpoint_type',
+        help="Monasca API url endpoint type in keystone catalog",
+        default='')
+    parser.add_argument(
+        '--region_name',
+        help="Monasca API url region name in keystone catalog",
+        default='')
 
-    parser.add_argument('--system_only', help="Setup the service but only configure the base config and system " +
-                                              "metrics (cpu, disk, load, memory, network).",
-                        action="store_true", default=False)
-    parser.add_argument('-d', '--detection_plugins', nargs='*',
-                        help="Skip base config and service setup and only configure this space separated list. " +
-                             "This assumes the base config has already run.")
+    parser.add_argument(
+        '--system_only',
+        help="Setup the service but only configure the base config and system " +
+        "metrics (cpu, disk, load, memory, network).",
+        action="store_true",
+        default=False)
+    parser.add_argument(
+        '-d',
+        '--detection_plugins',
+        nargs='*',
+        help="Skip base config and service setup and only configure this space separated list. " +
+        "This assumes the base config has already run.")
     parser.add_argument('--skip_detection_plugins', nargs='*',
                         help="Skip detection for all plugins in this space separated list.")
     detection_args_group = parser.add_mutually_exclusive_group()
-    detection_args_group.add_argument('-a', '--detection_args', help="A string of arguments that will be passed to detection " +
-                                      "plugins. Only certain detection plugins use arguments.")
-    detection_args_group.add_argument('-json', '--detection_args_json',
-                                      help="A JSON string that will be passed to detection plugins that parse JSON.")
+    detection_args_group.add_argument(
+        '-a',
+        '--detection_args',
+        help="A string of arguments that will be passed to detection " +
+        "plugins. Only certain detection plugins use arguments.")
+    detection_args_group.add_argument(
+        '-json',
+        '--detection_args_json',
+        help="A JSON string that will be passed to detection plugins that parse JSON.")
     parser.add_argument('--check_frequency', help="How often to run metric collection in seconds",
                         type=validate_positive, default=30)
-    parser.add_argument('--num_collector_threads', help="Number of Threads to use in Collector " +
-                                                        "for running checks", type=validate_positive, default=1)
-    parser.add_argument('--pool_full_max_retries', help="Maximum number of collection cycles where all of the threads " +
-                                                        "in the pool are still running plugins before the " +
-                                                        "collector will exit and be restart",
-                        type=validate_positive, default=4)
-    parser.add_argument('--plugin_collect_time_warn', help="Number of seconds a plugin collection time exceeds " +
-                                                           "that causes a warning to be logged for that plugin",
-                        type=validate_positive, default=6)
-    parser.add_argument('--dimensions', help="Additional dimensions to set for all metrics. A comma separated list " +
-                                             "of name/value pairs, 'name:value,name2:value2'")
-    parser.add_argument('--ca_file', help="Sets the path to the ca certs file if using certificates. " +
-                                          "Required only if insecure is set to False", default='')
-    parser.add_argument('--insecure', help="Set whether certificates are used for Keystone authentication",
-                        default=False)
-    parser.add_argument('--config_dir', help="Configuration directory", default='/etc/monasca/agent')
-    parser.add_argument('--log_dir', help="monasca-agent log directory", default='/var/log/monasca/agent')
-    parser.add_argument('--log_level', help="monasca-agent logging level (ERROR, WARNING, INFO, DEBUG)", required=False,
-                        default='WARN')
+    parser.add_argument(
+        '--num_collector_threads',
+        help="Number of Threads to use in Collector " +
+        "for running checks",
+        type=validate_positive,
+        default=1)
+    parser.add_argument(
+        '--pool_full_max_retries',
+        help="Maximum number of collection cycles where all of the threads " +
+        "in the pool are still running plugins before the " +
+        "collector will exit and be restart",
+        type=validate_positive,
+        default=4)
+    parser.add_argument(
+        '--plugin_collect_time_warn',
+        help="Number of seconds a plugin collection time exceeds " +
+        "that causes a warning to be logged for that plugin",
+        type=validate_positive,
+        default=6)
+    parser.add_argument(
+        '--dimensions',
+        help="Additional dimensions to set for all metrics. A comma separated list " +
+        "of name/value pairs, 'name:value,name2:value2'")
+    parser.add_argument(
+        '--ca_file',
+        help="Sets the path to the ca certs file if using certificates. " +
+        "Required only if insecure is set to False",
+        default='')
+    parser.add_argument(
+        '--insecure',
+        help="Set whether certificates are used for Keystone authentication",
+        default=False)
+    parser.add_argument(
+        '--config_dir',
+        help="Configuration directory",
+        default='/etc/monasca/agent')
+    parser.add_argument(
+        '--log_dir',
+        help="monasca-agent log directory",
+        default='/var/log/monasca/agent')
+    parser.add_argument(
+        '--log_level',
+        help="monasca-agent logging level (ERROR, WARNING, INFO, DEBUG)",
+        required=False,
+        default='WARN')
     parser.add_argument('--template_dir', help="Alternative template directory",
                         default=os.path.join(PREFIX_DIR, 'share/monasca/agent'))
     parser.add_argument('--overwrite',
                         help="Overwrite existing plugin configuration. " +
                              "The default is to merge. agent.yaml is always overwritten.",
                         action="store_true")
-    parser.add_argument('-r', '--remove', help="Rather than add the detected configuration remove it.",
-                        action="store_true", default=False)
-    parser.add_argument('--skip_enable', help="By default the service is enabled, " +
-                                              "which requires the script run as root. Set this to skip that step.",
-                        action="store_true")
+    parser.add_argument(
+        '-r',
+        '--remove',
+        help="Rather than add the detected configuration remove it.",
+        action="store_true",
+        default=False)
+    parser.add_argument(
+        '--skip_enable',
+        help="By default the service is enabled, " +
+        "which requires the script run as root. Set this to skip that step.",
+        action="store_true")
     parser.add_argument('--install_plugins_only', help="Only update plugin "
                         "configuration, do not configure services, users, etc."
                         " or restart services",
                         action="store_true")
     parser.add_argument('--user', help="User name to run monasca-agent as", default='mon-agent')
-    parser.add_argument('-s', '--service', help="Service this node is associated with, added as a dimension.")
-    parser.add_argument('--amplifier', help="Integer for the number of additional measurements to create. " +
-                                            "Additional measurements contain the 'amplifier' dimension. " +
-                                            "Useful for load testing; not for production use.", default=0)
+    parser.add_argument(
+        '-s',
+        '--service',
+        help="Service this node is associated with, added as a dimension.")
+    parser.add_argument(
+        '--amplifier',
+        help="Integer for the number of additional measurements to create. " +
+        "Additional measurements contain the 'amplifier' dimension. " +
+        "Useful for load testing; not for production use.",
+        default=0)
     parser.add_argument('-v', '--verbose', help="Verbose Output", action="store_true")
-    parser.add_argument('--dry_run', help="Make no changes just report on changes", action="store_true")
+    parser.add_argument(
+        '--dry_run',
+        help="Make no changes just report on changes",
+        action="store_true")
     parser.add_argument('--max_buffer_size',
                         help="Maximum number of batches of measurements to"
                              " buffer while unable to communicate with monasca-api",
@@ -312,13 +406,21 @@ def parse_arguments(parser):
     return parser.parse_args()
 
 
-def plugin_detection(plugins, template_dir, detection_args, detection_args_json, skip_failed=True, remove=False):
-    """Runs the detection step for each plugin in the list and returns the complete detected agent config.
+def plugin_detection(
+        plugins,
+        template_dir,
+        detection_args,
+        detection_args_json,
+        skip_failed=True,
+        remove=False):
+    """Runs the detection step for each plugin in the list and returns the complete detected
+    agent config.
     :param plugins: A list of detection plugin classes
     :param template_dir: Location of plugin configuration templates
     :param detection_args: Arguments passed to each detection plugin
     :param skip_failed: When False any detection failure causes the run to halt and return None
-    :return: An agent_config instance representing the total configuration from all detection plugins run.
+    :return: An agent_config instance representing the total configuration from all detection
+             plugins run.
     """
     plugin_config = agent_config.Plugins()
     if detection_args_json:
@@ -364,7 +466,8 @@ def remove_config(args, plugin_names):
         deletes = False
         plugin_name = os.path.splitext(os.path.basename(file_path))[0]
         config = agent_config.read_plugin_config_from_disk(args.config_dir, plugin_name)
-        new_instances = []  # To avoid odd issues from iterating over a list you delete from, build a new instead
+        # To avoid odd issues from iterating over a list you delete from, build a new instead
+        new_instances = []
         if args.detection_args is None:
             for inst in config['instances']:
                 if 'built_by' in inst and inst['built_by'] in plugin_names:

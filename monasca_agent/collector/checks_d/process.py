@@ -92,7 +92,8 @@ class ProcessCheck(checks.AgentCheck):
                 total_thr = self._safely_increment_var(total_thr, p.num_threads())
 
                 try:
-                    total_open_file_descriptors = self._safely_increment_var(total_open_file_descriptors, float(p.num_fds()))
+                    total_open_file_descriptors = self._safely_increment_var(
+                        total_open_file_descriptors, float(p.num_fds()))
                 except psutil.AccessDenied:
                     got_denied = True
 
@@ -105,10 +106,14 @@ class ProcessCheck(checks.AgentCheck):
                 if io_permission:
                     try:
                         io_counters = p.io_counters()
-                        total_read_count = self._safely_increment_var(total_read_count, io_counters.read_count)
-                        total_write_count = self._safely_increment_var(total_write_count, io_counters.write_count)
-                        total_read_kbytes = self._safely_increment_var(total_read_kbytes, float(io_counters.read_bytes / 1024))
-                        total_write_kbytes = self._safely_increment_var(total_write_kbytes, float(io_counters.write_bytes / 1024))
+                        total_read_count = self._safely_increment_var(
+                            total_read_count, io_counters.read_count)
+                        total_write_count = self._safely_increment_var(
+                            total_write_count, io_counters.write_count)
+                        total_read_kbytes = self._safely_increment_var(
+                            total_read_kbytes, float(io_counters.read_bytes / 1024))
+                        total_write_kbytes = self._safely_increment_var(
+                            total_write_kbytes, float(io_counters.write_bytes / 1024))
                     except psutil.AccessDenied:
                         self.log.debug('monasca-agent user does not have ' +
                                        'access to I/O counters for process' +
@@ -130,8 +135,14 @@ class ProcessCheck(checks.AgentCheck):
                            "when trying to get the number of file descriptors")
 
         return dict(zip(ProcessCheck.PROCESS_GAUGE,
-                        (total_thr, total_cpu, total_rss, total_open_file_descriptors, total_read_count,
-                         total_write_count, total_read_kbytes, total_write_kbytes)))
+                        (total_thr,
+                         total_cpu,
+                         total_rss,
+                         total_open_file_descriptors,
+                         total_read_count,
+                         total_write_count,
+                         total_read_kbytes,
+                         total_write_kbytes)))
 
     def prepare_run(self):
         """Collect the list of processes once before each run"""
@@ -164,13 +175,15 @@ class ProcessCheck(checks.AgentCheck):
         if name is None:
             raise KeyError('The "name" of process groups is mandatory')
 
-        if (search_string is None and username is None) or (search_string is not None and username is not None):
+        if (search_string is None and username is None) or (
+                search_string is not None and username is not None):
             raise KeyError('"You must provide either "search_string" or "user"')
 
         if username is None:
             dimensions = self._set_dimensions({'process_name': name}, instance)
         else:
-            dimensions = self._set_dimensions({'process_user': username, 'process_name': name}, instance)
+            dimensions = self._set_dimensions(
+                {'process_user': username, 'process_name': name}, instance)
 
         pids = self.find_pids(search_string, username, exact_match=exact_match)
 

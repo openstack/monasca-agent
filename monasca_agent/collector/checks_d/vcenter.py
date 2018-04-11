@@ -5,13 +5,9 @@ Generic VCenter check. This check allows you to specify particular metrics that
 you want from vCenter in your configuration.
 """
 
-import json
-import logging as log
 from monasca_agent.collector.checks import AgentCheck
-from monasca_agent.common.config import Config
 from oslo_vmware import api
 from oslo_vmware import vim_util
-import requests
 import traceback
 
 CLUSTER_COMPUTE_PROPERTIES = ["name", "host", "datastore"]
@@ -158,23 +154,23 @@ class VCenterCheck(AgentCheck):
                 self._build_resource_dict(mor)
 
     def _get_sample(self, samples, counter_name, is_summation=False):
-            res = 0
-            num_samples = 0
+        res = 0
+        num_samples = 0
 
-            for cn in samples:
-                if cn.startswith(counter_name):
-                    vals = samples[cn]
-                    if vals:
-                        for val in vals:
-                            i_val = int(val)
-                            if i_val != -1:
-                                res += i_val
-                                num_samples += 1
+        for cn in samples:
+            if cn.startswith(counter_name):
+                vals = samples[cn]
+                if vals:
+                    for val in vals:
+                        i_val = int(val)
+                        if i_val != -1:
+                            res += i_val
+                            num_samples += 1
 
-            if not is_summation and num_samples:
-                res /= num_samples
+        if not is_summation and num_samples:
+            res /= num_samples
 
-            return res
+        return res
 
     def _get_shared_datastores(self, datastore_stats, managed_cluster):
         """Method to find the shared datastores associated with the cluster
@@ -608,8 +604,8 @@ class VcenterOperations(object):
                     name = self.counters[perf_metric_series_csv.id.counterId]
                     instance = perf_metric_series_csv.id.instance
                     if (instance is not None and
-                       len(instance) > 0 and
-                       instance is not "*"):
+                        len(instance) > 0 and
+                            instance is not "*"):
                         name += "." + instance
                     perf_result[name] = perf_metric_series_csv.value
 

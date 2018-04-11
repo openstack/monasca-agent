@@ -17,8 +17,6 @@
 import logging
 import os
 
-import yaml
-
 import monasca_setup.agent_config
 import monasca_setup.detection
 
@@ -50,7 +48,8 @@ class Zookeeper(monasca_setup.detection.Plugin):
             if not process_found:
                 log.error('Zookeeper process has not been found: {0}'.format(err_str))
             elif not has_config_file:
-                log.error('Zookeeper plugin cannot find configuration file: {0}. {1}'.format(self._cfg_file, err_str))
+                log.error('Zookeeper plugin cannot find configuration '
+                          'file: {0}. {1}'.format(self._cfg_file, err_str))
 
     def build_config(self):
         """Build the config as a Plugins object and return.
@@ -60,8 +59,11 @@ class Zookeeper(monasca_setup.detection.Plugin):
         host, port = self._read_config_file(self._cfg_file)
         # First watch the process
         log.info("\tWatching the zookeeper process.")
-        config.merge(monasca_setup.detection.watch_process(['org.apache.zookeeper.server'], 'zookeeper',
-                                                           exact_match=False))
+        config.merge(
+            monasca_setup.detection.watch_process(
+                ['org.apache.zookeeper.server'],
+                'zookeeper',
+                exact_match=False))
 
         log.info("\tEnabling the zookeeper plugin")
         config['zk'] = {

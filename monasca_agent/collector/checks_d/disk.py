@@ -81,21 +81,33 @@ class Disk(checks.AgentCheck):
                                    dimensions=dimensions)
                         disk_count += 1
 
-                    log.debug('Collected {0} disk usage metrics for partition {1}'.format(disk_count, partition.mountpoint))
+                    log.debug('Collected {0} disk usage metrics for partition {1}'.format(
+                        disk_count,
+                        partition.mountpoint))
                     disk_count = 0
                     if send_io_stats:
                         try:
                             stats = disk_stats[device_name]
-                            self.rate("io.read_req_sec", round(float(stats.read_count), 2), device_name=device_name, dimensions=dimensions)
-                            self.rate("io.write_req_sec", round(float(stats.write_count), 2), device_name=device_name, dimensions=dimensions)
-                            self.rate("io.read_kbytes_sec", round(float(stats.read_bytes / 1024), 2), device_name=device_name, dimensions=dimensions)
-                            self.rate("io.write_kbytes_sec", round(float(stats.write_bytes / 1024), 2), device_name=device_name, dimensions=dimensions)
-                            self.rate("io.read_time_sec", round(float(stats.read_time / 1000), 2), device_name=device_name, dimensions=dimensions)
-                            self.rate("io.write_time_sec", round(float(stats.write_time / 1000), 2), device_name=device_name, dimensions=dimensions)
+                            self.rate("io.read_req_sec", round(float(stats.read_count), 2),
+                                      device_name=device_name, dimensions=dimensions)
+                            self.rate("io.write_req_sec", round(float(stats.write_count), 2),
+                                      device_name=device_name, dimensions=dimensions)
+                            self.rate("io.read_kbytes_sec",
+                                      round(float(stats.read_bytes / 1024), 2),
+                                      device_name=device_name, dimensions=dimensions)
+                            self.rate("io.write_kbytes_sec",
+                                      round(float(stats.write_bytes / 1024), 2),
+                                      device_name=device_name, dimensions=dimensions)
+                            self.rate("io.read_time_sec", round(float(stats.read_time / 1000), 2),
+                                      device_name=device_name, dimensions=dimensions)
+                            self.rate("io.write_time_sec", round(float(stats.write_time / 1000), 2),
+                                      device_name=device_name, dimensions=dimensions)
 
-                            log.debug('Collected 6 disk I/O metrics for partition {0}'.format(partition.mountpoint))
+                            log.debug('Collected 6 disk I/O metrics for'
+                                      'partition {0}'.format(partition.mountpoint))
                         except KeyError:
-                            log.debug('No Disk I/O metrics available for {0}...Skipping'.format(device_name))
+                            log.debug('No Disk I/O metrics available for'
+                                      ' {0}...Skipping'.format(device_name))
 
         if send_rollup_stats:
             self.gauge("disk.total_space_mb",

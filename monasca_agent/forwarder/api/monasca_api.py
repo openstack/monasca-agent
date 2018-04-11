@@ -171,7 +171,9 @@ class MonascaAPI(object):
             log.info("Current measurements in queue: {0} of {1}".format(
                 self._current_number_measurements, self._max_measurement_buffer_size))
 
-            log.info("A message will be logged for every {0} messages queued.".format(MonascaAPI.LOG_INTERVAL))
+            log.info(
+                "A message will be logged for every {0} messages queued.".format(
+                    MonascaAPI.LOG_INTERVAL))
             self._log_interval_remaining = MonascaAPI.LOG_INTERVAL
         else:
             self._log_interval_remaining -= 1

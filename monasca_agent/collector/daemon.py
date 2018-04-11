@@ -92,7 +92,8 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
         # Load the checks_d checks
         checksd = util.load_check_directory()
 
-        self.collector = checks.collector.Collector(config, monasca_agent.common.emitter.http_emitter, checksd)
+        self.collector = checks.collector.Collector(
+            config, monasca_agent.common.emitter.http_emitter, checksd)
 
         check_frequency = int(config['check_freq'])
 
@@ -146,9 +147,10 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
                 if collection_time < check_frequency:
                     time.sleep(check_frequency - collection_time)
                 else:
-                    log.info("Collection took {0} which is as long or longer then the configured collection frequency "
-                             "of {1}. Starting collection again without waiting in result.".format(collection_time,
-                                                                                                   check_frequency))
+                    log.info(
+                        "Collection took {0} which is as long or longer then the configured "
+                        "collection frequency of {1}. Starting collection again without waiting "
+                        "in result.".format(collection_time, check_frequency))
         self._stop(exitTimeout)
 
         # Explicitly kill the process, because it might be running
@@ -173,8 +175,9 @@ def main():
     if collector_restart_interval in range(1, 49):
         pass
     else:
-        log.error("Collector_restart_interval = {0} is out of legal range"
-                  " [1, 48]. Reset collector_restart_interval to 24".format(collector_restart_interval))
+        log.error(
+            "Collector_restart_interval = {0} is out of legal range"
+            " [1, 48]. Reset collector_restart_interval to 24".format(collector_restart_interval))
         collector_restart_interval = 24
 
     COMMANDS = [
@@ -281,7 +284,8 @@ def main():
             print("You have to specify one of the following commands:")
             for command, desc in jmxfetch.JMX_LIST_COMMANDS.items():
                 print("      - %s [OPTIONAL: LIST OF CHECKS]: %s" % (command, desc))
-            print("Example: sudo /etc/init.d/monasca-agent jmx list_matching_attributes tomcat jmx solr")
+            print("Example: sudo /etc/init.d/monasca-agent jmx list_matching_attributes "
+                  "tomcat jmx solr")
             print("\n")
 
         else:
@@ -297,7 +301,9 @@ def main():
                                                 checks_list,
                                                 reporter="console")
             if not should_run:
-                print("Couldn't find any valid JMX configuration in your conf.d directory: %s" % confd_path)
+                print(
+                    "Couldn't find any valid JMX configuration in your conf.d directory: %s" %
+                    confd_path)
                 print("Have you enabled any JMX checks ?")
 
     return 0

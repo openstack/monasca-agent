@@ -63,10 +63,14 @@ class Systemd(LinuxInit):
 
         # Write the systemd script
         init_path = '/etc/systemd/system/{0}.service'.format(self.name)
-        with open(os.path.join(self.template_dir, 'monasca-agent.service.template'), 'r') as template:
+        with open(os.path.join(self.template_dir, 'monasca-agent.service.template'),
+                  'r') as template:
             with open(init_path, 'w') as service_script:
-                service_script.write(template.read().format(prefix=self.prefix_dir, monasca_user=self.username,
-                                                            config_dir=self.config_dir))
+                service_script.write(
+                    template.read().format(
+                        prefix=self.prefix_dir,
+                        monasca_user=self.username,
+                        config_dir=self.config_dir))
         os.chown(init_path, 0, 0)
         os.chmod(init_path, 0o644)
 
@@ -110,11 +114,25 @@ class Systemd(LinuxInit):
 
 class SysV(LinuxInit):
 
-    def __init__(self, prefix_dir, config_dir, log_dir, template_dir, username, name='monasca-agent'):
+    def __init__(
+            self,
+            prefix_dir,
+            config_dir,
+            log_dir,
+            template_dir,
+            username,
+            name='monasca-agent'):
         """Setup this service with the given init template.
 
         """
-        service.Service.__init__(self, prefix_dir, config_dir, log_dir, template_dir, name, username)
+        service.Service.__init__(
+            self,
+            prefix_dir,
+            config_dir,
+            log_dir,
+            template_dir,
+            name,
+            username)
         self.init_script = '/etc/init.d/%s' % self.name
         self.init_template = os.path.join(template_dir, 'monasca-agent.init.template')
 
@@ -127,8 +145,11 @@ class SysV(LinuxInit):
         # Write the init script and enable.
         with open(self.init_template, 'r') as template:
             with open(self.init_script, 'w') as conf:
-                conf.write(template.read().format(prefix=self.prefix_dir, monasca_user=self.username,
-                                                  config_dir=self.config_dir))
+                conf.write(
+                    template.read().format(
+                        prefix=self.prefix_dir,
+                        monasca_user=self.username,
+                        config_dir=self.config_dir))
         os.chown(self.init_script, 0, 0)
         os.chmod(self.init_script, 0o755)
 
@@ -148,7 +169,8 @@ class SysV(LinuxInit):
 
         log.info('Starting {0} service via SysV init script'.format(self.name))
         if restart:
-            subprocess.check_call([self.init_script, 'restart'])  # Throws CalledProcessError on error
+            # Throws CalledProcessError on error
+            subprocess.check_call([self.init_script, 'restart'])
         else:
             subprocess.check_call([self.init_script, 'start'])  # Throws CalledProcessError on error
         return True

@@ -35,12 +35,18 @@ JMX_CHECKS = [
 ]
 JMX_COLLECT_COMMAND = 'collect'
 JMX_LIST_COMMANDS = {
-    'list_everything': 'List every attributes available that has a type supported by JMXFetch',
-    'list_collected_attributes': 'List attributes that will actually be collected by your current instances configuration',
-    'list_matching_attributes': 'List attributes that match at least one of your instances configuration',
-    'list_not_matching_attributes': "List attributes that don't match any of your instances configuration",
-    'list_limited_attributes': "List attributes that do match one of your instances configuration but that are not being collected because it would exceed the number of metrics that can be collected",
-    JMX_COLLECT_COMMAND: "Start the collection of metrics based on your current configuration and display them in the console"}
+    "list_everything": "List every attributes available that has a type supported by JMXFetch",
+    "list_collected_attributes": "List attributes that will actually be collected by your current "
+    "instances configuration",
+    "list_matching_attributes": "List attributes that match at least one of your instances "
+    "configuration",
+    "list_not_matching_attributes": "List attributes that don't match any of your instances "
+    "configuration",
+    "list_limited_attributes": "List attributes that do match one of your instances "
+    "configuration but that are not being collected because it would "
+    "exceed the number of metrics that can be collected",
+    JMX_COLLECT_COMMAND: "Start the collection of metrics based on your current "
+    "configuration and display them in the console"}
 
 PYTHON_JMX_STATUS_FILE = 'jmx_status_python.yaml'
 
@@ -168,7 +174,8 @@ class JMXFetch(object):
             instances = check_config.get('instances', [])
             if not isinstance(instances, list) or len(instances) == 0:
                 raise InvalidJMXConfiguration(
-                    'You need to have at least one instance defined in the YAML file for this check')
+                    'You need to have at least one instance defined in the YAML '
+                    'file for this check')
 
             for inst in instances:
                 if not isinstance(inst, dict):
@@ -184,7 +191,8 @@ class JMXFetch(object):
 
                 if conf is None:
                     log.warning(
-                        "%s doesn't have a 'conf' section. Only basic JVM metrics will be collected. %s" %
+                        "%s doesn't have a 'conf' section. Only basic JVM metrics will "
+                        "be collected. %s" %
                         (inst, LINK_TO_DOC))
                 else:
                     if not isinstance(conf, list) or len(conf) == 0:

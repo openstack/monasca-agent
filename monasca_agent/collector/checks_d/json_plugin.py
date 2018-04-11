@@ -116,7 +116,7 @@ class JsonPlugin(checks.AgentCheck):
                 errors.append('%s: %s' % (path, err))
         msg = ''
         if errors:
-                msg = ', '.join(errors)
+            msg = ', '.join(errors)
         if msg:
             if len(msg) > 1024:  # keep well below length limit
                 msg = msg[:-1021] + '...'

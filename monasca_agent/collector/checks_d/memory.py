@@ -61,7 +61,7 @@ class Memory(checks.AgentCheck):
             count += 1
 
         if (hasattr(mem_info, 'buffers') and mem_info.buffers and
-           hasattr(mem_info, 'cached') and mem_info.cached):
+                hasattr(mem_info, 'cached') and mem_info.cached):
 
             mem_used_real = mem_info.used
             if psutil.version_info < (4, 4, 0):

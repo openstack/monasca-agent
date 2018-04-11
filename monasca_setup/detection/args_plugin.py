@@ -9,16 +9,20 @@ log = logging.getLogger(__name__)
 
 
 class ArgsPlugin(Plugin):
-    """Base plugin for detection plugins that take arguments for configuration rather than do detection."""
+    """Base plugin for detection plugins that take arguments for configuration rather than do
+    detection.
+    """
 
     def _build_instance(self, arg_list):
-        """If a value for each arg in the arg_list was specified build it into an instance dictionary. Also check for dimensions and add if they were specified.
+        """If a value for each arg in the arg_list was specified build it into an instance
+        dictionary. Also check for dimensions and add if they were specified.
         :param arg_list: Arguments to include
         :return: instance dictionary
         """
         instance = {}
         if 'dimensions' in self.args:
-            instance['dimensions'] = dict(item.strip().split(":") for item in self.args['dimensions'].split(","))
+            instance['dimensions'] = dict(item.strip().split(":")
+                                          for item in self.args['dimensions'].split(","))
         for arg in arg_list:
             if arg in self.args:
                 instance[arg] = self.args[arg]

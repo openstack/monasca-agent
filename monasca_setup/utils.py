@@ -14,14 +14,20 @@ log = logging.getLogger(__name__)
 
 
 def discover_plugins(custom_path):
-    """Find and import all detection plugins. It will look in detection/plugins dir of the code as well as custom_path
+    """Find and import all detection plugins. It will look in detection/plugins dir of the code
+    as well as custom_path
 
     :param custom_path: An additional path to search for detection plugins
     :return: A list of imported detection plugin classes.
     """
 
     # This was adapted from what monasca_agent.common.util.load_check_directory
-    plugin_paths = glob.glob(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'detection/plugins', '*.py'))
+    plugin_paths = glob.glob(
+        os.path.join(
+            os.path.dirname(
+                os.path.realpath(__file__)),
+            'detection/plugins',
+            '*.py'))
     plugin_paths.extend(glob.glob(os.path.join(custom_path, '*.py')))
 
     plugins = []
@@ -30,7 +36,10 @@ def discover_plugins(custom_path):
         if os.path.basename(plugin_path) == '__init__.py':
             continue
         try:
-            plugin = imp.load_source(os.path.splitext(os.path.basename(plugin_path))[0], plugin_path)
+            plugin = imp.load_source(
+                os.path.splitext(
+                    os.path.basename(plugin_path))[0],
+                plugin_path)
         except Exception:
             log.exception('Unable to import detection plugin {0}'.format(plugin_path))
 
@@ -60,8 +69,10 @@ def select_plugins(plugin_names, plugin_list, skip=False):
 
     if len(plugins) != len(plugin_names) and not skip:
         pnames = [p.__name__ for p in plugin_list]
-        log.warn("Not all plugins found, discovered plugins {0}\nAvailable plugins{1}".format(plugins,
-                                                                                              pnames))
+        log.warn(
+            "Not all plugins found, discovered plugins {0}\nAvailable plugins{1}".format(
+                plugins,
+                pnames))
 
     return plugins
 

@@ -13,9 +13,6 @@
 #    under the License.
 
 import logging
-import os
-
-import yaml
 
 import monasca_setup.agent_config
 import monasca_setup.detection

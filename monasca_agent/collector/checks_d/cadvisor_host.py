@@ -120,7 +120,8 @@ class CadvisorHost(AgentCheck):
                 try:
                     machine_info = requests.get(self.cadvisor_machine_url).json()
                 except Exception as ex:
-                    self.log.error("Error communicating with cAdvisor to collect machine data - {}".format(ex))
+                    self.log.error(
+                        "Error communicating with cAdvisor to collect machine data - {}".format(ex))
                 else:
                     self._parse_machine_info(machine_info)
             self._parse_send_metrics(host_metrics, dimensions)
@@ -164,7 +165,8 @@ class CadvisorHost(AgentCheck):
             file_dimensions['device'] = filesystem['device']
             usage_fs = -1
             capacity_fs = 0
-            for cadvisor_key, (metric_name, metric_types, metric_units) in filesystem_metrics.items():
+            for cadvisor_key, (metric_name, metric_types,
+                               metric_units) in filesystem_metrics.items():
                 if cadvisor_key in filesystem:
                     self._send_metrics("fs." + metric_name,
                                        filesystem[cadvisor_key],
@@ -175,14 +177,20 @@ class CadvisorHost(AgentCheck):
                 elif cadvisor_key == "capacity":
                     capacity_fs = int(filesystem[cadvisor_key])
             if usage_fs < 0:
-                self.log.warn("no value for usage size of {}, file system usage (percent) couldn't be calculated".format(filesystem['device']))
+                self.log.warn(
+                    "no value for usage size of {}, file system usage (percent) "
+                    "couldn't be calculated".format(
+                        filesystem['device']))
             elif capacity_fs > 0:
                 self._send_metrics("fs.usage_perc",
                                    (float(usage_fs) / capacity_fs) * 100,
                                    file_dimensions,
                                    ["gauge"], ["percent"])
             else:
-                self.log.warn("no value for capacity of {}, file system usage (percent) couldn't be calculated".format(filesystem['device']))
+                self.log.warn(
+                    "no value for capacity of {}, file system usage (percent) "
+                    "couldn't be calculated".format(
+                        filesystem['device']))
 
     def _parse_network(self, network_data, dimensions):
         network_interfaces = network_data['interfaces']
@@ -221,10 +229,20 @@ class CadvisorHost(AgentCheck):
             if cadvisor_key in cpu_usage:
                 # Convert nanoseconds to seconds
                 cpu_usage_sec = cpu_usage[cadvisor_key] / 1000000000.0
-                self._send_metrics("cpu." + metric_name, cpu_usage_sec, dimensions, metric_types, metric_units)
+                self._send_metrics(
+                    "cpu." + metric_name,
+                    cpu_usage_sec,
+                    dimensions,
+                    metric_types,
+                    metric_units)
                 # Provide metrics for number of cores if given
                 if self.num_cores > 0:
-                    self._send_metrics("cpu.num_cores", self.num_cores, dimensions, ["gauge"], ["number_of_cores"])
+                    self._send_metrics(
+                        "cpu.num_cores",
+                        self.num_cores,
+                        dimensions,
+                        ["gauge"],
+                        ["number_of_cores"])
 
     def _parse_send_metrics(self, metrics, dimensions):
         for host, cadvisor_metrics in metrics.items():

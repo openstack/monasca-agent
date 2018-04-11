@@ -34,10 +34,14 @@ class MonascaStatsd(object):
         config = cfg.Config()
         statsd_config = config.get_config(['Main', 'Statsd'])
 
-        # Create the aggregator (which is the point of communication between the server and reporting threads.
-        aggregator = agg.MetricsAggregator(util.get_hostname(),
-                                           recent_point_threshold=statsd_config['recent_point_threshold'],
-                                           tenant_id=statsd_config.get('global_delegated_tenant', None))
+        # Create the aggregator (which is the point of communication between the
+        # server and reporting threads.
+        aggregator = agg.MetricsAggregator(
+            util.get_hostname(),
+            recent_point_threshold=statsd_config['recent_point_threshold'],
+            tenant_id=statsd_config.get(
+                'global_delegated_tenant',
+                None))
 
         # Start the reporting thread.
         interval = int(statsd_config['monasca_statsd_interval'])
@@ -54,9 +58,13 @@ class MonascaStatsd(object):
         else:
             server_host = 'localhost'
 
-        self.server = udp.Server(aggregator, server_host, statsd_config['monasca_statsd_port'],
-                                 forward_to_host=statsd_config.get('monasca_statsd_forward_host'),
-                                 forward_to_port=int(statsd_config.get('monasca_statsd_forward_port')))
+        self.server = udp.Server(
+            aggregator,
+            server_host,
+            statsd_config['monasca_statsd_port'],
+            forward_to_host=statsd_config.get('monasca_statsd_forward_host'),
+            forward_to_port=int(
+                statsd_config.get('monasca_statsd_forward_port')))
 
     def _handle_sigterm(self, signum, frame):
         log.debug("Caught sigterm. Stopping run loop.")
@@ -88,9 +96,13 @@ class MonascaStatsd(object):
 
 def main():
     """The main entry point for the unix version of monasca_statsd. """
-    parser = argparse.ArgumentParser(description='Monasca statsd - statsd server supporting metric dimensions')
-    parser.add_argument('--config', '--config-file', '-c',
-                        help="Location for an alternate config rather than using the default config location.")
+    parser = argparse.ArgumentParser(
+        description='Monasca statsd - statsd server supporting metric dimensions')
+    parser.add_argument(
+        '--config',
+        '--config-file',
+        '-c',
+        help="Location for an alternate config rather than using the default config location.")
     args = parser.parse_args()
 
     monasca_statsd = MonascaStatsd(args.config)

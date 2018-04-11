@@ -106,7 +106,10 @@ class MetricsAggregator(object):
         cur_time = time()
         if timestamp is not None:
             if cur_time - int(timestamp) > self.recent_point_threshold:
-                log.debug("Discarding {0} - ts = {1}, current ts = {2} ".format(name, timestamp, cur_time))
+                log.debug(
+                    "Discarding {0} - ts = {1}, current ts = {2} ".format(name,
+                                                                          timestamp,
+                                                                          cur_time))
                 self.num_discarded_old_points += 1
                 return
         else:

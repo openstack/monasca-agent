@@ -17,16 +17,20 @@ class ProcessCheck(monasca_setup.detection.Plugin):
     """Setup a process check according to the passed in JSON string or YAML config file path.
 
        A process can be monitored by process_names or by process_username, or by both if
-       the process_config list contains both dictionary entries. Pass in the dictionary containing process_names
-       when watching process by name.  Pass in the dictionary containing process_username and dimensions with
-       component when watching process by username. Watching by process_username is useful for groups of processes
-       that are owned by a specific user. For process monitoring by process_username the component dimension
-       is required since it is used to initialize the instance name in process.yaml.
+       the process_config list contains both dictionary entries. Pass in the dictionary containing
+       process_names when watching process by name.  Pass in the dictionary containing process_user
+       name and dimensions with component when watching process by username. Watching by
+       process_username is useful for groups of processes that are owned by a specific user.
+       For process monitoring by process_username the component dimension is required since it is
+       used to initialize the instance name in process.yaml.
 
-       service and component dimensions are recommended to distinguish multiple components per service.  The component
-       dimensions will be defaulted to the process name when it is not input when monitoring by process_names.
-       exact_match is optional and defaults to false, meaning the process name search string can be found within the process name.
-       exact_match can be set to true if the process_names search string should match the process name.
+       service and component dimensions are recommended to distinguish multiple components per
+       service.  The component dimensions will be defaulted to the process name when it is not
+       input when monitoring by process_names.
+       exact_match is optional and defaults to false, meaning the process name search string can
+       be found within the process name.
+       exact_match can be set to true if the process_names search string should match the process
+       name.
 
        Pass in a YAML config file path:
        monasca-setup -d ProcessCheck -a "conf_file_path=/home/stack/myprocess.yaml"
@@ -34,27 +38,35 @@ class ProcessCheck(monasca_setup.detection.Plugin):
        or
 
        Pass in a JSON string command line argument:
-       Using monasca-setup, you can pass in a json string with arguments --detection_args_json, or the shortcut -json.
+       Using monasca-setup, you can pass in a json string with arguments --detection_args_json,
+       or the shortcut -json.
 
        Monitor by process_names:
        monasca-setup -d ProcessCheck -json \
-         '{"process_config":[{"process_names":["monasca-notification","monasca-api"],"dimensions":{"service":"monitoring"}}]}'
+         '{"process_config":[{"process_names":["monasca-notification","monasca-api"],
+         "dimensions":{"service":"monitoring"}}]}'
 
        Specifiy one or more dictionary entries to the process_config list:
        monasca-setup -d ProcessCheck -json \
          '{"process_config":[
-            {"process_names":["monasca-notification","monasca-api"],"dimensions":{"service":"monitoring"}},
-            {"process_names":["elasticsearch"],"dimensions":{"service":"logging"},"exact_match":"true"},
-            {"process_names":["monasca-thresh"],"dimensions":{"service":"monitoring","component":"thresh"}}]}'
+            {"process_names":["monasca-notification","monasca-api"],
+             "dimensions":{"service":"monitoring"}},
+            {"process_names":["elasticsearch"],
+             "dimensions":{"service":"logging"},"exact_match":"true"},
+            {"process_names":["monasca-thresh"],
+             "dimensions":{"service":"monitoring","component":"thresh"}}]}'
 
        Monitor by process_username:
        monasca-setup -d ProcessCheck -json \
-         '{"process_config":[{"process_username":"dbadmin","dimensions":{"service":"monitoring","component":"vertica"}}]}'
+         '{"process_config":[{"process_username":"dbadmin",
+           "dimensions":{"service":"monitoring","component":"vertica"}}]}'
 
        Can specify monitoring by both process_username and process_names:
        monasca-setup -d ProcessCheck -json \
-         '{"process_config":[{"process_names":["monasca-api"],"dimensions":{"service":"monitoring"}},
-                             {"process_username":"mon-api","dimensions":{"service":"monitoring","component":"monasca-api"}}]}'
+         '{"process_config":[{"process_names":["monasca-api"],
+           "dimensions":{"service":"monitoring"}},
+                             {"process_username":"mon-api",
+                              "dimensions":{"service":"monitoring","component":"monasca-api"}}]}'
 
     """
     def __init__(self, template_dir, overwrite=False, args=None, **kwargs):
@@ -83,7 +95,8 @@ class ProcessCheck(monasca_setup.detection.Plugin):
                 else:
                     log.error("\tInvalid format yaml file, missing key: process_config")
             except yaml.YAMLError as e:
-                exception_msg = ("Could not read config file. Invalid yaml format detected. {0}.".format(e))
+                exception_msg = (
+                    "Could not read config file. Invalid yaml format detected. {0}.".format(e))
                 raise Exception(exception_msg)
 
     def _detect(self):
@@ -106,12 +119,15 @@ class ProcessCheck(monasca_setup.detection.Plugin):
 
                 # monitoring by process_names
                 if not_found_process_names:
-                    log.info("\tDid not discover process_name(s): {0}.".format(",".join(not_found_process_names)))
+                    log.info(
+                        "\tDid not discover process_name(s): {0}.".format(
+                            ",".join(not_found_process_names)))
                 if found_process_names:
                     process_item['found_process_names'] = found_process_names
                     if 'exact_match' in process_item:
                         if isinstance(process_item['exact_match'], six.string_types):
-                            process_item['exact_match'] = (process_item['exact_match'].lower() == 'true')
+                            process_item['exact_match'] = (
+                                process_item['exact_match'].lower() == 'true')
                     else:
                         process_item['exact_match'] = False
                     self.valid_process_names.append(process_item)
@@ -126,7 +142,12 @@ class ProcessCheck(monasca_setup.detection.Plugin):
         if self.valid_process_names or self.valid_usernames:
             self.available = True
 
-    def _monitor_by_process_name(self, process_name, exact_match=False, detailed=True, dimensions=None):
+    def _monitor_by_process_name(
+            self,
+            process_name,
+            exact_match=False,
+            detailed=True,
+            dimensions=None):
         config = monasca_setup.agent_config.Plugins()
         instance = {'name': process_name,
                     'detailed': detailed,
@@ -172,10 +193,15 @@ class ProcessCheck(monasca_setup.detection.Plugin):
 
         # Watch by process_username
         for process in self.valid_usernames:
-            log.info("\tMonitoring by process_username: {0} "
-                     "for dimensions: {1}.".format(process['process_username'], json.dumps(process['dimensions'])))
-            config.merge(self._monitor_by_process_username(process_username=process['process_username'],
-                                                           dimensions=process['dimensions']))
+            log.info(
+                "\tMonitoring by process_username: {0} "
+                "for dimensions: {1}.".format(
+                    process['process_username'], json.dumps(
+                        process['dimensions'])))
+            config.merge(
+                self._monitor_by_process_username(
+                    process_username=process['process_username'],
+                    dimensions=process['dimensions']))
         return config
 
     def dependencies_installed(self):

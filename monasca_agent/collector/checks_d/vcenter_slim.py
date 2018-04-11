@@ -12,7 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 """
-VCenter plugin that returns only vm status. Takes no instances, reads from a single configured VCenter
+VCenter plugin that returns only vm status. Takes no instances,
+reads from a single configured VCenter
 """
 
 from monasca_agent.collector.checks import AgentCheck
@@ -36,8 +37,15 @@ class VcenterSlim(AgentCheck):
 
         session = self.get_api_session()
 
-        result = session.invoke_api(vim_util, "get_objects", session.vim, "VirtualMachine", self.max_objects,
-                                    ["runtime.connectionState", "config.annotation", "config.instanceUuid"])
+        result = session.invoke_api(
+            vim_util,
+            "get_objects",
+            session.vim,
+            "VirtualMachine",
+            self.max_objects,
+            ["runtime.connectionState",
+             "config.annotation",
+             "config.instanceUuid"])
         for vm in result[0]:
             vm_status = 1
             # vm_name = vm.obj.value

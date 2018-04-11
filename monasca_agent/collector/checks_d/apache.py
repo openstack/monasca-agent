@@ -110,6 +110,8 @@ class Apache(checks.AgentCheck):
                 self.log.warn("Assuming url was not correct. Trying to add ?auto suffix to the url")
                 self.check(instance)
             else:
-                return services_checks.Status.DOWN, "%s is DOWN, error: No metrics available.".format(service_check_name)
+                return services_checks.Status.DOWN,
+                "%s is DOWN, error: No metrics available.".format(service_check_name)
         else:
-            log.debug("Collected {0} metrics for {1} Apache Web Server".format(apache_host, metric_count))
+            log.debug("Collected {0} metrics for {1} Apache Web Server".format(apache_host,
+                                                                               metric_count))

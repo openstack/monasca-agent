@@ -168,7 +168,8 @@ class Memcache(AgentCheck):
             import memcache
         except ImportError:
             raise Exception(
-                "Cannot import memcache module. Check the instructions to install this module at https://app.datadoghq.com/account/settings#integrations/mcache")
+                "Cannot import memcache module. Check the instructions to install"
+                "this module at https://app.datadoghq.com/account/settings#integrations/mcache")
 
         # Hacky monkeypatch to fix a memory leak in the memcache library.
         # See https://github.com/DataDog/dd-agent/issues/278 for details.

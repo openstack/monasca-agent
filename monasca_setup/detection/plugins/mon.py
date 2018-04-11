@@ -5,7 +5,8 @@
 """Classes for monitoring the monitoring server stack.
 
     Covering mon-persister, mon-api and mon-thresh.
-    Kafka, mysql, vertica and influxdb are covered by other detection plugins. Mon-notification uses statsd.
+    Kafka, mysql, vertica and influxdb are covered by other detection plugins. Mon-notification
+    uses statsd.
 """
 
 import logging
@@ -17,7 +18,6 @@ from six.moves import configparser
 import monasca_setup.agent_config
 import monasca_setup.detection
 from monasca_setup.detection import find_process_cmdline
-from monasca_setup.detection import find_process_name
 from monasca_setup.detection.utils import get_agent_username
 from monasca_setup.detection.utils import watch_process
 from monasca_setup.detection.utils import watch_process_by_username
@@ -293,8 +293,19 @@ class MonThresh(monasca_setup.detection.Plugin):
         config = monasca_setup.agent_config.Plugins()
         for process in ['storm.daemon.nimbus', 'storm.daemon.supervisor', 'storm.daemon.worker']:
             if find_process_cmdline(process) is not None:
-                config.merge(watch_process([process], 'monitoring', 'apache-storm', exact_match=False, detailed=False))
-        config.merge(watch_process_by_username('storm', 'monasca-thresh', 'monitoring', 'apache-storm'))
+                config.merge(
+                    watch_process(
+                        [process],
+                        'monitoring',
+                        'apache-storm',
+                        exact_match=False,
+                        detailed=False))
+        config.merge(
+            watch_process_by_username(
+                'storm',
+                'monasca-thresh',
+                'monitoring',
+                'apache-storm'))
         return config
 
     def dependencies_installed(self):
@@ -305,11 +316,12 @@ def dropwizard_health_check(service, component, url):
     """Setup a dropwizard heathcheck to be watched by the http_check plugin."""
     config = monasca_setup.agent_config.Plugins()
     config['http_check'] = {'init_config': None,
-                            'instances': [{'name': "{0}-{1} healthcheck".format(service, component),
-                                           'url': url,
-                                           'timeout': 5,
-                                           'include_content': False,
-                                           'dimensions': {'service': service, 'component': component}}]}
+                            'instances': [
+                                {'name': "{0}-{1} healthcheck".format(service, component),
+                                 'url': url,
+                                 'timeout': 5,
+                                 'include_content': False,
+                                 'dimensions': {'service': service, 'component': component}}]}
     return config
 
 
@@ -320,7 +332,8 @@ def dropwizard_metrics(service, component, url, whitelist):
                               'instances': [{'name': "{0}-{1} metrics".format(service, component),
                                              'url': url,
                                              'timeout': 5,
-                                             'dimensions': {'service': service, 'component': component},
+                                             'dimensions': {'service': service,
+                                                            'component': component},
                                              'whitelist': whitelist}]}
     return config
 
@@ -462,56 +475,55 @@ class _MonPersisterJavaHelper(_DropwizardJavaHelper):
         for idx in range(alarm_num_threads):
             new_thread = {
                 "name": "alarm-state-transitions-added-to-batch-counter[{0}]".format(idx),
-                "path": "counters/monasca.persister.pipeline.event.AlarmStateTransitionHandler[alarm-state-transition-{0}].alarm-state-transitions-added-to-batch-counter/count".format(idx),
-                "type": "rate"
-            }
+                "path": "counters/monasca.persister.pipeline.event."
+                        "AlarmStateTransitionHandler[alarm-state-transition-{0}]."
+                        "alarm-state-transitions-added-to-batch-counter/count".format(idx),
+                "type": "rate"}
             whitelist.append(new_thread)
         for idx in range(metric_num_threads):
             new_thread = {
                 "name": "metrics-added-to-batch-counter[{0}]".format(idx),
-                "path": "counters/monasca.persister.pipeline.event.MetricHandler[metric-{0}].metrics-added-to-batch-counter/count".format(idx),
-                "type": "rate"
-            }
+                "path": "counters/monasca.persister.pipeline.event.MetricHandler[metric-{0}]."
+                        "metrics-added-to-batch-counter/count".format(idx),
+                "type": "rate"}
             whitelist.append(new_thread)
 
     def _add_vertica_metrics(self, whitelist):
-        whitelist.extend([
-            {
-                "name": "monasca.persister.repository.vertica.VerticaMetricRepo.definition-cache-hit-meter",
-                "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo.definition-cache-hit-meter/count",
-                "type": "rate"
-            },
-            {
-                "name": "monasca.persister.repository.vertica.VerticaMetricRepo.definition-cache-miss-meter",
-                "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo.definition-cache-miss-meter/count",
-                "type": "rate"
-            },
-            {
-                "name": "monasca.persister.repository.vertica.VerticaMetricRepo.definition-dimension-cache-hit-meter",
-                "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo.definition-dimension-cache-hit-meter/count",
-                "type": "rate"
-            },
-            {
-                "name": "monasca.persister.repository.vertica.VerticaMetricRepo.definition-dimension-cache-miss-meter",
-                "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo.definition-dimension-cache-miss-meter/count",
-                "type": "rate"
-            },
-            {
-                "name": "monasca.persister.repository.vertica.VerticaMetricRepo.dimension-cache-hit-meter",
-                "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo.dimension-cache-hit-meter/count",
-                "type": "rate"
-            },
-            {
-                "name": "monasca.persister.repository.vertica.VerticaMetricRepo.dimension-cache-miss-meter",
-                "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo.dimension-cache-miss-meter/count",
-                "type": "rate"
-            },
-            {
-                "name": "monasca.persister.repository.vertica.VerticaMetricRepo.measurement-meter",
-                "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo.measurement-meter/count",
-                "type": "rate"
-            }
-        ])
+        whitelist.extend(
+            [{"name": "monasca.persister.repository.vertica.VerticaMetricRepo."
+                      "definition-cache-hit-meter",
+              "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo."
+                      "definition-cache-hit-meter/count",
+              "type": "rate"},
+             {"name": "monasca.persister.repository.vertica.VerticaMetricRepo."
+                      "definition-cache-miss-meter",
+              "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo."
+                      "definition-cache-miss-meter/count",
+              "type": "rate"},
+                {"name": "monasca.persister.repository.vertica.VerticaMetricRepo."
+                         "definition-dimension-cache-hit-meter",
+                 "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo."
+                         "definition-dimension-cache-hit-meter/count",
+                 "type": "rate"},
+                {"name": "monasca.persister.repository.vertica.VerticaMetricRepo."
+                         "definition-dimension-cache-miss-meter",
+                 "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo."
+                         "definition-dimension-cache-miss-meter/count",
+                 "type": "rate"},
+                {"name": "monasca.persister.repository.vertica.VerticaMetricRepo."
+                         "dimension-cache-hit-meter",
+                 "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo."
+                         "dimension-cache-hit-meter/count",
+                 "type": "rate"},
+                {"name": "monasca.persister.repository.vertica.VerticaMetricRepo."
+                         "dimension-cache-miss-meter",
+                 "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo."
+                         "dimension-cache-miss-meter/count",
+                 "type": "rate"},
+                {"name": "monasca.persister.repository.vertica.VerticaMetricRepo.measurement-meter",
+                 "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo."
+                         "measurement-meter/count",
+                 "type": "rate"}])
 
     def _monitor_endpoints(self, config, metrics):
         admin_connector = self._cfg['server']['adminConnectors'][0]

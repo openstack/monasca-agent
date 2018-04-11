@@ -47,7 +47,8 @@ def get_session(**kwargs):
     - using **Keystone v3** be careful with the scope of authentication.
       For more details about scopes refer to identity_tokens_ and v3_identity_
 
-    .. _v3_api: https://developer.openstack.org/api-ref/identity/v3/index.html?expanded=token-authentication-with-scoped-authorization-detail
+    .. _v3_api: https://developer.openstack.org/api-ref/identity/v3/index.html?expanded=token-authe
+    ntication-with-scoped-authorization-detail
     .. _identity_tokens: https://docs.openstack.org/admin-guide/identity-tokens.html
 
     In overall:

@@ -93,7 +93,9 @@ class HTTPCheck(services_checks.ServicesCheck):
             try:
                 self.log.debug("Connecting to %s" % addr)
                 if disable_ssl_validation:
-                    self.log.info("Skipping SSL certificate validation for %s based on configuration" % addr)
+                    self.log.info(
+                        "Skipping SSL certificate validation for %s based on configuration" %
+                        addr)
                 h = Http(timeout=timeout, disable_ssl_certificate_validation=disable_ssl_validation)
                 if username is not None and password is not None:
                     h.add_credentials(username, password)
@@ -186,7 +188,8 @@ class HTTPCheck(services_checks.ServicesCheck):
             if re.search(pattern, result_string, re.DOTALL):
                 self.log.debug("Pattern match successful")
             else:
-                error_string = 'Pattern match failed! "{0}" not in "{1}"'.format(pattern, result_string)
+                error_string = 'Pattern match failed! "{0}" not in "{1}"'.format(
+                    pattern, result_string)
                 self.log.info(error_string)
                 # maximum length of value_meta including {'error':''} is 2048
                 # Cutting it down to 1024 here so we don't clutter the

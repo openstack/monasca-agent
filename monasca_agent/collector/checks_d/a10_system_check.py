@@ -15,7 +15,11 @@ class SSLHTTPAdapter(HTTPAdapter):
         context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
         context.options |= ssl.OP_NO_SSLv2
         context.options |= ssl.OP_NO_SSLv3
-        self.poolmanager = PoolManager(num_pools=connections, maxsize=maxsize, block=block, ssl_version=context)
+        self.poolmanager = PoolManager(
+            num_pools=connections,
+            maxsize=maxsize,
+            block=block,
+            ssl_version=context)
 
 
 class A10Session(object):
@@ -53,7 +57,8 @@ class A10MemoryCheck(AgentCheck):
         a10_device = instance.get("a10_device")
         username = instance.get('a10_username')
         password = instance.get('a10_password')
-        dimensions = self._set_dimensions({'service': 'networking', 'a10_device': a10_device}, instance)
+        dimensions = self._set_dimensions(
+            {'service': 'networking', 'a10_device': a10_device}, instance)
 
         try:
             authed_session = A10Session(a10_device, username, password, SSLHTTPAdapter)
@@ -79,8 +84,13 @@ class A10MemoryCheck(AgentCheck):
         try:
             url = "https://" + a10_device + "/axapi/v3/system/memory/oper"
             try:
-                request = requests.get(url=url, headers={"Content-type": "application/json",
-                                                         "Authorization": "A10 %s" % self.auth_sig}, verify=False)
+                request = requests.get(
+                    url=url,
+                    headers={
+                        "Content-type": "application/json",
+                        "Authorization": "A10 %s" %
+                        self.auth_sig},
+                    verify=False)
             except urllib3.exceptions.SSLError as e:
                 self.log.warning("Caught SSL exception {}".format(e))
 
@@ -90,7 +100,8 @@ class A10MemoryCheck(AgentCheck):
 
             convert_kb_to_mb = 1024
 
-            memory_data['a10.memory_total_mb'] = (data['memory']['oper']['Total']) / convert_kb_to_mb
+            memory_data['a10.memory_total_mb'] = (
+                data['memory']['oper']['Total']) / convert_kb_to_mb
             memory_data['a10.memory_used_mb'] = (data['memory']['oper']['Used']) / convert_kb_to_mb
             memory_data['a10.memory_free_mb'] = (data['memory']['oper']['Free']) / convert_kb_to_mb
             memory_data['a10.memory_used'] = int(mem_used[:2])

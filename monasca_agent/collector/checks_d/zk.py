@@ -38,7 +38,8 @@ class Zookeeper(AgentCheck):
         host = instance.get('host', 'localhost')
         port = int(instance.get('port', 2181))
         timeout = float(instance.get('timeout', 3.0))
-        dimensions = self._set_dimensions({'component': 'zookeeper', 'service': 'zookeeper'}, instance)
+        dimensions = self._set_dimensions(
+            {'component': 'zookeeper', 'service': 'zookeeper'}, instance)
 
         sock = socket.socket()
         sock.settimeout(timeout)
