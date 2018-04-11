@@ -1,5 +1,6 @@
 # (C) Copyright 2015,2017-2018 Hewlett Packard Enterprise Development LP
 # (C) Copyright 2017 KylinCloud
+# Copyright 2018 OP5 AB
 
 import base64
 import json
@@ -815,6 +816,8 @@ def _get_pod_owner_pair(kubernetes_connector, pod_owner_type, pod_owner_name, po
             return 'deployment', deployment_name
     elif pod_owner_type == "DaemonSet":
         return 'daemon_set', pod_owner_name
+    elif pod_owner_type == "StatefulSet":
+        return 'stateful_set', pod_owner_name
     elif pod_owner_type == "Job":
         if not kubernetes_connector:
             log.info("Can not set cronjob name as connection information to API is not set. "
