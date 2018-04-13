@@ -132,7 +132,8 @@ class MongoDb(AgentCheck):
             self.log.error(
                 'mongo.yaml exists but pymongo module can not be imported. Skipping check.')
             raise Exception(
-                'Python PyMongo Module can not be imported. Please check the installation instruction on the Datadog Website')
+                'Python PyMongo Module can not be imported. Please check the installation '
+                'instruction on the Datadog Website')
 
         try:
             from pymongo import uri_parser
@@ -194,7 +195,8 @@ class MongoDb(AgentCheck):
                         data['replicationLag'] = lag.total_seconds()
                     else:
                         data['replicationLag'] = (
-                            lag.microseconds + (lag.seconds + lag.days * 24 * 3600) * 10 ** 6) / 10.0 ** 6
+                            lag.microseconds + (
+                                lag.seconds + lag.days * 24 * 3600) * 10 ** 6) / 10.0 ** 6
 
                 if current is not None:
                     data['health'] = current['health']

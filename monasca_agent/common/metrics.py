@@ -107,7 +107,8 @@ class Rate(Metric):
     # redefine flush method to calculate rate from metrics
     def flush(self):
         # need at least two timestamps to determine rate
-        # is the second one is missing then the first is kept as start value for the subsequent interval
+        # is the second one is missing then the first is kept as start value for
+        # the subsequent interval
         if self.start_timestamp is None or self.timestamp is None:
             return []
 
@@ -116,8 +117,13 @@ class Rate(Metric):
         try:
             rate = delta_v / float(delta_t)
         except ZeroDivisionError:
-            log.warning('Conflicting values reported for metric %s with dimensions %s at time %d: (%f, %f)', self.metric['name'],
-                        self.metric['dimensions'], self.timestamp, self.start_value, self.value)
+            log.warning(
+                'Conflicting values reported for metric %s with dimensions %s at time %d: (%f, %f)',
+                self.metric['name'],
+                self.metric['dimensions'],
+                self.timestamp,
+                self.start_value,
+                self.value)
 
             # skip this measurement, but keep value for next cycle
             self.start_value = self.value

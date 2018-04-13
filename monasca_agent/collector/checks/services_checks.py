@@ -6,7 +6,6 @@ import Queue
 import threading
 
 import eventlet
-from eventlet.green import time
 import multiprocessing
 
 import monasca_agent.collector.checks
@@ -44,7 +43,8 @@ class ServicesCheck(monasca_agent.collector.checks.AgentCheck):
     """
 
     def __init__(self, name, init_config, agent_config, instances):
-        monasca_agent.collector.checks.AgentCheck.__init__(self, name, init_config, agent_config, instances)
+        monasca_agent.collector.checks.AgentCheck.__init__(
+            self, name, init_config, agent_config, instances)
 
         # A dictionary to keep track of service statuses
         self.statuses = {}

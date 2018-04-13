@@ -19,30 +19,34 @@ log = logging.getLogger(__name__)
 
 class ServicePlugin(Plugin):
     """Base class implemented by the monasca-agent plugin detection classes for OpenStack Services.
-        Detection plugins inheriting from this class can easily setup up processes to be watched and
-        a http endpoint to be checked.
+    Detection plugins inheriting from this class can easily setup up processes to be watched and
+    a http endpoint to be checked.
 
-        This class covers Process, HTTP endpoints, Directory, and File monitoring.  It is primarily used for
-        monitoring OpenStack components.
-        Note: There are existing default detection plugins for http_check.py, directory.py, and file_size.py that
-        only require configuration.
+    This class covers Process, HTTP endpoints, Directory, and File monitoring.  It is primarily
+    used for monitoring OpenStack components.
+    Note: There are existing default detection plugins for http_check.py, directory.py, and
+    file_size.py that only require configuration.
 
-        A process can be monitored by process_names or by process_username. Pass in the process_names list argument
-        when watching process by name.  Pass in the process_username argument and component_name arguments when
-        watching process by username. Watching by username is useful for groups of processes that are owned by a specific user.
-        For process monitoring by process_username the component_name is required since it is used to initialize the
-        instance name in process.yaml.  component_name is optional for monitoring by process_name and all other checks.
+    A process can be monitored by process_names or by process_username. Pass in the process_names
+    list argument when watching process by name.  Pass in the process_username argument and
+    component_name arguments when watching process by username. Watching by username is useful for
+    groups of processes that are owned by a specific user.
+    For process monitoring by process_username the component_name is required since it is used to
+    initialize the instance name in process.yaml.  component_name is optional for monitoring by
+    process_name and all other checks.
 
-        An http endpoint connection can be checked by passing in the service_api_url and optional search_pattern parameters.
-        The http check can be skipped by specifying the argument 'disable_http_check'
+    An http endpoint connection can be checked by passing in the service_api_url and optional
+    search_pattern parameters.
+    The http check can be skipped by specifying the argument 'disable_http_check'
 
-        Directory size can be checked by passing in a directory_names list.
+    Directory size can be checked by passing in a directory_names list.
 
-        File size can be checked by passing in a file_dirs_names list where each directory name item includes a list of files.
-        example: 'file_dirs_names': [('/var/log/monasca/api', ['monasca-api'])]
+    File size can be checked by passing in a file_dirs_names list where each directory name item
+    includes a list of files.
+    example: 'file_dirs_names': [('/var/log/monasca/api', ['monasca-api'])]
 
-        Note: service_name and component_name are optional (except component_name is required with process_username) arguments
-        used for metric dimensions by all checks.
+    Note: service_name and component_name are optional (except component_name is required with
+    process_username) arguments used for metric dimensions by all checks.
     """
 
     def __init__(self, kwargs):
@@ -141,17 +145,29 @@ class ServicePlugin(Plugin):
                     log.info("\tMonitoring the size of all the files in the "
                              "directory {0}.".format(file_dir))
                 else:
-                    log.info("\tMonitoring the size of files {0} in the "
-                             "directory {1}.".format(", ".join(str(name) for name in file_names), file_dir))
-                config.merge(watch_file_size(directory_name=file_dir, file_names=file_names,
-                                             file_recursive=file_recursive, service=self.service_name,
-                                             component=self.component_name))
+                    log.info(
+                        "\tMonitoring the size of files {0} in the "
+                        "directory {1}.".format(
+                            ", ".join(
+                                str(name) for name in file_names),
+                            file_dir))
+                config.merge(
+                    watch_file_size(
+                        directory_name=file_dir,
+                        file_names=file_names,
+                        file_recursive=file_recursive,
+                        service=self.service_name,
+                        component=self.component_name))
 
         if self.directory_names:
             for dir_name in self.directory_names:
                 log.info("\tMonitoring the size of directory {0}.".format(
                     dir_name))
-                config.merge(watch_directory(directory_name=dir_name, service=self.service_name, component=self.component_name))
+                config.merge(
+                    watch_directory(
+                        directory_name=dir_name,
+                        service=self.service_name,
+                        component=self.component_name))
 
         # Skip the http_check if disable_http_check is set
         if self.args is not None and self.args.get('disable_http_check', False):
@@ -166,7 +182,8 @@ class ServicePlugin(Plugin):
 
             if len(listening) > 0:
                 # If not listening on localhost or ips then use another local ip
-                if host == 'localhost' and len(set(['127.0.0.1', '0.0.0.0', '::', '::1']) & set(listening)) == 0:
+                if host == 'localhost' and len(
+                        set(['127.0.0.1', '0.0.0.0', '::', '::1']) & set(listening)) == 0:
                     new_url = list(parsed)
                     new_url[1] = listening[0] + ':' + port
                     api_url = urlparse.urlunparse(new_url)

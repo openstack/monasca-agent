@@ -83,7 +83,8 @@ class InfluxDB(detection.Plugin):
     def _monitor_process(self):
         dimensions = {}
         if self.args and self.args.get(self.INFLUXDB_NODE_ARG_NAME):
-            dimensions.update({self.INFLUXDB_NODE_ARG_NAME: self.args.get(self.INFLUXDB_NODE_ARG_NAME)})
+            dimensions.update(
+                {self.INFLUXDB_NODE_ARG_NAME: self.args.get(self.INFLUXDB_NODE_ARG_NAME)})
 
         return detection.watch_process([self.PROC_NAME],
                                        service='influxdb',

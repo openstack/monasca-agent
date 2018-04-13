@@ -37,7 +37,8 @@ class Config(object):
         elif os.path.exists(os.getcwd() + '/agent.yaml'):
             self._configFile = os.getcwd() + '/agent.yaml'
         else:
-            error_msg = 'No config file found at {0} nor in the working directory.'.format(DEFAULT_CONFIG_FILE)
+            error_msg = 'No config file found at {0} nor in the working directory.'.format(
+                DEFAULT_CONFIG_FILE)
             log.error(error_msg)
             raise IOError(error_msg)
 
@@ -146,7 +147,8 @@ class Config(object):
                         break
             if not valid_instances:
                 raise Exception(
-                    'You need to have at least one instance defined in the YAML file for this check')
+                    'You need to have at least one instance defined'
+                    'in the YAML file for this check')
             else:
                 return check_config
         finally:

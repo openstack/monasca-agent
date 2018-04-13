@@ -214,16 +214,19 @@ class Daemon(object):
             # Check for the existence of a process with the pid
             try:
                 # os.kill(pid, 0) will raise an OSError exception if the process
-                # does not exist, or if access to the process is denied (access denied will be an EPERM error).
+                # does not exist, or if access to the process is denied
+                # (access denied will be an EPERM error).
                 # If we get an OSError that isn't an EPERM error, the process
                 # does not exist.
-                # (from http://stackoverflow.com/questions/568271/check-if-pid-is-not-in-use-in-python,
+                # (from http://stackoverflow.com/questions/568271/
+                # check-if-pid-is-not-in-use-in-python,
                 #  Giampaolo's answer)
                 os.kill(pid, 0)
             except OSError as e:
                 if e.errno != errno.EPERM:
-                    message = '%s pidfile contains pid %s, but no running process could be found' % (
-                        self.__class__.__name__, pid)
+                    message = \
+                        '%s pidfile contains pid %s, but no running process could be found' % (
+                            self.__class__.__name__, pid)
                     exit_code = 1
             else:
                 message = '%s is running with pid %s' % (self.__class__.__name__, pid)

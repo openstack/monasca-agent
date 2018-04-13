@@ -42,7 +42,8 @@ class Server(object):
                 forward_to_port = 8125
 
             log.info(
-                "External statsd forwarding enabled. All packets received will be forwarded to %s:%s" %
+                "External statsd forwarding enabled. All packets received will"
+                "be forwarded to %s:%s" %
                 (forward_to_host, forward_to_port))
             try:
                 self.forward_udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

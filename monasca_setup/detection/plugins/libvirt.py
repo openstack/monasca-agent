@@ -12,7 +12,6 @@ import sys
 from oslo_config import cfg
 from oslo_utils import importutils
 
-from monasca_agent.common.psutil_wrapper import psutil
 from monasca_setup import agent_config
 from monasca_setup.detection import plugin
 from monasca_setup.detection import utils

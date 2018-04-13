@@ -34,15 +34,19 @@ _CONSUMER_GROUP_COMMAND_LINE_VALUES_LEN = 7
 class Kafka(Plugin):
 
     """Detect Kafka daemons and sets up configuration to monitor them.
-        This plugin configures the kafka_consumer plugin and does not configure any jmx based checks against kafka.
-        Note this plugin will pull the same information from kafka on each node in the cluster it runs on.
+       This plugin configures the kafka_consumer plugin and does not configure any jmx based
+       checks against kafka.
+       Note this plugin will pull the same information from kafka on each node in the cluster it
+       runs on.
 
-        To skip detection consumer groups and topics can be specified with plugin args, for example:
-        `monasca-setup -d kafka -a "group1=topic1 group2=topic2/topic3"`
-        All partitions are assumed for each topic and '/' is used to deliminate more than one topic per consumer group.
+       To skip detection consumer groups and topics can be specified with plugin args,
+       for example:
+       `monasca-setup -d kafka -a "group1=topic1 group2=topic2/topic3"`
+       All partitions are assumed for each topic and '/' is used to deliminate more than one
+       topic per consumer group.
 
-        For more information see:
-            - https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol
+       For more information see:
+           - https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol
     """
 
     def __init__(self, template_dir, overwrite=True, args=None, port=9092):
@@ -182,7 +186,10 @@ class Kafka(Plugin):
         if listen_ip:
             log.info("\tKafka found listening on {:s}:{:d}".format(listen_ip, self.port))
         else:
-            log.info("\tKafka not found listening on a specific IP (port {:d}), using 'localhost'".format(self.port))
+            log.info(
+                "\tKafka not found listening on a specific IP (port {:d}),"
+                "using 'localhost'".format(
+                    self.port))
             listen_ip = 'localhost'
 
         return "{:s}:{:d}".format(listen_ip, self.port)
@@ -207,8 +214,8 @@ class Kafka(Plugin):
 
     def _ls_zookeeper(self, path):
         """Do a ls on the given zookeeper path.
-           I am using the local command line kafka rather than kazoo because it doesn't make sense to
-           have kazoo as a dependency only for detection.
+           I am using the local command line kafka rather than kazoo because it doesn't make
+           sense to have kazoo as a dependency only for detection.
         """
         zk_shell = [self._zookeeper_consumer_bin, self.zk_url, 'ls', path]
         try:
@@ -218,7 +225,8 @@ class Kafka(Plugin):
                       path)
             raise
 
-        # The last line is like '[item1, item2, item3]', '[]' or an error message not starting with [
+        # The last line is like '[item1, item2, item3]', '[]' or an error message
+        # not starting with [
         last_line = output.splitlines()[-1]
         if len(last_line) == 2 or last_line[0] != '[':
             return []

@@ -30,7 +30,8 @@ class System(Plugin):
         config = agent_config.Plugins()
         for metric in System.system_metrics:
             try:
-                with open(os.path.join(self.template_dir, 'conf.d/' + metric + '.yaml'), 'r') as metric_template:
+                with open(os.path.join(self.template_dir, 'conf.d/' + metric + '.yaml'),
+                          'r') as metric_template:
                     default_config = yaml.safe_load(metric_template.read())
                 config[metric] = default_config
                 if self.args:

@@ -27,7 +27,8 @@ log = logging.getLogger(__name__)
 
 
 VALID_HOSTNAME_RFC_1123_PATTERN = re.compile(
-    r"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$")
+    r"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*"
+    "([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$")
 MAX_HOSTNAME_LEN = 255
 LOGGING_MAX_BYTES = 5 * 1024 * 1024
 
@@ -285,11 +286,16 @@ def get_uuid():
 def timeout_command(command, timeout, command_input=None):
     # call shell-command with timeout (in seconds) and stdinput for the command (optional)
     # returns None if timeout or the command output.
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=subprocess.PIPE)
     command_timer = threading.Timer(timeout, process.kill)
     try:
         command_timer.start()
-        stdout, stderr = process.communicate(input=command_input.encode() if command_input else None)
+        stdout, stderr = process.communicate(
+            input=command_input.encode() if command_input else None)
         return_code = process.returncode
         return stdout, stderr, return_code
     finally:
@@ -421,9 +427,11 @@ def get_hostname():
 
     if hostname is None:
         log.critical(
-            'Unable to reliably determine host name. You can define one in agent.yaml or in your hosts file')
+            'Unable to reliably determine host name. You can define one in agent.yaml '
+            'or in your hosts file')
         raise Exception(
-            'Unable to reliably determine host name. You can define one in agent.yaml or in your hosts file')
+            'Unable to reliably determine host name. You can define one in agent.yaml '
+            'or in your hosts file')
     else:
         return hostname
 
@@ -470,7 +478,8 @@ def load_check_directory():
         confd_path = paths.get_confd_path()
     except PathNotFound as e:
         log.error(
-            "No conf.d folder found at '%s' or in the directory where the Agent is currently deployed.\n" %
+            "No conf.d folder found at '%s' or in the directory where the Agent is "
+            "currently deployed.\n" %
             e.args[0])
         sys.exit(3)
 
@@ -581,7 +590,8 @@ def load_check_directory():
 
 def initialize_logging(logger_name):
     try:
-        log_format = '%%(asctime)s | %%(levelname)s | %s | %%(name)s(%%(filename)s:%%(lineno)s) | %%(message)s' % logger_name
+        log_format = '%%(asctime)s | %%(levelname)s | %s | %%(name)s(%%(filename)s:%%(lineno)s) '
+        '| %%(message)s' % logger_name
         log_date_format = "%Y-%m-%d %H:%M:%S %Z"
         config = configuration.Config()
         logging_config = config.get_config(sections='Logging')
@@ -614,7 +624,8 @@ def initialize_logging(logger_name):
         # set up syslog
         if logging_config['log_to_syslog']:
             try:
-                syslog_format = '%s[%%(process)d]: %%(levelname)s (%%(filename)s:%%(lineno)s): %%(message)s' % logger_name
+                syslog_format = '%s[%%(process)d]: %%(levelname)s (%%(filename)s:%%(lineno)s): '
+                '%%(message)s' % logger_name
                 from logging.handlers import SysLogHandler
 
                 if logging_config['syslog_host'] is not None and logging_config[

@@ -95,7 +95,8 @@ class Apache(monasca_setup.detection.Plugin):
             [self._apache_process_name], 'apache'))
         log.info("\tWatching the apache webserver process.")
 
-        error_msg = '\n\t*** The Apache plugin is not configured ***\n\tPlease correct and re-run monasca-setup.'
+        error_msg = '\n\t*** The Apache plugin is not configured ***\n\tPlease correct and re-run'
+        'monasca-setup.'
         # Attempt login, requires either an empty root password from localhost
         # or relying on a configured /root/.apache.cnf
         if self.dependencies_installed():
@@ -167,7 +168,9 @@ class Apache(monasca_setup.detection.Plugin):
                 log.error(exception_msg)
                 raise Exception(exception_msg)
         else:
-            log.error('\tThe dependencies for Apache Web Server are not installed or unavailable.' + error_msg)
+            log.error(
+                '\tThe dependencies for Apache Web Server are not installed or unavailable.' +
+                error_msg)
 
         return config
 

@@ -118,11 +118,14 @@ class Lighttpd(AgentCheck):
             if self.assumed_url.get(instance['lighttpd_status_url'],
                                     None) is None and url[-len(url_suffix):] != url_suffix:
                 self.assumed_url[instance['lighttpd_status_url']] = '%s%s' % (url, url_suffix)
-                self.log.warn("Assuming url was not correct. Trying to add %s suffix to the url" % url_suffix)
+                self.log.warn(
+                    "Assuming url was not correct. Trying to add %s suffix to the url" %
+                    url_suffix)
                 self.check(instance)
             else:
                 raise Exception(
-                    "No metrics were fetched for this instance. Make sure that %s is the proper url." %
+                    "No metrics were fetched for this instance. "
+                    "Make sure that %s is the proper url." %
                     instance['lighttpd_status_url'])
 
     def _get_server_version(self, headers):

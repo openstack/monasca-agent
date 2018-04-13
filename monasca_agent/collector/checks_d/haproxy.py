@@ -95,7 +95,9 @@ class HAProxy(AgentCheck):
 
         # Split the first line into an index of fields
         # The line looks like:
-        # "# pxname,svname,qcur,qmax,scur,smax,slim,stot,bin,bout,dreq,dresp,ereq,econ,eresp,wretr,wredis,status,weight,act,bck,chkfail,chkdown,lastchg,downtime,qlimit,pid,iid,sid,throttle,lbtot,tracked,type,rate,rate_lim,rate_max,"
+        # "# pxname,svname,qcur,qmax,scur,smax,slim,stot,bin,bout,dreq,dresp,ereq,econ,eresp,wretr,
+        # wredis,status,weight,act,bck,chkfail,chkdown,lastchg,downtime,qlimit,pid,iid,sid,throttle
+        # ,lbtot,tracked,type,rate,rate_lim,rate_max,"
         fields = [f.strip() for f in data[0][2:].split(',') if f]
 
         hosts_statuses = defaultdict(int)

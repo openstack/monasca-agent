@@ -94,7 +94,8 @@ class Kubernetes(checks.AgentCheck):
             raise Exception('Kubernetes check only supports one configured instance.')
         self.connection_timeout = int(init_config.get('connection_timeout', DEFAULT_TIMEOUT))
         self.host = None
-        self.report_container_metrics = init_config.get('report_container_metrics', REPORT_CONTAINER_METRICS)
+        self.report_container_metrics = init_config.get(
+            'report_container_metrics', REPORT_CONTAINER_METRICS)
         self.report_container_mem_percent = init_config.get('report_container_mem_percent', True)
         self.kubernetes_connector = None
 
@@ -120,10 +121,14 @@ class Kubernetes(checks.AgentCheck):
         pod_dimensions_map = {}
         memory_limit_map = {}
         dimensions = self._set_dimensions(None, instance)
-        # Remove hostname from dimensions as the majority of the metrics are not tied to the hostname.
+        # Remove hostname from dimensions as the majority of the metrics are not
+        # tied to the hostname.
         del dimensions['hostname']
         kubelet_health_status = self._get_api_health("{}/healthz".format(kubelet))
-        self.gauge("kubelet.health_status", 0 if kubelet_health_status else 1, dimensions=dimensions)
+        self.gauge(
+            "kubelet.health_status",
+            0 if kubelet_health_status else 1,
+            dimensions=dimensions)
         try:
             pods = self._get_result("{}/pods".format(kubelet))
         except Exception as e:
@@ -157,7 +162,9 @@ class Kubernetes(checks.AgentCheck):
         try:
             result = self._get_result(health_url, as_json=False)
         except Exception as e:
-            self.log.error("Error connecting to the health endpoint {} with exception {}".format(health_url, e))
+            self.log.error(
+                "Error connecting to the health endpoint {} with exception {}".format(
+                    health_url, e))
             return False
         else:
             api_health = False
@@ -167,8 +174,14 @@ class Kubernetes(checks.AgentCheck):
                     break
             return api_health
 
-    def _process_pods(self, pods, kubernetes_labels, dimensions, container_dimension_map, pod_dimensions_map,
-                      memory_limit_map):
+    def _process_pods(
+            self,
+            pods,
+            kubernetes_labels,
+            dimensions,
+            container_dimension_map,
+            pod_dimensions_map,
+            memory_limit_map):
         for pod in pods:
             pod_status = pod['status']
             pod_spec = pod['spec']
@@ -178,8 +191,11 @@ class Kubernetes(checks.AgentCheck):
                 # Pod does not have any containers assigned to it no-op going to next pod
                 continue
             pod_dimensions = dimensions.copy()
-            pod_dimensions.update(utils.get_pod_dimensions(self.kubernetes_connector, pod['metadata'],
-                                                           kubernetes_labels))
+            pod_dimensions.update(
+                utils.get_pod_dimensions(
+                    self.kubernetes_connector,
+                    pod['metadata'],
+                    kubernetes_labels))
             pod_key = pod_dimensions['pod_name'] + pod_dimensions['namespace']
             pod_dimensions_map[pod_key] = pod_dimensions
             pod_retry_count = 0
@@ -197,20 +213,38 @@ class Kubernetes(checks.AgentCheck):
                 container_dimension_map[container_id] = container_dimensions
                 if self.report_container_metrics:
                     container_ready = 0 if container_status['ready'] else 1
-                    self.gauge("container.ready_status", container_ready, container_dimensions, hostname="SUPPRESS")
-                    self.gauge("container.restart_count", container_restart_count, container_dimensions,
-                               hostname="SUPPRESS")
+                    self.gauge(
+                        "container.ready_status",
+                        container_ready,
+                        container_dimensions,
+                        hostname="SUPPRESS")
+                    self.gauge(
+                        "container.restart_count",
+                        container_restart_count,
+                        container_dimensions,
+                        hostname="SUPPRESS")
                 # getting an aggregated value for pod restart count
                 pod_retry_count += container_restart_count
 
             # Report limit/request metrics
             if self.report_container_metrics or self.report_container_mem_percent:
-                self._report_container_limits(pod_containers, container_dimension_map, name2id, memory_limit_map)
+                self._report_container_limits(
+                    pod_containers, container_dimension_map, name2id, memory_limit_map)
 
             self.gauge("pod.restart_count", pod_retry_count, pod_dimensions, hostname="SUPPRESS")
-            self.gauge("pod.phase", POD_PHASE.get(pod_status['phase']), pod_dimensions, hostname="SUPPRESS")
+            self.gauge(
+                "pod.phase",
+                POD_PHASE.get(
+                    pod_status['phase']),
+                pod_dimensions,
+                hostname="SUPPRESS")
 
-    def _report_container_limits(self, pod_containers, container_dimension_map, name2id, memory_limit_map):
+    def _report_container_limits(
+            self,
+            pod_containers,
+            container_dimension_map,
+            name2id,
+            memory_limit_map):
         for container in pod_containers:
             container_name = container['name']
             container_dimensions = container_dimension_map[name2id[container_name]]
@@ -226,15 +260,22 @@ class Kubernetes(checks.AgentCheck):
                     cpu_limit = container_limits['cpu']
                     cpu_value = self._convert_cpu_to_cores(cpu_limit)
                     if self.report_container_metrics:
-                        self.gauge("container.cpu.limit", cpu_value, container_dimensions, hostname="SUPPRESS")
+                        self.gauge(
+                            "container.cpu.limit",
+                            cpu_value,
+                            container_dimensions,
+                            hostname="SUPPRESS")
                 else:
                     self.log.debug("Container {} does not have cpu limit set", container_name)
                 if 'memory' in container_limits:
                     memory_limit = container_limits['memory']
                     memory_in_bytes = utils.convert_memory_string_to_bytes(memory_limit)
                     if self.report_container_metrics:
-                        self.gauge("container.memory.limit_bytes", memory_in_bytes, container_dimensions,
-                                   hostname="SUPPRESS")
+                        self.gauge(
+                            "container.memory.limit_bytes",
+                            memory_in_bytes,
+                            container_dimensions,
+                            hostname="SUPPRESS")
                     if self.report_container_mem_percent:
                         container_key = container_name + " " + container_dimensions["namespace"]
                         if container_key not in memory_limit_map:
@@ -249,15 +290,22 @@ class Kubernetes(checks.AgentCheck):
                     cpu_request = container_requests['cpu']
                     cpu_value = self._convert_cpu_to_cores(cpu_request)
                     if self.report_container_metrics:
-                        self.gauge("container.request.cpu", cpu_value, container_dimensions, hostname="SUPPRESS")
+                        self.gauge(
+                            "container.request.cpu",
+                            cpu_value,
+                            container_dimensions,
+                            hostname="SUPPRESS")
                 else:
                     self.log.debug("Container {} does not have cpu request set", container_name)
                 if 'memory' in container_requests:
                     memory_request = container_requests['memory']
                     memory_in_bytes = utils.convert_memory_string_to_bytes(memory_request)
                     if self.report_container_metrics:
-                        self.gauge("container.request.memory_bytes", memory_in_bytes, container_dimensions,
-                                   hostname="SUPPRESS")
+                        self.gauge(
+                            "container.request.memory_bytes",
+                            memory_in_bytes,
+                            container_dimensions,
+                            hostname="SUPPRESS")
                 else:
                     self.log.debug("Container {} does not have memory request set", container_name)
 
@@ -297,15 +345,20 @@ class Kubernetes(checks.AgentCheck):
                                        METRIC_TYPES_UNITS[metric_name][1])
                 self._add_pod_metric(metric_name, metric_value, pod_key, pod_map)
                 if self.report_container_mem_percent and cadvisor_key == "working_set":
-                    if "container_name" in container_dimensions and "namespace" in container_dimensions:
-                        container_key = container_dimensions["container_name"] + " " + container_dimensions["namespace"]
+                    if "container_name" in container_dimensions \
+                            and "namespace" in container_dimensions:
+                        container_key = container_dimensions["container_name"] + \
+                            " " + container_dimensions["namespace"]
                         if container_key not in memory_limit_map:
                             continue
                         memory_limit = memory_limit_map[container_key]
                         memory_usage = metric_value
                         memory_usage_percent = (memory_usage / memory_limit) * 100
-                        self.gauge("container.mem.usage_percent", memory_usage_percent, container_dimensions,
-                                   hostname="SUPPRESS")
+                        self.gauge(
+                            "container.mem.usage_percent",
+                            memory_usage_percent,
+                            container_dimensions,
+                            hostname="SUPPRESS")
 
     def _parse_filesystem(self, filesystem_data, container_dimensions):
         if not self.report_container_metrics:
@@ -379,16 +432,21 @@ class Kubernetes(checks.AgentCheck):
                                      pod_metrics)
 
     def _add_pod_metric(self, metric_name, metric_value, pod_key, pod_metrics):
-            if pod_key:
-                if pod_key not in pod_metrics:
-                    pod_metrics[pod_key] = {}
-                if metric_name not in pod_metrics[pod_key]:
-                    pod_metrics[pod_key][metric_name] = metric_value
-                else:
-                    pod_metrics[pod_key][metric_name] += metric_value
+        if pod_key:
+            if pod_key not in pod_metrics:
+                pod_metrics[pod_key] = {}
+            if metric_name not in pod_metrics[pod_key]:
+                pod_metrics[pod_key][metric_name] = metric_value
+            else:
+                pod_metrics[pod_key][metric_name] += metric_value
 
-    def _get_container_dimensions(self, container, instance_dimensions, container_spec, container_dimension_map,
-                                  pod_dimension_map):
+    def _get_container_dimensions(
+            self,
+            container,
+            instance_dimensions,
+            container_spec,
+            container_dimension_map,
+            pod_dimension_map):
         container_id = ""
         # meant to key through pod metrics/dimension dictionaries
 
@@ -410,19 +468,26 @@ class Kubernetes(checks.AgentCheck):
             pod_key = None
             if 'labels' in container_spec:
                 container_labels = container_spec['labels']
-                if 'io.kubernetes.pod.namespace' in container_labels and 'io.kubernetes.pod.name' in container_labels:
+                if 'io.kubernetes.pod.namespace' in container_labels \
+                        and 'io.kubernetes.pod.name' in container_labels:
                     pod_key = container_labels['io.kubernetes.pod.name'] + \
                         container_labels['io.kubernetes.pod.namespace']
                     # In case new pods showed up since we got our pod list from the kubelet
                     if pod_key in pod_dimension_map:
                         container_dimensions.update(pod_dimension_map[pod_key])
-                        container_dimensions['container_name'] = container_labels['io.kubernetes.container.name']
+                        container_dimensions['container_name'] = \
+                            container_labels['io.kubernetes.container.name']
                     else:
                         pod_key = None
             return pod_key, container_dimensions
 
-    def _process_containers(self, cadvisor_url, dimensions, container_dimension_map, pod_dimension_map,
-                            memory_limit_map):
+    def _process_containers(
+            self,
+            cadvisor_url,
+            dimensions,
+            container_dimension_map,
+            pod_dimension_map,
+            memory_limit_map):
         try:
             cadvisor_spec_url = cadvisor_url + CADVISOR_SPEC_URL
             cadvisor_metric_url = cadvisor_url + CADVISOR_METRIC_URL

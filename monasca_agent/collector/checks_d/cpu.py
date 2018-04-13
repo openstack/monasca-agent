@@ -64,7 +64,8 @@ class Cpu(checks.AgentCheck):
 
     def _add_cpu_freq(self, data):
         try:
-            lscpu_command = subprocess.Popen('lscpu', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            lscpu_command = subprocess.Popen(
+                'lscpu', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             lscpu_output = lscpu_command.communicate()[0].decode(
                 encoding='UTF-8')
             cpu_freq_output = re.search("(CPU MHz:.*?(\d+\.\d+)\n)", lscpu_output)

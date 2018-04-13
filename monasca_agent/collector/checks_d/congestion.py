@@ -5,7 +5,6 @@
 from copy import deepcopy
 import json
 import logging
-import math
 import os
 import stat
 import subprocess
@@ -264,7 +263,7 @@ class Congestion(AgentCheck):
                 for net in instance.addresses:
                     for ip in instance.addresses[net]:
                         if (ip['OS-EXT-IPS:type'] == 'fixed' and
-                           ip['version'] == 4):
+                                ip['version'] == 4):
                             vm_list[inst_name] = ip['addr']
         return vm_list
 

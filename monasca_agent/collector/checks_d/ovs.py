@@ -82,7 +82,8 @@ class OvsCheck(AgentCheck):
         for ifx in interface_data:
             if not re.match(self.include_iface_re, ifx):
                 self.log.debug("include_iface_re {0} does not match with "
-                               "ovs-vsctl interface {1} ".format(self.include_iface_re.pattern, ifx))
+                               "ovs-vsctl interface {1} ".format(self.include_iface_re.pattern,
+                                                                 ifx))
                 continue
 
             if ifx not in ctr_cache:
@@ -90,7 +91,8 @@ class OvsCheck(AgentCheck):
             for metric_name, idx in self._get_metrics_map(measure).items():
                 interface_stats_key = self._get_interface_stats_key(idx, metric_name, measure, ifx)
                 statistics_dict = interface_data[ifx]['statistics']
-                value = statistics_dict[interface_stats_key] if interface_stats_key in statistics_dict else 0
+                value = statistics_dict[interface_stats_key] \
+                    if interface_stats_key in statistics_dict else 0
                 if metric_name in ctr_cache[ifx]:
                     cache_time = ctr_cache[ifx][metric_name]['timestamp']
                     time_diff = sample_time - float(cache_time)
@@ -207,7 +209,7 @@ class OvsCheck(AgentCheck):
                     metric_name_rate = "vswitch.{0}_sec".format(metric_name)
                     metric_name_abs = "vswitch.{0}".format(metric_name)
                 if not self.use_health_metrics and interface_stats_key in HEALTH_METRICS:
-                        continue
+                    continue
                 if self.use_rate_metrics:
                     self.gauge(metric_name_rate, value[interface_stats_key],
                                dimensions=customer_dimensions,
@@ -218,7 +220,8 @@ class OvsCheck(AgentCheck):
                                dimensions=ops_dimensions)
                 if self.use_absolute_metrics:
                     statistics_dict = interface_data[ifx]['statistics']
-                    abs_value = statistics_dict[interface_stats_key] if interface_stats_key in statistics_dict else 0
+                    abs_value = statistics_dict[interface_stats_key] \
+                        if interface_stats_key in statistics_dict else 0
                     if self.use_bits and 'bytes' in interface_stats_key:
                         abs_value = abs_value * 8
                     # POST to customer

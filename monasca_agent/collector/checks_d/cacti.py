@@ -56,17 +56,19 @@ class Cacti(AgentCheck):
 
         # The rrdtool module is required for the check to work
         try:
-            import rrdtool
+            import rrdtool  # noqa
         except ImportError:
             raise Exception(
-                "Cannot import rrdtool module. This module is required for the cacti plugin to work correctly")
+                "Cannot import rrdtool module. This module is required for "
+                "the cacti plugin to work correctly")
 
         # Try importing MySQL
         try:
             import pymysql
         except ImportError:
             raise Exception(
-                "Cannot import PyMySQL module. This module is required for the cacti plugin to work correctly")
+                "Cannot import PyMySQL module. This module is required for "
+                "the cacti plugin to work correctly")
 
         connection = pymysql.connect(config.host, config.user, config.password, config.db)
 

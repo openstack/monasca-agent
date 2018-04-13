@@ -44,7 +44,7 @@ class Congestion(monasca_setup.detection.Plugin):
             try:
                 cmd = proc.as_dict(['cmdline'])['cmdline']
                 if (len(cmd) > 2 and 'python' in cmd[0] and
-                   'nova-compute' in cmd[1]):
+                        'nova-compute' in cmd[1]):
                     conf_indexes = [cmd.index(y)
                                     for y in cmd if 'nova.conf' in y]
                     if not conf_indexes:
@@ -82,16 +82,16 @@ class Congestion(monasca_setup.detection.Plugin):
             's_factor': s_factor,
             'collect_period': collect_period}
         for option in cfg_needed:
-                init_config[option] = nova_cfg.get(
-                    cfg_section, cfg_needed[option])
+            init_config[option] = nova_cfg.get(
+                cfg_section, cfg_needed[option])
         init_config['region_name'] = nova_cfg.get(
             region_name_sec, 'region_name')
         # Create an identity URI (again, slightly different for Devstack)
         if nova_cfg.has_option(cfg_section, 'auth_url'):
-                init_config['auth_url'] = nova_cfg.get(cfg_section, 'auth_url')
+            init_config['auth_url'] = nova_cfg.get(cfg_section, 'auth_url')
         else:
-                init_config['auth_url'] = nova_cfg.get(
-                    cfg_section, 'identity_uri')
+            init_config['auth_url'] = nova_cfg.get(
+                cfg_section, 'identity_uri')
 
         config = monasca_setup.agent_config.Plugins()
         config['congestion'] = {

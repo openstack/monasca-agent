@@ -68,7 +68,8 @@ class Reporter(threading.Thread):
                 except Exception:
                     log.exception("Error running emitter.")
 
-            should_log = self.flush_count <= FLUSH_LOGGING_INITIAL or self.log_count <= FLUSH_LOGGING_COUNT
+            should_log = self.flush_count <= FLUSH_LOGGING_INITIAL \
+                or self.log_count <= FLUSH_LOGGING_COUNT
             log_func = log.info
             if not should_log:
                 log_func = log.debug

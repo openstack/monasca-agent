@@ -19,8 +19,10 @@ PROJECTION_METRICS_QUERY = "SELECT projection_name, wos_used_bytes, ros_count, "
                            "COALESCE(tuple_mover_mergeouts, 0) tuple_mover_mergeouts " \
                            "FROM projection_storage " \
                            "LEFT JOIN (SELECT projection_id, " \
-                           "SUM(case when operation_name = 'Moveout' then 1 else 0 end) tuple_mover_moveouts, " \
-                           "SUM(case when operation_name = 'Mergeout' then 1 else 0 end) tuple_mover_mergeouts " \
+                           "SUM(case when operation_name = " \
+                           "'Moveout' then 1 else 0 end) tuple_mover_moveouts, " \
+                           "SUM(case when operation_name = " \
+                           "'Mergeout' then 1 else 0 end) tuple_mover_mergeouts " \
                            "FROM tuple_mover_operations " \
                            "WHERE node_name = '{0}' and is_executing = 't' " \
                            "GROUP BY projection_id) tm " \
@@ -34,7 +36,8 @@ RESOURCE_METRICS_QUERY = "SELECT COALESCE(request_queue_depth, 0) request_queue_
                          "FROM resource_usage " \
                          "WHERE node_name = '{0}';"
 
-RESOURCE_POOL_METRICS_QUERY = "SELECT pool_name, memory_size_actual_kb, memory_inuse_kb, running_query_count, " \
+RESOURCE_POOL_METRICS_QUERY = "SELECT pool_name, memory_size_actual_kb, " \
+                              "memory_inuse_kb, running_query_count, " \
                               "COALESCE(rejection_count, 0) rejection_count " \
                               "FROM resource_pool_status " \
                               "LEFT JOIN (" \
@@ -95,14 +98,20 @@ class Vertica(checks.AgentCheck):
             self._report_resource_pool_metrics(results[4], dimensions)
 
     def _query_database(self, user, password, timeout, query):
-        stdout, stderr, return_code = timeout_command(["/opt/vertica/bin/vsql", "-U", user, "-w", password, "-A", "-R",
-                                                       "|", "-t", "-F", ",", "-x"], timeout, command_input=query)
+        stdout, stderr, return_code = timeout_command(["/opt/vertica/bin/vsql",
+                                                       "-U", user, "-w",
+                                                       password, "-A", "-R",
+                                                       "|", "-t", "-F", ",", "-x"],
+                                                      timeout,
+                                                      command_input=query)
         if return_code == 0:
             # remove trailing newline
             stdout = stdout.rstrip()
             return stdout, 0
         else:
-            self.log.error("Error querying vertica with return code of {0} and error {1}".format(return_code, stderr))
+            self.log.error(
+                "Error querying vertica with return code of {0} and error {1}".format(
+                    return_code, stderr))
             return stderr, 1
 
     def _build_query(self, node_name):
@@ -115,13 +124,18 @@ class Vertica(checks.AgentCheck):
         return query
 
     def _results_to_dict(self, results):
-        return [dict(entry.split(',') for entry in dictionary.split('|')) for dictionary in results.split('||')]
+        return [dict(entry.split(',') for entry in dictionary.split('|'))
+                for dictionary in results.split('||')]
 
     def _report_node_status(self, results, dimensions):
         result = self._results_to_dict(results)
         node_status = result[0]['node_state']
         status_metric = 0 if node_status == 'UP' else 1
-        self.gauge('vertica.node_status', status_metric, dimensions=dimensions, value_meta=result[0])
+        self.gauge(
+            'vertica.node_status',
+            status_metric,
+            dimensions=dimensions,
+            value_meta=result[0])
 
     def _report_projection_metrics(self, results, dimensions):
         results = self._results_to_dict(results)
@@ -135,11 +149,12 @@ class Vertica(checks.AgentCheck):
                 result['wos_used_bytes'] = '0'
             self.gauge(projection_metric_name + 'wos_used_bytes', int(result['wos_used_bytes']),
                        dimensions=projection_dimensions)
-            self.gauge(projection_metric_name + 'ros_count', int(result['ros_count']), dimensions=projection_dimensions)
-            self.rate(projection_metric_name + 'tuple_mover_moveouts', int(result['tuple_mover_moveouts']),
-                      dimensions=projection_dimensions)
-            self.rate(projection_metric_name + 'tuple_mover_mergeouts', int(result['tuple_mover_mergeouts']),
-                      dimensions=projection_dimensions)
+            self.gauge(projection_metric_name + 'ros_count',
+                       int(result['ros_count']), dimensions=projection_dimensions)
+            self.rate(projection_metric_name + 'tuple_mover_moveouts',
+                      int(result['tuple_mover_moveouts']), dimensions=projection_dimensions)
+            self.rate(projection_metric_name + 'tuple_mover_mergeouts',
+                      int(result['tuple_mover_mergeouts']), dimensions=projection_dimensions)
 
     def _report_resource_metrics(self, results, dimensions):
         results = self._results_to_dict(results)
@@ -147,13 +162,21 @@ class Vertica(checks.AgentCheck):
         resource_metrics = results[0]
         for metric_name, metric_value in resource_metrics.items():
             if metric_name in ['resource_rejections', 'disk_space_rejections']:
-                self.rate(resource_metric_name + metric_name, int(metric_value), dimensions=dimensions)
+                self.rate(
+                    resource_metric_name +
+                    metric_name,
+                    int(metric_value),
+                    dimensions=dimensions)
             else:
                 if metric_name == 'wos_used_bytes' and not metric_value:
                     # when nothing has been written, wos_used_bytes is empty.
                     # Needs to convert it to zero.
                     metric_value = '0'
-                self.gauge(resource_metric_name + metric_name, int(metric_value), dimensions=dimensions)
+                self.gauge(
+                    resource_metric_name +
+                    metric_name,
+                    int(metric_value),
+                    dimensions=dimensions)
 
     def _report_resource_pool_metrics(self, results, dimensions):
         results = self._results_to_dict(results)
@@ -161,12 +184,12 @@ class Vertica(checks.AgentCheck):
         for result in results:
             resource_pool_dimensions = dimensions.copy()
             resource_pool_dimensions['resource_pool'] = result['pool_name']
-            self.gauge(resource_pool_metric_name + 'memory_size_actual_kb', int(result['memory_size_actual_kb']),
-                       dimensions=resource_pool_dimensions)
-            self.gauge(resource_pool_metric_name + 'memory_inuse_kb', int(result['memory_inuse_kb']),
-                       dimensions=resource_pool_dimensions)
-            self.gauge(resource_pool_metric_name + 'running_query_count', int(result['running_query_count']),
-                       dimensions=resource_pool_dimensions)
+            self.gauge(resource_pool_metric_name + 'memory_size_actual_kb',
+                       int(result['memory_size_actual_kb']), dimensions=resource_pool_dimensions)
+            self.gauge(resource_pool_metric_name + 'memory_inuse_kb',
+                       int(result['memory_inuse_kb']), dimensions=resource_pool_dimensions)
+            self.gauge(resource_pool_metric_name + 'running_query_count',
+                       int(result['running_query_count']), dimensions=resource_pool_dimensions)
             self.rate(resource_pool_metric_name + 'rejection_count', int(result['rejection_count']),
                       dimensions=resource_pool_dimensions)
 

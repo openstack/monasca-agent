@@ -10,11 +10,9 @@
    polls all services and all hosts.
 """
 import logging
-import os
-import re
-
 import monasca_setup.agent_config
 import monasca_setup.detection
+import os
 
 log = logging.getLogger(__name__)
 
@@ -55,8 +53,8 @@ class MKLivestatus(monasca_setup.detection.Plugin):
         if self.dependencies_installed and socket_path is not None:
             if os.path.exists(socket_path):
                 # Is it readable by the monasca-agent user?
-                test_readable = os.system('sudo -u {0} ls -1 {1} >/dev/null 2>&1'.format(agent_user,
-                                                                                         socket_path))
+                test_readable = os.system(
+                    'sudo -u {0} ls -1 {1} >/dev/null 2>&1'.format(agent_user, socket_path))
                 if test_readable != 0:
                     log.info("Not configuring MK_Livestatus:")
                     log.info("\t{0} exists but is not readable by {1}.".format(socket_path,
@@ -81,7 +79,7 @@ class MKLivestatus(monasca_setup.detection.Plugin):
 
     def dependencies_installed(self):
         try:
-            import socket
+            import socket  # noqa
         except ImportError:
             return False
         else:

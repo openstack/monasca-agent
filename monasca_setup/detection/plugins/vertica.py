@@ -21,11 +21,13 @@ class Vertica(monasca_setup.detection.Plugin):
 
     """Detect Vertica process running and DB connection status
 
-        This plugin has the following options (each optional) that you can pass in via command line:
+       This plugin has the following options (each optional) that you can pass in via command line:
             - user      (optional - user to connect with) - Defaults to monitor user
             - password  (optional - password to use when connecting) - Defaults to password
-            - service   (optional - dimensions service to be set for the metrics coming out of the plugin)
-            - timeout   (optional - timeout for vertica connection in seconds) - Defaults to 3 second
+            - service   (optional - dimensions service to be set for the metrics coming out
+                         of the plugin)
+            - timeout   (optional - timeout for vertica connection in seconds) - Defaults to
+                         3 seconds)
     """
 
     def _detect(self):
@@ -66,7 +68,9 @@ class Vertica(monasca_setup.detection.Plugin):
             self.node_name = stdout
             return True
         else:
-            log.error("Error querying vertica with return code of {0} and the error {1}".format(return_code, stderr))
+            log.error(
+                "Error querying vertica with return code of {0} and the error {1}".format(
+                    return_code, stderr))
             return False
 
     def build_config(self):

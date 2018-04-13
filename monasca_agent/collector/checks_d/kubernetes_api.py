@@ -57,7 +57,8 @@ class KubernetesAPI(checks.AgentCheck):
     def check(self, instance):
         kubernetes_labels = instance.get('kubernetes_labels', ["app"])
         dimensions = self._set_dimensions(None, instance)
-        # Remove hostname from dimensions as the majority of the metrics are not tied to the hostname.
+        # Remove hostname from dimensions as the majority of the metrics are not
+        # tied to the hostname.
         del dimensions['hostname']
         kubernetes_api_health = self._get_api_health()
         self.gauge("kubernetes.api.health_status", 0 if kubernetes_api_health else 1, dimensions,
@@ -100,8 +101,11 @@ class KubernetesAPI(checks.AgentCheck):
                     if condition['status']:
                         component_status = True
                         break
-            self.gauge("kubernetes.component_status", 0 if component_status else 1, component_dimensions,
-                       hostname="SUPPRESS")
+            self.gauge(
+                "kubernetes.component_status",
+                0 if component_status else 1,
+                component_dimensions,
+                hostname="SUPPRESS")
 
     def _set_kubernetes_dimensions(self, dimensions, type, metadata, kubernetes_labels):
         dimensions['type'] = metadata['name']
@@ -136,7 +140,12 @@ class KubernetesAPI(checks.AgentCheck):
                     self.gauge("kubernetes." + condition_map['metric_name'], 0, node_dimensions)
                 else:
                     value_meta = {"reason": condition['message'][:1024]}
-                    self.gauge("kubernetes." + condition_map['metric_name'], 1, node_dimensions, value_meta=value_meta)
+                    self.gauge(
+                        "kubernetes." +
+                        condition_map['metric_name'],
+                        1,
+                        node_dimensions,
+                        value_meta=value_meta)
 
     def _report_nodes_metrics(self, dimensions):
         try:
@@ -166,23 +175,35 @@ class KubernetesAPI(checks.AgentCheck):
         for deployment in deployments['items']:
             try:
                 deployment_dimensions = dimensions.copy()
-                self._set_kubernetes_dimensions(deployment_dimensions, "deployment", deployment['metadata'],
-                                                kubernetes_labels)
+                self._set_kubernetes_dimensions(
+                    deployment_dimensions,
+                    "deployment",
+                    deployment['metadata'],
+                    kubernetes_labels)
                 deployment_status = deployment['status']
                 deployment_replicas = deployment_status['replicas']
                 deployment_updated_replicas = deployment_status['updatedReplicas']
                 deployment_available_replicas = deployment_status['availableReplicas']
-                deployment_unavailable_replicas = deployment_available_replicas - deployment_replicas
+                deployment_unavailable_replicas = \
+                    deployment_available_replicas - deployment_replicas
                 self.gauge("kubernetes.deployment.replicas", deployment_replicas,
                            deployment_dimensions, hostname="SUPPRESS")
-                self.gauge("kubernetes.deployment.available_replicas", deployment_available_replicas,
-                           deployment_dimensions, hostname="SUPPRESS")
-                self.gauge("kubernetes.deployment.unavailable_replicas", deployment_unavailable_replicas,
-                           deployment_dimensions, hostname="SUPPRESS")
+                self.gauge(
+                    "kubernetes.deployment.available_replicas",
+                    deployment_available_replicas,
+                    deployment_dimensions,
+                    hostname="SUPPRESS")
+                self.gauge(
+                    "kubernetes.deployment.unavailable_replicas",
+                    deployment_unavailable_replicas,
+                    deployment_dimensions,
+                    hostname="SUPPRESS")
                 self.gauge("kubernetes.deployment.updated_replicas", deployment_updated_replicas,
                            deployment_dimensions, hostname="SUPPRESS")
             except Exception as e:
-                self.log.info("Error {} parsing deployment {}. Skipping".format(e, deployment), exc_info=e)
+                self.log.info(
+                    "Error {} parsing deployment {}. Skipping".format(
+                        e, deployment), exc_info=e)
 
     def _report_replication_controller_metrics(self, dimensions, kubernetes_labels):
         # Get namespaces first
@@ -205,12 +226,18 @@ class KubernetesAPI(checks.AgentCheck):
                 continue
             for rc in replication_controllers['items']:
                 rc_dimensions = dimensions.copy()
-                self._set_kubernetes_dimensions(rc_dimensions, "replication_controller", rc['metadata'],
-                                                kubernetes_labels)
+                self._set_kubernetes_dimensions(
+                    rc_dimensions,
+                    "replication_controller",
+                    rc['metadata'],
+                    kubernetes_labels)
                 rc_status = rc['status']
                 if 'replicas' not in rc_status or not rc_status['replicas']:
                     continue
                 self.gauge("kubernetes.replication.controller.replicas", rc_status['replicas'],
                            rc_dimensions, hostname="SUPPRESS")
-                self.gauge("kubernetes.replication.controller.ready_replicas", rc_status['readyReplicas'],
-                           rc_dimensions, hostname="SUPPRESS")
+                self.gauge(
+                    "kubernetes.replication.controller.ready_replicas",
+                    rc_status['readyReplicas'],
+                    rc_dimensions,
+                    hostname="SUPPRESS")

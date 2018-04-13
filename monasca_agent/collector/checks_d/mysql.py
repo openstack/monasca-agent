@@ -66,8 +66,9 @@ class MySql(checks.AgentCheck):
         return {"PyMySQL": version}
 
     def check(self, instance):
-        host, port, user, password, mysql_sock, ssl_ca, ssl_key, ssl_cert, defaults_file, options = self._get_config(
-            instance)
+        host, port, user, password, mysql_sock, ssl_ca, ssl_key, ssl_cert, defaults_file, \
+            options = self._get_config(
+                instance)
         self.ssl_options = {}
         if ssl_ca is not None:
             self.ssl_options['ca'] = ssl_ca
@@ -102,7 +103,8 @@ class MySql(checks.AgentCheck):
         defaults_file = instance.get('defaults_file', '')
         options = instance.get('options', {})
 
-        return host, port, user, password, mysql_sock, ssl_ca, ssl_key, ssl_cert, defaults_file, options
+        return host, port, user, password, mysql_sock, ssl_ca, ssl_key, ssl_cert, \
+            defaults_file, options
 
     def _connect(self, host, port, mysql_sock, user, password, defaults_file):
         try:
@@ -212,7 +214,9 @@ class MySql(checks.AgentCheck):
                 greater_502 = True
 
         except Exception as exception:
-            self.log.warn("Cannot compute mysql version, assuming older than 5.0.2: %s" % str(exception))
+            self.log.warn(
+                "Cannot compute mysql version, assuming older than 5.0.2: %s" %
+                str(exception))
 
         self.greater_502[host] = greater_502
 

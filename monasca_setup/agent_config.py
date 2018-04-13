@@ -15,8 +15,8 @@ class Plugins(collections.defaultdict):
 
     """A container for the plugin configurations used by the monasca-agent.
 
-        This is essentially a defaultdict(dict) but put into a class primarily to make the interface clear, also
-        to add a couple of helper methods.
+        This is essentially a defaultdict(dict) but put into a class primarily to make the
+        interface clear, also to add a couple of helper methods.
         Each plugin config is stored with the key being its config name (excluding .yaml).
         The value a dict which will convert to yaml.
     """
@@ -33,13 +33,14 @@ class Plugins(collections.defaultdict):
         """Do a deep merge with precedence going to other (as is the case with update).
 
         """
-        # Implemented as a function so it can be used for arbitrary dictionaries not just self, this is needed
-        # for the recursive nature of the merge.
+        # Implemented as a function so it can be used for arbitrary dictionaries not just self,
+        # this is needed for the recursive nature of the merge.
         deep_merge(self, other)
 
 
 def deep_merge(adict, other):
-    """A recursive merge of two dictionaries including combining of any lists within the data structure.
+    """A recursive merge of two dictionaries including combining of any lists within the data
+    structure.
 
     """
     for key, value in other.items():
@@ -53,8 +54,10 @@ def deep_merge(adict, other):
 
 
 def merge_by_name(first, second):
-    """Merge a list of dictionaries replacing any dictionaries with the same 'name' value rather than merging.
-        The precedence goes to first.
+    """Merge a list of dictionaries replacing any dictionaries with the same 'name' value rather
+    than merging.
+
+    The precedence goes to first.
     """
     first_names = [i['name'] for i in first if 'name' in i]
     for item in second:

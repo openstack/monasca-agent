@@ -174,7 +174,8 @@ SELECT relname,
 
                 # Build dimensions
                 # descriptors are: (pg_name, dd_tag_name): value
-                # Special-case the "db" tag, which overrides the one that is passed as instance_dimensions
+                # Special-case the "db" tag, which overrides the one that is passed as
+                # instance_dimensions
                 # The reason is that pg_stat_database returns all databases regardless of the
                 # connection.
                 if not scope['relation'] and 'db' in dimensions:
@@ -205,7 +206,8 @@ SELECT relname,
                 import psycopg2 as pg
             except ImportError:
                 raise ImportError(
-                    "psycopg2 library cannot be imported. Please check the installation instruction on the Datadog Website.")
+                    "psycopg2 library cannot be imported. Please check the"
+                    "installation instruction on the Datadog Website.")
 
             if host == 'localhost' and password == '':  # nosec
                 # Use ident method

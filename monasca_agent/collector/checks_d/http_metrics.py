@@ -61,7 +61,9 @@ class HTTPMetrics(http_check.HTTPCheck):
                 # everything requires a number
                 if metric_type in ['gauge', 'counter', 'rate']:
                     if not self._valid_number(value, metric_name):
-                        self.log.warning("Invalid value '{0}' for metric '{1}'".format(value, metric_name))
+                        self.log.warning(
+                            "Invalid value '{0}' for metric '{1}'".format(
+                                value, metric_name))
                         continue
 
                 if metric_type in self.metric_method:
@@ -69,7 +71,9 @@ class HTTPMetrics(http_check.HTTPCheck):
                                                     value,
                                                     dimensions=dimensions)
                 else:
-                    self.log.warning("Unrecognized type '{0}' for metric '{1}'".format(metric_type, metric_name))
+                    self.log.warning(
+                        "Unrecognized type '{0}' for metric '{1}'".format(
+                            metric_type, metric_name))
 
             success_string = '{0} is UP'.format(addr)
             self.log.debug(success_string)

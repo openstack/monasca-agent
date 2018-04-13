@@ -149,7 +149,7 @@ class MySQL(monasca_setup.detection.Plugin):
 
     def dependencies_installed(self):
         try:
-            import pymysql
+            import pymysql  # noqa
         except ImportError:
             return False
         return True

@@ -8,7 +8,8 @@ import monasca_setup.detection
 
 class HttpCheck(monasca_setup.detection.ArgsPlugin):
     """Setup an http_check according to the passed in args.
-       Despite being a detection plugin this plugin does no detection and will be a noop without arguments.
+       Despite being a detection plugin this plugin does no detection and will be a noop without
+       arguments.
        Expects space separated arguments, the required argument is url. Optional parameters include:
        disable_ssl_validation and match_pattern.
     """

@@ -109,8 +109,9 @@ class WrapMK(AgentCheck):
             if 'name' in instance:
                 metric_name = instance['name']
             elif instance['check_type'] == 'service':
-                metric_name = re.sub(' ', '_',
-                                     "nagios.{0}_status".format(measurement['display_name'].lower()))
+                metric_name = re.sub(
+                    ' ', '_', "nagios.{0}_status".format(
+                        measurement['display_name'].lower()))
             elif instance['check_type'] == 'host':
                 metric_name = 'nagios.host_status'
 

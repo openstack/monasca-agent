@@ -2,7 +2,6 @@
 
 import json
 import re
-import time
 import urllib2
 import urlparse
 
@@ -48,11 +47,13 @@ QUEUE_ATTRIBUTES = [
     ('message_stats/redeliver', 'messages.redeliver_count', float),
     ('message_stats/redeliver_details/rate', 'messages.redeliver_rate', float)]
 
-EXCHANGE_ATTRIBUTES = [('message_stats/publish_out', 'messages.published_count', float),
-                       ('message_stats/publish_out_details/rate', 'messages.published_rate', float),
+EXCHANGE_ATTRIBUTES = [
+    ('message_stats/publish_out', 'messages.published_count', float),
+    ('message_stats/publish_out_details/rate', 'messages.published_rate', float),
 
-                       ('message_stats/publish_in', 'messages.received_count', float),
-                       ('message_stats/publish_in_details/rate', 'messages.received_rate', float)]
+    ('message_stats/publish_in', 'messages.received_count', float),
+    ('message_stats/publish_in_details/rate', 'messages.received_rate', float)
+]
 
 NODE_ATTRIBUTES = [
     ('fd_used', 'fd_used', float),
@@ -192,7 +193,8 @@ class RabbitMQ(checks.AgentCheck):
         base_url: the url of the rabbitmq management api (e.g. http://localhost:15672/api)
         object_type: either QUEUE_TYPE, EXCHANGE_TYPE or NODE_TYPE
         max_detailed: the limit of objects to collect for this type
-        filters: explicit or regexes filters of specified queues or nodes (specified in the yaml file)
+        filters: explicit or regexes filters of specified queues or nodes
+                (specified in the yaml file)
         """
         data = self._get_data(urlparse.urljoin(base_url, object_type))
         # Make a copy of this list as we will remove items from it at each iteration
@@ -202,9 +204,30 @@ class RabbitMQ(checks.AgentCheck):
         """data is a list of nodes or queues:
 
         data = [
-            {'status': 'running', 'node': 'rabbit@host', 'name': 'queue1', 'consumers': 0, 'vhost': '/', 'backing_queue_status': {'q1': 0, 'q3': 0, 'q2': 0, 'q4': 0, 'avg_ack_egress_rate': 0.0, 'ram_msg_count': 0, 'ram_ack_count': 0, 'len': 0, 'persistent_count': 0, 'target_ram_count': 'infinity', 'next_seq_id': 0, 'delta': ['delta', 'undefined', 0, 'undefined'], 'pending_acks': 0, 'avg_ack_ingress_rate': 0.0, 'avg_egress_rate': 0.0, 'avg_ingress_rate': 0.0}, 'durable': True, 'idle_since': '2013-10-03 13:38:18', 'exclusive_consumer_tag': '', 'arguments': {}, 'memory': 10956, 'policy': '', 'auto_delete': False},
-            {'status': 'running', 'node': 'rabbit@host, 'name': 'queue10', 'consumers': 0, 'vhost': '/', 'backing_queue_status': {'q1': 0, 'q3': 0, 'q2': 0, 'q4': 0, 'avg_ack_egress_rate': 0.0, 'ram_msg_count': 0, 'ram_ack_count': 0, 'len': 0, 'persistent_count': 0, 'target_ram_count': 'infinity', 'next_seq_id': 0, 'delta': ['delta', 'undefined', 0, 'undefined'], 'pending_acks': 0, 'avg_ack_ingress_rate': 0.0, 'avg_egress_rate': 0.0, 'avg_ingress_rate': 0.0}, 'durable': True, 'idle_since': '2013-10-03 13:38:18', 'exclusive_consumer_tag': '', 'arguments': {}, 'memory': 10956, 'policy': '', 'auto_delete': False},
-            {'status': 'running', 'node': 'rabbit@host', 'name': 'queue11', 'consumers': 0, 'vhost': '/', 'backing_queue_status': {'q1': 0, 'q3': 0, 'q2': 0, 'q4': 0, 'avg_ack_egress_rate': 0.0, 'ram_msg_count': 0, 'ram_ack_count': 0, 'len': 0, 'persistent_count': 0, 'target_ram_count': 'infinity', 'next_seq_id': 0, 'delta': ['delta', 'undefined', 0, 'undefined'], 'pending_acks': 0, 'avg_ack_ingress_rate': 0.0, 'avg_egress_rate': 0.0, 'avg_ingress_rate': 0.0}, 'durable': True, 'idle_since': '2013-10-03 13:38:18', 'exclusive_consumer_tag': '', 'arguments': {}, 'memory': 10956, 'policy': '', 'auto_delete': False},
+            { 'status': 'running', 'node': 'rabbit@host', 'name': 'queue1', 'consumers': 0,
+            'vhost': '/', 'backing_queue_status': {'q1': 0, 'q3': 0, 'q2': 0, 'q4': 0,
+            'avg_ack_egress_rate': 0.0, 'ram_msg_count': 0, 'ram_ack_count': 0, 'len': 0,
+            'persistent_count': 0, 'target_ram_count': 'infinity', 'next_seq_id': 0,
+            'delta': ['delta', 'undefined', 0, 'undefined'], 'pending_acks': 0,
+            'avg_ack_ingress_rate': 0.0, 'avg_egress_rate': 0.0, 'avg_ingress_rate': 0.0},
+            'durable': True, 'idle_since': '2013-10-03 13:38:18', 'exclusive_consumer_tag': '',
+            'arguments': {}, 'memory': 10956, 'policy': '', 'auto_delete': False},
+            {'status': 'running', 'node': 'rabbit@host, 'name': 'queue10', 'consumers': 0,
+            'vhost': '/', 'backing_queue_status': {'q1': 0, 'q3': 0, 'q2': 0, 'q4': 0,
+            'avg_ack_egress_rate': 0.0, 'ram_msg_count': 0, 'ram_ack_count': 0, 'len': 0,
+            'persistent_count': 0, 'target_ram_count': 'infinity', 'next_seq_id': 0,
+            'delta': ['delta', 'undefined', 0, 'undefined'], 'pending_acks': 0,
+            'avg_ack_ingress_rate': 0.0, 'avg_egress_rate': 0.0, 'avg_ingress_rate': 0.0},
+            'durable': True, 'idle_since': '2013-10-03 13:38:18', 'exclusive_consumer_tag': '',
+            'arguments': {}, 'memory': 10956, 'policy': '', 'auto_delete': False},
+            {'status': 'running', 'node': 'rabbit@host', 'name': 'queue11', 'consumers': 0,
+            'vhost': '/', 'backing_queue_status': {'q1': 0, 'q3': 0, 'q2': 0, 'q4': 0,
+            'avg_ack_egress_rate': 0.0, 'ram_msg_count': 0, 'ram_ack_count': 0, 'len': 0,
+            'persistent_count': 0, 'target_ram_count': 'infinity', 'next_seq_id': 0,
+            'delta': ['delta', 'undefined', 0, 'undefined'], 'pending_acks': 0,
+            'avg_ack_ingress_rate': 0.0, 'avg_egress_rate': 0.0, 'avg_ingress_rate': 0.0},
+            'durable': True, 'idle_since': '2013-10-03 13:38:18', 'exclusive_consumer_tag': '',
+            'arguments': {}, 'memory': 10956, 'policy': '', 'auto_delete': False},
             ...
         ]
         """
@@ -233,7 +256,9 @@ class RabbitMQ(checks.AgentCheck):
 
         if len(data) > max_detailed:
             self.log.warning(
-                "Too many %s to fetch.  Increase max_detailed_ in the config or results will be truncated." % object_type)
+                "Too many %s to fetch.  Increase max_detailed_ in the config"
+                "or results will be truncated." %
+                object_type)
 
         for data_line in data[:max_detailed]:
             # We truncate the list of nodes/queues if it's above the limit
@@ -275,8 +300,15 @@ class RabbitMQ(checks.AgentCheck):
             if value is None:
                 value = 0.0
             try:
-                self.log.debug("Collected data for %s: metric name: %s: value: %f dimensions: %s" % (object_type, metric_name, operation(value), str(dimensions)))
-                self.gauge('rabbitmq.%s.%s' % (METRIC_SUFFIX[object_type], metric_name), operation(value), dimensions=dimensions)
+                self.log.debug(
+                    "Collected data for %s: metric name: %s: value: %f dimensions: %s" %
+                    (object_type, metric_name, operation(value), str(dimensions)))
+                self.gauge(
+                    'rabbitmq.%s.%s' %
+                    (METRIC_SUFFIX[object_type],
+                     metric_name),
+                    operation(value),
+                    dimensions=dimensions)
             except ValueError:
                 self.log.exception("Caught ValueError for %s %s = %s  with dimensions: %s" % (
                     METRIC_SUFFIX[object_type], attribute, value, dimensions))

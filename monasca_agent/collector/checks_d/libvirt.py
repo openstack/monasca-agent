@@ -58,14 +58,15 @@ DOM_ALIVE_NAMES = {libvirt.VIR_DOMAIN_BLOCKED: 'blocked',
                    libvirt.VIR_DOMAIN_SHUTDOWN: 'shuttingdown',
                    libvirt.VIR_DOMAIN_SHUTOFF: 'shutoff'}  # shut off/nova suspend
 
-DOM_SHUTOFF_STATES = {libvirt.VIR_DOMAIN_SHUTOFF_UNKNOWN: 'VM has been shutoff (reason unknown)',
-                      libvirt.VIR_DOMAIN_SHUTOFF_SHUTDOWN: 'VM has been shut down',
-                      libvirt.VIR_DOMAIN_SHUTOFF_DESTROYED: 'VM has been destroyed (forced off)',
-                      libvirt.VIR_DOMAIN_SHUTOFF_CRASHED: 'VM has crashed',
-                      libvirt.VIR_DOMAIN_SHUTOFF_MIGRATED: 'VM has been migrated',
-                      libvirt.VIR_DOMAIN_SHUTOFF_SAVED: 'VM has been suspended',
-                      libvirt.VIR_DOMAIN_SHUTOFF_FAILED: 'VM has failed to start',
-                      libvirt.VIR_DOMAIN_SHUTOFF_FROM_SNAPSHOT: 'VM has been restored from powered off snapshot'}
+DOM_SHUTOFF_STATES = {
+    libvirt.VIR_DOMAIN_SHUTOFF_UNKNOWN: 'VM has been shutoff (reason unknown)',
+    libvirt.VIR_DOMAIN_SHUTOFF_SHUTDOWN: 'VM has been shut down',
+    libvirt.VIR_DOMAIN_SHUTOFF_DESTROYED: 'VM has been destroyed (forced off)',
+    libvirt.VIR_DOMAIN_SHUTOFF_CRASHED: 'VM has crashed',
+    libvirt.VIR_DOMAIN_SHUTOFF_MIGRATED: 'VM has been migrated',
+    libvirt.VIR_DOMAIN_SHUTOFF_SAVED: 'VM has been suspended',
+    libvirt.VIR_DOMAIN_SHUTOFF_FAILED: 'VM has failed to start',
+    libvirt.VIR_DOMAIN_SHUTOFF_FROM_SNAPSHOT: 'VM has been restored from powered off snapshot'}
 
 
 class LibvirtCheck(AgentCheck):
@@ -297,8 +298,8 @@ class LibvirtCheck(AgentCheck):
                     if nsuuid is not None and ping_allowed:
                         if 'network' not in id_cache[inst_name]:
                             id_cache[inst_name]['network'] = []
-                        id_cache[inst_name]['network'].append({'namespace': "qrouter-{0}".format(nsuuid),
-                                                               'ip': ip['addr']})
+                        id_cache[inst_name]['network'].append(
+                            {'namespace': "qrouter-{0}".format(nsuuid), 'ip': ip['addr']})
                     elif ping_allowed is False:
                         self.log.debug("ICMP disallowed for {0} on {1}".format(inst_name,
                                                                                ip['addr']))
@@ -344,9 +345,9 @@ class LibvirtCheck(AgentCheck):
         # Remove inactive VMs from the metric cache
         write_metric_cache = deepcopy(metric_cache)
         for instance in metric_cache:
-            if (('cpu.time' not in metric_cache[instance] or
-                 self._test_vm_probation(time.strftime('%Y-%m-%dT%H:%M:%SZ',
-                                         time.gmtime(metric_cache[instance]['cpu.time']['timestamp'] + run_time))) < 0)):
+            if (('cpu.time' not in metric_cache[instance] or self._test_vm_probation(time.strftime(
+                    '%Y-%m-%dT%H:%M:%SZ',
+                    time.gmtime(metric_cache[instance]['cpu.time']['timestamp'] + run_time))) < 0)):
                 self.log.info("Expiring old/empty {0} from cache".format(instance))
                 del(write_metric_cache[instance])
         try:
@@ -357,7 +358,15 @@ class LibvirtCheck(AgentCheck):
         except IOError as e:
             self.log.error("Cannot write to {0}: {1}".format(self.metric_cache_file, e))
 
-    def _inspect_network(self, insp, inst, inst_name, instance_cache, metric_cache, dims_customer, dims_operations):
+    def _inspect_network(
+            self,
+            insp,
+            inst,
+            inst_name,
+            instance_cache,
+            metric_cache,
+            dims_customer,
+            dims_operations):
         """Inspect network metrics for an instance"""
         for vnic in insp.inspect_vnics(inst):
             sample_time = time.time()
@@ -376,17 +385,20 @@ class LibvirtCheck(AgentCheck):
 
                 value = int(vnic[1].__getattribute__(metric))
                 if vnic[0].name in metric_cache[inst_name][metric_name]:
-                    last_update_time = metric_cache[inst_name][metric_name][vnic[0].name]['timestamp']
+                    last_update_time = \
+                        metric_cache[inst_name][metric_name][vnic[0].name]['timestamp']
                     time_diff = sample_time - float(last_update_time)
-                    rate_value = self._calculate_rate(value,
-                                                      metric_cache[inst_name][metric_name][vnic[0].name]['value'],
-                                                      time_diff)
+                    rate_value = self._calculate_rate(
+                        value,
+                        metric_cache[inst_name][metric_name][vnic[0].name]['value'],
+                        time_diff)
                     if rate_value < 0:
                         # Bad value, save current reading and skip
-                        self.log.warn("Ignoring negative network sample for: "
-                                      "{0} new value: {1} old value: {2}"
-                                      .format(inst_name, value,
-                                              metric_cache[inst_name][metric_name][vnic[0].name]['value']))
+                        self.log.warn(
+                            "Ignoring negative network sample for: "
+                            "{0} new value: {1} old value: {2}"
+                            .format(inst_name, value,
+                                    metric_cache[inst_name][metric_name][vnic[0].name]['value']))
                         metric_cache[inst_name][metric_name][vnic[0].name] = {
                             'timestamp': sample_time,
                             'value': value}
@@ -429,7 +441,15 @@ class LibvirtCheck(AgentCheck):
                     'timestamp': sample_time,
                     'value': value}
 
-    def _inspect_cpu(self, insp, inst, inst_name, instance_cache, metric_cache, dims_customer, dims_operations):
+    def _inspect_cpu(
+            self,
+            insp,
+            inst,
+            inst_name,
+            instance_cache,
+            metric_cache,
+            dims_customer,
+            dims_operations):
         """Inspect cpu metrics for an instance"""
 
         sample_time = float("{:9f}".format(time.time()))
@@ -491,7 +511,15 @@ class LibvirtCheck(AgentCheck):
         metric_cache[inst_name]['cpu.time'] = {'timestamp': sample_time,
                                                'value': cpu_info.time}
 
-    def _inspect_disks(self, insp, inst, inst_name, instance_cache, metric_cache, dims_customer, dims_operations):
+    def _inspect_disks(
+            self,
+            insp,
+            inst,
+            inst_name,
+            instance_cache,
+            metric_cache,
+            dims_customer,
+            dims_operations):
         """Inspect disk metrics for an instance"""
 
         metric_aggregate = {}
@@ -628,7 +656,8 @@ class LibvirtCheck(AgentCheck):
         """
         inst_state = inst.state()
         dom_status = inst_state[0] - 1
-        health_status = 0 if dom_status == 0 else 1  # anything other than 'running' is considered unhealthy
+        # Anything other than 'running' is considered unhealthy
+        health_status = 0 if dom_status == 0 else 1
         metatag = None
 
         if inst_state[0] in DOM_STATES:
@@ -767,7 +796,8 @@ class LibvirtCheck(AgentCheck):
                 # Add dimensions that would be helpful for operations
                 dims_operations = dims_customer.copy()
                 dims_operations['tenant_id'] = instance_cache.get(inst_name)['tenant_id']
-                dims_operations = self._update_dims_with_metadata(instance_cache, inst_name, dims_operations)
+                dims_operations = self._update_dims_with_metadata(
+                    instance_cache, inst_name, dims_operations)
                 if self.init_config.get('customer_metadata'):
                     for metadata in self.init_config.get('customer_metadata'):
                         metadata_value = (instance_cache.get(inst_name).
@@ -787,7 +817,9 @@ class LibvirtCheck(AgentCheck):
                 # Nova can potentially get into a state where it can't see an
                 # instance, but libvirt can.  This would cause TypeErrors as
                 # incomplete data is cached for this instance.  Log and skip.
-                self.log.error("{0} is not known to nova after instance cache update -- skipping this ghost VM.".format(inst_name))
+                self.log.error(
+                    "{0} is not known to nova after instance cache update -- "
+                    "skipping this ghost VM.".format(inst_name))
                 continue
 
             # Accumulate aggregate data
@@ -796,10 +828,12 @@ class LibvirtCheck(AgentCheck):
                     agg_values[gauge] += instance_cache.get(inst_name)[gauge]
 
             # Skip instances created within the probation period
-            vm_probation_remaining = self._test_vm_probation(instance_cache.get(inst_name)['created'])
+            vm_probation_remaining = self._test_vm_probation(
+                instance_cache.get(inst_name)['created'])
             if (vm_probation_remaining >= 0):
-                self.log.info("Libvirt: {0} in probation for another {1} seconds".format(instance_cache.get(inst_name)['hostname'].encode('utf8'),
-                                                                                         vm_probation_remaining))
+                self.log.info("Libvirt: {0} in probation for another {1} seconds".format(
+                    instance_cache.get(inst_name)['hostname'].encode('utf8'),
+                    vm_probation_remaining))
                 continue
 
             vm_dom_state = self._inspect_state(insp, inst, inst_name,
@@ -821,28 +855,72 @@ class LibvirtCheck(AgentCheck):
                 metric_cache[inst_name] = {}
 
             if self.init_config.get('vm_cpu_check_enable'):
-                self._inspect_cpu(insp, inst, inst_name, instance_cache, metric_cache, dims_customer, dims_operations)
+                self._inspect_cpu(
+                    insp,
+                    inst,
+                    inst_name,
+                    instance_cache,
+                    metric_cache,
+                    dims_customer,
+                    dims_operations)
             if not self._collect_intervals['disk']['skip']:
                 if self.init_config.get('vm_disks_check_enable'):
-                    self._inspect_disks(insp, inst, inst_name, instance_cache, metric_cache, dims_customer,
-                                        dims_operations)
+                    self._inspect_disks(
+                        insp,
+                        inst,
+                        inst_name,
+                        instance_cache,
+                        metric_cache,
+                        dims_customer,
+                        dims_operations)
                 if self.init_config.get('vm_extended_disks_check_enable'):
-                    self._inspect_disk_info(insp, inst, inst_name, instance_cache, metric_cache, dims_customer,
-                                            dims_operations)
+                    self._inspect_disk_info(
+                        insp,
+                        inst,
+                        inst_name,
+                        instance_cache,
+                        metric_cache,
+                        dims_customer,
+                        dims_operations)
 
             if not self._collect_intervals['vnic']['skip']:
                 if self.init_config.get('vm_network_check_enable'):
-                    self._inspect_network(insp, inst, inst_name, instance_cache, metric_cache, dims_customer, dims_operations)
+                    self._inspect_network(
+                        insp,
+                        inst,
+                        inst_name,
+                        instance_cache,
+                        metric_cache,
+                        dims_customer,
+                        dims_operations)
 
             # Memory utilization
             # (req. balloon driver; Linux kernel param CONFIG_VIRTIO_BALLOON)
             try:
                 mem_stats = inst.memoryStats()
-                mem_metrics = {'mem.free_gb': float(mem_stats['unused']) / 1024 / 1024,
-                               'mem.swap_used_gb': float(mem_stats['swap_out']) / 1024 / 1024,
-                               'mem.total_gb': float(mem_stats['available']) / 1024 / 1024,
-                               'mem.used_gb': float(mem_stats['available'] - mem_stats['unused']) / 1024 / 1024,
-                               'mem.free_perc': float(mem_stats['unused']) / float(mem_stats['available']) * 100}
+                mem_metrics = {
+                    'mem.free_gb': float(
+                        mem_stats['unused']) /
+                    1024 /
+                    1024,
+                    'mem.swap_used_gb': float(
+                        mem_stats['swap_out']) /
+                    1024 /
+                    1024,
+                    'mem.total_gb': float(
+                        mem_stats['available']) /
+                    1024 /
+                    1024,
+                    'mem.used_gb': float(
+                        mem_stats['available'] -
+                        mem_stats['unused']) /
+                    1024 /
+                    1024,
+                    'mem.free_perc': float(
+                        mem_stats['unused']) /
+                    float(
+                        mem_stats['available']) *
+                    100}
                 for name in mem_metrics:
                     self.gauge(name, mem_metrics[name], dimensions=dims_customer,
                                delegated_tenant=instance_cache.get(inst_name)['tenant_id'],
@@ -850,12 +928,17 @@ class LibvirtCheck(AgentCheck):
                     self.gauge("vm.{0}".format(name), mem_metrics[name],
                                dimensions=dims_operations)
                 memory_info = insp.inspect_memory_resident(inst)
-                self.gauge('vm.mem.resident_gb', float(memory_info.resident) / 1024, dimensions=dims_operations)
+                self.gauge(
+                    'vm.mem.resident_gb',
+                    float(
+                        memory_info.resident) / 1024,
+                    dimensions=dims_operations)
             except KeyError:
-                self.log.debug("Balloon driver not active/available on guest {0} ({1})".format(inst_name,
-                                                                                               instance_cache.get(inst_name)['hostname'].encode('utf8')))
+                self.log.debug("Balloon driver not active/available on guest {0} ({1})".format(
+                    inst_name, instance_cache.get(inst_name)['hostname'].encode('utf8')))
             # Test instance's remote responsiveness (ping check) if possible
-            if (self.init_config.get('vm_ping_check_enable')) and self.init_config.get('ping_check') and 'network' in instance_cache.get(inst_name):
+            if (self.init_config.get('vm_ping_check_enable')) and self.init_config.get(
+                    'ping_check') and 'network' in instance_cache.get(inst_name):
                 for net in instance_cache.get(inst_name)['network']:
                     ping_args = [dims_customer, dims_operations, inst_name, instance_cache, net]
                     ping_results.append(self.pool.apply_async(self._run_ping, ping_args))

@@ -144,7 +144,7 @@ class Kibana(detection.Plugin):
 
     def dependencies_installed(self):
         try:
-            import yaml
+            import yaml  # noqa
         except Exception:
             return False
         return True

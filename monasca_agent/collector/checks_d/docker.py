@@ -45,11 +45,15 @@ class Docker(checks.AgentCheck):
         try:
             docker_client = docker.Client(base_url=docker_url, version=self.docker_version,
                                           timeout=self.connection_timeout)
-            running_containers = {container['Id']: container for container in self._get_containers(docker_client)}
+            running_containers = {
+                container['Id']: container for container in self._get_containers(docker_client)}
         except Exception as e:
-            self.log.error("Could not get containers from Docker API skipping Docker check - {}".format(e))
+            self.log.error(
+                "Could not get containers from Docker API skipping Docker check - {}".format(e))
             return
-        add_kubernetes_dimensions = instance.get('add_kubernetes_dimensions', DEFAULT_ADD_KUBERNETES_DIMENSIONS)
+        add_kubernetes_dimensions = instance.get(
+            'add_kubernetes_dimensions',
+            DEFAULT_ADD_KUBERNETES_DIMENSIONS)
         dimensions = self._set_dimensions(None, instance)
         self.gauge("container.running_count", len(running_containers), dimensions=dimensions)
         self._set_container_pids(running_containers)
@@ -67,14 +71,17 @@ class Docker(checks.AgentCheck):
             try:
                 container_dimensions = dimensions.copy()
                 container_id = container['Id']
-                container_dimensions['name'] = self._get_container_name(container['Names'], container_id)
+                container_dimensions['name'] = self._get_container_name(
+                    container['Names'], container_id)
                 container_dimensions['image'] = container['Image']
                 container_labels = container['Labels']
                 if add_kubernetes_dimensions:
                     if 'io.kubernetes.pod.name' in container_labels:
-                        container_dimensions['kubernetes_pod_name'] = container_labels['io.kubernetes.pod.name']
+                        container_dimensions['kubernetes_pod_name'] = \
+                            container_labels['io.kubernetes.pod.name']
                     if 'io.kubernetes.pod.namespace' in container_labels:
-                        container_dimensions['kubernetes_namespace'] = container_labels['io.kubernetes.pod.namespace']
+                        container_dimensions['kubernetes_namespace'] = \
+                            container_labels['io.kubernetes.pod.namespace']
                 self._report_cgroup_cpuacct(container_id, container_dimensions)
                 self._report_cgroup_memory(container_id, container_dimensions, system_memory)
                 self._report_cgroup_blkio(container_id, container_dimensions)
@@ -104,8 +111,14 @@ class Docker(checks.AgentCheck):
     def _report_cgroup_cpuacct(self, container_id, container_dimensions):
         stat_file = self._get_cgroup_file('cpuacct', container_id, 'cpuacct.stat')
         stats = self._parse_cgroup_pairs(stat_file)
-        self._report_rate_gauge_metric('container.cpu.user_time', stats['user'], container_dimensions)
-        self._report_rate_gauge_metric('container.cpu.system_time', stats['system'], container_dimensions)
+        self._report_rate_gauge_metric(
+            'container.cpu.user_time',
+            stats['user'],
+            container_dimensions)
+        self._report_rate_gauge_metric(
+            'container.cpu.system_time',
+            stats['system'],
+            container_dimensions)
 
     def _report_cgroup_memory(self, container_id, container_dimensions, system_memory_limit):
         stat_file = self._get_cgroup_file('memory', container_id, 'memory.stat')
@@ -133,8 +146,14 @@ class Docker(checks.AgentCheck):
         stat_file = self._get_cgroup_file('blkio', container_id,
                                           'blkio.throttle.io_service_bytes')
         stats = self._parse_cgroup_blkio_metrics(stat_file)
-        self._report_rate_gauge_metric('container.io.read_bytes', stats['io_read'], container_dimensions)
-        self._report_rate_gauge_metric('container.io.write_bytes', stats['io_write'], container_dimensions)
+        self._report_rate_gauge_metric(
+            'container.io.read_bytes',
+            stats['io_read'],
+            container_dimensions)
+        self._report_rate_gauge_metric(
+            'container.io.write_bytes',
+            stats['io_write'],
+            container_dimensions)
 
     def _report_cgroup_cpu_pct(self, container_id, container_dimensions):
         usage_file = self._get_cgroup_file('cpuacct', container_id, 'cpuacct.usage')
@@ -154,14 +173,17 @@ class Docker(checks.AgentCheck):
             self.gauge('container.cpu.utilization_perc', cpu_pct, dimensions=container_dimensions)
 
     def _report_net_metrics(self, container, container_dimensions):
-        """Find container network metrics by looking at /proc/$PID/net/dev of the container process."""
+        """Find container network metrics by looking at /proc/$PID/net/dev
+        of the container process.
+        """
+
         proc_net_file = os.path.join(container['_proc_root'], 'net/dev')
         try:
             with open(proc_net_file, 'r') as f:
                 lines = f.readlines()
                 """Two first lines are headers:
-                Inter-|   Receive                                                |  Transmit
-                 face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
+                Inter-| Receive bytes packets errs drop   | Transmit bytes packkets errs drop
+                 face | fifo frame compressed multicast   | fifo colls carrier compressed
                 """
                 for line in lines[2:]:
                     cols = line.split(':', 1)
@@ -170,13 +192,17 @@ class Docker(checks.AgentCheck):
                         container_network_dimensions = container_dimensions.copy()
                         container_network_dimensions['interface'] = interface_name
                         network_values = cols[1].split()
-                        self._report_rate_gauge_metric("container.net.in_bytes", long(network_values[0]),
-                                                       container_network_dimensions)
-                        self._report_rate_gauge_metric("container.net.out_bytes", long(network_values[8]),
-                                                       container_network_dimensions)
+                        self._report_rate_gauge_metric(
+                            "container.net.in_bytes", long(
+                                network_values[0]), container_network_dimensions)
+                        self._report_rate_gauge_metric(
+                            "container.net.out_bytes", long(
+                                network_values[8]), container_network_dimensions)
                         break
         except Exception as e:
-            self.log.error("Failed to report network metrics from file {0}. Exception: {1}".format(proc_net_file, e))
+            self.log.error(
+                "Failed to report network metrics from file {0}. Exception: {1}".format(
+                    proc_net_file, e))
 
     # Docker API
     def _get_containers(self, docker_client):
@@ -190,8 +216,10 @@ class Docker(checks.AgentCheck):
             stat_file_path_docker = os.path.join(mountpoint, "docker")
             stat_file_path_coreos = os.path.join(mountpoint, "system.slice")
             stat_file_path_kubernetes = os.path.join(mountpoint, container_id)
-            stat_file_path_kubernetes_docker = os.path.join(mountpoint, "system", "docker", container_id)
-            stat_file_path_docker_daemon = os.path.join(mountpoint, "docker-daemon", "docker", container_id)
+            stat_file_path_kubernetes_docker = os.path.join(
+                mountpoint, "system", "docker", container_id)
+            stat_file_path_docker_daemon = os.path.join(
+                mountpoint, "docker-daemon", "docker", container_id)
 
             if os.path.exists(stat_file_path_lxc):
                 return '%(mountpoint)s/lxc/%(id)s/%(file)s'
@@ -353,7 +381,9 @@ class Docker(checks.AgentCheck):
                 if matches:
                     container_id = matches[-1]
                     if container_id not in containers:
-                        self.log.debug("Container %s not in container_dict, it's likely excluded", container_id)
+                        self.log.debug(
+                            "Container %s not in container_dict, it's likely excluded",
+                            container_id)
                         continue
                     containers[container_id]['_pid'] = pid_dir
                     containers[container_id]['_proc_root'] = os.path.join(proc_path, pid_dir)

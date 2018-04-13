@@ -33,7 +33,8 @@ class Crash(checks.AgentCheck):
         dt = None
         if dir_name is None:
             return None
-        # Check for CentOS 7.1 and RHEL 7.1. <IP-address>-YYYY.MM.dd-HH:mm:ss (e.g. 127.0.0.1-2015.10.02-16:07:51)
+        # Check for CentOS 7.1 and RHEL 7.1. <IP-address>-YYYY.MM.dd-HH:mm:ss
+        # (e.g. 127.0.0.1-2015.10.02-16:07:51)
         elif re.match(r".*-\d{4}[.]\d{2}[.]\d{2}-\d{2}:\d{2}:\d{2}$", dir_name):
             dt = self._create_datetime_for_rhel71(dir_name)
         else:
