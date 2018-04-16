@@ -261,11 +261,12 @@ class Kubernetes(checks.AgentCheck):
             container_name = container['name']
             container_dimensions = container_dimension_map[name2id[container_name]]
             if 'resources' not in container:
-                self.log.debug("Container {} does not have limits or requests set")
+                self.log.debug(
+                    "Container %s does not have limits or requests set", container_name)
                 continue
             container_resources = container['resources']
             if 'limits' not in container_resources:
-                self.log.debug("Container {} does not have limits set", container_name)
+                self.log.debug("Container %s does not have limits set", container_name)
             else:
                 container_limits = container_resources['limits']
                 if 'cpu' in container_limits:
@@ -278,7 +279,8 @@ class Kubernetes(checks.AgentCheck):
                             container_dimensions,
                             hostname="SUPPRESS")
                 else:
-                    self.log.debug("Container {} does not have cpu limit set", container_name)
+                    self.log.debug(
+                        "Container %s does not have cpu limit set", container_name)
                 if 'memory' in container_limits:
                     memory_limit = container_limits['memory']
                     memory_in_bytes = utils.convert_memory_string_to_bytes(memory_limit)
@@ -293,9 +295,10 @@ class Kubernetes(checks.AgentCheck):
                         if container_key not in memory_limit_map:
                             memory_limit_map[container_key] = memory_in_bytes
                 else:
-                    self.log.debug("Container {} does not have memory limit set", container_name)
+                    self.log.debug(
+                        "Container %s does not have memory limit set", container_name)
             if 'requests' not in container_resources:
-                self.log.debug("Container {} does not have requests set", container_name)
+                self.log.debug("Container %s does not have requests set", container_name)
             else:
                 container_requests = container_resources['requests']
                 if 'cpu' in container_requests:
@@ -308,7 +311,8 @@ class Kubernetes(checks.AgentCheck):
                             container_dimensions,
                             hostname="SUPPRESS")
                 else:
-                    self.log.debug("Container {} does not have cpu request set", container_name)
+                    self.log.debug(
+                        "Container %s does not have cpu request set", container_name)
                 if 'memory' in container_requests:
                     memory_request = container_requests['memory']
                     memory_in_bytes = utils.convert_memory_string_to_bytes(memory_request)
@@ -319,7 +323,8 @@ class Kubernetes(checks.AgentCheck):
                             container_dimensions,
                             hostname="SUPPRESS")
                 else:
-                    self.log.debug("Container {} does not have memory request set", container_name)
+                    self.log.debug(
+                        "Container %s does not have memory request set", container_name)
 
     def _convert_cpu_to_cores(self, cpu_string):
         """Kubernetes reports cores in millicores in some instances.
