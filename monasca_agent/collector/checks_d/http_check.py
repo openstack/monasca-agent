@@ -45,6 +45,9 @@ class HTTPCheck(services_checks.ServicesCheck):
         # init the keystone client if instance has use_keystone
         self._api_config = cfg.Config().get_config('Api')
         self._ksclients = {}
+
+        init_keystone_config = init_config.get('keystone_config', None)
+
         for instance in instances:
             addr, username, password, timeout, headers, response_time, \
                 disable_ssl_validation, use_keystone, keystone_config, \
@@ -52,7 +55,11 @@ class HTTPCheck(services_checks.ServicesCheck):
             if use_keystone:
                 # keystone is a singleton. It will be initialized once,
                 # the first config instance used.
-                if keystone_config:
+                if init_keystone_config:
+                    ksclient = keystone.Keystone(init_keystone_config)
+                elif keystone_config:
+                    # Using Keystone config in each instance is deprecated
+                    # in Rocky.
                     ksclient = keystone.Keystone(keystone_config)
                 else:
                     ksclient = keystone.Keystone(self._api_config)
