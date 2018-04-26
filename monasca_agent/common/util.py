@@ -601,8 +601,8 @@ def load_check_directory():
 
 def initialize_logging(logger_name):
     try:
-        log_format = '%%(asctime)s | %%(levelname)s | %s | %%(name)s(%%(filename)s:%%(lineno)s) '
-        '| %%(message)s' % logger_name
+        log_format = '%%(asctime)s | %%(levelname)s | %s | %%(name)s(%%(filename)s:%%(lineno)s) ' \
+            '| %%(message)s' % logger_name
         log_date_format = "%Y-%m-%d %H:%M:%S %Z"
         config = configuration.Config()
         logging_config = config.get_config(sections='Logging')
@@ -635,8 +635,8 @@ def initialize_logging(logger_name):
         # set up syslog
         if logging_config['log_to_syslog']:
             try:
-                syslog_format = '%s[%%(process)d]: %%(levelname)s (%%(filename)s:%%(lineno)s): '
-                '%%(message)s' % logger_name
+                syslog_format = '%s[%%(process)d]: %%(levelname)s (%%(filename)s:%%(lineno)s): ' \
+                    '%%(message)s' % logger_name
                 from logging.handlers import SysLogHandler
 
                 if logging_config['syslog_host'] is not None and logging_config[
