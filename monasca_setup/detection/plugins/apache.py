@@ -1,4 +1,17 @@
 # (C) Copyright 2015,2016 Hewlett Packard Enterprise Development Company LP
+# (C) Copyright 2018 SUSE LLC
+
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
 
 import logging
 import os
@@ -10,8 +23,12 @@ import monasca_setup.detection
 log = logging.getLogger(__name__)
 
 # Process name is apache2 on Debian derivatives, on RHEL derivatives it's httpd,
-# on openSUSE/SLES it might be httpd-prefork or httpd-worker
-APACHE_PROCESS_NAMES = ('apache2', 'httpd', 'httpd-prefork', 'httpd-worker')
+# on openSUSE/SLES it might be httpd-prefork or httpd-worker. With some versions
+# of apache2-mod_perl, e.g., 2.0.8, the process name is "/usr/sbin/httpd" after
+# being truncated to the UNIX limit of 15 characters. "/usr/sbin/httpd" should
+# be removed from the list when we conclude the offending verson(s) of the
+# mod_perl is no longer in use.
+APACHE_PROCESS_NAMES = ('apache2', 'httpd', 'httpd-prefork', 'httpd-worker', '/usr/sbin/httpd')
 DEFAULT_APACHE_CONFIG = '/root/.apache.cnf'
 CONFIG_ARG_KEYS = set(["url", "user", "password", "use_server_status_metrics"])
 
