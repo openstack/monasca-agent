@@ -43,6 +43,3 @@ Agent Customizations [github.com/openstack/monasca-agent/docs/Customizations.md]
 Monasca Metrics [github.com/openstack/monasca-agent/docs/MonascaMetrics.md](https://github.com/openstack/monasca-agent/blob/master/docs/MonascaMetrics.md)
 
 Agent Plugin details [github.com/openstack/monasca-agent/docs/Plugins.md](https://github.com/openstack/monasca-agent/blob/master/docs/Plugins.md)
-
-# License
-(C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
