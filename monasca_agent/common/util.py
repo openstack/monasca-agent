@@ -31,6 +31,7 @@ import traceback
 import uuid
 
 import logging
+import logging.handlers
 
 from numbers import Number
 
@@ -637,7 +638,6 @@ def initialize_logging(logger_name):
             try:
                 syslog_format = '%s[%%(process)d]: %%(levelname)s (%%(filename)s:%%(lineno)s): ' \
                     '%%(message)s' % logger_name
-                from logging.handlers import SysLogHandler
 
                 if logging_config['syslog_host'] is not None and logging_config[
                         'syslog_port'] is not None:
@@ -648,7 +648,8 @@ def initialize_logging(logger_name):
                     if sys.platform == 'darwin':
                         sys_log_addr = "/var/run/syslog"
 
-                handler = SysLogHandler(address=sys_log_addr, facility=SysLogHandler.LOG_DAEMON)
+                handler = logging.handlers.SysLogHandler(
+                    address=sys_log_addr, facility=logging.handlers.SysLogHandler.LOG_DAEMON)
                 handler.setFormatter(
                     logging.Formatter(syslog_format, log_date_format))
                 root_log = logging.getLogger()
