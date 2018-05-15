@@ -123,7 +123,7 @@ class MySql(checks.AgentCheck):
         except ImportError:
             raise Exception(
                 "Cannot import PyMySQl module. Check the instructions "
-                "to install this module at https://pypi.python.org/pypi/PyMySQL")
+                "to install this module at https://pypi.org/project/PyMySQL/")
 
         if defaults_file != '':
             db = pymysql.connect(read_default_file=defaults_file)
