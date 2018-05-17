@@ -1539,7 +1539,7 @@ The additional directives are described in the following table. The directives a
 
 The main purpose of the stale_age directive is to detect if the JSON file stops updating (e.g., due to a bug or system failure). See the description of the monasca.json_plugin.status metric below.
 
-The main purpose of the replace_timestamps directive is where the mechanism to write the JSON file runs infrequently or erratically. Every time Monasa Agent runs, the metrics
+The main purpose of the replace_timestamps directive is where the mechanism to write the JSON file runs infrequently or erratically. Every time Monasca Agent runs, the metrics
 are reported with the current time -- whether or not the file is updated. In this mode, you do not need to supply a timestamp (in fact, any timestamp you include is ignored). Also the
 stale_age directive is also ignored.
 
