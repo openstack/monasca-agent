@@ -325,6 +325,7 @@ These are the detection plugins included with the Monasca Agent.  See [Customiza
 | cert_check | ArgsPlugin |
 | check_mk_local | Plugin |
 | cinder | ServicePlugin |
+| cloudkitty | ServicePlugin |
 | crash | Plugin |
 | cue | ServicePlugin |
 | designate | ServicePlugin |
