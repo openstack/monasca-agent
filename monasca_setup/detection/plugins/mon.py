@@ -464,7 +464,7 @@ class _MonPersisterJavaHelper(_DropwizardJavaHelper):
         """Collects DB specific metrics.
 
         Method retrieves which time-series database is used
-        in monaca-persister and sets up new metrics to be monitored.
+        in monasca-persister and sets up new metrics to be monitored.
 
         Note:
             Only if vertica is TSDB in monasca-persister
