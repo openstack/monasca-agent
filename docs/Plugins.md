@@ -2671,7 +2671,7 @@ Sample config:
 init_config:
 
 instances:
-    host: localhost
+  - host: localhost
     port: 2181
     timeout: 3
 ```
