@@ -23,6 +23,18 @@ class HttpCheck(monasca_setup.detection.ArgsPlugin):
        arguments.
        Expects space separated arguments, the required argument is url. Optional parameters include:
        disable_ssl_validation and match_pattern.
+
+       You could provide Keystone configuration for all services when
+       for example you want to monitor different OpenStack instance.
+       Using monasca-setup, you can pass in space separated arguments with
+       --detection_args, or the shortcut -a.
+
+       monasca-setup -d HttpCheck --detection_args \
+         "keystone_url=http://192.168.10.6/identity \
+          keystone_project=proj \
+          keystone_user=usr \
+          keystone_password=pass \
+          url=https://192.168.10.6"
     """
 
     def _detect(self):
@@ -38,6 +50,10 @@ class HttpCheck(monasca_setup.detection.ArgsPlugin):
         instance = self._build_instance(['url', 'timeout', 'username', 'password',
                                          'match_pattern', 'disable_ssl_validation',
                                          'name', 'use_keystone', 'collect_response_time'])
+        init_config = {'keystone_config': self._build_instance(['keystone_url',
+                                                                'keystone_project',
+                                                                'keystone_user',
+                                                                'keystone_password'])}
 
         # Normalize any boolean parameters
         for param in ['use_keystone', 'collect_response_time']:
@@ -49,6 +65,17 @@ class HttpCheck(monasca_setup.detection.ArgsPlugin):
         if 'name' not in instance:
             instance['name'] = self.args['url']
 
-        config['http_check'] = {'init_config': None, 'instances': [instance]}
+        # Configure http check wide Keystone settings
+        if 'keystone_project' in init_config['keystone_config']:
+            init_config['keystone_config']['project_name'] = init_config['keystone_config']\
+                .pop('keystone_project')
+        if 'keystone_user' in init_config['keystone_config']:
+            init_config['keystone_config']['username'] = init_config['keystone_config']\
+                .pop('keystone_user')
+        if 'keystone_password' in init_config['keystone_config']:
+            init_config['keystone_config']['password'] = init_config['keystone_config']\
+                .pop('keystone_password')
+
+        config['http_check'] = {'init_config': init_config, 'instances': [instance]}
 
         return config
