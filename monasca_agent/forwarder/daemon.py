@@ -24,6 +24,8 @@ import signal
 import socket
 import sys
 
+from six import text_type
+
 # set up logging before importing any other components
 import monasca_agent.common.util as util
 util.initialize_logging('forwarder')
@@ -42,6 +44,7 @@ import tornado.web
 # agent import
 import monasca_agent.common.config as cfg
 import monasca_agent.forwarder.api.monasca_api as mon
+
 
 log = logging.getLogger('forwarder')
 
@@ -219,10 +222,10 @@ def main():
     skip_ssl_validation = False
     use_simple_http_client = False
 
-    if unicode(tornado.options.options.sslcheck) == u"0":
+    if text_type(tornado.options.options.sslcheck) == u"0":
         skip_ssl_validation = True
 
-    if unicode(tornado.options.options.use_simple_http_client) == u"1":
+    if text_type(tornado.options.options.use_simple_http_client) == u"1":
         use_simple_http_client = True
 
     # If we don't have any arguments, run the server.

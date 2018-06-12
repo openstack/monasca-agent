@@ -52,7 +52,7 @@ class WrapMK(AgentCheck):
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         try:
             s.connect(socket_path)
-        except socket.error, (err):
+        except socket.error as err:
             self.log.error("Error connecting to {0}: {1}".format(socket_path,
                                                                  str(err)))
             sys.exit(1)

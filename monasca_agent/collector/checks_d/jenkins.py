@@ -16,6 +16,8 @@ from glob import glob
 import os
 import time
 
+from six import moves
+
 try:
     from xml.etree.ElementTree import ElementTree
 except ImportError:
@@ -101,7 +103,7 @@ class Jenkins(AgentCheck):
             if len(dirs) > 0:
                 dirs = sorted(dirs, reverse=True)
                 # We try to get the last valid build
-                for index in xrange(0, len(dirs) - 1):
+                for index in moves.range(0, len(dirs) - 1):
                     dir_name = dirs[index]
                     try:
                         timestamp = self._extract_timestamp(dir_name)

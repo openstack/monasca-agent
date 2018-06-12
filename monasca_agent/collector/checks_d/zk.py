@@ -136,11 +136,11 @@ class Zookeeper(AgentCheck):
 
         # Received: 101032173
         _, value = buf.readline().split(':')
-        metrics.append(('zookeeper.in_bytes', long(value.strip())))
+        metrics.append(('zookeeper.in_bytes', int(value.strip())))
 
         # Sent: 1324
         _, value = buf.readline().split(':')
-        metrics.append(('zookeeper.out_bytes', long(value.strip())))
+        metrics.append(('zookeeper.out_bytes', int(value.strip())))
 
         if has_connections_val:
             # Connections: 1
@@ -153,12 +153,12 @@ class Zookeeper(AgentCheck):
 
         # Outstanding: 0
         _, value = buf.readline().split(':')
-        metrics.append(('zookeeper.outstanding_bytes', long(value.strip())))
+        metrics.append(('zookeeper.outstanding_bytes', int(value.strip())))
 
         # Zxid: 0x1034799c7
         _, value = buf.readline().split(':')
         # Parse as a 64 bit hex int
-        zxid = long(value.strip(), 16)
+        zxid = int(value.strip(), 16)
         # convert to bytes
         zxid_bytes = struct.pack('>q', zxid)
         # the higher order 4 bytes is the epoch
@@ -175,6 +175,6 @@ class Zookeeper(AgentCheck):
 
         # Node count: 487
         _, value = buf.readline().split(':')
-        metrics.append(('zookeeper.node_count', long(value.strip())))
+        metrics.append(('zookeeper.node_count', int(value.strip())))
 
         return metrics, dimensions

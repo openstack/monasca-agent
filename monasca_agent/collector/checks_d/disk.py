@@ -147,7 +147,7 @@ class Disk(checks.AgentCheck):
 
         # automatically ignore filesystems not backed by a device
         try:
-            for nodevfs in filter(lambda x: x.startswith('nodev\t'), file('/proc/filesystems')):
+            for nodevfs in filter(lambda x: x.startswith('nodev\t'), open('/proc/filesystems')):
                 file_system_list.add(nodevfs.partition('\t')[2].strip())
         except IOError:
             log.debug('Failed reading /proc/filesystems')

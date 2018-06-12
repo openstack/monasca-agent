@@ -103,7 +103,7 @@ class JMXFetch(object):
             'timestamp': time.time(),
             'invalid_checks': invalid_checks
         }
-        stream = file(os.path.join(tempfile.gettempdir(), PYTHON_JMX_STATUS_FILE), 'w')
+        stream = open(os.path.join(tempfile.gettempdir(), PYTHON_JMX_STATUS_FILE), 'w')
         yaml.dump(data, stream)
         stream.close()
 

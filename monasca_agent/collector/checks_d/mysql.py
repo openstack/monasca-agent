@@ -17,8 +17,9 @@ import subprocess
 import sys
 import traceback
 
-import monasca_agent.collector.checks as checks
+from six import text_type
 
+import monasca_agent.collector.checks as checks
 
 GAUGE = "gauge"
 RATE = "rate"
@@ -254,7 +255,7 @@ class MySql(checks.AgentCheck):
         return self._collect_type(key, dict, float)
 
     def _collect_string(self, key, dict):
-        return self._collect_type(key, dict, unicode)
+        return self._collect_type(key, dict, text_type)
 
     def _collect_type(self, key, dict, the_type):
         self.log.debug("Collecting data with %s" % key)
@@ -307,7 +308,7 @@ class MySql(checks.AgentCheck):
     def _collect_system_metrics(self, host, db, dimensions):
         pid = None
         # The server needs to run locally, accessed by TCP or socket
-        if host in ["localhost", "127.0.0.1"] or db.port == long(0):
+        if host in ["localhost", "127.0.0.1"] or db.port == int(0):
             pid = self._get_server_pid(db)
 
         if pid:

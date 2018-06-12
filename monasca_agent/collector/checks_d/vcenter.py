@@ -222,8 +222,8 @@ class VCenterCheck(AgentCheck):
     def _process_storage_data(self, datastore_stats, managed_cluster):
         shared_ds = self._get_shared_datastores(datastore_stats,
                                                 managed_cluster)
-        capacity = 0L
-        freeSpace = 0L
+        capacity = 0
+        freeSpace = 0
         self.log.info("Polling for the datastores: " + str(shared_ds))
         for object_contents in datastore_stats:
             for object_content in object_contents[1]:
@@ -237,12 +237,12 @@ class VCenterCheck(AgentCheck):
                                                "of datastore: %s in cluster: "
                                                "%s" %
                                                (ds_mor, managed_cluster))
-                                capacity += long(propSet.val)
+                                capacity += int(propSet.val)
                             elif propSet.name == 'summary.freeSpace':
                                 self.log.debug("Calculating freeSpace of "
                                                "datastore: %s in cluster: %s"
                                                % (ds_mor, managed_cluster))
-                                freeSpace += long(propSet.val)
+                                freeSpace += int(propSet.val)
         usedSpace = capacity - freeSpace
         self.log.debug("Total capacity:" + str(capacity) +
                        " used:" + str(usedSpace) + " free:" + str(freeSpace))

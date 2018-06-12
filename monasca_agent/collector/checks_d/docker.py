@@ -204,10 +204,10 @@ class Docker(checks.AgentCheck):
                         container_network_dimensions['interface'] = interface_name
                         network_values = cols[1].split()
                         self._report_rate_gauge_metric(
-                            "container.net.in_bytes", long(
+                            "container.net.in_bytes", int(
                                 network_values[0]), container_network_dimensions)
                         self._report_rate_gauge_metric(
-                            "container.net.out_bytes", long(
+                            "container.net.out_bytes", int(
                                 network_values[8]), container_network_dimensions)
                         break
         except Exception as e:

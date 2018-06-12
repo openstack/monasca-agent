@@ -35,9 +35,9 @@ class Varnish(AgentCheck):
         if name == "stat":
             m_name = self.normalize(self._current_metric)
             if self._current_type in ("a", "c"):
-                self.rate(m_name, long(self._current_value))
+                self.rate(m_name, int(self._current_value))
             elif self._current_type in ("i", "g"):
-                self.gauge(m_name, long(self._current_value))
+                self.gauge(m_name, int(self._current_value))
             else:
                 # Unsupported data type, ignore
                 self._reset()
@@ -53,7 +53,7 @@ class Varnish(AgentCheck):
         data = data.strip()
         if len(data) > 0 and self._current_element != "":
             if self._current_element == "value":
-                self._current_value = long(data)
+                self._current_value = int(data)
             elif self._current_element == "flag":
                 self._current_type = data
             else:

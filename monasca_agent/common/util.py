@@ -32,6 +32,7 @@ import uuid
 
 import logging
 import logging.handlers
+from six import integer_types
 
 from numbers import Number
 
@@ -44,7 +45,7 @@ VALID_HOSTNAME_RFC_1123_PATTERN = re.compile(
 MAX_HOSTNAME_LEN = 255
 LOGGING_MAX_BYTES = 5 * 1024 * 1024
 
-NumericTypes = (float, int, long)
+NumericTypes = (float,) + integer_types
 
 import monasca_agent.common.config as configuration
 from monasca_agent.common.exceptions import PathNotFound

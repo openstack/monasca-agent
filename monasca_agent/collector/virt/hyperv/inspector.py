@@ -14,6 +14,7 @@
 # under the License.
 """Implementation of Inspector abstraction for Hyper-V"""
 
+
 from oslo_utils import units
 
 from monasca_agent.collector.virt.hyperv import utilsv2
@@ -40,7 +41,7 @@ class HyperVInspector(virt_inspector.Inspector):
         cpu_percent_used = (cpu_clock_used /
                             float(host_cpu_clock * cpu_count))
         # Nanoseconds
-        cpu_time = (long(uptime * cpu_percent_used) * units.k)
+        cpu_time = (int(uptime * cpu_percent_used) * units.k)
 
         return virt_inspector.CPUStats(number=cpu_count, time=cpu_time)
 
