@@ -53,6 +53,7 @@ def discover_plugins(custom_path):
                 plugin_path)
         except Exception:
             log.exception('Unable to import detection plugin {0}'.format(plugin_path))
+            continue
 
         # Verify this is a subclass of Plugin
         classes = inspect.getmembers(plugin, inspect.isclass)
@@ -113,10 +114,10 @@ def write_template(template_path,
         contents = template.read().format(**variables)
         with open(out_path, 'w') as conf:
             if is_yaml:
-                conf.write(yaml.safe_dump(yaml.safe_load(contents),
-                                          encoding='utf-8',
-                                          allow_unicode=True,
-                                          default_flow_style=False))
+                conf.write((yaml.safe_dump(yaml.safe_load(contents),
+                                           encoding='utf-8',
+                                           allow_unicode=True,
+                                           default_flow_style=False)).decode('utf-8'))
             else:
                 conf.write(contents)
 

@@ -12,7 +12,8 @@
 # under the License.
 
 import logging
-import urlparse
+
+from six.moves import urllib
 
 from monasca_setup import agent_config
 from monasca_setup.detection.plugin import Plugin
@@ -187,7 +188,7 @@ class ServicePlugin(Plugin):
 
         if self.service_api_url and self.search_pattern:
             # Check if there is something listening on the host/port
-            parsed = urlparse.urlparse(self.service_api_url)
+            parsed = urllib.parse.urlparse(self.service_api_url)
             host, port = parsed.netloc.split(':')
             listening = find_addrs_listening_on_port(port)
 
@@ -197,7 +198,7 @@ class ServicePlugin(Plugin):
                         set(['127.0.0.1', '0.0.0.0', '::', '::1']) & set(listening)) == 0:
                     new_url = list(parsed)
                     new_url[1] = listening[0] + ':' + port
-                    api_url = urlparse.urlunparse(new_url)
+                    api_url = urllib.parse.urlunparse(new_url)
                 else:
                     api_url = self.service_api_url
 

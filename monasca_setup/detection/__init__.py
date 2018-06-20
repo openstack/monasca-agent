@@ -11,11 +11,11 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from args_plugin import ArgsPlugin  # noqa
-from plugin import Plugin  # noqa
-from service_plugin import ServicePlugin  # noqa
-from utils import find_process_cmdline  # noqa
-from utils import find_process_name  # noqa
-from utils import find_process_service  # noqa
-from utils import watch_process  # noqa
-from utils import watch_process_by_username  # noqa
+from monasca_setup.detection.args_plugin import ArgsPlugin  # noqa
+from monasca_setup.detection.plugin import Plugin  # noqa
+from monasca_setup.detection.service_plugin import ServicePlugin  # noqa
+from monasca_setup.detection.utils import find_process_cmdline  # noqa
+from monasca_setup.detection.utils import find_process_name  # noqa
+from monasca_setup.detection.utils import find_process_service  # noqa
+from monasca_setup.detection.utils import watch_process  # noqa
+from monasca_setup.detection.utils import watch_process_by_username  # noqa

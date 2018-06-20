@@ -12,7 +12,8 @@
 # under the License.
 
 import logging
-import urllib2
+
+from six.moves import urllib
 
 import monasca_setup.agent_config
 import monasca_setup.detection
@@ -89,13 +90,13 @@ class RabbitMQ(monasca_setup.detection.Plugin):
         :return: bool status of the test
         """
         url = self.api_url + '/aliveness-test/%2F'
-        password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        password_mgr = urllib.HTTPPasswordMgrWithDefaultRealm()
         password_mgr.add_password(None,
                                   self.api_url,
                                   self.user,
                                   self.password)
-        handler = urllib2.HTTPBasicAuthHandler(password_mgr)
-        opener = urllib2.build_opener(handler)
+        handler = urllib.HTTPBasicAuthHandler(password_mgr)
+        opener = urllib.build_opener(handler)
 
         request = opener.open(url)
         response = request.read()

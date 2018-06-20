@@ -11,13 +11,13 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import ConfigParser
 import logging
 import os
 import re
 
 from oslo_config import cfg
 from oslo_utils import importutils
+from six.moves import configparser
 
 from monasca_setup import agent_config
 from monasca_setup import detection
@@ -125,7 +125,7 @@ class Ovs(detection.Plugin):
             self.neutron_conf = neutron_conf
 
     def _is_neutron_conf_valid(self, conf_file):
-        neutron_cfg = ConfigParser.SafeConfigParser()
+        neutron_cfg = configparser.SafeConfigParser()
         neutron_cfg.read(conf_file)
 
         for section in self.REQUIRED_CONF_SECTIONS:
@@ -194,7 +194,7 @@ class Ovs(detection.Plugin):
         else:
             try:
                 init_config['region_name'] = str(self.get_option('nova', 'region_name'))
-            except ConfigParser.NoOptionError:
+            except configparser.NoOptionError:
                 log.debug(('Option region_name was not found in nova '
                            'section, nova_region_name option from '
                            'DEFAULT section will be used.'))

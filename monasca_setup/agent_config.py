@@ -102,10 +102,10 @@ def save_plugin_config(config_dir, plugin_name, user, conf):
 
     with open(config_path, 'w') as config_file:
         # The gid is created on service activation which we assume has happened
-        config_file.write(yaml.safe_dump(conf,
-                                         encoding='utf-8',
-                                         allow_unicode=True,
-                                         default_flow_style=False))
+        config_file.write((yaml.safe_dump(conf,
+                                          encoding='utf-8',
+                                          allow_unicode=True,
+                                          default_flow_style=False)).decode('utf-8'))
     stat = pwd.getpwnam(user)
 
     gid = stat.pw_gid

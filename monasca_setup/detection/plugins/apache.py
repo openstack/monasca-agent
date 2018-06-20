@@ -15,7 +15,8 @@
 
 import logging
 import os
-import urllib2
+
+from six.moves import urllib
 
 import monasca_setup.agent_config
 import monasca_setup.detection
@@ -144,19 +145,19 @@ class Apache(monasca_setup.detection.Plugin):
                 return config
 
             if apache_user and apache_pass:
-                password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+                password_mgr = urllib.HTTPPasswordMgrWithDefaultRealm()
                 password_mgr.add_password(None,
                                           apache_url,
                                           apache_user,
                                           apache_pass)
-                handler = urllib2.HTTPBasicAuthHandler(password_mgr)
+                handler = urllib.HTTPBasicAuthHandler(password_mgr)
             else:
                 if 'https' in apache_url:
-                    handler = urllib2.HTTPSHandler()
+                    handler = urllib.HTTPSHandler()
                 else:
-                    handler = urllib2.HTTPHandler()
+                    handler = urllib.HTTPHandler()
 
-            opener = urllib2.build_opener(handler)
+            opener = urllib.build_opener(handler)
 
             try:
                 request = opener.open(apache_url)
@@ -171,7 +172,7 @@ class Apache(monasca_setup.detection.Plugin):
                     log.info("\tSuccessfully setup Apache plugin.")
                 else:
                     log.warn('Unable to access the Apache server-status URL;' + error_msg)
-            except urllib2.URLError as e:
+            except urllib.URLError as e:
                 exception_msg = (
                     '\tError {0} received when accessing url {1}.'.format(e.reason, apache_url) +
                     '\n\tPlease ensure the Apache web server is running and your configuration ' +

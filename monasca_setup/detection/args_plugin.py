@@ -13,7 +13,7 @@
 
 import logging
 
-from plugin import Plugin
+from monasca_setup.detection.plugin import Plugin
 
 
 log = logging.getLogger(__name__)

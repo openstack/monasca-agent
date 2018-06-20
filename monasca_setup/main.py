@@ -82,7 +82,7 @@ def main(argv=None):
     # Collect the set of detection plugins to run
     detected_plugins = utils.discover_plugins(CUSTOM_PLUGIN_PATH)
     if args.system_only:
-        from detection.plugins.system import System
+        from monasca_setup.detection.plugins.system import System
         plugins = [System]
     elif args.detection_plugins is not None:
         plugins = utils.select_plugins(args.detection_plugins,

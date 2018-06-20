@@ -32,9 +32,8 @@ import uuid
 
 import logging
 import logging.handlers
-from six import integer_types
-
 from numbers import Number
+from six import integer_types
 
 log = logging.getLogger(__name__)
 

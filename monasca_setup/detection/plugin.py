@@ -68,7 +68,7 @@ class Plugin(object):
         conf = self.build_config()
         if conf is None:
             return None
-        for plugin_type in conf.itervalues():
+        for plugin_type in conf.values():
             for inst in plugin_type['instances']:
                 inst['built_by'] = self.__class__.__name__
         return conf

@@ -11,9 +11,10 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import ConfigParser
 import logging
 import os
+
+from six.moves import configparser
 
 from monasca_agent.common.psutil_wrapper import psutil
 import monasca_setup.agent_config
@@ -76,7 +77,7 @@ class Congestion(monasca_setup.detection.Plugin):
         """Build the config as a Plugins object and return.  """
         config = monasca_setup.agent_config.Plugins()
         log.info("Configuring congestion plugin")
-        nova_cfg = ConfigParser.SafeConfigParser()
+        nova_cfg = configparser.SafeConfigParser()
         log.info("\tUsing nova configuration file {0}".format(self.nova_conf))
         nova_cfg.read(self.nova_conf)
         # Which configuration options are needed for the plugin YAML?

@@ -11,8 +11,9 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import ConfigParser
 import logging
+
+from six.moves import configparser
 
 from monasca_agent.common.psutil_wrapper import psutil
 import monasca_setup.agent_config
@@ -75,7 +76,7 @@ class VCenter(Plugin):
         config = monasca_setup.agent_config.Plugins()
 
         if self.dependencies_installed():
-            nova_cfg = ConfigParser.SafeConfigParser()
+            nova_cfg = configparser.SafeConfigParser()
             instance = {}
             if self.nova_conf is None:
                 log.warn("Nova compute configuration file was not found.")
