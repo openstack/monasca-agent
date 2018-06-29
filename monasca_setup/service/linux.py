@@ -13,24 +13,37 @@
 
 """ Systemd based service
 """
-import glob
 import logging
 import os
 import pwd
 import subprocess
 
-import service
+LOG = logging.getLogger(__name__)
 
 
-log = logging.getLogger(__name__)
+class Systemd(object):
+    """Manage service using systemd."""
 
+    def __init__(self, prefix_dir, config_dir, log_dir, template_dir,
+                 name='monasca-agent', username='mon-agent'):
+        """Create a service."""
+        self.prefix_dir = prefix_dir
+        self.config_dir = config_dir
+        self.log_dir = log_dir
+        self.template_dir = template_dir
+        self.name = name
+        self.username = username
 
-class LinuxInit(service.Service):
-    """Parent class for all Linux based init systems.
-    """
     def enable(self):
-        """Does user/group directory creation.
+        """Set monasca-agent to start on boot.
+
+        Generally this requires running as super user.
         """
+        if os.geteuid() != 0:
+            LOG.error('This service must be run as root')
+            raise OSError
+
+        # LinuxInit.enable(self)
         # Create user/group if needed
         try:
             user = pwd.getpwnam(self.username)
@@ -39,171 +52,89 @@ class LinuxInit(service.Service):
             user = pwd.getpwnam(self.username)
 
         # Create dirs
-        # todo log dir is hardcoded
-        for path in (self.log_dir, self.config_dir, '%s/conf.d' % self.config_dir):
+        for path in (self.log_dir, self.config_dir,
+                     '%s/conf.d' % self.config_dir):
             if not os.path.exists(path):
                 os.makedirs(path, 0o755)
                 os.chown(path, 0, user.pw_gid)
-        # the log dir needs to be writable by the user
+        # log dir needs to be writable by the user
         os.chown(self.log_dir, user.pw_uid, user.pw_gid)
 
-    def start(self, restart=True):
-        if not self.is_enabled():
-            log.error('The service is not enabled')
-            return False
+        # Get systemd services and target template
+        templates = [f for f in os.listdir(self.template_dir)
+                     if (f.endswith('service.template') or
+                         f.endswith('target.template'))]
+        systemd_path = '/etc/systemd/system/'
 
-    def stop(self):
-        if not self.is_enabled():
-            log.error('The service is not enabled')
-            return True
-
-    def is_enabled(self):
-        """Returns True if monasca-agent is setup to start on boot, false otherwise.
-
-        """
-        raise NotImplementedError
-
-
-class Systemd(LinuxInit):
-    def enable(self):
-        """Sets monasca-agent to start on boot.
-
-            Generally this requires running as super user
-        """
-        LinuxInit.enable(self)
-
-        # Write the systemd script
-        init_path = '/etc/systemd/system/{0}.service'.format(self.name)
-        with open(os.path.join(self.template_dir, 'monasca-agent.service.template'),
-                  'r') as template:
-            with open(init_path, 'w') as service_script:
-                service_script.write(
-                    template.read().format(
-                        prefix=self.prefix_dir,
-                        monasca_user=self.username,
-                        config_dir=self.config_dir))
-        os.chown(init_path, 0, 0)
-        os.chmod(init_path, 0o644)
+        # Write the systemd units configuration file: we have 3 services and
+        # 1 target grouping all of them together
+        for template_file_name in templates:
+            service_file_name, e = os.path.splitext(template_file_name)
+            service_file_path = os.path.join(systemd_path,
+                                             service_file_name)
+            with open(os.path.join(self.template_dir,
+                      template_file_name), 'r') as template:
+                with open(service_file_path, 'w') as service_file:
+                    LOG.info('Creating service file %s', service_file_name)
+                    service_file.write(template.read().
+                                       format(prefix=self.prefix_dir,
+                                              monasca_user=self.username))
+            os.chown(service_file_path, 0, 0)
+            os.chmod(service_file_path, 0o644)
 
         # Enable the service
         subprocess.check_call(['systemctl', 'daemon-reload'])
-        subprocess.check_call(['systemctl', 'enable', '{0}.service'.format(self.name)])
-        log.info('Enabled {0} service via systemd'.format(self.name))
+        subprocess.check_call(
+            ['systemctl', 'enable', '{0}.target'.format(self.name)])
+        LOG.info('Enabled %s target via systemd', self.name)
 
     def start(self, restart=True):
-        """Starts monasca-agent.
+        """Start monasca-agent.
 
-            If the agent is running and restart is True, restart
+        If the agent is running and restart is True restart it.
+
+        :return: True if monasca-agent is enabled on boot, False otherwise..
         """
-        LinuxInit.start(self)
-        log.info('Starting {0} service via systemd'.format(self.name))
-        if restart:
-            subprocess.check_call(['systemctl', 'restart', '{0}.service'.format(self.name)])
-        else:
-            subprocess.check_call(['systemctl', 'start', '{0}.service'.format(self.name)])
+        if not self.is_enabled():
+            LOG.error('The service is not enabled')
+            return False
 
+        LOG.info('Starting %s services via systemd', self.name)
+        if self.is_running() and restart:
+            subprocess.check_call(
+                ['systemctl', 'restart', '{0}.target'.format(self.name)])
+        else:
+            subprocess.check_call(
+                ['systemctl', 'start', '{0}.target'.format(self.name)])
         return True
 
     def stop(self):
-        """Stops monasca-agent.
+        """Stop monasca-agent.
+        :return: True if monasca-agent was stopped successfully, False otherwise
         """
-        LinuxInit.stop(self)
-        log.info('Stopping {0} service'.format(self.name))
-        subprocess.check_call(['systemctl', 'stop', '{0}.service'.format(self.name)])
-        return True
-
-    def is_enabled(self):
-        """Returns True if monasca-agent is setup to start on boot, false otherwise.
-        """
+        LOG.info('Stopping %s services', self.name)
         try:
-            subprocess.check_output(['systemctl', 'is-enabled', '{0}.service'.format(self.name)])
-        except subprocess.CalledProcessError:
+            subprocess.check_call(
+                ['systemctl', 'stop', '{0}.target'.format(self.name)])
+        except subprocess.CalledProcessError as call_error:
+            LOG.error('Unable to stop monasca-agent.')
+            LOG.error(call_error.output)
             return False
-
-        return True
-
-
-class SysV(LinuxInit):
-
-    def __init__(
-            self,
-            prefix_dir,
-            config_dir,
-            log_dir,
-            template_dir,
-            username,
-            name='monasca-agent'):
-        """Setup this service with the given init template.
-
-        """
-        service.Service.__init__(
-            self,
-            prefix_dir,
-            config_dir,
-            log_dir,
-            template_dir,
-            name,
-            username)
-        self.init_script = '/etc/init.d/%s' % self.name
-        self.init_template = os.path.join(template_dir, 'monasca-agent.init.template')
-
-    def enable(self):
-        """Sets monasca-agent to start on boot.
-
-            Generally this requires running as super user
-        """
-        LinuxInit.enable(self)
-        # Write the init script and enable.
-        with open(self.init_template, 'r') as template:
-            with open(self.init_script, 'w') as conf:
-                conf.write(
-                    template.read().format(
-                        prefix=self.prefix_dir,
-                        monasca_user=self.username,
-                        config_dir=self.config_dir))
-        os.chown(self.init_script, 0, 0)
-        os.chmod(self.init_script, 0o755)
-
-        for runlevel in ['2', '3', '4', '5']:
-            link_path = '/etc/rc%s.d/S10monasca-agent' % runlevel
-            if not os.path.exists(link_path):
-                os.symlink(self.init_script, link_path)
-
-        log.info('Enabled {0} service via SysV init script'.format(self.name))
-
-    def start(self, restart=True):
-        """Starts monasca-agent.
-
-            If the agent is running and restart is True, restart
-        """
-        LinuxInit.start(self)
-
-        log.info('Starting {0} service via SysV init script'.format(self.name))
-        if restart:
-            # Throws CalledProcessError on error
-            subprocess.check_call([self.init_script, 'restart'])
         else:
-            subprocess.check_call([self.init_script, 'start'])  # Throws CalledProcessError on error
-        return True
+            return True
 
-    def stop(self):
-        """Stops monasca-agent.
+    def is_running(self):
+        """Check if monasca-agent is running.
 
+        :return: True if monasca-agent is running, false otherwise.
         """
-        LinuxInit.stop(self)
-
-        log.info('Stopping {0} service via SysV init script'.format(self.name))
-        subprocess.check_call([self.init_script, 'stop'])  # Throws CalledProcessError on error
-        return True
+        return(subprocess.call(['systemctl', 'is-active', '--quiet',
+                               '{0}.target'.format(self.name)]) == 0)
 
     def is_enabled(self):
-        """Returns True if monasca-agent is setup to start on boot, false otherwise.
+        """Check if monasca-agent is setup to start at boot time.
 
+        :return: True if monasca-agent is enabled on boot, False otherwise.
         """
-        if not os.path.exists(self.init_script):
-            return False
-
-        if len(glob.glob('/etc/rc?.d/S??monasca-agent')) > 0:
-            return True
-        else:
-            return False
+        return(subprocess.call(['systemctl', 'is-enabled', '--quiet',
+                               '{0}.target'.format(self.name)]) == 0)

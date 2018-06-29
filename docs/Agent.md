@@ -35,11 +35,12 @@ The Agent is composed of the following components:
 
 | Component Name | Process Name | Description |
 | -------------- | ------------ | ----------- |
-| Supervisor | supervisord | Runs as root, launches all other processes as the user configured to run monasca-agent.  This process manages the lifecycle of the Collector, Forwarder and Statsd Daemon.  It allows Start, Stop and Restart of all the agent processes together. |
 | Collector | monasca-collector | Gathers system & application metrics on a configurable interval and sends them to the Forwarder process. The collector runs various plugins for collection of different plugins.|
 | Forwarder | monasca-forwarder | Gathers data from the collector and statsd and submits it to Monasca API over SSL (tcp/17123) |
 | Statsd Daemon | monasca-statsd | Statsd engine capable of handling dimensions associated with metrics submitted by a client that supports them. Also supports metrics from the standard statsd client. (udp/8125) |
 | Monasca Setup | monasca-setup | The monasca-setup script configures the agent.  The Monasca Setup program can also auto-detect and configure certain agent plugins |
+
+It is possible to Start, Stop and Reset all components by using monasca-agent.target. Monasca-agent.target is the systemd configuration that allows to manage all monasca-agent services.
 
 # Installing
 The Agent (monasca-agent) is available for installation from the Python Package Index (PyPI). To install it, you first need `pip` installed on the node to be monitored. Instructions on installing pip may be found at https://pip.pypa.io/en/latest/installing.html.  The Agent will NOT run under any flavor of Windows or Mac OS at this time but has been tested thoroughly on Ubuntu and should work under most flavors of Linux.  Support may be added for Mac OS and Windows in the future.  Example of an Ubuntu or Debian based install:
@@ -277,7 +278,7 @@ The number of threads to use for running the plugins is via num_collector_thread
 
 The collector is optimized for collecting as many metrics on schedule as possible. The plugins are run in reverse order of their collection time, i.e., the fastest plugin first. Also, if a plugin does not complete within the collection frequency, that plugin will be skipped in the next collection cycle. These two optimizations together ensure that plugins that complete with collection frequency seconds will get run on every collection cycle.
 
-If there is some problem with multiple plugins that end up blocking the entire thread pool, the collector will exit so that it can be restarted by the supervisord. The parameter pool_full_max_retries controls when this happens. If pool_full_max_retries consecutive collection cycles have ended with the Thread Pool completely full, the collector will exit.
+If there is some problem with multiple plugins that end up blocking the entire thread pool, the collector will exit so that it can be restarted by the monasca-agent systemd target. The parameter pool_full_max_retries controls when this happens. If pool_full_max_retries consecutive collection cycles have ended with the Thread Pool completely full, the collector will exit.
 
 Some of the plugins have their own thread pools to handle asynchronous checks. The collector thread pool is separate and has no special interaction with those thread pools.
 # License

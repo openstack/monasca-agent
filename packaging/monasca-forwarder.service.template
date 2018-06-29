@@ -1,0 +1,15 @@
+[Unit]
+Description=Monasca Agent - Forwarder
+PartOf=monasca-agent.target
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={monasca_user}
+Group={monasca_user}
+Restart=always
+ExecStart={prefix}/bin/monasca-forwarder
+
+[Install]
+WantedBy=multi-user.target

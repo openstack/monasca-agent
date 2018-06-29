@@ -28,12 +28,12 @@ import sys
 
 import six
 
-import agent_config
+from monasca_setup import agent_config
+from monasca_setup.service.detection import detect_init
 import monasca_setup.utils as utils
 from monasca_setup.utils import write_template
-from service.detection import detect_init
 
-log = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 CUSTOM_PLUGIN_PATH = '/usr/lib/monasca/agent/custom_detect.d'
 # dirname is called twice to get the dir 1 above the location of the script
@@ -42,22 +42,26 @@ PREFIX_DIR = os.path.dirname(os.path.dirname(os.path.realpath(sys.argv[0])))
 
 def main(argv=None):
     parser = argparse.ArgumentParser(
-        description='Configure and setup the agent. In a full run it will detect running' +
-        ' daemons then configure and start the agent.',
+        description='Configure and setup the agent. In a full run it will' +
+        ' detect running daemons then configure and start the agent.',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     args = parse_arguments(parser)
 
     if args.verbose:
-        logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
+        logging.basicConfig(level=logging.DEBUG,
+                            format="%(levelname)s: %(message)s")
     else:
-        logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+        logging.basicConfig(level=logging.INFO,
+                            format="%(levelname)s: %(message)s")
 
     if args.dry_run:
-        log.info("Running in dry run mode, no changes will be made only reported")
+        LOG.info("Running in dry run mode, no changes will be made only"
+                 " reported")
 
     # Detect and if possibly enable the agent service
-    agent_service = detect_init(PREFIX_DIR, args.config_dir, args.log_dir, args.template_dir,
-                                username=args.user, name=args.agent_service_name)
+    agent_service = detect_init(PREFIX_DIR, args.config_dir, args.log_dir,
+                                args.template_dir, username=args.user,
+                                name=args.agent_service_name)
 
     # Skip base setup if only installing plugins or running specific detection
     # plugins
@@ -66,9 +70,11 @@ def main(argv=None):
             agent_service.enable()
 
         # Verify required options
-        if args.username is None or args.password is None or args.keystone_url is None:
-            log.error('Username, password and keystone_url are required when running full'
-                      'configuration.')
+        if (args.username is None or
+                args.password is None or
+                args.keystone_url is None):
+            LOG.error('Username, password and keystone_url are required when'
+                      ' running full configuration.')
             parser.print_help()
             sys.exit(1)
         base_configuration(args)
@@ -79,50 +85,59 @@ def main(argv=None):
         from detection.plugins.system import System
         plugins = [System]
     elif args.detection_plugins is not None:
-        plugins = utils.select_plugins(args.detection_plugins, detected_plugins)
+        plugins = utils.select_plugins(args.detection_plugins,
+                                       detected_plugins)
     elif args.skip_detection_plugins is not None:
-        plugins = utils.select_plugins(args.skip_detection_plugins, detected_plugins, skip=True)
+        plugins = utils.select_plugins(args.skip_detection_plugins,
+                                       detected_plugins, skip=True)
     else:
         plugins = detected_plugins
     plugin_names = [p.__name__ for p in plugins]
 
-    if args.remove:  # Remove entries for each plugin from the various plugin config files
+    # Remove entries for each plugin from the various plugin config files.
+    if args.remove:
         changes = remove_config(args, plugin_names)
     else:
         # Run detection for all the plugins, halting on any failures if plugins
         # were specified in the arguments
-        detected_config = plugin_detection(plugins, args.template_dir, args.detection_args,
+        detected_config = plugin_detection(plugins, args.template_dir,
+                                           args.detection_args,
                                            args.detection_args_json,
-                                           skip_failed=(args.detection_plugins is None))
+                                           skip_failed=(args.detection_plugins
+                                                        is None))
         if detected_config is None:
-            # Indicates detection problem, skip remaining steps and give non-zero exit code
+            # Indicates detection problem, skip remaining steps and give
+            # non-zero exit code
             return 1
 
         changes = modify_config(args, detected_config)
 
     # Don't restart if only doing detection plugins and no changes found
     if args.detection_plugins is not None and not changes:
-        log.info(
+        LOG.info(
             'No changes found for plugins {0}, skipping restart of'
             'Monasca Agent'.format(plugin_names))
         return 0
     elif args.dry_run:
-        log.info('Running in dry mode, skipping changes and restart of Monasca Agent')
+        LOG.info('Running in dry mode, skipping changes and restart of'
+                 ' Monasca Agent')
         return 0
 
     # Now that the config is built, start the service
     if args.install_plugins_only:
-        log.info('Command line option install_plugins_only set, skipping '
+        LOG.info('Command line option install_plugins_only set, skipping '
                  'service (re)start.')
     else:
         try:
             agent_service.start(restart=True)
         except subprocess.CalledProcessError:
-            log.error('The service did not startup correctly see %s' % args.log_dir)
+            LOG.error('The service did not startup correctly see %s',
+                      args.log_dir)
 
 
 def base_configuration(args):
     """Write out the primary Agent configuration and setup the service.
+
     :param args: Arguments from the command line
     :return: None
     """
@@ -132,28 +147,23 @@ def base_configuration(args):
     gid = stat.pw_gid
 
     # Write the main agent.yaml - Note this is always overwritten
-    log.info('Configuring base Agent settings.')
+    LOG.info('Configuring base Agent settings.')
     dimensions = {}
     # Join service in with the dimensions
     if args.service:
         dimensions.update({'service': args.service})
     if args.dimensions:
-        dimensions.update(dict(item.strip().split(":") for item in args.dimensions.split(",")))
+        dimensions.update(dict(item.strip().split(":")
+                               for item in args.dimensions.split(",")))
 
-    args.dimensions = dict((name, value) for (name, value) in dimensions.items())
+    args.dimensions = dict((name, value)
+                           for (name, value) in dimensions.items())
     write_template(os.path.join(args.template_dir, 'agent.yaml.template'),
                    os.path.join(args.config_dir, 'agent.yaml'),
                    {'args': args, 'hostname': socket.getfqdn()},
                    group=gid,
                    user=uid,
                    is_yaml=True)
-
-    # Write the supervisor.conf
-    write_template(os.path.join(args.template_dir, 'supervisor.conf.template'),
-                   os.path.join(args.config_dir, 'supervisor.conf'),
-                   {'prefix': PREFIX_DIR, 'log_dir': args.log_dir, 'monasca_user': args.user},
-                   user=uid,
-                   group=gid)
 
 
 def modify_config(args, detected_config):
@@ -169,7 +179,8 @@ def modify_config(args, detected_config):
                 continue
             else:
                 agent_config.save_plugin_config(
-                    args.config_dir, detection_plugin_name, args.user, new_config)
+                    args.config_dir, detection_plugin_name, args.user,
+                    new_config)
         else:
             config = agent_config.read_plugin_config_from_disk(
                 args.config_dir, detection_plugin_name)
@@ -191,9 +202,11 @@ def modify_config(args, detected_config):
                     # Check endpoint change, use new protocol instead
                     # Note: config is possibly changed after running
                     # check_endpoint_changes function.
-                    config = agent_config.check_endpoint_changes(new_config, config)
+                    config = agent_config.check_endpoint_changes(new_config,
+                                                                 config)
 
-                agent_config.merge_by_name(new_config['instances'], config['instances'])
+                agent_config.merge_by_name(new_config['instances'],
+                                           config['instances'])
                 # Sort before compare, if instances have no name the sort will
                 #  fail making order changes significant
                 try:
@@ -203,7 +216,8 @@ def modify_config(args, detected_config):
                     pass
 
                 if detection_plugin_name == "http_check":
-                    new_config_urls = [i['url'] for i in new_config['instances'] if 'url' in i]
+                    new_config_urls = [i['url'] for i in new_config['instances']
+                                       if 'url' in i]
                     # Don't write config if no change
                     if new_config_urls == config_urls and new_config == config:
                         continue
@@ -212,18 +226,20 @@ def modify_config(args, detected_config):
                         continue
             modified_config = True
             if args.dry_run:
-                log.info("Changes would be made to the config file for the {0}"
+                LOG.info("Changes would be made to the config file for the {0}"
                          " check plugin".format(detection_plugin_name))
             else:
                 agent_config.save_plugin_config(
-                    args.config_dir, detection_plugin_name, args.user, new_config)
+                    args.config_dir, detection_plugin_name, args.user,
+                    new_config)
     return modified_config
 
 
 def validate_positive(value):
     int_value = int(value)
     if int_value <= 0:
-        raise argparse.ArgumentTypeError("%s must be greater than zero" % value)
+        raise argparse.ArgumentTypeError("%s must be greater than zero" %
+                                         value)
     return int_value
 
 
@@ -231,11 +247,13 @@ def parse_arguments(parser):
     parser.add_argument(
         '-u',
         '--username',
-        help="Username used for keystone authentication. Required for basic configuration.")
+        help="Username used for keystone authentication. " +
+             "Required for basic configuration.")
     parser.add_argument(
         '-p',
         '--password',
-        help="Password used for keystone authentication. Required for basic configuration.")
+        help="Password used for keystone authentication. " +
+             "Required for basic configuration.")
 
     parser.add_argument(
         '--user_domain_id',
@@ -245,8 +263,9 @@ def parse_arguments(parser):
         '--user_domain_name',
         help="User domain name for keystone authentication",
         default='')
-    parser.add_argument('--keystone_url', help="Keystone url. Required for basic configuration.")
-
+    parser.add_argument(
+        '--keystone_url',
+        help="Keystone url. Required for basic configuration.")
     parser.add_argument(
         '--project_name',
         help="Project name for keystone authentication",
@@ -263,7 +282,6 @@ def parse_arguments(parser):
         '--project_id',
         help="Keystone project id  for keystone authentication",
         default='')
-
     parser.add_argument(
         '--monasca_url',
         help="Monasca API url, if not defined the url is pulled from keystone",
@@ -281,7 +299,6 @@ def parse_arguments(parser):
         '--region_name',
         help="Monasca API url region name in keystone catalog",
         default='')
-
     parser.add_argument(
         '--system_only',
         help="Setup the service but only configure the base config and system " +
@@ -292,10 +309,12 @@ def parse_arguments(parser):
         '-d',
         '--detection_plugins',
         nargs='*',
-        help="Skip base config and service setup and only configure this space separated list. " +
-        "This assumes the base config has already run.")
-    parser.add_argument('--skip_detection_plugins', nargs='*',
-                        help="Skip detection for all plugins in this space separated list.")
+        help="Skip base config and service setup and only configure this " +
+             "space separated list. " +
+             "This assumes the base config has already run.")
+    parser.add_argument(
+        '--skip_detection_plugins', nargs='*',
+        help="Skip detection for all plugins in this space separated list.")
     detection_args_group = parser.add_mutually_exclusive_group()
     detection_args_group.add_argument(
         '-a',
@@ -445,12 +464,13 @@ def plugin_detection(
         if detect.available:
             new_config = detect.build_config_with_name()
             if not remove:
-                log.info('Configuring {0}'.format(detect.name))
+                LOG.info('Configuring {0}'.format(detect.name))
             if new_config is not None:
                 plugin_config.merge(new_config)
         elif not skip_failed:
-            log.warn('Failed detection of plugin {0}.'.format(detect.name) +
-                     "\n\tPossible causes: Service not found or missing arguments.")
+            LOG.warning("Failed detection of plugin %s."
+                        "\n\tPossible causes: Service not found or missing"
+                        "arguments.", detect.name)
             return None
 
     return plugin_config
@@ -495,7 +515,10 @@ def remove_config(args, plugin_names):
                         deletes = True
                         config['instances'].remove(inst)
         if deletes:
-            agent_config.delete_from_config(args, config, file_path, plugin_name)
+            agent_config.delete_from_config(args, config, file_path,
+                                            plugin_name)
     return changes
+
+
 if __name__ == "__main__":
     sys.exit(main())
