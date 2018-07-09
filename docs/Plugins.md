@@ -2313,6 +2313,26 @@ instances:
   name: vertica
   username: dbadmin
 ```
+Docker environment:
+
+For Docker environment you can enable the process plugin by adding
+`proccess.yaml` to the `monasca-agent-collector` container (mount plugin file
+to `/plugins.d/process.yaml`). Additionally you have to specify the path of the
+host process filesystem. In this case mount host root directory `/` to
+`/rootfs` in the container. Sample configuration:
+```
+init_config:
+  process_fs_path: /rootfs/proc
+instances:
+- name: monasca-collector
+  detailed: true
+  dimensions:
+    service: monasca-collector
+  exact_match: false
+  search_string:
+  - monasca-collector
+```
+
 The process checks return the following metrics ( if detailed is set to true, otherwise process.pid_count is only returned ):
 
 | Metric Name | Dimensions | Semantics |
