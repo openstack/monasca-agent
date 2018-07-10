@@ -262,7 +262,7 @@ class AgentCheck(util.Dimensions):
                 self.log.exception("Check '%s' instance #%s failed" % (self.name, i))
 
     def check(self, instance):
-        """Overriden by the check class. This will be called to run the check.
+        """Overridden by the check class. This will be called to run the check.
 
         :param instance: A dict with the instance information. This will vary
         depending on your config structure.
