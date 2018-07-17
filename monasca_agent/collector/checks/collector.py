@@ -220,7 +220,7 @@ class Collector(util.Dimensions):
         # Sort by the last collection time so the checks that take the
         # least amount of time are run first so they are more likely to
         # complete within the check_frequency
-        sorted_checks = sorted(self.collection_times.itervalues(),
+        sorted_checks = sorted(self.collection_times.values(),
                                key=lambda x: x['last_collect_time'])
         for entry in sorted_checks:
             check = entry['check']

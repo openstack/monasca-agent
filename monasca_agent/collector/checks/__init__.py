@@ -12,4 +12,4 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from check import AgentCheck  # noqa
+from monasca_agent.collector.checks.check import AgentCheck  # noqa

@@ -13,7 +13,7 @@
 
 import collections
 from concurrent import futures
-import Queue
+from queue import Queue
 import threading
 
 import eventlet
@@ -60,7 +60,7 @@ class ServicesCheck(monasca_agent.collector.checks.AgentCheck):
         # A dictionary to keep track of service statuses
         self.statuses = {}
         self.notified = {}
-        self.resultsq = Queue.Queue()
+        self.resultsq = Queue()
         self.nb_failures = 0
         self.pool = None
 

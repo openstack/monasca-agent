@@ -23,9 +23,9 @@ import sys
 import time
 
 # Custom modules
-import checks.collector
-import checks.services_checks as status_checks
-import jmxfetch
+from monasca_agent.collector.checks.collector import Collector
+import monasca_agent.collector.checks.services_checks as status_checks
+from monasca_agent.collector import jmxfetch
 import monasca_agent.common.config as cfg
 import monasca_agent.common.daemon
 import monasca_agent.common.emitter
@@ -103,7 +103,7 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
         # Load the checks_d checks
         checksd = util.load_check_directory()
 
-        self.collector = checks.collector.Collector(
+        self.collector = Collector(
             config, monasca_agent.common.emitter.http_emitter, checksd)
 
         check_frequency = int(config['check_freq'])

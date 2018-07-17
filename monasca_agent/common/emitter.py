@@ -13,7 +13,11 @@
 
 from hashlib import md5
 import json
-import urllib2
+from six.moves.urllib.error import HTTPError
+from six.moves.urllib.request import build_opener
+from six.moves.urllib.request import ProxyHandler
+from six.moves.urllib.request import Request
+from six import PY3
 
 
 def post_headers(payload):
@@ -37,15 +41,17 @@ def http_emitter(message, log, url):
         partial_payload.append(measurement)
 
     payload = json.dumps(partial_payload)
+    if PY3:
+        payload = payload.encode('utf-8')
     url = "%s/intake" % url
     headers = post_headers(payload)
 
     try:
         # Make sure no proxy is autodetected for this localhost connection
-        proxy_handler = urllib2.ProxyHandler({})
+        proxy_handler = ProxyHandler({})
         # Should this be installed as the default opener and reused?
-        opener = urllib2.build_opener(proxy_handler)
-        request = urllib2.Request(url, payload, headers)
+        opener = build_opener(proxy_handler)
+        request = Request(url, payload, headers)
         response = None
         try:
             response = opener.open(request)
@@ -57,7 +63,7 @@ def http_emitter(message, log, url):
         finally:
             if response:
                 response.close()
-    except urllib2.HTTPError as e:
+    except HTTPError as e:
         if e.code == 202:
             log.debug("http payload accepted")
         else:
