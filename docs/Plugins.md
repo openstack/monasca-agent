@@ -86,6 +86,8 @@
   - [SQLServer](#sqlserver)
   - [Supervisord](#supervisord)
   - [Swift Diags](#swift-diags)
+  - [Swift Recon](#swift-recon)
+    - [Sample Config](#sample-config)
   - [TCP Check](#tcp-check)
   - [Varnish](#varnish)
   - [VCenter](#vcenter)
@@ -2648,6 +2650,73 @@ See [the example configuration](https://github.com/openstack/monasca-agent/blob/
 
 ## Swift Diags
 See [the example configuration](https://github.com/openstack/monasca-agent/blob/master/conf.d/swift_diags.yaml.example) for how to configure the Swift Diags plugin.
+
+## Swift Recon
+Swift outputs a lot of statsd metrics that you can point directly at
+monasca-agents. However there is another swift endpoint, recon, that is used
+to gather more metrics.
+
+The Swift recon (or reconnaissance) API is an endpoint each of the storage
+node servers make available via a REST API. This API can either be hit
+manually or via the swift-recon tool. Or via this plugin. This plugin queries
+the Swift Recon endpoint of the given node and reports these extra metrics
+back via Monasca.
+
+There are many metrics available via swift recon, this plugin returns all
+date/timestamp and float/integer metrics. These include:
+
+| Metric name | Description |
+|-------------|-------------|
+| swift_recon.object.async_pending | Number of container updates in async pending |
+| swift_recon.object.auditor.object_auditor_stats_ALL.audit_time| |
+| swift_recon.object.auditor.object_auditor_stats_ALL.bytes_processed| |
+| swift_recon.object.auditor.object_auditor_stats_ALL.passes| |
+| swift_recon.object.auditor.object_auditor_stats_ALL.errors| |
+| swift_recon.object.auditor.object_auditor_stats_ALL.quarantined| |
+| swift_recon.object.auditor.object_auditor_stats_ALL.start_time| |
+| swift_recon.object.auditor.object_auditor_stats_ZBF.audit_time| |
+| swift_recon.object.auditor.object_auditor_stats_ZBF.bytes_processed| |
+| swift_recon.object.auditor.object_auditor_stats_ZBF.passes| |
+| swift_recon.object.auditor.object_auditor_stats_ZBF.errors| |
+| swift_recon.object.auditor.object_auditor_stats_ZBF.quarantined| |
+| swift_recon.object.auditor.object_auditor_stats_ZBF.start_time| |
+| swift_recon.object.object_updater_sweep | |
+| swift_recon.container.container_updater_sweep | |
+| swift_recon.object.expirer.object_expiration_pass | |
+| swift_recon.object.expirer.expired_last_pass | |
+| swift_recon.container.container_auditor_pass_completed | |
+| swift_recon.container.container_audits_failed | |
+| swift_recon.container.container_audits_passed | |
+| swift_recon.container.container_audits_since | |
+| swift_recon.account.account_auditor_pass_completed | |
+| swift_recon.account.account_audits_failed | |
+| swift_recon.account.account_audits_passed | |
+| swift_recon.account.account_audits_since | |
+| swift_recon.object.replication_time | |
+| swift_recon.object.replication_last | |
+| swift_recon.object.replication.attempted | |
+| swift_recon.object.replication.failure | |
+| swift_recon.object.replication.success | |
+| swift_recon.container.replication_time | |
+| swift_recon.container.replication_last | |
+| swift_recon.container.replication.attempted | |
+| swift_recon.container.replication.failure | |
+| swift_recon.container.replication.success | |
+| swift_recon.account.replication_time | |
+| swift_recon.account.replication_last | |
+| swift_recon.account.replication.attempted | |
+| swift_recon.account.replication.failure | |
+| swift_recon.account.replication.success | |
+| swift_recon.unmounted | |
+| swift_recon.disk_usage.mounted | |
+| swift_recon.disk_usage.size | |
+| swift_recon.disk_usage.used | |
+| swift_recon.disk_usage.avail | |
+| swift_recon.quarantined | with policy and ring names as dimensions to drill down |
+| swift_recon.drive_audit_errors | |
+
+### Sample Config
+See [the example configuration](https://github.com/openstack/monasca-agent/blob/master/conf.d/swift_recon.yaml.example)
 
 ## TCP Check
 See [the example configuration](https://github.com/openstack/monasca-agent/blob/master/conf.d/tcp_check.yaml.example) for how to configure the TCP Check plugin.

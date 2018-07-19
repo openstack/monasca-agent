@@ -1,0 +1,17 @@
+init_config:
+  collect_period: 300
+
+instances:
+    - name: swift-account
+      server_type: account
+      hostname: localhost
+      port: 6012
+      timeout: 5
+    - name: swift-container
+      server_type: container
+      hostname: localhost
+      port: 6011
+    - name: swift-object
+      server_type: object
+      hostname: localhost
+      port: 6010
