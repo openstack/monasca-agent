@@ -88,6 +88,7 @@
   - [Swift Diags](#swift-diags)
   - [Swift Recon](#swift-recon)
     - [Sample Config](#sample-config)
+  - [Swift Handoffs](#swift-handoffs)
   - [TCP Check](#tcp-check)
   - [Varnish](#varnish)
   - [VCenter](#vcenter)
@@ -2717,6 +2718,43 @@ date/timestamp and float/integer metrics. These include:
 
 ### Sample Config
 See [the example configuration](https://github.com/openstack/monasca-agent/blob/master/conf.d/swift_recon.yaml.example)
+
+## Swift Handoffs
+This plugin monitors the number of Swift primary and handoff partitions on a server or
+drive (device). This is a powerful metric to watch for on a swift cluster. A build up of
+handoff nodes on a particular server could indicate a disk problem somewhere in the
+cluster. A bottleneck somewhere. Or better, when would be a good time to rebalance the
+ring, as you'd want to do it when existing backend data movement is at a minimum.
+
+So it turns out to be a great visualisation of the health of a cluster.
+
+To be able to determine primary vs handoff partitions on a drive the swift ring needs
+to be consulted. If a storage node stores more then 1 ring then an instance would be
+defined for each.
+
+ You give swift a bunch of disks. These disks are placed in what swift calls the
+'devices' location. That is a directory where a mount point for each mounted
+swift drive is located.
+
+Finally, you can decide on the granularity which is either `server` or `device`,
+defaulting to `server` if not defined. On `device` the device (mountpoint name) will
+be added as a dimesion.
+
+### Sample Config
+
+```
+instances:
+    - name: Object Storage Policy 0
+      ring: /etc/swift/object.ring.gz
+      devices: /srv/node
+      granularity: server
+```
+### Swift Handoffs Metrics
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| swift.partitions.primary_count | service=swift, ring=ringname, device=device | The number of partitions of a given ring on the server (or device) |
+| swift.partitions.handoff_count | service=swift, ring=ringname, device=device | The number of handoff partitions of a given ring on the server (or device), partitions that should live elsewhere |
 
 ## TCP Check
 See [the example configuration](https://github.com/openstack/monasca-agent/blob/master/conf.d/tcp_check.yaml.example) for how to configure the TCP Check plugin.
