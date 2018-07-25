@@ -28,6 +28,7 @@ class Load(checks.AgentCheck):
 
     def __init__(self, name, init_config, agent_config):
         super(Load, self).__init__(name, init_config, agent_config)
+        self.process_fs_path_config = init_config.get('process_fs_path', None)
 
     def check(self, instance):
         """Capture load stats
@@ -38,7 +39,13 @@ class Load(checks.AgentCheck):
 
         if util.Platform.is_linux():
             try:
-                loadAvrgProc = open('/proc/loadavg', 'r')
+                if self.process_fs_path_config:
+                    log.debug(
+                        'The path of the process filesystem set to %s',
+                        self.process_fs_path_config)
+                    loadAvrgProc = open(self.process_fs_path_config + '/loadavg', 'r')
+                else:
+                    loadAvrgProc = open('/proc/loadavg', 'r')
                 uptime = loadAvrgProc.readlines()
                 loadAvrgProc.close()
             except Exception:

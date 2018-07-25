@@ -27,6 +27,12 @@ class Disk(checks.AgentCheck):
         self._partition_error = set()
 
         super(Disk, self).__init__(name, init_config, agent_config)
+        process_fs_path_config = init_config.get('process_fs_path', None)
+        if process_fs_path_config:
+            psutil.PROCFS_PATH = process_fs_path_config
+            self.log.debug('The path of the process filesystem set to %s', process_fs_path_config)
+        else:
+            self.log.debug('The process_fs_path not set. Use default path: /proc')
 
     def _log_once_per_day(self, message):
         if message in self._partition_error:
@@ -65,60 +71,60 @@ class Disk(checks.AgentCheck):
             if partition.fstype not in fs_types_to_ignore \
                 and (not device_blacklist_re
                      or not device_blacklist_re.match(partition.device)):
-                    try:
-                        device_name = self._get_device_name(partition.device)
-                        disk_usage = psutil.disk_usage(partition.mountpoint)
-                        total_capacity += disk_usage.total
-                        total_used += disk_usage.used
-                        st = os.statvfs(partition.mountpoint)
-                    except Exception as ex:
-                        exception_name = ex.__class__.__name__
-                        self._log_once_per_day('Unable to access partition {} '
-                                               'with error: {}'.format(partition,
-                                                                       exception_name))
-                        continue
+                try:
+                    device_name = self._get_device_name(partition.device)
+                    disk_usage = psutil.disk_usage(partition.mountpoint)
+                    total_capacity += disk_usage.total
+                    total_used += disk_usage.used
+                    st = os.statvfs(partition.mountpoint)
+                except Exception as ex:
+                    exception_name = ex.__class__.__name__
+                    self._log_once_per_day('Unable to access partition {} '
+                                           'with error: {}'.format(partition,
+                                                                   exception_name))
+                    continue
 
-                    if use_mount:
-                        dimensions.update({'mount_point': partition.mountpoint})
-                    self.gauge("disk.space_used_perc",
-                               disk_usage.percent,
+                if use_mount:
+                    dimensions.update({'mount_point': partition.mountpoint})
+                self.gauge("disk.space_used_perc",
+                           disk_usage.percent,
+                           device_name=device_name,
+                           dimensions=dimensions)
+                disk_count += 1
+                if st.f_files > 0:
+                    self.gauge("disk.inode_used_perc",
+                               round((float(st.f_files - st.f_ffree) / st.f_files) * 100, 2),
                                device_name=device_name,
                                dimensions=dimensions)
                     disk_count += 1
-                    if st.f_files > 0:
-                        self.gauge("disk.inode_used_perc",
-                                   round((float(st.f_files - st.f_ffree) / st.f_files) * 100, 2),
-                                   device_name=device_name,
-                                   dimensions=dimensions)
-                        disk_count += 1
 
-                    log.debug('Collected {0} disk usage metrics for partition {1}'.format(
-                        disk_count,
-                        partition.mountpoint))
-                    disk_count = 0
-                    if send_io_stats:
-                        try:
-                            stats = disk_stats[device_name]
-                            self.rate("io.read_req_sec", round(float(stats.read_count), 2),
-                                      device_name=device_name, dimensions=dimensions)
-                            self.rate("io.write_req_sec", round(float(stats.write_count), 2),
-                                      device_name=device_name, dimensions=dimensions)
-                            self.rate("io.read_kbytes_sec",
-                                      round(float(stats.read_bytes / 1024), 2),
-                                      device_name=device_name, dimensions=dimensions)
-                            self.rate("io.write_kbytes_sec",
-                                      round(float(stats.write_bytes / 1024), 2),
-                                      device_name=device_name, dimensions=dimensions)
-                            self.rate("io.read_time_sec", round(float(stats.read_time / 1000), 2),
-                                      device_name=device_name, dimensions=dimensions)
-                            self.rate("io.write_time_sec", round(float(stats.write_time / 1000), 2),
-                                      device_name=device_name, dimensions=dimensions)
+                log.debug('Collected {0} disk usage metrics for partition {1}'.format(
+                    disk_count,
+                    partition.mountpoint))
+                disk_count = 0
+                if send_io_stats:
+                    try:
+                        stats = disk_stats[device_name]
+                        self.rate("io.read_req_sec", round(float(stats.read_count), 2),
+                                  device_name=device_name, dimensions=dimensions)
+                        self.rate("io.write_req_sec", round(float(stats.write_count), 2),
+                                  device_name=device_name, dimensions=dimensions)
+                        self.rate("io.read_kbytes_sec",
+                                  round(float(stats.read_bytes / 1024), 2),
+                                  device_name=device_name, dimensions=dimensions)
+                        self.rate("io.write_kbytes_sec",
+                                  round(float(stats.write_bytes / 1024), 2),
+                                  device_name=device_name, dimensions=dimensions)
+                        self.rate("io.read_time_sec", round(float(stats.read_time / 1000), 2),
+                                  device_name=device_name, dimensions=dimensions)
+                        self.rate("io.write_time_sec", round(float(stats.write_time / 1000), 2),
+                                  device_name=device_name, dimensions=dimensions)
 
-                            log.debug('Collected 6 disk I/O metrics for'
-                                      'partition {0}'.format(partition.mountpoint))
-                        except KeyError:
-                            log.debug('No Disk I/O metrics available for'
-                                      ' {0}...Skipping'.format(device_name))
+                        log.debug('Collected 6 disk I/O metrics for'
+                                  'partition {0}'.format(partition.mountpoint))
+                    except KeyError:
+                        log.debug('No Disk I/O metrics available for'
+                                  ' {0}...Skipping'.format(device_name))
 
         if send_rollup_stats:
             self.gauge("disk.total_space_mb",
