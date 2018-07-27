@@ -13,11 +13,11 @@
 
 import collections
 from concurrent import futures
-from queue import Queue
 import threading
 
 import eventlet
 import multiprocessing
+from six.moves.queue import Queue
 
 import monasca_agent.collector.checks
 
