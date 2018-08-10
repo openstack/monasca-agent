@@ -4,6 +4,7 @@
 
 - [Libvirt VM Monitoring](#libvirt-vm-monitoring)
   - [Overview](#overview)
+  - [Installation](#installation)
   - [Configuration](#configuration)
   - [Instance Cache](#instance-cache)
   - [Metrics Cache](#metrics-cache)
@@ -29,6 +30,19 @@
 
 ## Overview
 The Libvirt plugin provides metrics for virtual machines when run on the hypervisor server.  It provides two sets of metrics per measurement: one designed for the owner of the VM, and one intended for the owner of the hypervisor server.
+
+## Installation
+Install `libvirt` plugin system dependencies
+```
+apt install libvirt-dev
+```
+
+Install `libvirt` plugin Python dependencies
+```
+pip install monasca-agent[libvirt]
+```
+It will install `libvirt` packages like `libvirt-python`, `python-novaclient`
+and `python-neutronclient`.
 
 ## Configuration
 The `monasca-setup` program will configure the Libvirt plugin if `nova-compute` is running, its `nova.conf` config file is readable by the Monasca Agent user (default: 'mon-agent'), and `python-novaclient` is installed.
