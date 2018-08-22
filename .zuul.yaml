@@ -1,0 +1,3 @@
+- project:
+    templates:
+      - openstack-python-jobs
