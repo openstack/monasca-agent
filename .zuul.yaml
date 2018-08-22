@@ -1,4 +1,6 @@
 - project:
+    templates:
+      - openstack-python-jobs
     check:
       jobs:
         - monasca-tempest-python-mysql:
