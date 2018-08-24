@@ -370,6 +370,54 @@ This section documents all the checks that are supplied by the Agent.
 ## System Metrics
 This section documents the system metrics that are sent by the Agent.
 
+Docker environment:
+
+For Docker environment you can enable the system plugins by adding cpu, disk,
+memory and load yaml files to the monasca-agent-collector container (mount
+plugin files to /plugins.d/cpu|disk|memory|load.yaml). Additionally you have to
+specify the path of the host process filesystem. In this case mount host root
+directory `/` to `/rootfs` in the container. Docker compose example:
+
+```
+volumes:
+  - "/:/rootfs:ro"
+```
+
+Sample configurations:
+
+cpu.yaml
+```
+init_config:
+  process_fs_path: /rootfs/proc
+instances:
+- name: cpu_stats
+```
+
+disk.yaml
+```
+init_config:
+  process_fs_path: /rootfs/proc
+instances:
+- name: disk_stats
+  ignore_filesystem_types: iso9660,tmpfs,nsfs
+```
+
+memory.yaml
+```
+init_config:
+  process_fs_path: /rootfs/proc
+instances:
+- name: memory_stats
+```
+
+load.yaml
+```
+init_config:
+  process_fs_path: /rootfs/proc
+instances:
+- name: load_stats
+```
+
 ### CPU
 | Metric Name | Dimensions | Semantics |
 | ----------- | ---------- | --------- |

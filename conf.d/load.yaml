@@ -1,7 +1,11 @@
 # (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
 
 init_config:
-
+# process_fs_path: (optional) STRING. It will set up the path of the process
+# filesystem. By default it's set for: /proc directory.
+# Example:
+#
+# process_fs_path: /rootfs/proc
 instances:
     # Load check only supports one configured instance
     - name: load_stats

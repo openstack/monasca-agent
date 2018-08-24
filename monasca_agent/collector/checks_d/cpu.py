@@ -26,6 +26,12 @@ class Cpu(checks.AgentCheck):
 
     def __init__(self, name, init_config, agent_config):
         super(Cpu, self).__init__(name, init_config, agent_config)
+        process_fs_path_config = init_config.get('process_fs_path', None)
+        if process_fs_path_config:
+            psutil.PROCFS_PATH = process_fs_path_config
+            self.log.debug('The path of the process filesystem set to %s', process_fs_path_config)
+        else:
+            self.log.debug('The process_fs_path not set. Use default path: /proc')
         # psutil.cpu_percent and psutil.cpu_times_percent are called in
         # __init__ because the first time these two functions are called with
         # interval = 0.0 or None, it will return a meaningless 0.0 value
