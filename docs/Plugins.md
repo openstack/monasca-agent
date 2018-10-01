@@ -245,7 +245,7 @@ Each plugin has a corresponding YAML configuration file with the same stem name 
 
 The configuration file has the following structure:
 
-```
+```yaml
 init_config:
     key1: value1
     key2: value2
@@ -475,7 +475,7 @@ instances:
 The network check can be configured to submit its metrics in either bytes/sec or bits/sec.  The default behavior is to submit bytes.  To submit `net.in_bits_sec` and `net.out_bits_sec` rather than `net.in_bytes_sec` and `net.out_bytes_sec`, set the config option `use_bits` to true for the instance you want to configure.
 
 Example configuration:
-```
+```yaml
 init_config: null
 instances:
 - built_by: System
@@ -524,7 +524,7 @@ By default, all metrics are enabled.
 ## A10
 This section describes the A10 System Check.
 
-```
+```yaml
 init_config:
 
 instances:
@@ -546,7 +546,7 @@ This section describes the Apache Web Server check that can be performed by the 
 
 Sample config:
 
-```
+```yaml
 init_config:
 
 instances:
@@ -596,7 +596,7 @@ only have one instance defined under instances. (Example shown below)
 
 Sample config (passing in cAdvisor url):
 
-```
+```yaml
 init_config:
     # Timeout on GET requests to the cAdvisor endpoints
     connection_timeout: 3
@@ -606,7 +606,7 @@ instances:
 ```
 
 Sample config (setting Kubernetes detect cAdvisor url):
-```
+```yaml
 init_config:
     # Timeout on GET requests to the cAdvisor endpoints
     connection_timeout: 3
@@ -672,13 +672,15 @@ monasca-setup script is run:
 
 ##### Example Cassandra Metrics
 
+
 | Component | Metric Name | Metric Type | Check Type | Dimensions | Plugin | Description |
-| --------- | ----------- | ----------- | ---------- | ---- | ------ | ----------- | ----- |
+| --------- | ----------- | ----------- | ---------- | ---------- | ------ | ----------- |
 | cassandra | process_pid_count | Gauge | Passive | service=cassandra, component=cassandra, process_user=cassandra | process | cassandra process pid count |
 | cassandra | directory.files_count | Gauge | Active | service=cassandra, component=cassandra, path=/var/cassandra/data | cassandra data directory file count |
 | cassandra | directory.size_bytes | Gauge | Active | service=cassandra, component=cassandra, path=/var/cassandra/data | cassandra data directory size |
 | cassandra | directory.files_count | Gauge | Active | service=cassandra, component=cassandra, path=/var/cassandra/commitlog | cassandra commit log directory file count |
 | cassandra | directory.size_bytes | Gauge | Active | service=cassandra, component=cassandra, path=/var/cassandra/commitlog | cassandra commit log directory size |
+
 
 ## Check_MK_Local
 The [Check_MK](http://mathias-kettner.com/check_mk.html) [Agent](http://mathias-kettner.com/checkmk_linuxagent.html) can be extended through a series of [local checks](http://mathias-kettner.com/checkmk_localchecks.html).  This plugin parses the `<<<local>>>` output of `check_mk_agent` and converts them into Monasca metrics.  It is installed by `monasca-setup` automatically when the `check_mk_agent` script is found to be installed on the system.
@@ -712,7 +714,7 @@ and
 The name of the metric starts with `check_mk.`, includes the check_mk item name, and is followed by either `status` for the Nagios status code (0, 1, 2, or 3), or the name of the performance metric.  The free-form output from the check is included in the meta field of the check status.
 
 You may override these defaults in the configuration, which by default is `/etc/monasca/agent/conf.d/check_mk_local.yaml`.
-```
+```yaml
 init_config:
     mk_agent_path: /usr/bin/check_mk_agent
 
@@ -753,7 +755,7 @@ user to the `ceph` group which does not require using sudo.
 
 Sample config:
 
-```
+```yaml
 init_config:
 
 instances:
@@ -864,8 +866,9 @@ The Ceph checks return the following metrics:
 An extension to the Agent provides the ability to determine the expiration date of the certificate for the URL. The metric is days until the certificate expires
 
  default dimensions:
+```
     url: url
-
+```
 A YAML file (cert_check.yaml) contains the list of urls to check. It also contains
 
 The configuration of the certificate expiration check is done in YAML, and consists of two keys:
@@ -877,7 +880,7 @@ The init_config section lists the global configuration settings, such as the Cer
 
     $ ls -l `which ping` -rwsr-xr-x 1 root root 35712 Nov 8 2011 /bin/ping
 
-```
+```yaml
 init_config:
   ca_certs: /etc/ssl/certs/ca-certificates.crt
   ciphers: HIGH:-aNULL:-eNULL:-PSK:RC4-SHA:RC4-MD5
@@ -887,7 +890,7 @@ init_config:
 
 The instances section contains the urls to check.
 
-```
+```yaml
 instances:
 - built_by: CertificateCheck
   url: https://somehost.somedomain.net:8333
@@ -962,8 +965,8 @@ ecn congestion rate calculation.
 the plugin runs against all computes.
 
 Sample config (`congestion.yaml`):
-```
----
+
+```yaml
 init_config:
   auth_url: http://10.10.10.10/identity_admin
   cache_dir: /dev/shm
@@ -1020,7 +1023,7 @@ The `monasca-setup` program will configure the Crash plugin if a crash kernel is
 
 Sample config:
 
-```
+```yaml
 init_config:
   crash_dir: /var/crash
 
@@ -1037,7 +1040,7 @@ Similar to other checks, the configuration is done in YAML, and consists of two 
 
 Sample config:
 
-```
+```yaml
 init_config: null
 instances:
 - built_by: Directory
@@ -1066,7 +1069,7 @@ Sample config:
 
 Without kubernetes dimensions
 
-```
+```yaml
 init_config:
   docker_root: /
   socket_timeout: 5
@@ -1075,7 +1078,7 @@ instances:
 ```
 
 With kubernetes dimensions
-```
+```yaml
 init_config:
   docker_root: /
   socket_timeout: 5
@@ -1115,7 +1118,7 @@ This section describes the Elasticsearch check that can be performed by the Agen
 
 Sample config:
 
-```
+```yaml
 init_config:
 instances:
 -   url: http://127.0.0.1:9200
@@ -1241,7 +1244,7 @@ Similar to other checks, the configuration is done in YAML, and consists of two 
 
 Sample config:
 
-```
+```yaml
 init_config: null
 instances:
 - built_by: FileSize
@@ -1301,7 +1304,7 @@ The init_config section lists the global configuration settings, such as SSH por
 
     $ ls -l `which ping` -rwsr-xr-x 1 root root 35712 Nov 8 2011 /bin/ping
 
-```
+```yaml
 init_config:
     ssh_port: 22
 
@@ -1314,7 +1317,7 @@ init_config:
 
 The instances section contains the hostname/IP to check, and the type of check to perform, which is either ssh or ping.
 
-```
+```yaml
     # alive_test can be either "ssh" for an SSH banner test (port 22)
     # or "ping" for an ICMP ping test instances:
   - name: ssh to somehost
@@ -1360,23 +1363,28 @@ The host alive checks return the following metrics
 Also in the case of an error the value_meta contains an error message.
 
 The default dimensions are:
+```
    observer_host: fqdn
    hostname: fqdn | supplied
    target_hostname: Set to target_hostname only if that is different than host_name
    test_type: ping | ssh | Unrecognized alive_test
-
+```
 default value_meta
+```
    error: error_message
+```
 
 ## HTTP (endpoint status)
 This section describes the http endpoint check that can be performed by the Agent. Http endpoint checks are checks that perform simple up/down checks on services, such as HTTP/REST APIs. An agent, given a list of URLs, can dispatch an http request and report to the API success/failure as a metric.
 
  default dimensions:
+```
     url: endpoint
-
+```
  default value_meta
+```
     error: error_message
-
+```
 The Agent supports additional functionality through the use of Python scripts. A YAML file (http_check.yaml) contains the list of URLs to check (among other optional parameters). A Python script (http_check.py) runs checks each host in turn, returning a 0 on success and a 1 on failure in the result sent through the Forwarder and on the Monitoring API.
 
 Similar to other checks, the configuration is done in YAML, and consists of two
@@ -1397,7 +1405,7 @@ DEPRECATED: providing Keystone configuration in each instance.
 
 Sample config:
 
-```
+```yaml
 init_config:
     keystone_config:
         keystone_url: http://endpoint.com/v3/
@@ -1425,15 +1433,17 @@ The http_status checks return the following metrics:
 This section describes the http metrics check that can be performed by the agent. Http metrics checks are checks that retrieve metrics from any url returning a json formatted response. An agent, given a list of URLs, can dispatch an http request and parse the desired metrics from the json response.
 
  default dimensions:
+```
     url: endpoint
-
+```
  default value_meta
+```
     error: error_message
-
+```
 Similar to other checks, the configuration is done in YAML (http_metrics.yaml), and consists of two keys: init_config and instances.  The former is not used by http_metrics, while the later contains one or more URLs to check, plus optional parameters like a timeout, username/password, whether or not to also record the response time, and a whitelist of metrics to collect. The whitelist should consist of a name, path, and type for each metric to be collected. The name is what the metric will be called when it is reported. The path is a string of keys separated by '/' where the metric value resides in the json response. The type is how you want the metric to be recorded (gauge, counter, histogram, rate, set). A gauge will store and report the value it find with no modifications. A counter will increment itself by the value it finds. A histogram will store values and return the calculated max, median, average, count, and percentiles. A rate will return the difference between the last two recorded samples divided by the interval between those samples in seconds. A set will record samples and return the number of unique values in the set.
 If the endpoint being checked requires authentication, there are two options. First, a username and password supplied in the instance options will be used by the check for authentication. Alternately, the check can retrieve a keystone token for authentication. Specific keystone information can be provided for each check, otherwise the information from the agent config will be used.
 
-```
+```yaml
 init_config:
 
 instances:
@@ -1543,7 +1553,7 @@ after writing new data to make sure the data is written to the file.
 
 Example of writing metrics file:
 
-```
+```python
 metric_data = [{"name": "metric1", "value": 10.1, "timestamp": time.time()}]
 max_retries = 10
 delay = 0.02
@@ -1628,7 +1638,7 @@ This section describes the Kafka check that can be performed by the Agent.  The 
 
 Sample config:
 
-```yml
+```yaml
 init_config:
 
 instances:
@@ -1677,7 +1687,7 @@ Sample configs:
 
 Without custom labels and host being manually set:
 
-```
+```yaml
 init_config:
     # Timeout on GET requests
     connection_timeout: 3
@@ -1691,7 +1701,7 @@ instances:
 
 With custom labels and host being manually set:
 
-```
+```yaml
 init_config:
     # Timeout on GET requests
     connection_timeout: 3
@@ -1706,7 +1716,7 @@ instances:
 
 With custom labels and derive host being set:
 
-```
+```yaml
 instances:
     # Set to the host that the plugin will use when connecting to the Kubernetes API
     - host: "127.0.0.1"
@@ -1716,7 +1726,7 @@ instances:
 
 With custom labels and derive api url set to True:
 
-```
+```yaml
 init_config:
     # Timeout on GET requests
     connection_timeout: 3
@@ -1860,7 +1870,7 @@ There are two ways you can configure the plugin to connect to the kubernetes api
 
 Sample configs:
 
-```
+```yaml
 instances:
     - derive api url: True
       kubernetes_labels: ['k8s-app', 'version']
@@ -1913,7 +1923,7 @@ Requirements:
 
 Sample config:
 
-```
+```yaml
 init_config:
 
 instances:
@@ -1998,7 +2008,7 @@ The configuration file (`/etc/monasca/agent/conf.d/mk_livestatus.yaml` by defaul
 If *host_name* is not specified, metrics for all hosts will be reported.
 
 This configuration example shows several ways to specify instances:
-```
+```yaml
 init_config:
     # Specify the path to the mk_livestatus socket
     socket_path: /var/lib/icinga/rw/live
@@ -2056,7 +2066,7 @@ Instance variables can be passed via command line arguments
 to the monasca-setup -d mysql command.
 The instance config files are built by the detection plugin.
 
-```
+```yaml
 init_config:
 Example clear connect:
 instances:
@@ -2119,22 +2129,31 @@ The mySQL checks return the following metrics:
 | mysql.net.connections | hostname, mode, service=mysql | Corresponding to "Connections" of the server status variable. |
 
 ## Nagios Wrapper
-The Agent can run Nagios plugins. A YAML file (nagios_wrapper.yaml) contains the list of Nagios checks to run, including the check name, command name with parameters, and desired interval between iterations. A Python script (nagios_wrapper.py) runs each command in turn, captures the resulting exit code (0 through 3, corresponding to OK, warning, critical and unknown), and sends that information to the Forwarder, which then sends the Monitoring API. Currently, the Agent can only  send the exit code from a Nagios plugin. Any accompanying text is not sent.
+The Agent can run Nagios plugins. A YAML file (nagios_wrapper.yaml) contains the list of Nagios checks to run,
+including the check name, command name with parameters, and desired interval between iterations. A Python
+script (nagios_wrapper.py) runs each command in turn, captures the resulting exit code (0 through 3,
+corresponding to OK, warning, critical and unknown), and sends that information to the Forwarder, which then
+sends to the Monitoring API. Currently, the Agent can only send the exit code from a Nagios plugin. Any
+accompanying text is not sent.
+
 
  default dimensions:
+```
     observer_host: fqdn
     target_host: fqdn | supplied
-
+```
  default value_meta
+```
     0, 1, 2, 3, 4
     OK, Warning, Critical, Unknown
     error: error_message
+```
 
 Similar to all plugins, the configuration is done in YAML, and consists of two keys: init_config and instances.
 
-init_config contains global configuration options:
+*init_config* contains global configuration options:
 
-```
+```yaml
 init_config:
   # Directories where Nagios checks (scripts, programs) may live
   check_path: /usr/lib/nagios/plugins:/usr/local/bin/nagios
@@ -2143,9 +2162,9 @@ init_config:
   temp_file_path: /dev/shm/
 ```
 
-instances contains the list of checks to run
+*instances* contains the list of checks to run.
 
-```
+```yaml
 instances:
   - name: load
     check_command: check_load -r -w 2,1.5,1 -c 10,5,4
@@ -2155,10 +2174,18 @@ instances:
     check_interval: 300
 ```
 
-* 'name' value is the name of the metric
-* check_command is the full command to run.  Specifying the full path is optional if the checks are located somewhere in check_path.  These above examples are a copy-and-paste from existing service checks in /etc/cron.d/servicecheck-* files, so migration is fairly easy.
+* `name` value is the name of the metric.
 
-* check_interval (optional) If unspecified, the checks will be run at the regular collector interval, which is 60 seconds by default. You may not want to run some checks that frequently, especially if they are resource-intensive, so check_interval lets you force a delay, in seconds, between iterations of that particular check.  The state for these are stored in temp_file_path with file names like nagios_wrapper_19fe42bc7cfdc37a2d88684013e66c7b.pck where the hash is an md5sum of the 'name' value (to accommodate odd characters that the filesystem may not like).
+* `check_command` is the full command to run.  Specifying the full path is optional if the checks are located
+  somewhere in check_path.  These above examples are a copy-and-paste from existing service checks in
+  /etc/cron.d/servicecheck-* files, so migration is fairly easy.
+
+* `check_interval` (optional) If unspecified, the checks will be run at the regular collector interval, which
+  is 60 seconds by default. You may not want to run some checks that frequently, especially if they are
+  resource-intensive, so check_interval lets you force a delay, in seconds, between iterations of that
+  particular check.  The state for these are stored in temp_file_path with file names like
+  nagios_wrapper_19fe42bc7cfdc37a2d88684013e66c7b.pck where the hash is an md5sum of the 'name' value (to
+  accommodate odd characters that the filesystem may not like).
 
 ## Nginx
 See [the example configuration](https://github.com/openstack/monasca-agent/blob/master/conf.d/nginx.yaml.example) for how to configure the Nginx plugin.
@@ -2168,7 +2195,7 @@ This section describes the Network Time Protocol checks that can be performed by
 
 Sample config:
 
-```
+```yaml
 init_config:
 
 instances:
@@ -2197,7 +2224,7 @@ NOTE: The user running monasca-agent must have passwordless sudo access for the 
 
 Sample config:
 
-```
+```yaml
 init_config:
 
 instances:
@@ -2220,7 +2247,7 @@ This section describes the PostgreSQL checks that can be performed by the Agent.
 
 Sample config:
 
-```
+```yaml
 init_config:
 
 instances:
@@ -2233,7 +2260,7 @@ instances:
 
 If you want to track per-relation (table), you need to add relations keys and specify the list.
 
-```
+```yaml
        relations:
             - my_table
             - my_other_table
@@ -2300,7 +2327,7 @@ Using a yaml config file:
 monasca-setup -d ProcessCheck -a "conf_file_path=/home/stack/myprocess.yaml"
 ```
 Example yaml input file format for process check by process names:
-```
+```yaml
 
 process_config:
 - process_names:
@@ -2310,7 +2337,7 @@ process_config:
     service: monitoring
 ```
 Example yaml input file format for multiple process_names entries:
-```
+```yaml
 
 process_config:
 - process_names:
@@ -2330,7 +2357,7 @@ process_config:
     component: thresh
 ```
 Sample successfully built process.yaml:
-```
+```yaml
 init_config: null
 instances:
 - built_by: ProcessCheck
@@ -2368,7 +2395,7 @@ For Docker environment you can enable the process plugin by adding
 to `/plugins.d/process.yaml`). Additionally you have to specify the path of the
 host process filesystem. In this case mount host root directory `/` to
 `/rootfs` in the container. Sample configuration:
-```
+```yaml
 init_config:
   process_fs_path: /rootfs/proc
 instances:
@@ -2412,7 +2439,7 @@ By default we grab the defined labels on each metric as dimensions.
 
 Example yaml file:
 
-```
+```yaml
 init_config:
   # Timeout on connections to each endpoint
   timeout: 3
@@ -2445,7 +2472,7 @@ for metrics coming out. By default that will be set to "app"
 
 Example yaml file (by pod):
 
-```
+```yaml
 init_config:
   timeout: 3
   auto_detect_endpoints: True
@@ -2456,7 +2483,7 @@ instances:
 
 Example yaml file (by service):
 
-```
+```yaml
 init_config:
   timeout: 3
   auto_detect_endpoints: True
@@ -2490,7 +2517,7 @@ rabbitmq-plugins enable rabbitmq_management
 ```
 Sample config:
 
-```
+```yaml
 init_config:
 
 instances:
@@ -2578,13 +2605,13 @@ See [the example configuration](https://github.com/openstack/monasca-agent/blob/
 The SolidFire checks require a matching solidfire.yaml to be present. Currently the checks report a mixture of cluster utilization and health metrics. Multiple clusters can be monitored via separate instance stanzas in the config file.
 
 Sample config:
-
+```yaml
 instances:
     - name: cluster_rack_d
       username: cluster_admin
       password: secret_password
       mvip: 192.168.1.1
-
+```
 The SolidFire checks return the following metrics:
 
 | Metric Name | Dimensions | Semantics |
@@ -2632,7 +2659,7 @@ See [the example configuration](https://github.com/openstack/monasca-agent/blob/
 This plugin provides metrics for VMware ESX clusters. It connects to vCenter server with its credentials and collects the configured cluster's performance data.
 
 ### Sample Config
-```
+```yaml
 init_config: {}
 instances:
     - vcenter_ip: <vcenter-ip or fqdn>
@@ -2673,7 +2700,7 @@ This plugin provides exclusively vm status metrics for VMware ESX clusters. Incl
  In the example below, the resulting metrics will have a dimension of 'tenant_id' with the value from the 'project_id' annotation.
 
 ### Sample Config
-```
+```yaml
 init_config:
   vcenter_ip: "127.0.0.1"
   vcenter_user: "joe"
@@ -2700,7 +2727,7 @@ This section describes the vertica check that can be performed by the Agent.  Th
 
 Sample config:
 
-```
+```yaml
 init_config:
 
 instances:
@@ -2736,7 +2763,7 @@ The Zookeeper check parses the result of zookeeper's `stat` admin command.
 
 Sample config:
 
-```
+```yaml
 init_config:
 
 instances:
