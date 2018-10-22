@@ -390,7 +390,7 @@ class OvsCheck(AgentCheck):
         #
         # Grab the first metric name and see if it's in the cache.
         #
-        metric_name = self._get_metrics_map(measure).keys()[0]
+        metric_name = list(self._get_metrics_map(measure).keys())[0]
 
         for ifx in ctr_cache:
             if metric_name not in ctr_cache[ifx]:

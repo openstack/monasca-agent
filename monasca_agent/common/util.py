@@ -686,7 +686,7 @@ def chunks(iterable, chunk_size):
         count = 0
         try:
             for _ in range(chunk_size):
-                chunk[count] = iterable.next()
+                chunk[count] = next(iterable)
                 count += 1
             yield chunk[:count]
         except StopIteration:

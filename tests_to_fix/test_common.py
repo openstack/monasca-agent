@@ -130,7 +130,7 @@ class TestAggregator(unittest.TestCase):
         self.aggr.increment(
             'test-counter', 1, dimensions={'a': 'avalue', 'b': 'bvalue', 'b': 'bvalue'})
         self.assertEqual(len(self.aggr.metrics), 1, self.aggr.metrics)
-        metric = self.aggr.metrics.values()[0]
+        metric = list(self.aggr.metrics.values())[0]
         self.assertEqual(metric.value, 2)
 
 if __name__ == '__main__':

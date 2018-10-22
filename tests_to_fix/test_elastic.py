@@ -15,10 +15,11 @@ import logging
 logging.basicConfig()
 import subprocess
 import time
-import urllib2
-import urlparse
 from nose.plugins.skip import SkipTest
 from tests.common import load_check
+
+from six.moves import urllib
+
 
 PORT = 9200
 MAX_WAIT = 150
@@ -30,8 +31,8 @@ class TestElastic(unittest.TestCase):
         loop = 0
         while True:
             try:
-                req = urllib2.Request(url, None)
-                request = urllib2.urlopen(req)
+                req = urllib.request.Request(url, None)
+                request = urllib.request.urlopen(req)
                 break
             except Exception:
                 time.sleep(0.5)

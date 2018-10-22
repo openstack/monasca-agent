@@ -61,8 +61,8 @@ class WMICheck(AgentCheck):
         # If there are filters, we need one query per filter.
         if filters:
             for f in filters:
-                prop = f.keys()[0]
-                search = f.values()[0]
+                prop = list(f.keys())[0]
+                search = list(f.values())[0]
                 if SEARCH_WILDCARD in search:
                     search = search.replace(SEARCH_WILDCARD, '%')
                     wql = "SELECT * FROM %s WHERE %s LIKE '%s'" % (wmi_class, prop, search)

@@ -12,9 +12,10 @@
 
 import logging
 import unittest
-from cStringIO import StringIO
 
 from collector.checks import LaconicFilter
+
+from six.moves import cStringIO as StringIO
 
 
 class TestLaconic(unittest.TestCase):

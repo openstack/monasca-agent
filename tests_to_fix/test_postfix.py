@@ -19,6 +19,7 @@ import binascii
 import re
 import shutil
 from nose.plugins.skip import SkipTest
+from six.moves import range
 
 class TestPostfix(unittest.TestCase):
     #
@@ -74,7 +75,7 @@ class TestPostfix(unittest.TestCase):
         """ % (self.queue_root))
 
         # stuff 10K msgs in random queues
-        for _ in xrange(1, 10000):
+        for _ in range(1, 10000):
             shuffle(self.queues)
             rand_queue = sample(self.queues, 1)[0]
             queue_file = binascii.b2a_hex(os.urandom(7))

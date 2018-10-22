@@ -14,7 +14,8 @@
 import json
 import re
 import sys
-import urllib2
+
+from six.moves import urllib
 
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.collector.checks.utils import add_basic_auth
@@ -67,15 +68,15 @@ class Couchbase(AgentCheck):
 
         """
         self.log.debug('Fetching Couchbase stats at url: %s' % url)
-        req = urllib2.Request(url, None, headers(self.agent_config))
+        req = urllib.request.Request(url, None, headers(self.agent_config))
         if 'user' in instance and 'password' in instance:
             add_basic_auth(req, instance['user'], instance['password'])
 
         if instance['is_recent_python']:
             timeout = instance.get('timeout', DEFAULT_TIMEOUT)
-            request = urllib2.urlopen(req, timeout=timeout)
+            request = urllib.request.urlopen(req, timeout=timeout)
         else:
-            request = urllib2.urlopen(req)
+            request = urllib.request.urlopen(req)
 
         response = request.read()
         return json.loads(response)

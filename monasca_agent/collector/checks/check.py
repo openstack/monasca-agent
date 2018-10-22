@@ -81,7 +81,7 @@ class AgentCheck(util.Dimensions):
                 # value in white list.
                 dim_key_values = {}
                 if metrics.get(metric):
-                    dim_key_values = metrics.get(metric).values()[0]
+                    dim_key_values = list(metrics.get(metric).values())[0]
                 else:
                     # If white list has a "dimensions" section, set the key
                     # value dimension pairs to all the metrics. But the

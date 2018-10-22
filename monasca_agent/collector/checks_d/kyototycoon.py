@@ -13,7 +13,8 @@
 
 from collections import defaultdict
 import re
-import urllib2
+
+from six.moves import urllib
 
 from monasca_agent.collector.checks import AgentCheck
 
@@ -68,7 +69,7 @@ class KyotoTycoonCheck(AgentCheck):
         if name is not None:
             dimensions.update({'instance': name})
 
-        response = urllib2.urlopen(url)
+        response = urllib.request.urlopen(url)
         body = response.read()
 
         totals = defaultdict(lambda: 0)
