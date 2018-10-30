@@ -90,13 +90,13 @@ class RabbitMQ(monasca_setup.detection.Plugin):
         :return: bool status of the test
         """
         url = self.api_url + '/aliveness-test/%2F'
-        password_mgr = urllib.HTTPPasswordMgrWithDefaultRealm()
+        password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
         password_mgr.add_password(None,
                                   self.api_url,
                                   self.user,
                                   self.password)
-        handler = urllib.HTTPBasicAuthHandler(password_mgr)
-        opener = urllib.build_opener(handler)
+        handler = urllib.request.HTTPBasicAuthHandler(password_mgr)
+        opener = urllib.request.build_opener(handler)
 
         request = opener.open(url)
         response = request.read()
