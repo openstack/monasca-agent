@@ -42,7 +42,7 @@ class MetricsAggregator(object):
             try:
                 metrics.extend(metric.flush())
             except Exception:
-                log.exception('Error flushing {0} metrics.'.format(metric.name))
+                log.exception('Error flushing {0} metrics.'.format(metric.metric['name']))
 
         # Log a warning regarding metrics with old timestamps being submitted
         if self.num_discarded_old_points > 0:

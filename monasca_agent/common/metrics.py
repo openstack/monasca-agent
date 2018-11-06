@@ -41,6 +41,13 @@ class Metric(object):
     def flush(self):
         if self.timestamp is None:
             return []
+        if self.value is None:
+            log.error('Value of None is not supported, will not send. '
+                      'Metric %s with dimensions %s at time %d',
+                      self.metric['name'],
+                      self.metric['dimensions'],
+                      self.timestamp)
+            return []
 
         envelope = self.measurement(self.value, self.timestamp)
         self.timestamp = None
