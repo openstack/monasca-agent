@@ -13,6 +13,8 @@
 import unittest
 from datetime import timedelta, datetime
 
+from six.moves import range
+
 from monasca_agent.forwarder.transaction import Transaction, TransactionManager
 from monasca_agent.forwarder.daemon import MAX_QUEUE_SIZE, THROTTLING_DELAY
 
@@ -50,7 +52,7 @@ class TestTransaction(unittest.TestCase):
 
         step = 10
         oneTrSize = (MAX_QUEUE_SIZE / step) - 1
-        for i in xrange(step):
+        for i in range(step):
             tr = memTransaction(oneTrSize, trManager)
             trManager.append(tr)
 
@@ -94,7 +96,7 @@ class TestTransaction(unittest.TestCase):
 
         # Add 3 transactions, make sure no memory limit is in the way
         oneTrSize = MAX_QUEUE_SIZE / 10
-        for i in xrange(3):
+        for i in range(3):
             tr = memTransaction(oneTrSize, trManager)
             trManager.append(tr)
 

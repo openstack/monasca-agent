@@ -12,7 +12,8 @@
 # under the License.
 
 import json
-import urllib2
+
+from six.moves import urllib
 
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.common.util import headers
@@ -46,10 +47,10 @@ class CouchDb(AgentCheck):
 
         """
         self.log.debug('Fetching Couchdb stats at url: %s' % url)
-        req = urllib2.Request(url, None, headers(self.agent_config))
+        req = urllib.request.Request(url, None, headers(self.agent_config))
 
         # Do the request, log any errors
-        request = urllib2.urlopen(req)
+        request = urllib.request.urlopen(req)
         response = request.read()
         return json.loads(response)
 

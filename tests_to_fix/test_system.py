@@ -16,6 +16,8 @@ import platform
 import re
 import unittest
 
+from six.moves import reduce
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__file__)
 
@@ -138,8 +140,8 @@ none                  985964       1  985963    1% /lib/init/rw
             res = disk.check()
             # Assert we have disk & inode stats
             assert len(res) == 2
-            assert res.keys()[0]
-            assert res.keys()[1]
+            assert list(res.keys())[0]
+            assert list(res.keys())[1]
 
     def testMemory(self):
         global logger

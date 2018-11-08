@@ -37,8 +37,9 @@ Tested with Zookeeper versions 3.0.0 to 3.4.10
 
 import re
 import socket
-from StringIO import StringIO
 import struct
+
+from six import StringIO
 
 from monasca_agent.collector.checks import AgentCheck
 

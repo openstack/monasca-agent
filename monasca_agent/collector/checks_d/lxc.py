@@ -64,7 +64,7 @@ class LXC(checks.AgentCheck):
             return
         metrics = self._get_cpu_metrics(container_name)
         cpu_dimensions = self._get_dimensions(container_name)
-        for metric, value in metrics.iteritems():
+        for metric, value in metrics.items():
             self.gauge(metric, value, dimensions=cpu_dimensions)
 
     def _collect_mem_metrics(self, container_name):
@@ -72,7 +72,7 @@ class LXC(checks.AgentCheck):
             return
         metrics = self._get_mem_metrics(container_name)
         mem_dimensions = self._get_dimensions(container_name)
-        for metric, value in metrics.iteritems():
+        for metric, value in metrics.items():
             self.gauge(metric, value, dimensions=mem_dimensions)
 
     def _collect_swap_metrics(self, container_name):
@@ -81,17 +81,17 @@ class LXC(checks.AgentCheck):
         metrics = self._get_swap_metrics(container_name)
         if metrics:
             swap_dimensions = self._get_dimensions(container_name)
-            for metric, value in metrics.iteritems():
+            for metric, value in metrics.items():
                 self.gauge(metric, value, dimensions=swap_dimensions)
 
     def _collect_net_metrics(self, container_name):
         if not self.instance.get('net', True):
             return
         metrics = self._get_net_metrics(container_name)
-        for iface_name, iface_metrics in metrics.iteritems():
+        for iface_name, iface_metrics in metrics.items():
             net_dimensions = self._get_dimensions(container_name,
                                                   {'iface': iface_name})
-            for metric, value in iface_metrics.iteritems():
+            for metric, value in iface_metrics.items():
                 self.gauge(metric, value, dimensions=net_dimensions)
 
     def _collect_disk_metrics(self, container_name):
@@ -99,7 +99,7 @@ class LXC(checks.AgentCheck):
             return
         metrics = self._get_disk_metrics(container_name)
         disk_dimensions = self._get_dimensions(container_name)
-        for metric, value in metrics.iteritems():
+        for metric, value in metrics.items():
             self.gauge(metric, value, dimensions=disk_dimensions)
 
     def _get_cpu_metrics(self, container_name):

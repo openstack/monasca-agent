@@ -101,7 +101,7 @@ class Redis(AgentCheck):
 
         """
         try:
-            for item in string.split(','):
+            for item in ','.split():
                 k, v = item.rsplit('=', 1)
                 if k == key:
                     try:

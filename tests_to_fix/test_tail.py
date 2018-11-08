@@ -58,7 +58,7 @@ class TestTail(unittest.TestCase):
 
         # Consume from the tail
         gen = tail.tail(line_by_line=False, move_end=True)
-        gen.next()
+        next(gen)
 
         # Verify that the tail consumed the data I wrote
         self.assertEqual(tail._size, len(init_string))
@@ -73,7 +73,7 @@ class TestTail(unittest.TestCase):
             self.log_file.flush()
 
             # Verify that the tail recognized the logrotation
-            gen.next()
+            next(gen)
             self.assertEqual(self.last_line, new_string[:-1], self.last_line)
         except OSError:
             "logrotate is not present"

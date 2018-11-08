@@ -12,7 +12,8 @@
 # under the License.
 
 from collections import defaultdict
-import urllib2
+from six.moves import urllib
+
 
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.common.util import headers
@@ -82,17 +83,17 @@ class HAProxy(AgentCheck):
         """
         # Try to fetch data from the stats URL
 
-        passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        passman = urllib.request.HTTPPasswordMgrWithDefaultRealm()
         passman.add_password(None, url, username, password)
-        authhandler = urllib2.HTTPBasicAuthHandler(passman)
-        opener = urllib2.build_opener(authhandler)
-        urllib2.install_opener(opener)
+        authhandler = urllib.request.HTTPBasicAuthHandler(passman)
+        opener = urllib.request.build_opener(authhandler)
+        urllib.request.install_opener(opener)
         url = "%s%s" % (url, STATS_URL)
 
         self.log.debug("HAProxy Fetching haproxy search data from: %s" % url)
 
-        req = urllib2.Request(url, None, headers(self.agent_config))
-        request = urllib2.urlopen(req)
+        req = urllib.request.Request(url, None, headers(self.agent_config))
+        request = urllib.request.urlopen(req)
         response = request.read()
         # Split the data by line
         return response.split('\n')

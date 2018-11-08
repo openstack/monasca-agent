@@ -78,7 +78,7 @@ class Docker(checks.AgentCheck):
     def _report_container_metrics(self, container_dict, add_kubernetes_dimensions, dimensions):
         self._curr_system_cpu, self._cpu_count = self._get_system_cpu_ns()
         system_memory = self._get_total_memory()
-        for container in container_dict.itervalues():
+        for container in container_dict.values():
             try:
                 container_dimensions = dimensions.copy()
                 container_id = container['Id']
@@ -222,7 +222,7 @@ class Docker(checks.AgentCheck):
 
     def _find_cgroup_filename_pattern(self, container_id):
         # We try with different cgroups so that it works even if only one is properly working
-        for mountpoint in self._mount_points.itervalues():
+        for mountpoint in self._mount_points.values():
             stat_file_path_lxc = os.path.join(mountpoint, "lxc")
             stat_file_path_docker = os.path.join(mountpoint, "docker")
             stat_file_path_coreos = os.path.join(mountpoint, "system.slice")

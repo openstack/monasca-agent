@@ -11,7 +11,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import urllib2
+from six.moves import urllib
 
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.collector.checks.utils import add_basic_auth
@@ -83,10 +83,10 @@ class Lighttpd(AgentCheck):
 
         dimensions = self._set_dimensions(None, instance)
         self.log.debug("Connecting to %s" % url)
-        req = urllib2.Request(url, None, headers(self.agent_config))
+        req = urllib.request.Request(url, None, headers(self.agent_config))
         if 'user' in instance and 'password' in instance:
             add_basic_auth(req, instance['user'], instance['password'])
-        request = urllib2.urlopen(req)
+        request = urllib.request.urlopen(req)
         headers_resp = request.info().headers
         server_version = self._get_server_version(headers_resp)
         response = request.read()

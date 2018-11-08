@@ -13,8 +13,8 @@
 
 import json
 import re
-import urllib2
-import urlparse
+
+from six.moves import urllib
 
 import monasca_agent.collector.checks as checks
 
@@ -161,11 +161,11 @@ class RabbitMQ(checks.AgentCheck):
                         "{0} / {0}_regexes parameter must be a list".format(object_type))
 
         # setup urllib2 for Basic Auth
-        auth_handler = urllib2.HTTPBasicAuthHandler()
+        auth_handler = urllib.request.HTTPBasicAuthHandler()
         auth_handler.add_password(
             realm='RabbitMQ Management', uri=base_url, user=username, passwd=password)
-        opener = urllib2.build_opener(auth_handler)
-        urllib2.install_opener(opener)
+        opener = urllib.request.build_opener(auth_handler)
+        urllib.request.install_opener(opener)
 
         return base_url, max_detailed, specified
 
@@ -191,8 +191,8 @@ class RabbitMQ(checks.AgentCheck):
     @staticmethod
     def _get_data(url):
         try:
-            data = json.loads(urllib2.urlopen(url).read())
-        except urllib2.URLError as e:
+            data = json.loads(urllib.request.urlopen(url).read())
+        except urllib.error.URLError as e:
             raise Exception('Cannot open RabbitMQ API url: %s %s' % (url, str(e)))
         except ValueError as e:
             raise Exception('Cannot parse JSON response from API url: %s %s' % (url, str(e)))
@@ -207,7 +207,7 @@ class RabbitMQ(checks.AgentCheck):
         filters: explicit or regexes filters of specified queues or nodes
                 (specified in the yaml file)
         """
-        data = self._get_data(urlparse.urljoin(base_url, object_type))
+        data = self._get_data(urllib.parse.urljoin(base_url, object_type))
         # Make a copy of this list as we will remove items from it at each iteration
         explicit_filters = list(filters['explicit'])
         regex_filters = filters['regexes']
@@ -291,7 +291,7 @@ class RabbitMQ(checks.AgentCheck):
         dimensions_list = DIMENSIONS_MAP[object_type].copy()
         dimensions = self._set_dimensions({'component': 'rabbitmq', 'service': 'rabbitmq'},
                                           instance)
-        for d in dimensions_list.iterkeys():
+        for d in dimensions_list:
             dim = data.get(d, None)
             if dim not in [None, ""]:
                 dimensions[dimensions_list[d]] = dim

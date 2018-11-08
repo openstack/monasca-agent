@@ -63,7 +63,7 @@ class Ceph(checks.AgentCheck):
             return
         ceph_df = self._ceph_cmd('df detail', 'json')
         metrics = self._get_usage_metrics(ceph_df)
-        for metric, value in metrics.iteritems():
+        for metric, value in metrics.items():
             self.gauge(metric, value, dimensions=self.dimensions)
 
     def _collect_stats_metrics(self):
@@ -72,7 +72,7 @@ class Ceph(checks.AgentCheck):
         ceph_status = self._ceph_cmd('status', 'json')
         ceph_status_plain = self._ceph_cmd('status')
         metrics = self._get_stats_metrics(ceph_status, ceph_status_plain)
-        for metric, value in metrics.iteritems():
+        for metric, value in metrics.items():
             self.gauge(metric, value, dimensions=self.dimensions)
 
     def _collect_mon_metrics(self):
@@ -80,10 +80,10 @@ class Ceph(checks.AgentCheck):
             return
         ceph_status = self._ceph_cmd('status', 'json')
         mon_metrics_dict = self._get_mon_metrics(ceph_status)
-        for monitor, metrics in mon_metrics_dict.iteritems():
+        for monitor, metrics in mon_metrics_dict.items():
             mon_dimensions = self.dimensions.copy()
             mon_dimensions['monitor'] = monitor
-            for metric, value in metrics.iteritems():
+            for metric, value in metrics.items():
                 self.gauge(metric, value, dimensions=mon_dimensions)
 
     def _collect_osd_metrics(self):
@@ -95,14 +95,14 @@ class Ceph(checks.AgentCheck):
         osd_metrics_dict = self._get_osd_metrics(ceph_osd_df,
                                                  ceph_osd_perf,
                                                  ceph_osd_dump)
-        for osd, metrics in osd_metrics_dict.iteritems():
+        for osd, metrics in osd_metrics_dict.items():
             osd_dimensions = self.dimensions.copy()
             osd_dimensions['osd'] = osd
-            for metric, value in metrics.iteritems():
+            for metric, value in metrics.items():
                 self.gauge(metric, value, dimensions=osd_dimensions)
 
         osd_summary_metrics = self._get_osd_summary_metrics(ceph_osd_df)
-        for metric, value in osd_summary_metrics.iteritems():
+        for metric, value in osd_summary_metrics.items():
             self.gauge(metric, value, dimensions=self.dimensions)
 
     def _collect_pool_metrics(self):
@@ -110,20 +110,20 @@ class Ceph(checks.AgentCheck):
             return
         ceph_df = self._ceph_cmd('df detail', 'json')
         pool_metrics_dict = self._get_pool_metrics(ceph_df)
-        for pool, metrics in pool_metrics_dict.iteritems():
+        for pool, metrics in pool_metrics_dict.items():
             pool_dimensions = self.dimensions.copy()
             pool_dimensions['pool'] = pool
-            for metric, value in metrics.iteritems():
+            for metric, value in metrics.items():
                 self.gauge(metric, value, dimensions=pool_dimensions)
         self.gauge('ceph.pools.count', len(pool_metrics_dict.keys()),
                    dimensions=self.dimensions)
 
         ceph_osd_pool_stats = self._ceph_cmd('osd pool stats', 'json')
         pool_stats_dict = self._get_pool_stats_metrics(ceph_osd_pool_stats)
-        for pool, metrics in pool_stats_dict.iteritems():
+        for pool, metrics in pool_stats_dict.items():
             pool_dimensions = self.dimensions.copy()
             pool_dimensions['pool'] = pool
-            for metric, value in metrics.iteritems():
+            for metric, value in metrics.items():
                 self.gauge(metric, value, dimensions=pool_dimensions)
 
     def _ceph_cmd(self, args, format='plain'):
@@ -526,14 +526,14 @@ class Ceph(checks.AgentCheck):
         pool_metrics = {}
         for pool in ceph_osd_pool_stats:
             pool_name = pool['pool_name']
-            for metric, value in pool['client_io_rate'].iteritems():
+            for metric, value in pool['client_io_rate'].items():
                 if pool_name in pool_metrics:
                     pool_metrics[pool_name].update({
                         'ceph.pool.client.' + metric: value})
                 else:
                     pool_metrics[pool_name] = {
                         'ceph.pool.client.' + metric: value}
-            for metric, value in pool['recovery_rate'].iteritems():
+            for metric, value in pool['recovery_rate'].items():
                 if pool_name in pool_metrics:
                     pool_metrics[pool_name].update({
                         'ceph.pool.recovery.' + metric: value})

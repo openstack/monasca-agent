@@ -13,7 +13,6 @@
 import unittest
 import subprocess
 import time
-import urllib2
 import tempfile
 import os
 import logging
@@ -21,6 +20,9 @@ import logging
 from tests.common import load_check, kill_subprocess
 from nose.plugins.attrib import attr
 from nose.plugins.skip import SkipTest
+
+from six.moves import urllib
+
 
 logging.basicConfig()
 
@@ -36,14 +38,14 @@ class HaproxyTestCase(unittest.TestCase):
         while True:
             try:
                 STATS_URL = ";csv;norefresh"
-                passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+                passman = urllib.request.HTTPPasswordMgrWithDefaultRealm()
                 passman.add_password(None, url, "datadog", "isdevops")
-                authhandler = urllib2.HTTPBasicAuthHandler(passman)
-                opener = urllib2.build_opener(authhandler)
-                urllib2.install_opener(opener)
+                authhandler = urllib.request.HTTPBasicAuthHandler(passman)
+                opener = urllib.request.build_opener(authhandler)
+                urllib.request.install_opener(opener)
                 url = "%s%s" % (url, STATS_URL)
-                req = urllib2.Request(url)
-                request = urllib2.urlopen(req)
+                req = urllib.request.Request(url)
+                request = urllib.request.urlopen(req)
                 break
             except Exception:
                 time.sleep(0.5)

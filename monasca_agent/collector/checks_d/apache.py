@@ -15,8 +15,8 @@
 
 import logging
 import socket
-import urllib2
-import urlparse
+
+from six.moves import urllib
 
 # project
 import monasca_agent.collector.checks as checks
@@ -52,7 +52,7 @@ class Apache(checks.AgentCheck):
         if not self.url:
             raise Exception("Missing 'apache_status_url' in Apache config")
 
-        req = urllib2.Request(self.url, None, util.headers(self.agent_config))
+        req = urllib.request.Request(self.url, None, util.headers(self.agent_config))
         apache_user = instance.get('apache_user', None)
         apache_password = instance.get('apache_password', None)
         if apache_user and apache_password:
@@ -61,7 +61,7 @@ class Apache(checks.AgentCheck):
             log.debug("Not using authentication for Apache Web Server")
 
         # Submit a service check for status page availability.
-        parsed_url = urlparse.urlparse(self.url)
+        parsed_url = urllib.parse.urlparse(self.url)
         apache_host = parsed_url.hostname
         apache_port = str(parsed_url.port or 80)
         service_check_name = 'apache.status'
@@ -78,7 +78,7 @@ class Apache(checks.AgentCheck):
                                           instance)
 
         try:
-            request = urllib2.urlopen(req)
+            request = urllib.request.urlopen(req)
         except Exception as e:
             self.log.info(
                 "%s is DOWN, error: %s. Connection failed." % (service_check_name, str(e)))

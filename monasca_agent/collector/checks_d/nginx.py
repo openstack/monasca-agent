@@ -12,7 +12,8 @@
 # under the License.
 
 import re
-import urllib2
+
+from six.moves import urllib
 
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.collector.checks.utils import add_basic_auth
@@ -46,10 +47,10 @@ class Nginx(AgentCheck):
 
     def _get_data(self, instance):
         url = instance.get('nginx_status_url')
-        req = urllib2.Request(url, None, headers(self.agent_config))
+        req = urllib.request.Request(url, None, headers(self.agent_config))
         if 'user' in instance and 'password' in instance:
             add_basic_auth(req, instance['user'], instance['password'])
-        request = urllib2.urlopen(req)
+        request = urllib.request.urlopen(req)
         return request.read()
 
     def _get_metrics(self, response, dimensions):

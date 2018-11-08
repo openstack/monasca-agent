@@ -15,8 +15,8 @@ import json
 import socket
 import subprocess
 import sys
-import urllib2
-import urlparse
+
+from six.moves import urllib
 
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.collector.checks.utils import add_basic_auth
@@ -186,7 +186,7 @@ class ElasticSearch(AgentCheck):
 
         # Support URLs that have a path in them from the config, for
         # backwards-compatibility.
-        parsed = urlparse.urlparse(config_url)
+        parsed = urllib.parse.urlparse(config_url)
         if parsed[2] != "":
             config_url = "%s://%s" % (parsed[0], parsed[1])
 
@@ -198,12 +198,12 @@ class ElasticSearch(AgentCheck):
         self._define_params(version)
 
         # Load stats data.
-        url = urlparse.urljoin(config_url, self.STATS_URL)
+        url = urllib.parse.urljoin(config_url, self.STATS_URL)
         stats_data = self._get_data(url, auth)
         self._process_stats_data(config_url, stats_data, auth, dimensions=dimensions)
 
         # Load the health data.
-        url = urlparse.urljoin(config_url, self.HEALTH_URL)
+        url = urllib.parse.urljoin(config_url, self.HEALTH_URL)
         health_data = self._get_data(url, auth)
         self._process_health_data(config_url, health_data, dimensions=dimensions)
 
@@ -282,10 +282,10 @@ class ElasticSearch(AgentCheck):
 
         `auth` is a tuple of (username, password) or None
         """
-        req = urllib2.Request(url, None, headers(self.agent_config))
+        req = urllib.request.Request(url, None, headers(self.agent_config))
         if auth:
             add_basic_auth(req, *auth)
-        request = urllib2.urlopen(req)
+        request = urllib.request.urlopen(req)
         response = request.read()
         return json.loads(response)
 
@@ -318,7 +318,7 @@ class ElasticSearch(AgentCheck):
                 # Fetch interface address from ifconfig or ip addr and check
                 # against the primary IP from ES
                 try:
-                    nodes_url = urlparse.urljoin(config_url, self.NODES_URL)
+                    nodes_url = urllib.parse.urljoin(config_url, self.NODES_URL)
                     primary_addr = self._get_primary_addr(nodes_url, node, auth)
                 except NodeNotFound:
                     # Skip any nodes that aren't found
@@ -334,11 +334,11 @@ class ElasticSearch(AgentCheck):
 
         Used in ES < 0.19
         """
-        req = urllib2.Request(url, None, headers(self.agent_config))
+        req = urllib.request.Request(url, None, headers(self.agent_config))
         # Load basic authentication configuration, if available.
         if auth:
             add_basic_auth(req, *auth)
-        request = urllib2.urlopen(req)
+        request = urllib.request.urlopen(req)
         response = request.read()
         data = json.loads(response)
 

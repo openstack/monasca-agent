@@ -11,7 +11,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import ConfigParser
 import contextlib
 import logging
 import os
@@ -23,6 +22,7 @@ from oslo_config import cfg
 
 from mock import patch
 from mock.mock import MagicMock
+from six.moves import configparser
 
 from monasca_setup.detection import utils
 from monasca_setup.detection.plugins.ovs import Ovs
@@ -80,7 +80,7 @@ class TestOvs(unittest.TestCase):
         ovs_obj.conf = MagicMock()
         ovs_obj.conf.default_config_files = ovs_obj.neutron_conf
         ovs_obj.conf.default_config_dirs = os.path.abspath(os.path.join(ovs_obj.neutron_conf, os.pardir))
-        with patch.object(ConfigParser, 'SafeConfigParser') as mock_config_parser:
+        with patch.object(configparser, 'SafeConfigParser') as mock_config_parser:
             config_parser_obj = mock_config_parser.return_value
             with contextlib.nested(
                     patch.object(cfg, 'CONF'),

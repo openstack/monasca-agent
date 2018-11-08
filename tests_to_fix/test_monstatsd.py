@@ -15,6 +15,7 @@ import time
 import unittest
 
 import nose.tools as nt
+from six.moves import range
 
 from monasca_agent.common.aggregator import MetricsAggregator
 
@@ -255,7 +256,7 @@ class TestUnitMonascaStatsd(unittest.TestCase):
         percentiles = range(100)
         random.shuffle(percentiles)  # in place
         for i in percentiles:
-            for j in xrange(20):
+            for j in range(20):
                 for type_ in ['h', 'ms']:
                     m = 'my.p:%s|%s' % (i, type_)
                     stats.submit_packets(m)
@@ -362,7 +363,7 @@ class TestUnitMonascaStatsd(unittest.TestCase):
         cnt = 100000
         for run in [1, 2]:
             stats = MetricsAggregator('myhost')
-            for i in xrange(cnt):
+            for i in range(cnt):
                 if run == 2:
                     stats.submit_packets('test.counter:1|c|@0.5')
                     stats.submit_packets('test.hist:1|ms|@0.5')
