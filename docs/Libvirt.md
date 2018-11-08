@@ -431,8 +431,8 @@ stats period in order to enable them.
 `mem_stats_period_seconds=10` into `/etc/nova/nova.conf` file. Restart
 nova-compute service: `sudo systemctl restart openstack-nova-compute`
 * Make sure your image includes the suitable balloon driver, particularly
-for Windows guests, most modern Linuxes have it build in. For `cirros`
-distribution, it's available from version 0.4.0.
+for Windows guests, most modern Linux distributions have it build in.
+For `cirros` it's available from version 0.4.0.
 
 #### Untunable Metrics List
 Please see table below for metrics in libvirt.
