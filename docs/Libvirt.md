@@ -34,7 +34,7 @@ The Libvirt plugin provides metrics for virtual machines when run on the hypervi
 ## Installation
 Install `libvirt` plugin system dependencies
 ```
-apt install libvirt-dev
+apt install libvirt-dev pkg-config
 ```
 
 Install `libvirt` plugin Python dependencies
