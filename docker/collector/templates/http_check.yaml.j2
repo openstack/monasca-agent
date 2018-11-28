@@ -1,0 +1,46 @@
+init_config: null
+instances:
+{% if MONASCA_MONITORING %}
+- name: keystone
+  dimensions:
+    service: keystone
+  timeout: 3
+  url: http://keystone:5000
+- name: mysql
+  dimensions:
+    service: mysql
+  timeout: 3
+  url: http://mysql:3306
+- name: cadvisor
+  dimensions:
+    service: cadvisor
+  timeout: 3
+  url: http://cadvisor:8080/healthz
+- name: influxdb
+  dimensions:
+    service: influxdb
+  timeout: 3
+  url: http://influxdb:8086/ping
+- name: cadvisor
+  dimensions:
+    service: cadvisor
+  timeout: 3
+  url: http://cadvisor:8080/healthz
+{% endif %}
+{% if MONASCA_LOG_MONITORING %}
+- name: log-api
+  dimensions:
+    service: log-api
+  timeout: 3
+  url: http://log-api:5607/healthcheck
+- name: elasticsearch
+  dimensions:
+    service: elasticsearch
+  timeout: 3
+  url: http://elasticsearch:9200/_cat/health
+- name: kibana
+  dimensions:
+    service: kibana
+  timeout: 3
+  url: http://kibana:5601/status
+{% endif %}
