@@ -108,12 +108,22 @@ All parameters require a '--' before the parameter such as '--verbose'. Run `mon
 | skip_detection_plugins | Skip provided space separated list of detection plugins. | system |
 | overwrite | This is an optional parameter to overwrite the plugin configuration.  Use this if you don't want to keep the original configuration.  If this parameter is not specified, the configuration will be appended to the existing configuration, possibly creating duplicate checks.  **NOTE:** The agent config file, agent.yaml, will always be overwritten, even if this parameter is not specified. | |
 | detection_args | Some detection plugins can be passed arguments. This is a string that will be passed to the detection plugins. | "hostname=ping.me" |
-| detection_args_json | A JSON string can be passed to the detection plugin. | '{"process_config":{"process_names":["monasca-api","monasca-notification"],"dimensions":{"service":"monitoring"}}}' |
+| detection_args_json | A JSON string can be passed to the detection plugin. | (See example below) |
 | max_measurement_buffer_size | Integer value for the maximum number of measurements to buffer locally while unable to connect to the monasca-api. If the queue exceeds this value, measurements will be dropped in batches. A value of '-1' indicates no limit | 100000 |
 | backlog_send_rate | Integer value of how many batches of buffered measurements to send each time the forwarder flushes data | 1000 |
 | max_batch_size | Maximum batch size of measurements to write to monasca-api, 0 is no limit | 0 |
 | monasca_statsd_port | Integer value for statsd daemon port number | 8125 |
 | monasca_statsd_interval | Integer value for the statsd metric aggregation interval (seconds) | 20 |
+| remove_config | Flag to remove the configuration that exactly matches the other given arguments. [See below](#removing-monasca-agent-monitoring) | |
+| remove_matching_args | Flag to search for and remove all configurations that match the given configuration items.   WARNING: This option is **not** compatible with --detection_args_json. [See below](#removing-monasca-agent-monitoring) | |
+
+
+An example of a JSON value which could be used for `--detection_args_json` is:
+
+`'{"process_config":{"process_names":["monasca-api","monasca-notification"],"dimensions":{"service":"monitoring"}}}'`
+
+This example JSON specifies the *monasca-api* and *monasca-notification* processes with the dimension *service:monitoring*.
+
 
 #### A note around using monasca-agent with different versions of Keystone
 
@@ -282,5 +292,28 @@ The collector is optimized for collecting as many metrics on schedule as possibl
 If there is some problem with multiple plugins that end up blocking the entire thread pool, the collector will exit so that it can be restarted by the monasca-agent systemd target. The parameter pool_full_max_retries controls when this happens. If pool_full_max_retries consecutive collection cycles have ended with the Thread Pool completely full, the collector will exit.
 
 Some of the plugins have their own thread pools to handle asynchronous checks. The collector thread pool is separate and has no special interaction with those thread pools.
+
+# Removing Monasca Agent monitoring
+
+There are two flags available in `monasca-setup` for triggering the methods to remove
+monitoring when it is no longer needed.
+
+The `--remove_config` flag is used as an opposite operation to creating monitoring configuration.
+The same set of parameters must be provided as were used to create a configuration.
+If the parameters don't match exactly, no configuration is removed.
+
+The `--remove_matching_args` flag triggers a search for and removal of all configurations that match the given
+configuration items. This may be useful when a node has been removed and any monitoring that references that node
+needs to be removed.  However, it should be used with caution as the search is powerful and if not specified correctly
+could match broadly against other monitoring configuration that should not be removed.
+
+**WARNING:** `--remove_matching_args` does not support JSON formatted detection arguments. In other words, this
+option is **not** compatible with `--detection_args_json.`
+
+Also see the [Agent Internals](DeveloperDocs/agent_internals.md) Developer Docs.
+
+
 # License
 (C) Copyright 2015-2016, 2018 Hewlett Packard Enterprise Development LP
+
+(C) Copyright 2020 SUSE LLC

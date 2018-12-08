@@ -13,7 +13,7 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Modify_Config
-Modify_config is a function in [monasca_setup/main.py](monasca_setup/main.py).
+`modify_config` is a function in [monasca_setup/main.py](monasca_setup/main.py).
 It compares existing and detected configurations for each check plugin and
 writes out the plugin configurations if there are changes.
 
@@ -137,6 +137,27 @@ output_config from modify_config:
 }
 ```
 
+# Remove Config
+
+There are two methods for removing configurations.
+
+The first is `remove_config` which will remove a configuration exactly matching the parameters.
+
+The second is `remove_config_for_matching_args` which will search for any configuration that matches the given
+arguments but allows for some variation. This is useful in the use case where a compute node has been removed
+and all configuration related to that host should be removed, but all the parameters in configuration used may
+not be known (like target_hostname for host_alive checks).
+
+WARNING: JSON support for detection arguments has not been added to `--remove_matching_args`.
+
+Example call to monasca-setup, to remove ping checks of a compute host in host_alive.yaml:
+```bash
+monasca-setup --user monasca-agent \
+--agent_service_name openstack-monasca-agent --remove-matching-args \
+-d HostAlive --detection_args "hostname=deletehost-localcloud-mgmt type=ping dimensions=service:compute"
+```
+REMINDER: Multiple dimensions can be in the form `dimensions=service:compute,tag:east`
+
 # Connector
 ## Kubernetes Connector
 Kubernetes Connector is a class within [monasca-collector utils](monasca_agent/collector/checks/utils.py)
@@ -148,5 +169,6 @@ under is mounted to the container file system. This class processes both and all
 
 # License
 (C) Copyright 2016,2017 Hewlett Packard Enterprise Development LP
+(C) Copyright 2019,2020 SUSE LLC
 
 

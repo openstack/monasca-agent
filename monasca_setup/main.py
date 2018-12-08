@@ -95,7 +95,10 @@ def main(argv=None):
     plugin_names = [p.__name__ for p in plugins]
 
     # Remove entries for each plugin from the various plugin config files.
-    if args.remove:
+    if args.remove_matching_args:
+        LOG.debug("Calling remove configuration for matching arguments.")
+        changes = remove_config_for_matching_args(args, plugin_names)
+    elif args.remove:
         changes = remove_config(args, plugin_names)
     else:
         # Run detection for all the plugins, halting on any failures if plugins
@@ -385,6 +388,13 @@ def parse_arguments(parser):
         action="store_true",
         default=False)
     parser.add_argument(
+        '--remove_matching_args',
+        help="Remove any configuration that matches all of the supplied arguments."
+             " Useful when removing a compute node but all the target_hostnames"
+             " are not known.  Implies -r.",
+        action="store_true",
+        default=False)
+    parser.add_argument(
         '--skip_enable',
         help="By default the service is enabled, " +
         "which requires the script run as root. Set this to skip that step.",
@@ -451,7 +461,9 @@ def plugin_detection(
     :param plugins: A list of detection plugin classes
     :param template_dir: Location of plugin configuration templates
     :param detection_args: Arguments passed to each detection plugin
+    :param detection_args_json: Alternate json format for detection arguments, use one or the other
     :param skip_failed: When False any detection failure causes the run to halt and return None
+    :param remove: When True will not log a message indicating the detected name is configuring
     :return: An agent_config instance representing the total configuration from all detection
              plugins run.
     """
@@ -488,17 +500,21 @@ def remove_config(args, plugin_names):
        Note there is no concept of overwrite for removal.
     :param args: specified arguments
     :param plugin_names: A list of the plugin names to remove from the config
-    :return: True if changes, false otherwise
+    :return: True if changes, False otherwise
     """
     changes = False
-    existing_config_files = glob(os.path.join(args.config_dir, 'conf.d', '*.yaml'))
+    existing_config_files = _get_config_yaml_files(args.config_dir)
+    if existing_config_files == []:
+        LOG.warning("Found no existing configuration files, no changes will be made!")
     detected_plugins = utils.discover_plugins(CUSTOM_PLUGIN_PATH)
     plugins = utils.select_plugins(args.detection_plugins, detected_plugins)
+    LOG.debug("Plugins selected: %s", plugins)
 
-    if (args.detection_args or args.detection_args_json):
+    if args.detection_args or args.detection_args_json:
         detected_config = plugin_detection(
             plugins, args.template_dir, args.detection_args, args.detection_args_json,
             skip_failed=(args.detection_plugins is None), remove=True)
+    LOG.debug("Detected configuration: %s", detected_config)
 
     for file_path in existing_config_files:
         deletes = False
@@ -507,8 +523,10 @@ def remove_config(args, plugin_names):
         # To avoid odd issues from iterating over a list you delete from, build a new instead
         new_instances = []
         if args.detection_args is None:
+            # JSON version of detection_args
             for inst in config['instances']:
                 if 'built_by' in inst and inst['built_by'] in plugin_names:
+                    LOG.debug("Removing %s", inst)
                     changes = True
                     deletes = True
                     continue
@@ -518,13 +536,95 @@ def remove_config(args, plugin_names):
             for detected_key in detected_config.keys():
                 for inst in detected_config[detected_key]['instances']:
                     if inst in config['instances']:
+                        LOG.debug("Removing %s", inst)
                         changes = True
                         deletes = True
                         config['instances'].remove(inst)
+        # TODO(joadavis) match dry-run functionality like in modify_config
         if deletes:
             agent_config.delete_from_config(args, config, file_path,
                                             plugin_name)
     return changes
+
+
+def remove_config_for_matching_args(args, plugin_names):
+    """Parse all configuration removing any configuration built by plugins in plugin_names
+       Will use the generated config fields to match against the stored configs
+       Intended for use when removing all config for a deleted compute host.  May delete
+       more than intended in other uses, so be cautious.
+       Note there is no concept of overwrite for removal.
+    :param args: specified arguments. detection_args or detection_args_json are Required.
+    :param plugin_names: A list of the plugin names to remove from the config
+    :return: True if changes, False otherwise
+    """
+    changes = False
+    existing_config_files = _get_config_yaml_files(args.config_dir)
+    if existing_config_files == []:
+        LOG.warning("Found no existing configuration files, no changes will be made!")
+    detected_plugins = utils.discover_plugins(CUSTOM_PLUGIN_PATH)
+    plugins = utils.select_plugins(args.detection_plugins, detected_plugins)
+    LOG.debug("Plugins selected: %s", plugins)
+
+    if args.detection_args or args.detection_args_json:
+        detected_config = plugin_detection(
+            plugins, args.template_dir, args.detection_args, args.detection_args_json,
+            skip_failed=(args.detection_plugins is None), remove=True)
+    else:
+        # this method requires detection_args
+        LOG.warning("Removing a configuration for matching arguments requires"
+                    " arguments. No changes to configuration will be made!")
+        return changes
+    LOG.debug("Detected configuration: %s", detected_config)
+
+    for file_path in existing_config_files:
+        deletes = False
+        plugin_name = os.path.splitext(os.path.basename(file_path))[0]
+        config = agent_config.read_plugin_config_from_disk(args.config_dir, plugin_name)
+        # To avoid odd issues from iterating over a list you delete from, build a new instead
+        new_instances = []
+        if args.detection_args is None:
+            # using detection_args_json
+            LOG.error("Only key-value argument format is currently supported for removing "
+                      "matching configuration. JSON format is not yet supported. "
+                      "No changes to configuration will be made!")
+            return False
+        else:
+            # here is where it will differ from remove_config()
+            # detected_config = generated based on args, config = read from disk
+            # for each field in the detected_config instance, check it matches the one on disk
+            # note that the one on disk is allowed to have more fields
+            for exist_inst in config['instances']:
+                for detected_key in detected_config.keys():
+                    for detected_inst in detected_config[detected_key]['instances']:
+                        if len(detected_inst.keys()) < 1:
+                            new_instances.append(exist_inst)
+                            continue
+                        needs_delete = True
+                        for detect_inst_key in detected_inst.keys():
+                            if detect_inst_key in exist_inst.keys():
+                                if detected_inst[detect_inst_key] != exist_inst[detect_inst_key]:
+                                    needs_delete = False
+                            else:
+                                # not a match
+                                needs_delete = False
+                                continue
+                        if needs_delete:
+                            LOG.debug("Removing configuration %s", exist_inst)
+                            changes = True
+                            deletes = True
+                            continue
+                        new_instances.append(exist_inst)
+            config['instances'] = new_instances
+        # TODO(joadavis) match dry-run functionality like in modify_config
+        if deletes:
+            agent_config.delete_from_config(args, config, file_path,
+                                            plugin_name)
+    return changes
+
+
+# helper function to make mock testing easier
+def _get_config_yaml_files(config_dir):
+    return glob(os.path.join(config_dir, 'conf.d', '*.yaml'))
 
 
 if __name__ == "__main__":
