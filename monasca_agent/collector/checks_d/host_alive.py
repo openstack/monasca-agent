@@ -63,7 +63,7 @@ class HostAlive(services_checks.ServicesCheck):
             error_message = 'Unable to open socket to host {0}'.format(host)
             self.log.warn(error_message)
             return False, error_message
-        if banner.startswith('SSH'):
+        if banner.startswith(b'SSH'):
             return True, None
         else:
             error_message = 'Unexpected response "{0}" from host {1}'.format(banner, host)

@@ -23,8 +23,8 @@ import sys
 import time
 
 from httplib2 import Http
-from httplib2 import httplib
 from httplib2 import HttpLib2Error
+from six.moves import http_client
 
 import monasca_agent.collector.checks.services_checks as services_checks
 import monasca_agent.common.config as cfg
@@ -130,7 +130,7 @@ class HTTPCheck(services_checks.ServicesCheck):
                     self.log.warn(warn_string)
                 return False, error_msg
 
-            except httplib.ResponseNotReady as e:
+            except http_client.ResponseNotReady as e:
                 length = int((time.time() - start) * 1000)
                 error_msg = 'error: {0}. Network is not routable after {1} ' \
                             'ms'.format(repr(e), length)

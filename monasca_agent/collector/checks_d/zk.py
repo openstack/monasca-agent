@@ -39,6 +39,7 @@ import re
 import socket
 import struct
 
+from oslo_utils import encodeutils
 from six import StringIO
 
 from monasca_agent.collector.checks import AgentCheck
@@ -63,10 +64,10 @@ class Zookeeper(AgentCheck):
             try:
                 # Connect to the zk client port and send the stat command
                 sock.connect((host, port))
-                sock.sendall('stat')
+                sock.sendall(b'stat')
 
                 # Read the response into a StringIO buffer
-                chunk = sock.recv(chunk_size)
+                chunk = encodeutils.safe_decode(sock.recv(chunk_size), 'utf-8')
                 buf.write(chunk)
                 num_reads = 1
                 max_reads = 10000
@@ -76,7 +77,7 @@ class Zookeeper(AgentCheck):
                         raise Exception(
                             "Read %s bytes before exceeding max reads of %s. " %
                             (buf.tell(), max_reads))
-                    chunk = sock.recv(chunk_size)
+                    chunk = encodeutils.safe_decode(sock.recv(chunk_size), 'utf-8')
                     buf.write(chunk)
                     num_reads += 1
             except socket.timeout:
@@ -115,7 +116,7 @@ class Zookeeper(AgentCheck):
             raise Exception("Could not parse version from stat command output: %s" % start_line)
         else:
             version_tuple = match.groups()
-        has_connections_val = map(int, version_tuple) >= [3, 4, 4]
+        has_connections_val = list(map(int, version_tuple)) >= [3, 4, 4]
 
         # Clients:
         buf.readline()  # skip the Clients: header
