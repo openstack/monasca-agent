@@ -32,9 +32,15 @@ class HttpCheck(monasca_setup.detection.ArgsPlugin):
        monasca-setup -d HttpCheck --detection_args \
          "keystone_url=http://192.168.10.6/identity \
           keystone_project=proj \
+          keystone_project_domain=Default \
           keystone_user=usr \
+          keystone_user_domain=Default \
           keystone_password=pass \
           url=https://192.168.10.6"
+
+       NOTE: keystone_project_domain and keystone_user_domain are required
+       for Keystone V3. They are used to convey the project's domain name and
+       user's domain name respectively.
     """
 
     def _detect(self):
@@ -52,7 +58,9 @@ class HttpCheck(monasca_setup.detection.ArgsPlugin):
                                          'name', 'use_keystone', 'collect_response_time'])
         init_config = {'keystone_config': self._build_instance(['keystone_url',
                                                                 'keystone_project',
+                                                                'keystone_project_domain',
                                                                 'keystone_user',
+                                                                'keystone_user_domain',
                                                                 'keystone_password'])}
 
         # Normalize any boolean parameters
@@ -69,9 +77,15 @@ class HttpCheck(monasca_setup.detection.ArgsPlugin):
         if 'keystone_project' in init_config['keystone_config']:
             init_config['keystone_config']['project_name'] = init_config['keystone_config']\
                 .pop('keystone_project')
+        if 'keystone_project_domain' in init_config['keystone_config']:
+            init_config['keystone_config']['project_domain_name'] = \
+                init_config['keystone_config'].pop('keystone_project_domain')
         if 'keystone_user' in init_config['keystone_config']:
             init_config['keystone_config']['username'] = init_config['keystone_config']\
                 .pop('keystone_user')
+        if 'keystone_user_domain' in init_config['keystone_config']:
+            init_config['keystone_config']['user_domain_name'] = \
+                init_config['keystone_config'].pop('keystone_user_domain')
         if 'keystone_password' in init_config['keystone_config']:
             init_config['keystone_config']['password'] = init_config['keystone_config']\
                 .pop('keystone_password')
