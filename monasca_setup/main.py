@@ -469,8 +469,12 @@ def plugin_detection(
                 plugin_config.merge(new_config)
         elif not skip_failed:
             LOG.warning("Failed detection of plugin %s."
-                        "\n\tPossible causes: Service not found or missing"
-                        "arguments.", detect.name)
+                        "\n\tPossible causes: Service not found or missing arguments. "
+                        "\n\tFor services, the service is required to be running at "
+                        "detection time. For other plugins, check the args (paths, "
+                        "urls, etc)."
+                        "\n\tDetection may also fail if monasca-agent services "
+                        "(statsd, forwarder, collector) are not running.", detect.name)
             return None
 
     return plugin_config
