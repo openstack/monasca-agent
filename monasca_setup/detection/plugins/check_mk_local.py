@@ -26,7 +26,7 @@ check_mk_agent_paths = ['/usr/bin/check_mk_agent',
 
 
 class CheckMKLocal(monasca_setup.detection.Plugin):
-    """Identify existance of check_mk_agent by looking for the executable.
+    """Identify existence of check_mk_agent by looking for the executable.
        The check_mk_agent process itself does not need to be running in order
        for this plugin to work, the agent program itself can return local data.
     """
