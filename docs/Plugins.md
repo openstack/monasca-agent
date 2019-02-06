@@ -262,13 +262,13 @@ instances:
 ```
 
 #### init_config
-In the init_config section you can specify an arbitrary number of global name:value pairs that will be available on every run of the check in self.init_config.
-Here you can specify a collection frequency specific to the plugin by setting collect_period.
-The global frequency at which all plugins are run is specified by the variable "check_frequency" defined in https://github.com/openstack/monasca-agent/blob/master/docs/Agent.md.
-Under normal and default conditions when a plugin runs all the metrics are collected and sent. For example, if check_frequency=30, by default the plugin will be run every 30 seconds and the metrics will be sent.
-The variable "collect_period" allows each plugins collect period to be further adjusted to a value greater than the frequency at which the plugin is run specified by "check_frequency", such that when the collection run starts, the plugin might not be called. For example, if check_frequency=30 and collect_period=600, the plugin will be called and metrics sent every 600 seconds. This allows fewer metrics to be sent.
-The "collect_period" should be evenly divisible by the "check_frequency". For example, if you want the plugin to collect and send metrics every 600 seconds (10 minutes), and the global check_frequency=30, then the collect_period should be set to 600.
-If the "collect_period" is not evenly divisible by the "check_frequency" then the "collect_period" will get rounded up to the nearest multiple of the "check_frequency". For example, if the collect_period=45 and the global check_frequency=30, then the "collect_period" will get rounded up to 60 and the plugin will get called and send metrics every 60 seconds.
+In the `init_config` section you can specify an arbitrary number of global name:value pairs that will be available on every run of the check in `self.init_config`.
+Here you can specify a collection frequency specific to the plugin by setting `collect_period`.
+The global frequency at which all plugins are run is specified by the variable `check_frequency` defined in https://github.com/openstack/monasca-agent/blob/master/docs/Agent.md.
+Under normal and default conditions when a plugin runs all the metrics are collected and sent. For example, if `check_frequency=30`, by default the plugin will be run every 30 seconds and the metrics will be sent.
+The variable `collect_period` allows each plugins collect period to be further adjusted to a value greater than the frequency at which the plugin is run specified by `check_frequency`, such that when the collection run starts, the plugin might not be called. For example, if `check_frequency=30` and `collect_period=600`, the plugin will be called and metrics sent every 600 seconds. This allows fewer metrics to be sent.
+The `collect_period` should be evenly divisible by the `check_frequency`. For example, if you want the plugin to collect and send metrics every 600 seconds (10 minutes), and the global `check_frequency=30`, then the `collect_period` should be set to 600.
+If the `collect_period` is not evenly divisible by the `check_frequency` then the `collect_period` will get rounded up to the nearest multiple of the `check_frequency`. For example, if the `collect_period=45` and the global `check_frequency=30`, then the `collect_period` will get rounded up to 60 and the plugin will get called and send metrics every 60 seconds.
 
 #### instances
 The instances section is a list of instances that this check will be run against. Your actual check() method is run once per instance. The name:value pairs for each instance specify details about the instance that are necessary for the check.
