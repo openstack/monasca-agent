@@ -69,7 +69,7 @@ class Postfix(plugin.Plugin):
                                     '\n Refer to postfix plugin documentation '
                                     'for more details.'
                                     % (agent_user, _POSTFIX_DIRECTORY))
-                    log.error('%s\n%s' % (detailed_msg, self.ERROR_MSG))
+                    log.warning('%s\n%s' % (detailed_msg, self.ERROR_MSG))
 
     def build_config(self):
         """Build the config as a Plugins object and return.

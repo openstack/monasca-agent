@@ -28,7 +28,6 @@ _ZOOKEEPER_DEFAULT_PORT = 2181
 
 
 class Zookeeper(monasca_setup.detection.Plugin):
-
     """Detect Zookeeper daemons and setup configuration to monitor them.
 
     """
@@ -46,10 +45,10 @@ class Zookeeper(monasca_setup.detection.Plugin):
         if not self.available:
             err_str = 'Plugin for Zookeeper will not be configured.'
             if not process_found:
-                log.error('Zookeeper process has not been found: {0}'.format(err_str))
+                log.info('Zookeeper process has not been found: {0}'.format(err_str))
             elif not has_config_file:
-                log.error('Zookeeper plugin cannot find configuration '
-                          'file: {0}. {1}'.format(self._cfg_file, err_str))
+                log.warning('Zookeeper plugin cannot find configuration '
+                            'file: {0}. {1}'.format(self._cfg_file, err_str))
 
     def build_config(self):
         """Build the config as a Plugins object and return.
@@ -68,7 +67,7 @@ class Zookeeper(monasca_setup.detection.Plugin):
         log.info("\tEnabling the zookeeper plugin")
         config['zk'] = {
             'init_config': None, 'instances':
-            [{'name': host, 'host': host, 'port': port, 'timeout': 3}]
+                [{'name': host, 'host': host, 'port': port, 'timeout': 3}]
         }
 
         return config

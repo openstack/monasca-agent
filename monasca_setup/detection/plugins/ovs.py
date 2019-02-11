@@ -82,13 +82,13 @@ class Ovs(detection.Plugin):
 
         if not self.available:
             if not process_exist:
-                log.error('OVS daemon process [%s] does not exist.',
-                          Ovs.PROC_NAME)
+                log.info('OVS daemon process [%s] does not exist.',
+                         Ovs.PROC_NAME)
             elif not neutron_conf_exists:
-                log.error(('OVS daemon process exists but configuration '
-                           'file was not found. Path to file does not exist '
-                           'as a process parameter or was not '
-                           'passed via args.'))
+                log.warning(('OVS daemon process exists but configuration '
+                             'file was not found. Path to file does not exist '
+                             'as a process parameter or was not '
+                             'passed via args.'))
             elif not neutron_conf_valid:
                 log.error(('OVS daemon process exists, configuration file was '
                            'found but it looks like it does not contain '

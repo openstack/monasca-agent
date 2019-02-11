@@ -71,6 +71,7 @@ def _get_impl_lang(process):
 
 class MonAgent(monasca_setup.detection.Plugin):
     """Detect the Monsaca agent engine and setup some simple checks."""
+
     def _detect(self):
         """Run detection, set self.available True if the service is detected."""
         self.available = True
@@ -158,8 +159,8 @@ class MonAPI(monasca_setup.detection.Plugin):
             self.available = port_taken
             self._impl_helper = impl_helper
         else:
-            log.error('monasca-api process has not been found. %s'
-                      % self.PARTIAL_ERR_MSG)
+            log.warning('monasca-api process has not been found. %s'
+                        % self.PARTIAL_ERR_MSG)
 
     def build_config(self):
         """Build the config as a Plugins object and return."""
@@ -198,6 +199,7 @@ class MonAPI(monasca_setup.detection.Plugin):
 
 class MonNotification(monasca_setup.detection.Plugin):
     """Detect the Monsaca notification engine and setup some simple checks."""
+
     def _detect(self):
         """Run detection, set self.available True if the service is detected."""
         if find_process_cmdline('monasca-notification') is not None:
@@ -246,8 +248,8 @@ class MonPersister(monasca_setup.detection.Plugin):
             log.info('\tmonasca-persister implementation is %s', impl_lang)
 
         else:
-            log.error('monasca-persister process has not been found. %s'
-                      % self.PARTIAL_ERR_MSG)
+            log.info('monasca-persister process has not been found. %s'
+                     % self.PARTIAL_ERR_MSG)
 
     def build_config(self):
         """Build the config as a Plugins object and return."""
@@ -292,6 +294,7 @@ class MonPersister(monasca_setup.detection.Plugin):
 
 class MonThresh(monasca_setup.detection.Plugin):
     """Detect the running mon-thresh and monitor."""
+
     def _detect(self):
         """Run detection, set self.available True if the service is detected."""
         # The node will be running either nimbus or supervisor or both
@@ -511,30 +514,30 @@ class _MonPersisterJavaHelper(_DropwizardJavaHelper):
               "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo."
                       "definition-cache-miss-meter/count",
               "type": "rate"},
-                {"name": "monasca.persister.repository.vertica.VerticaMetricRepo."
-                         "definition-dimension-cache-hit-meter",
-                 "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo."
-                         "definition-dimension-cache-hit-meter/count",
-                 "type": "rate"},
-                {"name": "monasca.persister.repository.vertica.VerticaMetricRepo."
-                         "definition-dimension-cache-miss-meter",
-                 "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo."
-                         "definition-dimension-cache-miss-meter/count",
-                 "type": "rate"},
-                {"name": "monasca.persister.repository.vertica.VerticaMetricRepo."
-                         "dimension-cache-hit-meter",
-                 "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo."
-                         "dimension-cache-hit-meter/count",
-                 "type": "rate"},
-                {"name": "monasca.persister.repository.vertica.VerticaMetricRepo."
-                         "dimension-cache-miss-meter",
-                 "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo."
-                         "dimension-cache-miss-meter/count",
-                 "type": "rate"},
-                {"name": "monasca.persister.repository.vertica.VerticaMetricRepo.measurement-meter",
-                 "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo."
-                         "measurement-meter/count",
-                 "type": "rate"}])
+             {"name": "monasca.persister.repository.vertica.VerticaMetricRepo."
+                      "definition-dimension-cache-hit-meter",
+              "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo."
+                      "definition-dimension-cache-hit-meter/count",
+              "type": "rate"},
+             {"name": "monasca.persister.repository.vertica.VerticaMetricRepo."
+                      "definition-dimension-cache-miss-meter",
+              "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo."
+                      "definition-dimension-cache-miss-meter/count",
+              "type": "rate"},
+             {"name": "monasca.persister.repository.vertica.VerticaMetricRepo."
+                      "dimension-cache-hit-meter",
+              "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo."
+                      "dimension-cache-hit-meter/count",
+              "type": "rate"},
+             {"name": "monasca.persister.repository.vertica.VerticaMetricRepo."
+                      "dimension-cache-miss-meter",
+              "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo."
+                      "dimension-cache-miss-meter/count",
+              "type": "rate"},
+             {"name": "monasca.persister.repository.vertica.VerticaMetricRepo.measurement-meter",
+              "path": "meters/monasca.persister.repository.vertica.VerticaMetricRepo."
+                      "measurement-meter/count",
+              "type": "rate"}])
 
     def _monitor_endpoints(self, config, metrics):
         admin_connector = self._cfg['server']['adminConnectors'][0]

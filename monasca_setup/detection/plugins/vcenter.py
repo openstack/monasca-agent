@@ -20,7 +20,6 @@ import monasca_setup.agent_config
 from monasca_setup.detection import Plugin
 from monasca_setup.detection.utils import find_process_name
 
-
 log = logging.getLogger(__name__)
 
 
@@ -43,11 +42,11 @@ class VCenter(Plugin):
         self.available = process_exist and has_config_file_or_args
         if not self.available:
             if not process_exist:
-                log.error('Nova-compute process does not exist.')
+                log.info('Nova-compute process does not exist.')
             elif not has_config_file_or_args:
-                log.error(('Nova-compute process exists but '
-                           'the configuration file was not detected and no '
-                           'arguments were given.'))
+                log.warning(('Nova-compute process exists but '
+                             'the configuration file was not detected and no '
+                             'arguments were given.'))
 
     def get_nova_config_file(self):
         nova_conf = None

@@ -67,9 +67,9 @@ class InfluxDBRelay(detection.Plugin):
             elif not dependencies_installed:
                 err_chunks.append('\tinfluxdb-relay plugin requires "toml" '
                                   'to be installed')
-            LOG.error('Plugin for influxdb-relay will not be configured.\n'
-                      'Following issue have to be resolved: %s' %
-                      '\n'.join(err_chunks))
+            LOG.warning('Plugin for influxdb-relay will not be configured.\n'
+                        'Following issue have to be resolved: %s' %
+                        '\n'.join(err_chunks))
         else:
             self._config = self._load_config(config_file)
 

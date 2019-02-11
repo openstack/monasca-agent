@@ -70,14 +70,14 @@ class Kibana(detection.Plugin):
         if not self.available:
             err_str = 'Plugin for Kibana will not be configured.'
             if not process_found:
-                LOG.error('Kibana process has not been found. %s' % err_str)
+                LOG.info('Kibana process has not been found. %s' % err_str)
             elif not has_deps:
                 LOG.error('Kibana plugin dependencies are not satisfied. '
                           'Module "pyaml" not found. %s'
                           % err_str)
             elif not has_config_file:
-                LOG.error('Kibana plugin cannot find configuration file %s. %s'
-                          % (cfg_file, err_str))
+                LOG.warning('Kibana plugin cannot find configuration file %s. %s'
+                            % (cfg_file, err_str))
 
     def build_config(self):
         kibana_config = self._get_config_file()
