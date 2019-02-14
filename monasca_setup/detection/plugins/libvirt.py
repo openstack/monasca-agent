@@ -63,8 +63,10 @@ INT_ARGS = ['disk_collection_period', 'vnic_collection_period',
 
 _REQUIRED_OPTS = [
     {'opt': cfg.StrOpt('username'), 'group': 'keystone_authtoken'},
+    {'opt': cfg.StrOpt('user_domain_name'), 'group': 'keystone_authtoken'},
     {'opt': cfg.StrOpt('password'), 'group': 'keystone_authtoken'},
     {'opt': cfg.StrOpt('project_name'), 'group': 'keystone_authtoken'},
+    {'opt': cfg.StrOpt('project_domain_name'), 'group': 'keystone_authtoken'},
     {'opt': cfg.StrOpt('auth_url'), 'group': 'keystone_authtoken'}
 ]
 """Nova configuration opts required by this plugin"""
@@ -218,8 +220,10 @@ class Libvirt(plugin.Plugin):
             'vm_extended_disks_check_enable': False,
             'ping_check': False,
             'username': keystone_auth_section['username'],
+            'user_domain_name': keystone_auth_section['user_domain_name'],
             'password': keystone_auth_section['password'],
             'project_name': keystone_auth_section['project_name'],
+            'project_domain_name': keystone_auth_section['project_domain_name'],
             'auth_url': keystone_auth_section['auth_url']
         }
         return init_config
