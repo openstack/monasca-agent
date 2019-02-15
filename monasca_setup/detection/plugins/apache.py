@@ -35,7 +35,6 @@ CONFIG_ARG_KEYS = set(["url", "user", "password", "use_server_status_metrics"])
 
 
 class Apache(monasca_setup.detection.Plugin):
-
     """Detect Apache web server daemons and setup configuration to monitor apache.
 
         This plugin will by default setup process check metrics for the apache process,
@@ -70,11 +69,11 @@ class Apache(monasca_setup.detection.Plugin):
         self.available = process_exists and has_args_or_config_file
         if not self.available:
             if not process_exists:
-                log.error('Apache process does not exist.')
+                log.info('Apache process does not exist.')
             elif not has_args_or_config_file:
-                log.error(('Apache process exists but '
-                           'configuration file was not found and '
-                           'no arguments were given.'))
+                log.warning(('Apache process exists but '
+                             'configuration file was not found and '
+                             'no arguments were given.'))
 
     def _read_apache_config(self, config_location):
         # Read the apache config file to extract the needed variables.

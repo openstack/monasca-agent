@@ -169,8 +169,8 @@ class TestOvs(unittest.TestCase):
             self.assertTrue(self.ovs_obj.available)
             self.assertEqual(self.ovs_obj.neutron_conf, '/opt/stack/neutron.conf')
 
-    def test_detect_warning(self):
-        with patch.object(LOG, 'error') as mock_log_warn:
+    def test_detect_info(self):
+        with patch.object(LOG, 'info') as mock_log_warn:
             ps_util_get_proc.detect_warning = True
             self._detect(self.ovs_obj)
             self.assertFalse(self.ovs_obj.available)

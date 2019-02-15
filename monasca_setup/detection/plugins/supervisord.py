@@ -18,7 +18,6 @@ import os
 import monasca_setup.agent_config
 import monasca_setup.detection
 
-
 log = logging.getLogger(__name__)
 
 # Defaults
@@ -59,11 +58,11 @@ class Supervisord(monasca_setup.detection.Plugin):
         self.available = found_process is not None and has_args_or_conf_file
         if not self.available:
             if not found_process:
-                log.error('Supervisord process does not exist.')
+                log.info('Supervisord process does not exist.')
             elif not has_args_or_conf_file:
-                log.error(('Supervisord process exists but '
-                           'configuration file was not found and '
-                           'no arguments were given.'))
+                log.warning(('Supervisord process exists but '
+                             'configuration file was not found and '
+                             'no arguments were given.'))
 
     def _get_config(self):
         """Set the configuration to be used for connecting to supervisord

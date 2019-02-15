@@ -113,13 +113,13 @@ class KibanaDetectionTest(unittest.TestCase):
                 self.assertEqual(kibana_user, instance['username'])
 
     def test_no_detect_no_process(self):
-        with mock.patch.object(LOG, 'error') as mock_log_error:
+        with mock.patch.object(LOG, 'info') as mock_log_info:
             PSUtilGetProc.cmdLine = []
             self._detect(self.kibana_plugin)
             self.assertFalse(self.kibana_plugin.available)
 
-            self.assertEqual(mock_log_error.call_count, 1)
-            self.assertEqual(mock_log_error.call_args[0][0],
+            self.assertEqual(mock_log_info.call_count, 1)
+            self.assertEqual(mock_log_info.call_args[0][0],
                              'Kibana process has not been found. '
                              'Plugin for Kibana will not be configured.')
 
@@ -135,12 +135,12 @@ class KibanaDetectionTest(unittest.TestCase):
                              'Plugin for Kibana will not be configured.')
 
     def test_no_detect_no_default_config_file(self):
-        with mock.patch.object(LOG, 'error') as mock_log_error:
+        with mock.patch.object(LOG, 'warning') as mock_log_warning:
             self._detect(self.kibana_plugin, config_is_file=False)
             self.assertFalse(self.kibana_plugin.available)
 
-            self.assertEqual(mock_log_error.call_count, 1)
-            self.assertEqual(mock_log_error.call_args[0][0],
+            self.assertEqual(mock_log_warning.call_count, 1)
+            self.assertEqual(mock_log_warning.call_args[0][0],
                              'Kibana plugin cannot find configuration '
                              'file /opt/kibana/config/kibana.yml. '
                              'Plugin for Kibana will not be configured.')
@@ -148,16 +148,16 @@ class KibanaDetectionTest(unittest.TestCase):
     def test_no_detect_no_args_config_file(self):
         config_file = '/fake/config'
 
-        patch_log_error = mock.patch.object(LOG, 'error')
+        patch_log_warning = mock.patch.object(LOG, 'warning')
 
-        with patch_log_error as mock_log_error:
+        with patch_log_warning as mock_log_warning:
             self.kibana_plugin.args = {'kibana-config': config_file}
 
             self._detect(self.kibana_plugin, config_is_file=False)
             self.assertFalse(self.kibana_plugin.available)
 
-            self.assertEqual(mock_log_error.call_count, 1)
-            self.assertEqual(mock_log_error.call_args[0][0],
+            self.assertEqual(mock_log_warning.call_count, 1)
+            self.assertEqual(mock_log_warning.call_args[0][0],
                              'Kibana plugin cannot find configuration '
                              'file %s. '
                              'Plugin for Kibana will not be configured.'

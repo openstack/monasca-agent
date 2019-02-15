@@ -28,7 +28,6 @@ SOCKET = '/var/run/mysqld/mysqld.sock'
 
 
 class MySQL(monasca_setup.detection.Plugin):
-
     """Detect MySQL daemons and setup configuration to monitor them.
 
         This plugin needs user/password info for mysql setup.
@@ -58,11 +57,11 @@ class MySQL(monasca_setup.detection.Plugin):
                           has_dependencies)
         if not self.available:
             if not process_exist:
-                log.error('MySQL process does not exist.')
+                log.info('MySQL process does not exist.')
             elif not has_args_or_config_file:
-                log.error(('MySQL process exists but '
-                           'configuration file was not found and '
-                           'no arguments were given.'))
+                log.warning(('MySQL process exists but '
+                             'configuration file was not found and '
+                             'no arguments were given.'))
             elif not has_dependencies:
                 log.error(('MySQL process exists but required dependence '
                            'PyMySQL is not installed.'))
@@ -138,10 +137,10 @@ class MySQL(monasca_setup.detection.Plugin):
             log.info("\tConnection test success.")
             config['mysql'] = {
                 'init_config': None, 'instances':
-                [{'name': self.host, 'server': self.host, 'port': self.port,
-                  'user': self.user, 'pass': self.password,
-                  'sock': self.socket, 'ssl_ca': self.ssl_ca,
-                  'ssl_key': self.ssl_key, 'ssl_cert': self.ssl_cert}]}
+                    [{'name': self.host, 'server': self.host, 'port': self.port,
+                      'user': self.user, 'pass': self.password,
+                      'sock': self.socket, 'ssl_ca': self.ssl_ca,
+                      'ssl_key': self.ssl_key, 'ssl_cert': self.ssl_cert}]}
         except ImportError as e:
             exception_msg = ('The mysql dependency PyMySQL is not '
                              'installed. {}'.format(e))
