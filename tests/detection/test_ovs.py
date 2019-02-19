@@ -52,9 +52,10 @@ class TestOvs(unittest.TestCase):
         unittest.TestCase.setUp(self)
         with patch.object(Ovs, '_detect') as mock_detect:
             self.ovs_obj = Ovs('temp_dir')
-            self.has_option = [False, True]
+            self.has_option = [True, False, True, False, False, True]
             self.get_value = [MagicMock(), MagicMock(), MagicMock(),
-                              'http://10.10.10.10', 'region1']
+                              MagicMock(), MagicMock(), 'http://10.10.10.10',
+                              'region1']
             self.assertTrue(mock_detect.called)
 
     def _detect(self, ovs_obj, file_config_valid=True):
@@ -227,6 +228,8 @@ class TestOvs(unittest.TestCase):
             self.ovs_obj.args = {'username': 'admin',
                                  'password': 'password',
                                  'project_name': 'tenant',
+                                 'user_domain_name': 'default',
+                                 'project_domain_name': 'default',
                                  'auth_url': '10.10.10.20',
                                  'region_name': 'region0',
                                  'neutron_refresh': 13000,
@@ -234,15 +237,15 @@ class TestOvs(unittest.TestCase):
                                  'invalid_arg': 'inv-arg'}
             result = self._build_config_with_arg(self.ovs_obj)
             self.assertTrue(mock_log_warn.called)
-            self.assertEqual(mock_log_warn.call_count, 6)
+            self.assertEqual(mock_log_warn.call_count, 8)
             self.assertEqual(result['ovs']['init_config']['included_interface_re'],
                              'qg.*|vhu.*|sg.*')
 
     def test_build_config_if_auth_version(self):
         self.ovs_obj.neutron_conf = 'neutron-conf'
-        self.has_option = [True, True]
-        self.get_value = [MagicMock(), MagicMock(), MagicMock(),
-                          'http://10.10.10.10',
+        self.has_option = [True, False, True, False, True, True]
+        self.get_value = [MagicMock(), MagicMock(), MagicMock(), MagicMock(),
+                          MagicMock(), 'http://10.10.10.10',
                           'http://10.10.10.10', 'region1']
         result = self._build_config_without_args(self.ovs_obj)
         self.assertEqual(result['ovs']['init_config']['auth_url'],
@@ -250,9 +253,9 @@ class TestOvs(unittest.TestCase):
 
     def test_build_config_if_auth_url_has_version(self):
         self.ovs_obj.neutron_conf = 'neutron-conf'
-        self.has_option = [True, True]
-        self.get_value = [MagicMock(), MagicMock(), MagicMock(),
-                          'http://10.10.10.10/v1',
+        self.has_option = [True, False, True, False, True, True]
+        self.get_value = [MagicMock(), MagicMock(), MagicMock(), MagicMock(),
+                          MagicMock(), 'http://10.10.10.10/v1',
                           'http://10.10.10.10/v1', 'region1']
         result = self._build_config_without_args(self.ovs_obj)
         self.assertEqual(result['ovs']['init_config']['auth_url'],
@@ -260,9 +263,9 @@ class TestOvs(unittest.TestCase):
 
     def test_build_config_region_name_from_nova(self):
         self.ovs_obj.neutron_conf = 'neutron-conf'
-        self.has_option = [False, False]
-        self.get_value = [MagicMock(), MagicMock(), MagicMock(),
-                          'http://10.10.10.10', 'region2']
+        self.has_option = [True, False, True, False, False, False]
+        self.get_value = [MagicMock(), MagicMock(), MagicMock(), MagicMock(),
+                          MagicMock(), 'http://10.10.10.10', 'region2']
         result = self._build_config_without_args(self.ovs_obj)
         self.assertEqual(result['ovs']['init_config']['auth_url'],
                          'http://10.10.10.10')
