@@ -47,12 +47,15 @@ use_health_metrics = True
 publish_router_capacity = False
 # Acceptable arguments
 acceptable_args = ['username', 'password', 'project_name',
+                   'user_domain_name', 'user_domain_id',
+                   'project_domain_name', 'project_domain_id'
                    'auth_url', 'cache_dir', 'neutron_refresh', 'ovs_cmd',
                    'network_use_bits', 'check_router_ha', 'region_name',
                    'included_interface_re', 'conf_file_path', 'use_absolute_metrics',
                    'use_rate_metrics', 'use_health_metrics', 'publish_router_capacity']
 # Arguments which must be ignored if provided
-ignorable_args = ['username', 'password', 'project_name',
+ignorable_args = ['username', 'password', 'project_name', 'user_domain_name',
+                  'user_domain_id', 'project_domain_name', 'project_domain_id',
                   'auth_url', 'region_name', 'conf_file_path']
 
 
@@ -109,14 +112,29 @@ class Ovs(detection.Plugin):
                            'Run pip install monasca-agent[ovs] '
                            'to install all dependencies.'))
         else:
-            for_opts = [{'opt': cfg.StrOpt('region', default='RegionOne'), 'group': 'service_auth'},
+            for_opts = [{'opt': cfg.StrOpt('region', default='RegionOne'),
+                         'group': 'service_auth'},
                         {'opt': cfg.StrOpt('region_name'), 'group': 'nova'},
-                        {'opt': cfg.StrOpt('nova_region_name'), 'group': 'DEFAULT'},
-                        {'opt': cfg.StrOpt('username'), 'group': 'keystone_authtoken'},
-                        {'opt': cfg.StrOpt('password'), 'group': 'keystone_authtoken'},
-                        {'opt': cfg.StrOpt('project_name'), 'group': 'keystone_authtoken'},
-                        {'opt': cfg.StrOpt('auth_url'), 'group': 'keystone_authtoken'},
-                        {'opt': cfg.StrOpt('identity_uri'), 'group': 'keystone_authtoken'}]
+                        {'opt': cfg.StrOpt('nova_region_name'),
+                         'group': 'DEFAULT'},
+                        {'opt': cfg.StrOpt('username'),
+                         'group': 'keystone_authtoken'},
+                        {'opt': cfg.StrOpt('password'),
+                         'group': 'keystone_authtoken'},
+                        {'opt': cfg.StrOpt('project_name'),
+                         'group': 'keystone_authtoken'},
+                        {'opt': cfg.StrOpt('user_domain_name'),
+                         'group': 'keystone_authtoken'},
+                        {'opt': cfg.StrOpt('user_domain_id'),
+                         'group': 'keystone_authtoken'},
+                        {'opt': cfg.StrOpt('project_domain_name'),
+                         'group': 'keystone_authtoken'},
+                        {'opt': cfg.StrOpt('project_domain_id'),
+                         'group': 'keystone_authtoken'},
+                        {'opt': cfg.StrOpt('auth_url'),
+                         'group': 'keystone_authtoken'},
+                        {'opt': cfg.StrOpt('identity_uri'),
+                         'group': 'keystone_authtoken'}]
             self.conf = utils.load_oslo_configuration(from_cmd=self.cmd,
                                                       in_project='neutron',
                                                       for_opts=for_opts
@@ -167,6 +185,8 @@ class Ovs(detection.Plugin):
         cfg_needed = {'username': 'username',
                       'password': 'password',
                       'project_name': 'project_name'}
+        cfg_domain = ['user_domain_name', 'user_domain_id',
+                      'project_domain_name', 'project_domain_id']
 
         # Start with plugin-specific configuration parameters
         init_config = {'cache_dir': cache_dir,
@@ -181,6 +201,10 @@ class Ovs(detection.Plugin):
 
         for option in cfg_needed:
             init_config[option] = self.get_option(cfg_section, cfg_needed[option])
+
+        for option in cfg_domain:
+            if self.has_option(cfg_section, option):
+                init_config[option] = self.get_option(cfg_section, option)
 
         # Create an identity URI (again, slightly different for Devstack)
         if self.has_option(cfg_section, 'auth_url'):
