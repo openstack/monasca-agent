@@ -125,7 +125,7 @@ Statsd:
   monasca_statsd_port : {args.monasca_statsd_port}
 
   ## The monasca_statsd flush period.
-  # monasca_statsd_interval : 20
+  monasca_statsd_interval : {args.monasca_statsd_interval}
 
   # If you want to forward every packet received by the monasca_statsd server
   # to another statsd server, uncomment these lines.

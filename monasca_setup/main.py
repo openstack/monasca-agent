@@ -428,6 +428,9 @@ def parse_arguments(parser):
     parser.add_argument('--monasca_statsd_port',
                         help="Statsd daemon port number",
                         default=8125)
+    parser.add_argument('--monasca_statsd_interval',
+                        help="Statsd metric aggregation interval (seconds)",
+                        default=20)
     parser.add_argument('--agent_service_name',
                         help="agent's systemd/sysv service name",
                         required=False,

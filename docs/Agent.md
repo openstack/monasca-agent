@@ -113,6 +113,7 @@ All parameters require a '--' before the parameter such as '--verbose'. Run `mon
 | backlog_send_rate | Integer value of how many batches of buffered measurements to send each time the forwarder flushes data | 1000 |
 | max_batch_size | Maximum batch size of measurements to write to monasca-api, 0 is no limit | 0 |
 | monasca_statsd_port | Integer value for statsd daemon port number | 8125 |
+| monasca_statsd_interval | Integer value for the statsd metric aggregation interval (seconds) | 20 |
 
 #### A note around using monasca-agent with different versions of Keystone
 
