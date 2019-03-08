@@ -1,0 +1,25 @@
+  cluster:
+    id:     03d30763-0641-46ce-adfa-c7ff69d0101b
+    health: HEALTH_WARN
+            2 osds down
+            1 host (11 osds) down
+            Degraded data redundancy: 9168695/70427256 objects degraded (13.019%), 2375 pgs unclean, 2375 pgs degraded, 2375 pgs undersized
+            application not enabled on 2 pool(s)
+ 
+  services:
+    mon: 3 daemons, quorum admin,mon1,osd1
+    mgr: admin(active), standbys: mon1, osd1
+    mds: cephfs-1/1/1 up  {0=mon1=up:active}
+    osd: 33 osds: 22 up, 24 in
+ 
+  data:
+    pools:   11 pools, 3248 pgs
+    objects: 33737k objects, 1636 GB
+    usage:   7372 GB used, 102 TB / 110 TB avail
+    pgs:     9168695/70427256 objects degraded (13.019%)
+             2375 active+undersized+degraded
+             873  active+clean
+ 
+  io:
+    client:   4246 B/s rd, 374 kB/s wr, 2 op/s rd, 16 op/s wr
+ 

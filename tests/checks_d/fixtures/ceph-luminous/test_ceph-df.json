@@ -1,0 +1,219 @@
+{
+    "pools": [
+        {
+            "id": 1,
+            "name": "cephfs_metadata",
+            "stats": {
+                "bytes_used": 47653204,
+                "dirty": 66133,
+                "kb_used": 46537,
+                "max_avail": 236492341248,
+                "objects": 66133,
+                "percent_used": 0.0,
+                "quota_bytes": 0,
+                "quota_objects": 0,
+                "raw_bytes_used": 91122080,
+                "rd": 545015,
+                "rd_bytes": 1511467008,
+                "wr": 1823016,
+                "wr_bytes": 15099714560
+            }
+        },
+        {
+            "id": 2,
+            "name": "cephfs_data",
+            "stats": {
+                "bytes_used": 1743163949040,
+                "dirty": 1287159,
+                "kb_used": 1702308544,
+                "max_avail": 52729787449344,
+                "objects": 1287159,
+                "percent_used": 0.72,
+                "quota_bytes": 0,
+                "quota_objects": 0,
+                "raw_bytes_used": 3419234369536,
+                "rd": 624295721,
+                "rd_bytes": 25137454158848,
+                "wr": 65020292,
+                "wr_bytes": 18614600047616
+            }
+        },
+        {
+            "id": 13,
+            "name": ".rgw.root",
+            "stats": {
+                "bytes_used": 1113,
+                "dirty": 4,
+                "kb_used": 2,
+                "max_avail": 52953687785472,
+                "objects": 4,
+                "percent_used": 0.0,
+                "quota_bytes": 0,
+                "quota_objects": 0,
+                "raw_bytes_used": 2226,
+                "rd": 4806,
+                "rd_bytes": 3280896,
+                "wr": 4,
+                "wr_bytes": 4096
+            }
+        },
+        {
+            "id": 14,
+            "name": "default.rgw.control",
+            "stats": {
+                "bytes_used": 0,
+                "dirty": 8,
+                "kb_used": 0,
+                "max_avail": 52953687785472,
+                "objects": 8,
+                "percent_used": 0.0,
+                "quota_bytes": 0,
+                "quota_objects": 0,
+                "raw_bytes_used": 0,
+                "rd": 0,
+                "rd_bytes": 0,
+                "wr": 0,
+                "wr_bytes": 0
+            }
+        },
+        {
+            "id": 15,
+            "name": "default.rgw.meta",
+            "stats": {
+                "bytes_used": 832,
+                "dirty": 6,
+                "kb_used": 1,
+                "max_avail": 52953687785472,
+                "objects": 6,
+                "percent_used": 0.0,
+                "quota_bytes": 0,
+                "quota_objects": 0,
+                "raw_bytes_used": 1664,
+                "rd": 220,
+                "rd_bytes": 204800,
+                "wr": 147,
+                "wr_bytes": 19456
+            }
+        },
+        {
+            "id": 16,
+            "name": "default.rgw.log",
+            "stats": {
+                "bytes_used": 0,
+                "dirty": 207,
+                "kb_used": 0,
+                "max_avail": 52953687785472,
+                "objects": 207,
+                "percent_used": 0.0,
+                "quota_bytes": 0,
+                "quota_objects": 0,
+                "raw_bytes_used": 0,
+                "rd": 21378199,
+                "rd_bytes": 21891063808,
+                "wr": 14245040,
+                "wr_bytes": 0
+            }
+        },
+        {
+            "id": 17,
+            "name": "default.rgw.buckets.index",
+            "stats": {
+                "bytes_used": 0,
+                "dirty": 1,
+                "kb_used": 0,
+                "max_avail": 52953687785472,
+                "objects": 1,
+                "percent_used": 0.0,
+                "quota_bytes": 0,
+                "quota_objects": 0,
+                "raw_bytes_used": 0,
+                "rd": 562,
+                "rd_bytes": 580608,
+                "wr": 237,
+                "wr_bytes": 0
+            }
+        },
+        {
+            "id": 18,
+            "name": "default.rgw.buckets.data",
+            "stats": {
+                "bytes_used": 95250,
+                "dirty": 6,
+                "kb_used": 94,
+                "max_avail": 52953687785472,
+                "objects": 6,
+                "percent_used": 0.0,
+                "quota_bytes": 0,
+                "quota_objects": 0,
+                "raw_bytes_used": 190500,
+                "rd": 162,
+                "rd_bytes": 291840,
+                "wr": 427,
+                "wr_bytes": 602112
+            }
+        },
+        {
+            "id": 19,
+            "name": "kubernetes",
+            "stats": {
+                "bytes_used": 4859,
+                "dirty": 8,
+                "kb_used": 5,
+                "max_avail": 79430529581056,
+                "objects": 8,
+                "percent_used": 0.0,
+                "quota_bytes": 0,
+                "quota_objects": 0,
+                "raw_bytes_used": 8503,
+                "rd": 164,
+                "rd_bytes": 133120,
+                "wr": 90892,
+                "wr_bytes": 126869424128
+            }
+        },
+        {
+            "id": 20,
+            "name": "volumes",
+            "stats": {
+                "bytes_used": 0,
+                "dirty": 0,
+                "kb_used": 0,
+                "max_avail": 79430529581056,
+                "objects": 0,
+                "percent_used": 0.0,
+                "quota_bytes": 0,
+                "quota_objects": 0,
+                "raw_bytes_used": 0,
+                "rd": 0,
+                "rd_bytes": 0,
+                "wr": 0,
+                "wr_bytes": 0
+            }
+        },
+        {
+            "id": 21,
+            "name": "benchmark",
+            "stats": {
+                "bytes_used": 37906503270,
+                "dirty": 33213250,
+                "kb_used": 37018070,
+                "max_avail": 79430529581056,
+                "objects": 33213250,
+                "percent_used": 0.02,
+                "quota_bytes": 0,
+                "quota_objects": 0,
+                "raw_bytes_used": 66925428736,
+                "rd": 2261777,
+                "rd_bytes": 3829217280,
+                "wr": 33280403,
+                "wr_bytes": 62774775808
+            }
+        }
+    ],
+    "stats": {
+        "total_avail_bytes": 113108752654336,
+        "total_bytes": 121070163910656,
+        "total_objects": 34566782,
+        "total_used_bytes": 7961411256320
+    }
+}

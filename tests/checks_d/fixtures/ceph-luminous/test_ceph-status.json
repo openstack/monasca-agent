@@ -1,0 +1,176 @@
+{
+    "election_epoch": 1768,
+    "fsid": "03d30763-0641-46ce-adfa-c7ff69d0101b",
+    "fsmap": {
+        "by_rank": [
+            {
+                "filesystem_id": 1,
+                "name": "mon1",
+                "rank": 0,
+                "status": "up:active"
+            }
+        ],
+        "epoch": 91,
+        "id": 1,
+        "in": 1,
+        "max": 1,
+        "up": 1
+    },
+    "health": {
+        "checks": {
+            "OSD_DOWN": {
+                "severity": "HEALTH_WARN",
+                "summary": {
+                    "message": "2 osds down"
+                }
+            },
+            "OSD_HOST_DOWN": {
+                "severity": "HEALTH_WARN",
+                "summary": {
+                    "message": "1 host (11 osds) down"
+                }
+            },
+            "PG_DEGRADED": {
+                "severity": "HEALTH_WARN",
+                "summary": {
+                    "message": "Degraded data redundancy: 9196074/70487094 objects degraded (13.046%), 2361 pgs unclean, 2361 pgs degraded, 2361 pgs undersized"
+                }
+            },
+            "POOL_APP_NOT_ENABLED": {
+                "severity": "HEALTH_WARN",
+                "summary": {
+                    "message": "application not enabled on 2 pool(s)"
+                }
+            }
+        },
+        "overall_status": "HEALTH_WARN",
+        "status": "HEALTH_WARN"
+    },
+    "mgrmap": {
+        "active_addr": "10.4.99.100:6800/706",
+        "active_gid": 112994172,
+        "active_name": "admin",
+        "available": true,
+        "available_modules": [
+            "dashboard",
+            "prometheus",
+            "restful",
+            "status",
+            "zabbix"
+        ],
+        "epoch": 88,
+        "modules": [
+            "restful",
+            "status"
+        ],
+        "standbys": [
+            {
+                "available_modules": [
+                    "dashboard",
+                    "prometheus",
+                    "restful",
+                    "status",
+                    "zabbix"
+                ],
+                "gid": 112972449,
+                "name": "mon1"
+            },
+            {
+                "available_modules": [
+                    "dashboard",
+                    "prometheus",
+                    "restful",
+                    "status",
+                    "zabbix"
+                ],
+                "gid": 112994109,
+                "name": "osd1"
+            }
+        ]
+    },
+    "monmap": {
+        "created": "2018-02-27 16:45:45.008887",
+        "epoch": 3,
+        "features": {
+            "optional": [],
+            "persistent": [
+                "kraken",
+                "luminous"
+            ]
+        },
+        "fsid": "03d30763-0641-46ce-adfa-c7ff69d0101b",
+        "modified": "2018-02-27 16:46:36.506498",
+        "mons": [
+            {
+                "addr": "10.4.99.100:6789/0",
+                "name": "admin",
+                "public_addr": "10.4.99.100:6789/0",
+                "rank": 0
+            },
+            {
+                "addr": "10.4.99.101:6789/0",
+                "name": "mon1",
+                "public_addr": "10.4.99.101:6789/0",
+                "rank": 1
+            },
+            {
+                "addr": "10.4.99.102:6789/0",
+                "name": "osd1",
+                "public_addr": "10.4.99.102:6789/0",
+                "rank": 2
+            }
+        ]
+    },
+    "osdmap": {
+        "osdmap": {
+            "epoch": 1884,
+            "full": false,
+            "nearfull": false,
+            "num_in_osds": 24,
+            "num_osds": 33,
+            "num_remapped_pgs": 14,
+            "num_up_osds": 22
+        }
+    },
+    "pgmap": {
+        "bytes_avail": 113108744396800,
+        "bytes_total": 121070163910656,
+        "bytes_used": 7961419513856,
+        "data_bytes": 1781122124601,
+        "degraded_objects": 9196074,
+        "degraded_ratio": 0.130465,
+        "degraded_total": 70487094,
+        "num_objects": 34566784,
+        "num_pgs": 3248,
+        "num_pools": 11,
+        "pgs_by_state": [
+            {
+                "count": 2361,
+                "state_name": "active+undersized+degraded"
+            },
+            {
+                "count": 873,
+                "state_name": "active+clean"
+            },
+            {
+                "count": 14,
+                "state_name": "active+clean+remapped"
+            }
+        ]
+    },
+    "quorum": [
+        0,
+        1,
+        2
+    ],
+    "quorum_names": [
+        "admin",
+        "mon1",
+        "osd1"
+    ],
+    "servicemap": {
+        "epoch": 340,
+        "modified": "2019-03-26 10:59:13.523804",
+        "services": {}
+    }
+}

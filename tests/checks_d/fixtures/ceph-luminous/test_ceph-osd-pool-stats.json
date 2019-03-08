@@ -1,0 +1,79 @@
+[
+    {
+        "client_io_rate": {},
+        "pool_id": 1,
+        "pool_name": "cephfs_metadata",
+        "recovery": {},
+        "recovery_rate": {}
+    },
+    {
+        "client_io_rate": {},
+        "pool_id": 2,
+        "pool_name": "cephfs_data",
+        "recovery": {},
+        "recovery_rate": {}
+    },
+    {
+        "client_io_rate": {},
+        "pool_id": 13,
+        "pool_name": ".rgw.root",
+        "recovery": {},
+        "recovery_rate": {}
+    },
+    {
+        "client_io_rate": {},
+        "pool_id": 14,
+        "pool_name": "default.rgw.control",
+        "recovery": {},
+        "recovery_rate": {}
+    },
+    {
+        "client_io_rate": {},
+        "pool_id": 15,
+        "pool_name": "default.rgw.meta",
+        "recovery": {},
+        "recovery_rate": {}
+    },
+    {
+        "client_io_rate": {},
+        "pool_id": 16,
+        "pool_name": "default.rgw.log",
+        "recovery": {},
+        "recovery_rate": {}
+    },
+    {
+        "client_io_rate": {},
+        "pool_id": 17,
+        "pool_name": "default.rgw.buckets.index",
+        "recovery": {},
+        "recovery_rate": {}
+    },
+    {
+        "client_io_rate": {},
+        "pool_id": 18,
+        "pool_name": "default.rgw.buckets.data",
+        "recovery": {},
+        "recovery_rate": {}
+    },
+    {
+        "client_io_rate": {},
+        "pool_id": 19,
+        "pool_name": "kubernetes",
+        "recovery": {},
+        "recovery_rate": {}
+    },
+    {
+        "client_io_rate": {},
+        "pool_id": 20,
+        "pool_name": "volumes",
+        "recovery": {},
+        "recovery_rate": {}
+    },
+    {
+        "client_io_rate": {},
+        "pool_id": 21,
+        "pool_name": "benchmark",
+        "recovery": {},
+        "recovery_rate": {}
+    }
+]

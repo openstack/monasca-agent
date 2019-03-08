@@ -362,10 +362,15 @@ class Ceph(checks.AgentCheck):
         """
         metrics = {}
         ceph_status_health = ceph_status['health']
-        metrics['ceph.cluster.health_status'] = self._parse_ceph_status(
-            ceph_status_health['overall_status'])
+        # The Ceph tools are deprecating 'overall_status' in favour of 'status'
+        # The deprecation logic fixes overall_status=HEALTH_WARN for awareness.
+        ceph_health = ceph_status_health.get('status',
+                                             ceph_status_health.get(
+                                                 'overall_status',
+                                                 'HEALTH_UNKNOWN'))
+        metrics['ceph.cluster.health_status'] = self._parse_ceph_status(ceph_health)
 
-        for s in ceph_status_health['summary']:
+        for s in ceph_status_health.get('summary', []):
             metrics.update(self._get_summary_metrics(s['summary']))
 
         osds = ceph_status['osdmap']['osdmap']
@@ -399,14 +404,16 @@ class Ceph(checks.AgentCheck):
             'ceph.cluster.pgs.total_count'] / metrics[
                 'ceph.cluster.osds.total_count']
 
+        # In Luminous the format of output parsed here changed slightly.
+        # Check for both known variations.
         ceph_status_plain = ceph_status_plain.split('\n')
         for l in ceph_status_plain:
             line = l.strip(' ')
-            if line.startswith('recovery io'):
+            if line.startswith('recovery io') or line.startswith('recovery:'):
                 metrics.update(self._get_recovery_io(line))
-            elif line.startswith('client io'):
+            elif line.startswith('client io') or line.startswith('client:'):
                 metrics.update(self._get_client_io(line))
-            elif line.startswith('cache io'):
+            elif line.startswith('cache io') or line.startswith('cache:'):
                 metrics.update(self._get_cache_io(line))
 
         metrics['ceph.cluster.quorum_size'] = len(ceph_status['quorum'])
@@ -417,9 +424,10 @@ class Ceph(checks.AgentCheck):
         with metrics regarding each monitor found, in the format
         {'monitor1': {metric1': value1, ...}, 'monitor2': {metric1': value1}}
         """
+        # This data is not returned in Luminous or later.
         mon_metrics = {}
-        for health_service in ceph_status['health']['health'][
-                'health_services']:
+        for health_service in ceph_status.get('health').get('health', {}).get(
+                'health_services', []):
             for mon in health_service['mons']:
                 store_stats = mon['store_stats']
                 mon['name'] = safe_decode(mon['name'], incoming='utf-8')
