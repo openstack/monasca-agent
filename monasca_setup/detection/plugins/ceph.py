@@ -165,6 +165,9 @@ class Ceph(Plugin):
                 cluster_dict['cluster_name'] = config_file[:-5]
                 cluster_dict['config_file'] = \
                     os.path.join(self.ceph_config_dir, config_file)
+                cluster_dict['admin_key'] = \
+                    cluster_dict['cluster_name'] + '.client.admin.keyring' in \
+                    os.listdir(self.ceph_config_dir)
                 clusters.append(cluster_dict)
 
         expected_processes = list()
@@ -187,8 +190,20 @@ class Ceph(Plugin):
         # Configure ceph plugin
         instances = []
         for cluster in clusters:
-            cluster_name = cluster['cluster_name']
-            log.info("\tMonitoring ceph cluster: '{0}'.".format(cluster_name))
-            instances.append({'cluster_name': cluster_name})
+            cluster_config = {}
+            cluster_config['cluster_name'] = cluster['cluster_name']
+
+            # If there is no client admin key installed for this cluster
+            # then we cannot invoke Ceph commands for cluster monitoring.
+            # In that case we only monitor the locally active processes.
+            if not cluster['admin_key']:
+                cluster_config['collect_usage_metrics'] = False
+                cluster_config['collect_stats_metrics'] = False
+                cluster_config['collect_mon_metrics'] = False
+                cluster_config['collect_osd_metrics'] = False
+                cluster_config['collect_pool_metrics'] = False
+
+            log.info("\tMonitoring ceph cluster: '{0}'.".format(cluster['cluster_name']))
+            instances.append(cluster_config)
         config['ceph'] = {'init_config': None, 'instances': instances}
         return config

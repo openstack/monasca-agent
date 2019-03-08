@@ -164,6 +164,49 @@ class TestCephDetection(base.BaseTestCase):
 
     @mock.patch('os.path.exists', return_value=True)
     @mock.patch('os.listdir', return_value=['ceph.conf', 'ceph1.conf'])
+    def test_build_config_with_no_admin_key(self, list_dir, path_exists):
+        self._ceph._service_config = mock.Mock(
+            side_effect=mocked_service_config)
+
+        processes = MON_PROCESSES + RGW_PROCESSES
+        process_instances = list()
+
+        for p in processes:
+            instance = {
+                'exact_match': False,
+                'search_string': p['search_string'],
+                'detailed': True,
+                'name': p['name'],
+                'dimensions':  {'component': p['type'], 'service': 'ceph'}
+            }
+            process_instances.append(instance)
+
+        expected_config = {
+            'process': {
+                'init_config': None,
+                'instances': process_instances,
+            },
+            'ceph': {
+                'init_config': None,
+                'instances': [{'cluster_name': 'ceph',
+                               'collect_mon_metrics': False,
+                               'collect_osd_metrics': False,
+                               'collect_pool_metrics': False,
+                               'collect_stats_metrics': False,
+                               'collect_usage_metrics': False},
+                              {'cluster_name': 'ceph1',
+                               'collect_mon_metrics': False,
+                               'collect_osd_metrics': False,
+                               'collect_pool_metrics': False,
+                               'collect_stats_metrics': False,
+                               'collect_usage_metrics': False}]
+            }
+        }
+        config = self._ceph.build_config()
+        self.assertEqual(expected_config, dict(config))
+
+    @mock.patch('os.path.exists', return_value=True)
+    @mock.patch('os.listdir', return_value=['ceph.conf', 'ceph1.conf', 'ceph1.client.admin.keyring'])
     def test_build_config(self, list_dir, path_exists):
         self._ceph._service_config = mock.Mock(
             side_effect=mocked_service_config)
@@ -188,7 +231,12 @@ class TestCephDetection(base.BaseTestCase):
             },
             'ceph': {
                 'init_config': None,
-                'instances': [{'cluster_name': 'ceph'},
+                'instances': [{'cluster_name': 'ceph',
+                               'collect_mon_metrics': False,
+                               'collect_osd_metrics': False,
+                               'collect_pool_metrics': False,
+                               'collect_stats_metrics': False,
+                               'collect_usage_metrics': False},
                               {'cluster_name': 'ceph1'}]
             }
         }
