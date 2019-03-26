@@ -56,12 +56,15 @@ class HttpCheck(monasca_setup.detection.ArgsPlugin):
         instance = self._build_instance(['url', 'timeout', 'username', 'password',
                                          'match_pattern', 'disable_ssl_validation',
                                          'name', 'use_keystone', 'collect_response_time'])
-        init_config = {'keystone_config': self._build_instance(['keystone_url',
-                                                                'keystone_project',
-                                                                'keystone_project_domain',
-                                                                'keystone_user',
-                                                                'keystone_user_domain',
-                                                                'keystone_password'])}
+
+        init_config = None
+        if 'keystone_url' in self.args:
+            init_config = {'keystone_config': self._build_instance(['keystone_url',
+                                                                    'keystone_project',
+                                                                    'keystone_project_domain',
+                                                                    'keystone_user',
+                                                                    'keystone_user_domain',
+                                                                    'keystone_password'])}
 
         # Normalize any boolean parameters
         for param in ['use_keystone', 'collect_response_time']:
@@ -74,22 +77,22 @@ class HttpCheck(monasca_setup.detection.ArgsPlugin):
             instance['name'] = self.args['url']
 
         # Configure http check wide Keystone settings
-        if 'keystone_project' in init_config['keystone_config']:
-            init_config['keystone_config']['project_name'] = init_config['keystone_config']\
-                .pop('keystone_project')
-        if 'keystone_project_domain' in init_config['keystone_config']:
-            init_config['keystone_config']['project_domain_name'] = \
-                init_config['keystone_config'].pop('keystone_project_domain')
-        if 'keystone_user' in init_config['keystone_config']:
-            init_config['keystone_config']['username'] = init_config['keystone_config']\
-                .pop('keystone_user')
-        if 'keystone_user_domain' in init_config['keystone_config']:
-            init_config['keystone_config']['user_domain_name'] = \
-                init_config['keystone_config'].pop('keystone_user_domain')
-        if 'keystone_password' in init_config['keystone_config']:
-            init_config['keystone_config']['password'] = init_config['keystone_config']\
-                .pop('keystone_password')
+        if init_config and ('keystone_config' in init_config):
+            if 'keystone_project' in init_config['keystone_config']:
+                init_config['keystone_config']['project_name'] = init_config['keystone_config']\
+                    .pop('keystone_project')
+            if 'keystone_project_domain' in init_config['keystone_config']:
+                init_config['keystone_config']['project_domain_name'] = \
+                    init_config['keystone_config'].pop('keystone_project_domain')
+            if 'keystone_user' in init_config['keystone_config']:
+                init_config['keystone_config']['username'] = init_config['keystone_config']\
+                    .pop('keystone_user')
+            if 'keystone_user_domain' in init_config['keystone_config']:
+                init_config['keystone_config']['user_domain_name'] = \
+                    init_config['keystone_config'].pop('keystone_user_domain')
+            if 'keystone_password' in init_config['keystone_config']:
+                init_config['keystone_config']['password'] = init_config['keystone_config']\
+                    .pop('keystone_password')
 
         config['http_check'] = {'init_config': init_config, 'instances': [instance]}
-
         return config
