@@ -59,12 +59,14 @@ class HttpCheck(monasca_setup.detection.ArgsPlugin):
 
         init_config = None
         if 'keystone_url' in self.args:
-            init_config = {'keystone_config': self._build_instance(['keystone_url',
-                                                                    'keystone_project',
-                                                                    'keystone_project_domain',
-                                                                    'keystone_user',
-                                                                    'keystone_user_domain',
-                                                                    'keystone_password'])}
+            init_config = {'keystone_config': self._build_instance([
+                'keystone_url',
+                'keystone_project',
+                'keystone_project_domain',
+                'keystone_user',
+                'keystone_user_domain',
+                'keystone_password'],
+                add_dimensions=False)}
 
         # Normalize any boolean parameters
         for param in ['use_keystone', 'collect_response_time']:

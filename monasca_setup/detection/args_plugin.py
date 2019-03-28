@@ -24,14 +24,15 @@ class ArgsPlugin(Plugin):
     detection.
     """
 
-    def _build_instance(self, arg_list):
+    def _build_instance(self, arg_list, add_dimensions=True):
         """If a value for each arg in the arg_list was specified build it into an instance
         dictionary. Also check for dimensions and add if they were specified.
         :param arg_list: Arguments to include
+        :param add_dimensions: Specifies if dimensions should be added
         :return: instance dictionary
         """
         instance = {}
-        if 'dimensions' in self.args:
+        if add_dimensions and 'dimensions' in self.args:
             instance['dimensions'] = dict(item.strip().split(":")
                                           for item in self.args['dimensions'].split(","))
         for arg in arg_list:
