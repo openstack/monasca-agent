@@ -33,7 +33,7 @@ set -eo pipefail  # Exit the script if any statement returns error.
 # To build specific version run this script in the following way:
 #   $ ./build_image.sh stable/queens
 # Building from specific commit:
-#   $ ./build_image.sh  cb7f226
+#   $ ./build_image.sh cb7f226
 # When building from a tag monasca-common will be used in version available
 # in upper constraint file:
 #   $ ./build_image.sh 2.5.0
@@ -43,6 +43,10 @@ set -eo pipefail  # Exit the script if any statement returns error.
 # If you want to build image with custom monasca-common version you need
 # to provide it as in the following example:
 #   $ ./build_image.sh master master refs/changes/19/595719/3
+
+# Go to folder with Docker files.
+REAL_PATH=$(python -c "import os,sys; print(os.path.realpath('$0'))")
+cd "$(dirname "$REAL_PATH")/../forwarder/"
 
 [ -z "$DOCKER_IMAGE" ] && \
     DOCKER_IMAGE=$(\grep DOCKER_IMAGE Dockerfile | cut -f2 -d"=")
@@ -90,7 +94,6 @@ if [ -z "$COMMON_REPO" ]; then
     COMMON_REPO=$(\grep COMMON_REPO Dockerfile | cut -f2 -d"=") || true
     : "${COMMON_REPO:=https://git.openstack.org/openstack/monasca-common}"
 fi
-
 : "${COMMON_VERSION:=$3}"
 if [ -z "$COMMON_VERSION" ]; then
     COMMON_VERSION=$(\grep COMMON_VERSION Dockerfile | cut -f2 -d"=") || true

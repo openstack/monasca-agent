@@ -1,7 +1,10 @@
 ===============================
 Docker images for Monasca Agent
 ===============================
-The Monasca Agent images are based on the monasca-base image.
+There are two separate images for monasca-agent services: collector
+and forwarder. Collector is working best with services that allow remote access
+to them and to gather host level metrics collector will need to work together
+with cAdvisor service.
 
 
 Building monasca-base image
@@ -12,26 +15,16 @@ See https://github.com/openstack/monasca-common/tree/master/docker/README.rst
 Building Monasca Agent images
 =============================
 
+``build_image.sh`` script in top level folder (``docker/build_image.sh``) is
+dummy script that will build both collector and forwarder images at once.
+
 Example:
-  $ ./build_image.sh <repository_version> <upper_constains_branch> <common_version>
+  $ ./build_image.sh <repository_version> <upper_constrains_branch> <common_version>
 
+Everything after ``./build_image.sh`` is optional and by default configured
+to get versions from ``Dockerfile``. ``./build_image.sh`` also contain more
+detailed build description.
 
-Requirements from monasca-base image
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-health_check.py
-  This file will be used for checking the status of the Monasca Agent
-  (unfortunately monasca agent doesn't have any endpoint for checking health).
-
-Scripts
-~~~~~~~
-start.sh
-  In this starting script provide all steps that lead to the proper service
-  start. Including usage of wait scripts and templating of configuration
-  files. You also could provide the ability to allow running container after
-  service died for easier debugging.
-
-build_image.sh
-  Please read detailed build description inside the script.
 
 Environment variables
 ~~~~~~~~~~~~~~~~~~~~~
@@ -55,7 +48,7 @@ STAY_ALIVE_ON_FAILURE          false                       If true, container ru
 ============================== =========================== ====================================================
 
 Note that additional variables can be specified as well, see the
-[config template][8] for a definitive list.
+``agent.yaml.j2`` for a definitive list in every image folder.
 
 Note that the auto restart feature can be enabled if the agent collector
 has unchecked memory growth. The proper restart behavior must be enabled
@@ -76,6 +69,18 @@ PROMETHEUS                     false       Monitor Prometheus
 MONASCA_MONITORING             false       Monitor services for metrics pipeline
 MONASCA_LOG_MONITORING         false       Monitor services for logs pipeline
 ============================== =========== =====================================
+
+Scripts
+~~~~~~~
+start.sh
+  In this starting script provide all steps that lead to the proper service
+  start. Including usage of wait scripts and templating of configuration
+  files. You also could provide the ability to allow running container after
+  service died for easier debugging.
+
+health_check.py
+  This file will be used for checking the status of the application.
+
 
 Docker Plugin
 -------------
@@ -111,7 +116,7 @@ This plugin is enabled when ``KUBERNETES=true``. It has the following options:
 
 The Kubernetes plugin is intended to be run as a DaemonSet on each Kubernetes
 node. In order for API endpoints to be detected correctly, ``AGENT_POD_NAME`` and
-`AGENT_POD_NAMESPACE`` must be set using the [Downward API][7] as described
+``AGENT_POD_NAMESPACE`` must be set using the `Downward API`_ as described
 above.
 
 Kubernetes API Plugin
@@ -187,10 +192,10 @@ This plugin is enabled when ``CADVISOR=true``. It has the following options:
 This plugin collects host-level metrics from a running cAdvisor instance.
 cAdvisor is included in ``kubelet`` when in Kubernetes environments and is
 necessary to retrieve host-level metrics. As with the Kubernetes plugin,
-`AGENT_POD_NAME`` and ``AGENT_POD_NAMESPACE`` must be set to determine the URL
+``AGENT_POD_NAME`` and ``AGENT_POD_NAMESPACE`` must be set to determine the URL
 automatically.
 
-cAdvisor can be easily run in [standard Docker environments][9] or directly on
+cAdvisor can be easily run in `standard Docker environments`_ or directly on
 host systems. In these cases, the URL must be manually provided via
 ``CADVISOR_URL``.
 
@@ -224,7 +229,7 @@ MySQL
 Logs pipeline
 ^^^^^^^^^^^^^
 For logs pipeline you can enable HTTP endpoint check, process and
-`Elasticsearch`` plugins. This is enabled when ``MONASCA_LOG_MONITORING=true``.
+``Elasticsearch`` plugins. This is enabled when ``MONASCA_LOG_MONITORING=true``.
 You can adjust the configuration of the components by passing environment
 variables:
 
@@ -250,3 +255,6 @@ templates with access to all environment variables.
 Links
 ~~~~~
 https://github.com/openstack/monasca-agent/blob/master/README.rst
+
+.. _`Downward API`: https://kubernetes.io/docs/user-guide/downward-api/
+.. _`standard Docker environments`: https://github.com/google/cadvisor#quick-start-running-cadvisor-in-a-docker-container
