@@ -26,7 +26,7 @@ class Cloudkitty(monasca_setup.detection.ServicePlugin):
             'process_names': ['cloudkitty-processor',
                               'cloudkitty-api'],
             'service_api_url': 'http://localhost:8889',
-            'search_pattern': '.*EXPERIMENTAL.*',
+            'search_pattern': '.*CURRENT.*',
         }
 
         super(Cloudkitty, self).__init__(service_params)
