@@ -120,11 +120,8 @@ In the below example, the Agent's Keystone username is "monasca-agent" and the A
 
 Example commands to add the Agent user/project to the monitoring-delegate role:
 
-    $ keystone role-create --name=monitoring-delegate
-    $ user_id=`keystone user-list | grep monasca-agent | cut -d'|' -f2`
-    $ role_id=`keystone role-list | grep monitoring-delegate | cut -d'|' -f2`
-    $ tenant_id=`keystone tenant-list | grep mini-mon | cut -d'|' -f2`
-    $ keystone user-role-add --user=${user_id// /} --role=${role_id// /} --tenant_id=${tenant_id// /}
+    $ openstack role create monitoring-delegate
+    $ openstack role add --user monasca-agent --project mini-mon monitoring-delegate
 
 Once the Agent's user and project are assigned to the `monitoring-delegate` group, the Agent can submit metrics for other tenants.
 
