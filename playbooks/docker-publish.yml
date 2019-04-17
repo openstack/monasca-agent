@@ -1,0 +1,15 @@
+---
+- hosts: all
+  tasks:
+    - name: Login to Dockerhub
+      command: "docker login -u {{ doker_hub_login_agent.user }} -p {{ doker_hub_login_agent.password }}"
+      no_log: true
+
+    - name: List images
+      shell: "docker images --format '{% raw %}{{ .Repository }}:{{ .Tag }}{% endraw %}' | grep monasca"
+
+    - name: Push to Docker Hub all agent-collector tags
+      shell: "docker push monasca/agent-collector"
+
+    - name: Push to Docker Hub all agent-forwarder tags
+      shell: "docker push monasca/agent-forwarder"

@@ -13,3 +13,49 @@
             voting: false
         - monasca-tempest-java-influxdb:
             voting: false
+    post:
+      jobs:
+        - publish-monasca-agent-docker-images
+    periodic:
+      jobs:
+        - publish-monasca-agent-docker-images
+    release:
+      jobs:
+        - publish-monasca-agent-docker-images
+
+- job:
+    name: publish-monasca-agent-docker-images
+    parent: build-monasca-docker-image
+    post-run: playbooks/docker-publish.yml
+    required-projects:
+      - openstack/monasca-common
+    vars:
+      publisher: true
+    secrets:
+      - doker_hub_login_agent
+
+- secret:
+    name: doker_hub_login_agent
+    data:
+      user: !encrypted/pkcs1-oaep
+        - 1bRzmNeNonIu3WCRS9nXsfMH6peZ4zw7ilLURI1WTXDB7wJU6KjzczXcIXDpWnEOkGeNg
+          UgkV9UAEQ41qBcGLO9JRTCjTolx8GJv0uFrpwd1ZLD3X8jNcObHO64f3UFjCryCS+dwMm
+          NNRCPYRusBV7o2B7SaeqlHlhHB/d0lYWqlxnHZLPRLuwDZFpNr273wJ6IA7B8+1KYIYiO
+          yiUnFcEHE147iDoZTzPHZirGDbTRHOvMFr8mhuB78vloW90U1ZSwwTqLvhADI+51fQZv8
+          pqLPGjE0jraPZH7c0ZKOLEX7GqXAAGZ/rn3fEN8AdXLzRZMO14Vv2ltNWRf/fCf71IuRR
+          091ZIl4tPgz3Nb4j/4xkz4gMDginEEr5xSrJ/jWTSy5LUjaCfav35ve+H0UtMQyNs3pJr
+          37yFTedwZu1glVn1AcOaus5Shb7utl+qclCN/kZ8Dx1g75ZL3PD67t/8ryHnNfvU3RYMO
+          6NKWePsIAQ/JHncERxojtrLxXlh3beqhhcPVjQ/0tLPDZUg2U+ZJOYTXt2g5rALChYWOt
+          rjn/41JD1SVJwichxfk661rh//Qy91g5DmTa43XmMUIjKLGezCZ21VsA9FQt8xTERT0mm
+          309yHo+x8EkDGKtrfJYTgQWNywqEWgjAAYkoplVjyabS+6jgANVOgq/4scLilE=
+      password: !encrypted/pkcs1-oaep
+        - nTqpCACpuK/jmzh6WnODHCeIoKv4SlFzkptANnUqSsg0JLaLe2vcxEnXJLw7TQBFJGlBY
+          Tp3TLf5bkNGOe5ezGAX+2LPFzX1asvHjY7m7OXTRRF55hdt9jOe87KdzG7CrqBbPEsqoG
+          pGRu+s7KzhPzk1HhY7iv44R29AHyd/ncwRPvpeTfKYsAPmKvQ56MOnaPX80152XNl0T4k
+          zzsdK1RBHweA0Wskw2Ryh4GtCqpEOH4+GXfDm+gt0+oefxGjJwaKglWQNxhLkPghiujUi
+          1YiHj3ePhgf25omixQQ2qriWpBuTHkHUtrIF1Y2vsMCo5rZSU10AGfiaO0qB92HfLvQI/
+          /XWHeRvJrRbz0G3LEClqVmHEPHRg5qMuWZx/+BIqTzm4pBsN+zdW5jz/Sk8l+Vpx2z1t1
+          VWWCnJn5RuQEf6qCRwmJEFOvZ9HDZuYLAmHPBIlJPCCbZhMkXQtmCBwCrs8b4IpbK4qE5
+          x7CjnJvaNb0JZJiHxhWVq3d8VBzH5WruIX/JwTWPkaLdNjAOgke5q0Uic/2xd+XdJKUVh
+          JO1CixW6uYw9j82W8hCmxdgtlLWAdz7ZWnGzmX0t4JvY20zTZKAPnJ5L/fdkyd/xX2Jyh
+          8JwIxP+NWhteedYmDUfcr1j9lg/f6EQyEh32Nj5ns7CpnbY4/IDZYYsDtTMbhs=
