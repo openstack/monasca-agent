@@ -15,6 +15,9 @@ import re
 import subprocess
 
 from monasca_agent.collector import checks
+from oslo_utils import encodeutils
+
+safe_decode = encodeutils.safe_decode
 
 _CACHE_FLUSH_RATE_REGEX = re.compile(r'(\d+) ([kKmMgG][bB])/s flush')
 _CACHE_EVICT_RATE_REGEX = re.compile(r'(\d+) ([kKmMgG][bB])/s evict')
@@ -381,9 +384,8 @@ class Ceph(checks.AgentCheck):
         metrics.update({'ceph.cluster.pgs.scrubbing_count': 0,
                         'ceph.cluster.pgs.deep_scrubbing_count': 0})
         for state in ceph_status['pgmap']['pgs_by_state']:
-            metrics['ceph.cluster.pgs.' +
-                    state['state_name'].encode('ascii', 'ignore')] = state[
-                        'count']
+            statename = safe_decode(state['state_name'], incoming='utf-8')
+            metrics['ceph.cluster.pgs.' + statename] = state['count']
             if 'scrubbing' in state['state_name']:
                 if 'deep' in state['state_name']:
                     metrics['ceph.cluster.pgs.deep_scrubbing_count'] += state[
@@ -420,7 +422,9 @@ class Ceph(checks.AgentCheck):
                 'health_services']:
             for mon in health_service['mons']:
                 store_stats = mon['store_stats']
-                mon_metrics[mon['name'].encode('ascii', 'ignore')] = {
+                mon['name'] = safe_decode(mon['name'], incoming='utf-8')
+
+                mon_metrics[mon['name']] = {
                     'ceph.monitor.total_bytes': mon['kb_total'] * 1e3,
                     'ceph.monitor.used_bytes': mon['kb_used'] * 1e3,
                     'ceph.monitor.avail_bytes': mon['kb_avail'] * 1e3,
@@ -435,7 +439,7 @@ class Ceph(checks.AgentCheck):
         # monitors configured on the cluster
         if len(mon_metrics) > 1:
             for mon in ceph_status['health']['timechecks']['mons']:
-                mon_metrics[mon['name'].encode('ascii', 'ignore')].update({
+                mon_metrics[mon['name']].update({
                     'ceph.monitor.skew': mon['skew'],
                     'ceph.monitor.latency': mon['latency']
                 })
@@ -448,7 +452,8 @@ class Ceph(checks.AgentCheck):
         """
         osd_metrics = {}
         for node in ceph_osd_df['nodes']:
-            osd_metrics[node['name'].encode('ascii', 'ignore')] = {
+            nodename = safe_decode(node['name'], incoming='utf-8')
+            osd_metrics[nodename] = {
                 'ceph.osd.crush_weight': node['crush_weight'],
                 'ceph.osd.depth': node['depth'],
                 'ceph.osd.reweight': node['reweight'],
@@ -501,7 +506,9 @@ class Ceph(checks.AgentCheck):
             stats = pool['stats']
             total_bytes = stats['bytes_used'] + stats['max_avail']
             utilization_perc = float(stats['bytes_used']) / total_bytes
-            pool_metrics[pool['name'].encode('ascii', 'ignore')] = {
+            pool['name'] = safe_decode(pool['name'], incoming='utf-8')
+
+            pool_metrics[pool['name']] = {
                 'ceph.pool.used_bytes': stats['bytes_used'],
                 'ceph.pool.used_raw_bytes': stats['raw_bytes_used'],
                 'ceph.pool.max_avail_bytes': stats['max_avail'],

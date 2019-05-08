@@ -13,7 +13,6 @@
 # under the License.
 
 import os
-import contextlib
 import logging
 import unittest
 import mock
@@ -57,13 +56,11 @@ class KibanaCheckTest(unittest.TestCase):
             self.kibana_check.check(None)
 
         self.assertEqual('An url to kibana must be specified',
-                         err.exception.message)
+                         str(err.exception))
 
     def test_should_early_exit_if_all_metrics_disabled(self):
-        with contextlib.nested(
-                mock.patch.object(util, 'get_hostname'),
-                mock.patch.object(LOG, 'warning')
-        ) as (_, mock_log_warning):
+        with mock.patch.object(util, 'get_hostname') as _,\
+                mock.patch.object(LOG, 'warning') as mock_log_warning:
             self.kibana_check._get_kibana_version = mock.Mock()
             self.kibana_check._get_data = mock.Mock()
             self.kibana_check._process_metrics = mock.Mock()
@@ -80,11 +77,9 @@ class KibanaCheckTest(unittest.TestCase):
                              'file, nothing to do.')
 
     def test_failed_to_retrieve_data(self):
-        with contextlib.nested(
-                mock.patch.object(util, 'get_hostname'),
-                mock.patch.object(LOG, 'error'),
-                mock.patch.object(LOG, 'exception')
-        ) as (_, mock_log_error, mock_log_exception):
+        with mock.patch.object(util, 'get_hostname') as _,\
+                mock.patch.object(LOG, 'error') as mock_log_error,\
+                mock.patch.object(LOG, 'exception') as mock_log_exception:
             exception = Exception('oh')
             self.kibana_check._get_data = mock.Mock(
                 side_effect=exception)
@@ -108,10 +103,8 @@ class KibanaCheckTest(unittest.TestCase):
                              exception)
 
     def test_empty_data_returned(self):
-        with contextlib.nested(
-                mock.patch.object(util, 'get_hostname'),
-                mock.patch.object(LOG, 'warning')
-        ) as (_, mock_log_warning):
+        with mock.patch.object(util, 'get_hostname') as _, \
+                mock.patch.object(LOG, 'warning') as mock_log_warning:
             self.kibana_check._get_data = mock.Mock(return_value=None)
 
             self.kibana_check.check({
@@ -162,7 +155,7 @@ class KibanaCheckTest(unittest.TestCase):
     def test_check(self):
         fixture_file = os.path.dirname(
             os.path.abspath(__file__)) + '/fixtures/test_kibana.json'
-        response = json.load(file(fixture_file))
+        response = json.load(open(fixture_file))
 
         metrics = ['heap_size', 'heap_used', 'load',
                    'req_sec', 'resp_time_avg',

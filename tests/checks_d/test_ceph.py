@@ -23,25 +23,25 @@ from monasca_agent.collector.checks_d import ceph
 def mocked_check_output(args, shell=True, stderr=''):
     output = ''
     if '-f json df detail' in args:
-        output = file(os.path.dirname(os.path.abspath(__file__)) +
+        output = open(os.path.dirname(os.path.abspath(__file__)) +
                       '/fixtures/ceph/test_ceph-df.json')
     elif '-f json status' in args:
-        output = file(os.path.dirname(os.path.abspath(__file__)) +
+        output = open(os.path.dirname(os.path.abspath(__file__)) +
                       '/fixtures/ceph/test_ceph-status.json')
     elif 'status' in args:
-        output = file(os.path.dirname(os.path.abspath(__file__)) +
+        output = open(os.path.dirname(os.path.abspath(__file__)) +
                       '/fixtures/ceph/test_ceph-status.plain')
     elif '-f json osd df' in args:
-        output = file(os.path.dirname(os.path.abspath(__file__)) +
+        output = open(os.path.dirname(os.path.abspath(__file__)) +
                       '/fixtures/ceph/test_ceph-osd-df.json')
     elif '-f json osd perf' in args:
-        output = file(os.path.dirname(os.path.abspath(__file__)) +
+        output = open(os.path.dirname(os.path.abspath(__file__)) +
                       '/fixtures/ceph/test_ceph-osd-perf.json')
     elif '-f json osd dump' in args:
-        output = file(os.path.dirname(os.path.abspath(__file__)) +
+        output = open(os.path.dirname(os.path.abspath(__file__)) +
                       '/fixtures/ceph/test_ceph-osd-dump.json')
     elif '-f json osd pool stats' in args:
-        output = file(os.path.dirname(os.path.abspath(__file__)) +
+        output = open(os.path.dirname(os.path.abspath(__file__)) +
                       '/fixtures/ceph/test_ceph-osd-pool-stats.json')
     else:
         raise subprocess.CalledProcessError(1, cmd=args,

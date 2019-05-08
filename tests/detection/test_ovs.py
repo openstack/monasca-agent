@@ -11,7 +11,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import contextlib
 import logging
 import os
 import psutil
@@ -61,17 +60,17 @@ class TestOvs(unittest.TestCase):
     def _detect(self, ovs_obj, file_config_valid=True):
         ovs_obj.neutron_conf = None
         ovs_obj.available = False
-        with contextlib.nested(
-                patch.object(cfg, 'CONF'),
+
+        with patch.object(cfg, 'CONF') as mock_conf, \
                 patch.object(psutil, 'process_iter',
-                             return_value=[ps_util_get_proc()]),
-                patch.object(os.path, 'isfile', return_value=True),
-                patch.object(ovs_obj, 'dependencies_installed',
-                             return_value=True),
+                             return_value=[ps_util_get_proc()]) \
+                        as mock_process_iter, \
+                patch.object(os.path, 'isfile', return_value=True) \
+                        as mock_isfile,\
+                patch.object(ovs_obj, 'dependencies_installed', return_value=True) \
+                        as dependencies,\
                 patch.object(ovs_obj, '_is_neutron_conf_valid',
-                             return_value=file_config_valid)) as (
-                                     mock_conf, mock_process_iter,
-                                     mock_isfile, dependencies, _):
+                             return_value=file_config_valid) as _:
             ovs_obj._detect()
             self.assertTrue(mock_process_iter.called)
             if not ps_util_get_proc.cmdLine:
@@ -83,15 +82,13 @@ class TestOvs(unittest.TestCase):
         ovs_obj.conf.default_config_dirs = os.path.abspath(os.path.join(ovs_obj.neutron_conf, os.pardir))
         with patch.object(configparser, 'SafeConfigParser') as mock_config_parser:
             config_parser_obj = mock_config_parser.return_value
-            with contextlib.nested(
-                    patch.object(cfg, 'CONF'),
-                    patch.object(LOG, 'info'),
+
+            with patch.object(cfg, 'CONF') as mock_conf, \
+                    patch.object(LOG, 'info') as mock_log_info,\
                     patch.object(ovs_obj, 'has_option',
-                                     side_effect=self.has_option),
+                                 side_effect=self.has_option) as mock_has_option, \
                     patch.object(ovs_obj, 'get_option',
-                                     side_effect=self.get_value)) as (
-                                             mock_conf, mock_log_info,
-                                             mock_has_option, mock_get):
+                                 side_effect=self.get_value) as mock_get:
                 result = ovs_obj.build_config()
                 if dependencies_installed:
                     self.assertTrue(mock_log_info.called)
@@ -181,17 +178,15 @@ class TestOvs(unittest.TestCase):
     def test_detect_conf_file_path_given(self):
         self.ovs_obj.neutron_conf = None
         self.ovs_obj.args = {'conf_file_path': '/opt/stack/neutron.conf'}
-        with contextlib.nested(
-                patch.object(utils, 'load_oslo_configuration'),
+
+        with patch.object(utils, 'load_oslo_configuration') as mock_conf, \
                 patch.object(psutil, 'process_iter',
-                             return_value=[ps_util_get_proc()]),
-                patch.object(os.path, 'isfile', return_value=True),
+                             return_value=[ps_util_get_proc()]) as mock_process_iter, \
+                patch.object(os.path, 'isfile', return_value=True) as mock_isfile, \
                 patch.object(self.ovs_obj, 'dependencies_installed',
-                             return_value=True),
+                             return_value=True) as dependencies, \
                 patch.object(self.ovs_obj, '_is_neutron_conf_valid',
-                             return_value=True)) as (
-                                     mock_conf, mock_process_iter,
-                                     mock_isfile, dependencies, _):
+                             return_value=True) as _:
             self.ovs_obj._detect()
             self.assertTrue(mock_isfile.called)
             self.assertTrue(self.ovs_obj.available)
@@ -285,10 +280,9 @@ class TestOvs(unittest.TestCase):
         self.ovs_obj.neutron_conf = 'neutron-conf'
         self.ovs_obj.args = {'included_interface_re': '[',
                              'neutron_refresh': 13000}
-        with contextlib.nested(
-                patch.object(re, 'compile', side_effect=re.error),
-                patch.object(LOG, 'exception')) as (
-                    mock_re_error, mock_log):
+
+        with patch.object(re, 'compile', side_effect=re.error('error')) as mock_re_error, \
+                patch.object(LOG, 'exception') as mock_log:
             self.assertRaises(Exception, self._build_config_with_arg, self.ovs_obj)
             self.assertTrue(mock_re_error.called)
             self.assertTrue(mock_log.called)

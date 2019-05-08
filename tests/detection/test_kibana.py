@@ -12,13 +12,13 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import contextlib
 import logging
 import os
 import unittest
 import mock
 import psutil
 import json
+import six
 
 from monasca_setup.detection.plugins import kibana
 
@@ -66,18 +66,13 @@ class KibanaDetectionTest(unittest.TestCase):
         kibana_plugin.available = False
         psutil_mock = PSUtilGetProc()
 
-        process_iter_patch = mock.patch.object(psutil, 'process_iter',
-                                               return_value=[psutil_mock])
-        isfile_patch = mock.patch.object(os.path, 'isfile',
-                                         return_value=config_is_file)
-        deps_installed_patch = mock.patch.object(kibana_plugin,
-                                                 'dependencies_installed',
-                                                 return_value=deps_installed)
-
-        with contextlib.nested(process_iter_patch,
-                               isfile_patch,
-                               deps_installed_patch) as (
-                mock_process_iter, mock_isfile, mock_deps_installed):
+        with mock.patch.object(psutil, 'process_iter',
+                               return_value=[psutil_mock]) as mock_process_iter, \
+                mock.patch.object(os.path, 'isfile',
+                                  return_value=config_is_file) as mock_isfile, \
+                mock.patch.object(kibana_plugin,
+                                  'dependencies_installed',
+                                  return_value=deps_installed) as mock_deps_installed:
             kibana_plugin._detect()
             self.assertTrue(mock_process_iter.called)
             self.assertTrue(mock_isfile.called)
@@ -96,7 +91,7 @@ class KibanaDetectionTest(unittest.TestCase):
         for instance in kibana_check['instances']:
             self.assertIn('metrics', instance)
             self.assertEqual(list, type(instance['metrics']))
-            self.assertItemsEqual(_KIBANA_METRICS, instance['metrics'])
+            six.assertCountEqual(self, _KIBANA_METRICS, instance['metrics'])
 
     def _verify_process_conf(self, process_check, kibana_user):
         # minimize check here, do not check how process should work
@@ -168,17 +163,11 @@ class KibanaDetectionTest(unittest.TestCase):
         self.assertTrue(self.kibana_plugin.available)
 
     def test_build_config_unreadable_config(self):
-        patch_log_error = mock.patch.object(LOG, 'error')
-        patch_log_exception = mock.patch.object(LOG, 'exception')
-        patch_read_config = mock.patch.object(self.kibana_plugin,
-                                              '_read_config',
-                                              side_effect=Exception('oh'))
-
-        with contextlib.nested(
-                patch_log_error,
-                patch_log_exception,
-                patch_read_config
-        ) as (mock_log_error, mock_log_exception, _):
+        with mock.patch.object(LOG, 'error') as mock_log_error, \
+                mock.patch.object(LOG, 'exception') as mock_log_exception, \
+                mock.patch.object(self.kibana_plugin,
+                                  '_read_config',
+                                  side_effect=Exception('oh')) as _:
             self.kibana_plugin.build_config()
 
             self.assertEqual(mock_log_error.call_count, 1)
@@ -192,15 +181,11 @@ class KibanaDetectionTest(unittest.TestCase):
 
     def test_build_config_https_support(self):
         config = ('localhost', 5700, 'https')
-        patch_log_error = mock.patch.object(LOG, 'error')
-        patch_read_config = mock.patch.object(self.kibana_plugin,
-                                              '_read_config',
-                                              return_value=config)
 
-        with contextlib.nested(
-                patch_log_error,
-                patch_read_config
-        ) as (mock_log_error, _):
+        with mock.patch.object(LOG, 'error') as mock_log_error, \
+                mock.patch.object(self.kibana_plugin,
+                                  '_read_config',
+                                  return_value=config) as _:
             self.assertIsNone(self.kibana_plugin.build_config())
 
             self.assertEqual(mock_log_error.call_count, 1)
@@ -209,19 +194,14 @@ class KibanaDetectionTest(unittest.TestCase):
 
     def test_build_config_no_metric_support(self):
         config = ('localhost', 5700, 'http')
-        patch_log_warning = mock.patch.object(LOG, 'warning')
-        patch_read_config = mock.patch.object(self.kibana_plugin,
-                                              '_read_config',
-                                              return_value=config)
-        has_metric_patch = mock.patch.object(self.kibana_plugin,
-                                             '_has_metrics_support',
-                                             return_value=False)
 
-        with contextlib.nested(
-                patch_log_warning,
-                patch_read_config,
-                has_metric_patch
-        ) as (patch_log_warning, _, __):
+        with mock.patch.object(LOG, 'warning') as patch_log_warning,\
+                mock.patch.object(self.kibana_plugin,
+                                  '_read_config',
+                                  return_value=config) as _,\
+                mock.patch.object(self.kibana_plugin,
+                                  '_has_metrics_support',
+                                  return_value=False) as __:
             self.assertIsNone(self.kibana_plugin.build_config())
 
             self.assertEqual(patch_log_warning.call_count, 1)
@@ -249,30 +229,26 @@ class KibanaDetectionTest(unittest.TestCase):
 
         fixture_file = (os.path.dirname(os.path.abspath(__file__))
                         + '/../checks_d/fixtures/test_kibana.json')
-        response = json.load(file(fixture_file))
+        response = json.load(open(fixture_file))
 
         get_metric_req_ret = mock.Mock(
             wraps=JsonResponse(response)
         )
 
-        patch_read_config = mock.patch.object(self.kibana_plugin,
-                                              '_read_config',
-                                              return_value=kibana_cfg)
-        has_metric_patch = mock.patch.object(self.kibana_plugin,
-                                             '_has_metrics_support',
-                                             return_value=True)
-        get_metrics_patch = mock.patch.object(self.kibana_plugin,
-                                              '_get_metrics_request',
-                                              return_value=get_metric_req_ret)
-
         self.kibana_plugin.args = {'kibana-user': kibana_user}
 
-        with contextlib.nested(patch_read_config,
-                               has_metric_patch,
-                               get_metrics_patch):
+        with mock.patch.object(self.kibana_plugin,
+                               '_read_config',
+                               return_value=kibana_cfg) as patch_read_config,\
+                mock.patch.object(self.kibana_plugin,
+                                  '_has_metrics_support',
+                                  return_value=True) as has_metrics_patch,\
+                mock.patch.object(self.kibana_plugin,
+                                  '_get_metrics_request',
+                                  return_value=get_metric_req_ret) as get_metrics_patch:
             conf = self.kibana_plugin.build_config()
             self.assertIsNotNone(conf)
 
-            self.assertItemsEqual(['kibana', 'process'], conf.keys())
+            six.assertCountEqual(self, ['kibana', 'process'], conf.keys())
             self._verify_kibana_conf(conf['kibana'], kibana_url)
             self._verify_process_conf(conf['process'], kibana_user)

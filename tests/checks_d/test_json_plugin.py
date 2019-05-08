@@ -19,6 +19,8 @@ import tempfile
 import os
 import unittest
 
+from oslo_utils import encodeutils
+
 from monasca_agent.collector.checks_d import json_plugin
 import monasca_agent.common.config
 
@@ -31,7 +33,7 @@ def _create_agent_conf():
     tempdir = tempfile.mkdtemp()
     conf_file = os.path.join(tempdir, 'agent.yaml')
     with open(conf_file, 'wb') as fd:
-        fd.write(
+        fd.write(encodeutils.safe_encode(
             """
             Logging:
               collector_log_file: /var/log/monasca/agent/collector.log
@@ -42,7 +44,7 @@ def _create_agent_conf():
               check_freq: 60
               dimensions: {{}}
               hostname: {hostname}
-            """.format(hostname=HOSTNAME)
+            """.format(hostname=HOSTNAME), incoming="utf-8")
         )
 
     config_obj = monasca_agent.common.config.Config(conf_file)
@@ -186,6 +188,11 @@ class JsonPluginCheckTest(unittest.TestCase):
         file1 = os.path.join(tempdir, 'file1.json')
         with open(file1, mode='w') as fd:
             fd.write('{')
+        try:
+            with open(file1, 'r') as f:
+                json.load(f)
+        except (ValueError, TypeError) as e:
+            errmsg = 'failed parsing json: %s' %  e
         self.json_plugin.check({'dimensions': {},
                                 'metrics_file': file1})
         rmtree(tempdir, ignore_errors=True)
@@ -193,10 +200,7 @@ class JsonPluginCheckTest(unittest.TestCase):
             fake_now = now
             expected = [{'metric': 'monasca.json_plugin.status', 'value': 1,
                          'dimensions': {'hostname': HOSTNAME},
-                         'value_meta': {
-                             'msg': '%s: failed parsing json: Expecting'
-                                    ' object: line 1'
-                                    ' column 1 (char 0)' % file1}}]
+                         'value_meta': {'msg': '%s: %s' % (file1, errmsg)}}]
             differs = metricsDiffer(expected, self.json_plugin._metrics)
             self.assertEqual('', differs, msg=differs)
 

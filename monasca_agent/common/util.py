@@ -33,6 +33,7 @@ import uuid
 import logging
 import logging.handlers
 from numbers import Number
+from oslo_utils import encodeutils
 from six import integer_types
 
 log = logging.getLogger(__name__)
@@ -418,7 +419,7 @@ def get_hostname():
                 p = subprocess.Popen(['/bin/hostname', '-f'], stdout=subprocess.PIPE)
                 out, err = p.communicate()
                 if p.returncode == 0:
-                    return out.strip()
+                    return encodeutils.safe_decode(out.strip(), incoming='utf-8')
             except Exception:
                 return None
 

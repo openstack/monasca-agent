@@ -86,11 +86,16 @@ class TestDynamicCheckHelper(unittest.TestCase):
     def testMeasurements(self):
         metrics = self.run_check()
         for m in metrics:
-            print "metric: {0}, dimensions: {1}".format(m['measurement']['name'], repr(m['measurement']['dimensions']))
-        metric1 = sorted(filter(lambda m: m['measurement']['name'] == 'dynhelper.messages_avg', metrics))
-        metric2 = sorted(filter(lambda m: m['measurement']['name'] == 'dynhelper.messages_total', metrics))
-        metric3 = sorted(filter(lambda m: m['measurement']['name'] == 'dynhelper.testgroup.req_responses_ok', metrics))
-        metric4 = sorted(filter(lambda m: m['measurement']['name'] == 'dynhelper.testgroup.sec_auth_total', metrics))
+            print("metric: {0}, dimensions: {1}".format(m['measurement']['name'], repr(m['measurement']['dimensions'])))
+
+        def sortfilter(name):
+            filterd = filter(lambda m: m['measurement']['name'] == name, metrics)
+            return sorted(filterd, key=lambda m:m['measurement']['timestamp'])
+
+        metric1 = sortfilter('dynhelper.messages_avg')
+        metric2 = sortfilter('dynhelper.messages_total')
+        metric3 = sortfilter('dynhelper.testgroup.req_responses_ok')
+        metric4 = sortfilter('dynhelper.testgroup.sec_auth_total')
         self.assertTrue(len(metric1) > 0,
                         'gauge dynhelper.messages_avg missing in metric list {0}'.format(repr(metrics)))
         self.assertEqual(metric1[0]['measurement']['dimensions'],
