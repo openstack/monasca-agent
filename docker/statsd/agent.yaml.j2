@@ -1,0 +1,10 @@
+Main:
+  non_local_traffic: {{ NON_LOCAL_TRAFFIC | default(True) }}
+  forwarder_url: {{ FORWARDER_URL | default("http://localhost:17123") }}
+
+Statsd:
+  monasca_statsd_port : {{ STATSD_PORT | default(8125) }}
+
+Logging:
+  log_level: {{ LOG_LEVEL | default('WARN') }}
+  disable_file_logging: True
