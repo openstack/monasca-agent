@@ -56,7 +56,7 @@ Agent Plugin details
 `github.com/openstack/monasca-agent/docs/Plugins.md <https://github.com/openstack/monasca-agent/blob/master/docs/Plugins.md>`__
 
 * License: Simplified BSD License
-* Source: http://git.openstack.org/cgit/openstack/monasca-agent
+* Source: https://opendev.org/openstack/monasca-agent
 * Bugs: https://storyboard.openstack.org/#!/project/861 (please use `bug` tag)
 
 .. |Team and repository tags| image:: https://governance.openstack.org/tc/badges/monasca-agent.svg
