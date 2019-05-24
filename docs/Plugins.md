@@ -2424,7 +2424,7 @@ The process checks return the following metrics ( if detailed is set to true, ot
 
 On Linux, if the Agent is not run as root or the owner of the process the io metrics and the open_file_descriptors metric will fail to be reported if the mon-agent user does not have permission to get it for the process.
 
-## Prometheus Client
+## Prometheus
 This plugin is for scraping metrics from endpoints that are created by prometheus client libraries - https://prometheus.io/docs/instrumenting/clientlibs/
 
 It can be configured in two ways. One being manually setting all the endpoints that you want to scrape. The other being
