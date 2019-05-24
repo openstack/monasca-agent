@@ -44,16 +44,16 @@ setup plugins, written in Python. See the "Agent Customizations"
 detailed documentation.
 
 Agent
-`github.com/openstack/monasca-agent/blob/master/docs/Agent.md <https://github.com/openstack/monasca-agent/blob/master/docs/Agent.md>`__
+    https://opendev.org/openstack/monasca-agent/src/branch/master/docs/Agent.md
 
 Agent Customizations
-`github.com/openstack/monasca-agent/docs/Customizations.md <https://github.com/openstack/monasca-agent/blob/master/docs/Customizations.md>`__
+    https://opendev.org/openstack/monasca-agent/src/branch/master/docs/Customizations.md
 
 Monasca Metrics
-`github.com/openstack/monasca-agent/docs/MonascaMetrics.md <https://github.com/openstack/monasca-agent/blob/master/docs/MonascaMetrics.md>`__
+    https://opendev.org/openstack/monasca-agent/src/branch/master/docs/MonascaMetrics.md
 
 Agent Plugin details
-`github.com/openstack/monasca-agent/docs/Plugins.md <https://github.com/openstack/monasca-agent/blob/master/docs/Plugins.md>`__
+    https://opendev.org/openstack/monasca-agent/src/branch/master/docs/Plugins.md
 
 * License: Simplified BSD License
 * Source: https://opendev.org/openstack/monasca-agent

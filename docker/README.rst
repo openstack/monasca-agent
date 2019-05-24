@@ -9,7 +9,7 @@ with cAdvisor service.
 
 Building monasca-base image
 ===========================
-See https://github.com/openstack/monasca-common/tree/master/docker/README.rst
+See https://opendev.org/openstack/monasca-common/src/branch/master/docker/README.rst
 
 
 Building Monasca Agent images
@@ -254,7 +254,7 @@ templates with access to all environment variables.
 
 Links
 ~~~~~
-https://github.com/openstack/monasca-agent/blob/master/README.rst
+https://opendev.org/openstack/monasca-agent/src/branch/master/README.rst
 
 .. _`Downward API`: https://kubernetes.io/docs/user-guide/downward-api/
 .. _`standard Docker environments`: https://github.com/google/cadvisor#quick-start-running-cadvisor-in-a-docker-container
