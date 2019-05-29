@@ -1,5 +1,5 @@
 ARG DOCKER_IMAGE=monasca/agent-forwarder
-ARG APP_REPO=https://git.openstack.org/openstack/monasca-agent
+ARG APP_REPO=https://review.opendev.org/openstack/monasca-agent
 
 # Branch, tag or git hash to build from.
 ARG REPO_VERSION=master
