@@ -46,8 +46,8 @@ class InfluxDB(detection.Plugin):
 
         dependencies_installed = self.dependencies_installed()
 
-        self.available = (process_found and config_file_found
-                          and dependencies_installed)
+        self.available = (process_found and config_file_found and
+                          dependencies_installed)
 
         if not self.available:
             err_chunks = []
