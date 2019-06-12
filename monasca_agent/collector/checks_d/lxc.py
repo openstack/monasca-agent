@@ -15,7 +15,7 @@ import re
 
 import monasca_agent.collector.checks as checks
 
-_LXC_CGROUP_PWD = '/sys/fs/cgroup'
+_LXC_CGROUP_PWD = '/sys/fs/cgroup'  # nosec B105
 _LXC_CGROUP_CPU_PWD = '{0}/cpu/lxc'.format(_LXC_CGROUP_PWD)
 _LXC_CGROUP_CPUSET_PWD = '{0}/cpuset/lxc'.format(_LXC_CGROUP_PWD)
 _LXC_CGROUP_MEM_PWD = '{0}/memory/lxc'.format(_LXC_CGROUP_PWD)
