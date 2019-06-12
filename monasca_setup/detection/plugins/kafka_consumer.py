@@ -158,8 +158,8 @@ class Kafka(Plugin):
                     values = line.split(',')
                     # There will be always 7 values in output
                     # after splitting the line by ,
-                    if (values and len(values)
-                            == _CONSUMER_GROUP_COMMAND_LINE_VALUES_LEN):
+                    if (values and len(values) ==
+                            _CONSUMER_GROUP_COMMAND_LINE_VALUES_LEN):
                         topics[values[_VIA_KAFKA_TOPIC_INDEX].strip()] = []
                 if len(topics.keys()):
                     consumers[consumer_group] = topics

@@ -74,8 +74,8 @@ class Ovs(detection.Plugin):
         has_dependencies = self.dependencies_installed()
         neutron_conf = self._get_ovs_config_file() if process_exist else ''
         neutron_conf_exists = os.path.isfile(neutron_conf)
-        neutron_conf_valid = (neutron_conf_exists
-                              and self._is_neutron_conf_valid(neutron_conf))
+        neutron_conf_valid = (neutron_conf_exists and
+                              self._is_neutron_conf_valid(neutron_conf))
 
         self.available = (process_exist is not None and
                           neutron_conf_valid and has_dependencies)

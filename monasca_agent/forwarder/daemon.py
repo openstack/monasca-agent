@@ -116,7 +116,7 @@ class Forwarder(tornado.web.Application):
             (r"/intake/?", AgentInputHandler)
         ]
 
-        settings = dict(
+        settings = dict(  # nosec B106
             cookie_secret="12oETzKXQAGaYdkL5gEmGeJJFuYh7EQnp2XdTP1o/Vo=",
             xsrf_cookies=False,
             debug=False,
