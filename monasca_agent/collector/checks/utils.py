@@ -97,7 +97,7 @@ class KubernetesConnector(object):
     in a Kubernetes environment
     """
     CACERT_PATH = '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
-    TOKEN_PATH = '/var/run/secrets/kubernetes.io/serviceaccount/token'
+    TOKEN_PATH = '/var/run/secrets/kubernetes.io/serviceaccount/token'  # nosec B105
 
     def __init__(self, connection_timeout):
         self.api_url = None
