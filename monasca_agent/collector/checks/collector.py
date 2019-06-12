@@ -63,8 +63,8 @@ class Collector(util.Dimensions):
                     # to an integer which holds the collection round the
                     # plugin should get called on.
                     derived_collect_periods = (
-                        ((check.init_config['collect_period'] - 1)
-                         / agent_config['check_freq']) + 1)
+                        ((check.init_config['collect_period'] - 1) /
+                         agent_config['check_freq']) + 1)
             self.collection_times[check.name] = {
                 'check': check,
                 'last_collect_time': 99999999,

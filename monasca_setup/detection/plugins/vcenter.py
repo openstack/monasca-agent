@@ -80,11 +80,11 @@ class VCenter(Plugin):
                 cfg_section = 'vmware'
 
                 # extract the vmware config from nova.conf and build instances
-                if (nova_cfg.has_option(cfg_section, 'host_ip')
-                        and nova_cfg.has_option(cfg_section, 'host_username')
-                        and nova_cfg.has_option(cfg_section, 'host_password')
-                        and nova_cfg.has_option(cfg_section, 'host_port')
-                        and nova_cfg.has_option(cfg_section, 'cluster_name')):
+                if (nova_cfg.has_option(cfg_section, 'host_ip') and
+                        nova_cfg.has_option(cfg_section, 'host_username') and
+                        nova_cfg.has_option(cfg_section, 'host_password') and
+                        nova_cfg.has_option(cfg_section, 'host_port') and
+                        nova_cfg.has_option(cfg_section, 'cluster_name')):
 
                     instance = {
                         'vcenter_ip': nova_cfg.get(cfg_section, 'host_ip'),
