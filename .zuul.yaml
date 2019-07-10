@@ -9,8 +9,6 @@
             voting: false
         - monasca-tempest-python3-influxdb:
             voting: false
-        - monasca-tempest-java-influxdb:
-            voting: false
     post:
       jobs:
         - publish-monasca-agent-docker-images
