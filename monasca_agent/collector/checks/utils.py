@@ -322,7 +322,7 @@ class DynamicCheckHelper(object):
                 self._metric_to_group[iname] = {}
                 self._groups[iname] = []
                 if groups:
-                    self._groups[iname] = groups.keys()
+                    self._groups[iname] = list(groups.keys())
                     self._grp_metric_map[iname] = {}
                     self._grp_metric_cache[iname] = {}
                     self._grp_dimension_map[iname] = {}
@@ -831,7 +831,8 @@ class DynamicCheckHelper(object):
     @staticmethod
     def _normalize_metricname(metric, match_groups=None):
         # map metric name first
-        if match_groups and match_groups.lastindex > 0:
+        if match_groups and match_groups.lastindex \
+                and match_groups.lastindex > 0:
             metric = '_'.join(match_groups.groups())
 
         metric = re.sub(

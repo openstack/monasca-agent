@@ -11,7 +11,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import contextlib
 import logging
 import os
 import psutil
@@ -56,9 +55,8 @@ class TestProcessCheck(unittest.TestCase):
         isfile_patch = patch.object(os.path, 'isfile',
                                     return_value=config_is_file)
 
-        with contextlib.nested(process_iter_patch,
-                               isfile_patch) as (
-                mock_process_iter, mock_isfile):
+        with process_iter_patch as mock_process_iter, \
+                isfile_patch as mock_isfile:
             proc_plugin._detect()
             if by_process_name:
                 self.assertTrue(mock_process_iter.called)
@@ -159,10 +157,11 @@ class TestProcessCheck(unittest.TestCase):
                          'vertica')
 
     def test_input_yaml_file(self):
-        # note: The previous tests will cover all yaml data variations, since the data is translated into a single dictionary.
-        fd, temp_path = tempfile.mkstemp(suffix='.yaml')
-        os.write(fd, '---\nprocess_config:\n- process_username: dbadmin\n  dimensions:\n    '
-                 'service: monitoring\n    component: vertica\n')
+        # note: The previous tests will cover all yaml data variations, since
+        # the data is translated into a single dictionary.
+        fd, temp_path = tempfile.mkstemp(suffix='.yaml', text=True)
+        os.write(fd, b'---\nprocess_config:\n- process_username: dbadmin\n  dimensions:\n    '
+                 b'service: monitoring\n    component: vertica\n')
         self.proc_plugin.args = {'conf_file_path': temp_path}
         self.proc_plugin._detect()
         result = self.proc_plugin.build_config()

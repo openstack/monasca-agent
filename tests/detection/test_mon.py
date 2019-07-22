@@ -17,6 +17,7 @@ import unittest
 import logging
 import mock
 import psutil
+import six
 
 from monasca_setup.detection.plugins import mon
 
@@ -185,8 +186,12 @@ class TestMonPersisterDetectionPlugin(unittest.TestCase):
             admin_port=6666
         )
 
+        mod = "builtins.open"
+        if six.PY2:
+            mod = "__builtin__.open"
+
         with mock.patch(
-                "__builtin__.open",
+                mod,
                 mock.mock_open(read_data=yml_cfg)) as mf:
             self._detect(retval=[fake_processes])
             mf.assert_called_once_with('/etc/monasca/persister-config.yml',
@@ -255,8 +260,12 @@ class TestMonPersisterDetectionPlugin(unittest.TestCase):
             admin_port=admin_port
         )
 
+        mod = "builtins.open"
+        if six.PY2:
+            mod = "__builtin__.open"
+
         with mock.patch(
-                "__builtin__.open",
+                mod,
                 mock.mock_open(read_data=yml_cfg)) as mf:
             self._detect(retval=[fake_processes])
             conf = self._build_config()
@@ -491,8 +500,12 @@ class TestMonAPIDetectionPlugin(unittest.TestCase):
             hibernate_enabled=False
         )
 
+        mod = "builtins.open"
+        if six.PY2:
+            mod = "__builtin__.open"
+
         with mock.patch(
-                "__builtin__.open",
+                mod,
                 mock.mock_open(read_data=yml_cfg)) as mock_file:
             self._detect(retval=[fake_processes])
             mock_file.assert_called_once_with('/etc/monasca/api-config.yml',
@@ -606,8 +619,12 @@ class TestMonAPIDetectionPlugin(unittest.TestCase):
             hibernate_enabled=hibernate_enabled
         )
 
+        mod = "builtins.open"
+        if six.PY2:
+            mod = "__builtin__.open"
+
         with mock.patch(
-                "__builtin__.open",
+                mod,
                 mock.mock_open(read_data=yml_cfg)) as mf:
             self._detect(retval=[fake_processes])
             conf = self._build_config()

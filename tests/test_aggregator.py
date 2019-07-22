@@ -276,7 +276,7 @@ class TestMetricsAggregator(unittest.TestCase):
         dimensions = {'A': 'B', 'B': 'C', 'D': 'E'}
         value_meta_value = ""
         num_value_meta = 10
-        for i in range(0, metric_validator.VALUE_META_VALUE_MAX_LENGTH/num_value_meta):
+        for i in range(0, metric_validator.VALUE_META_VALUE_MAX_LENGTH//num_value_meta):
             value_meta_value = '{}{}'.format(value_meta_value, '1')
 
         value_meta = {}

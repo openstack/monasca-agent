@@ -13,6 +13,7 @@
 
 import mock
 import os.path
+import six
 import tempfile
 import unittest
 
@@ -80,7 +81,7 @@ class TestConfig(unittest.TestCase):
         conf_file = os.path.join(tempdir, 'agent.yaml')
         with open(conf_file, 'wb') as fd:
             fd.write(
-                """
+                b"""
                 Logging:
                   collector_log_file: /var/log/monasca/agent/collector.log
                   forwarder_log_file: /var/log/monasca/agent/forwarder.log
@@ -127,5 +128,5 @@ class TestConfig(unittest.TestCase):
     def test_verify_common_config_opts(self):
         opts = util.get_parsed_args(prog='test')
         opts_dict = vars(opts[0])
-        self.assertItemsEqual(['config_file', 'clean', 'verbose'],
-                              opts_dict.keys())
+        six.assertCountEqual(self, ['config_file', 'clean', 'verbose'],
+                             opts_dict.keys())
