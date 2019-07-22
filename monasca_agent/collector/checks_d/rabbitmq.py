@@ -267,7 +267,7 @@ class RabbitMQ(checks.AgentCheck):
 
         if len(data) > max_detailed:
             self.log.warning(
-                "Too many %s to fetch.  Increase max_detailed_ in the config"
+                "Too many %s to fetch.  Increase max_detailed_ in the config "
                 "or results will be truncated." %
                 object_type)
 
