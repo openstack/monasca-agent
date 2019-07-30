@@ -142,9 +142,9 @@ statsd.timing('pipeline', 2468.34)      # Pipeline took 2468.34 ms to execute
 statsd.gauge('gaugething', 3.14159265)  # 'gauge' would be the preferred metric type for Monitoring
 ```
 
-## StatsD Protocol Compatiblity
+## StatsD Protocol Compatibility
 
-The moansca-statsd daemon supports the following parts of the StatsD protocol and its extensions:
+The monasca-statsd daemon supports the following parts of the StatsD protocol and its extensions:
 
 StatsD 1.0
 * counters

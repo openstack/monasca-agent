@@ -143,7 +143,7 @@ Kubernetes Connector is a class within [monasca-collector utils](monasca_agent/c
 that is used for connecting to the Kubernetes API from within a container that is running in a k8 cluster.
 
 When a container is brought up in Kubernetes by default there are environmental variables passed in that include needed
-configurations to connect to the API. Also, the cacert and token that is tied to the serviceaccount the container is
+configurations to connect to the API. Also, the cacert and token that is tied to the service account the container is
 under is mounted to the container file system. This class processes both and allows requests to the Kubernetes API.
 
 # License
