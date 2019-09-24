@@ -157,7 +157,7 @@ class Server(object):
         return dimensions
 
     def submit_packets(self, packets):
-        for packet in packets.split("\n"):
+        for packet in packets.split(b"\n"):
 
             if not packet.strip():
                 continue
