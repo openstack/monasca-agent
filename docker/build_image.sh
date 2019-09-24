@@ -56,3 +56,7 @@ cd "$(dirname "$REAL_PATH")/../docker/"
 printf "\n\n\n"
 
 ./forwarder/build_image.sh "$@"
+
+printf "\n\n\n"
+
+./statsd/build_image.sh "$@"
