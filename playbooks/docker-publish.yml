@@ -13,3 +13,6 @@
 
     - name: Push to Docker Hub all agent-forwarder tags
       shell: "docker push monasca/agent-forwarder"
+
+    - name: Push to Docker Hub all statsd tags
+      shell: "docker push monasca/statsd"
