@@ -30,6 +30,7 @@
   - [Check_MK_Local](#check_mk_local)
   - [Ceph](#ceph)
   - [Certificate Expiration (HTTPS)](#certificate-expiration-https)
+  - [Certificate Expiration (PEM File)](#certificate-expiration-file)
   - [Congestion](#congestion)
   - [Couch](#couch)
   - [Couchbase](#couchbase)
@@ -143,6 +144,7 @@ The following plugins are delivered via setup as part of the standard plugin che
 | cacti |  |  |
 | cAdvisor_host |  |  |
 | cert_check |  |  |
+| cert_file_check |  |  |
 | check_mk_local |  |  |
 | couch |  |  |
 | couchbase |  |  |
@@ -323,6 +325,7 @@ These are the detection plugins included with the Monasca Agent.  See [Customiza
 | ceilometer | ServicePlugin |
 | ceph | Plugin |
 | cert_check | ArgsPlugin |
+| cert_file_check | ArgsPlugin |
 | check_mk_local | Plugin |
 | cinder | ServicePlugin |
 | cloudkitty | ServicePlugin |
@@ -865,6 +868,78 @@ These options can be set if desired:
 * ciphers: list of ciphers to use.  default is HIGH:-aNULL:-eNULL:-PSK:RC4-SHA:RC4-MD5
 * collect_period: Integer time in seconds between outputting the metric.  Since the metric is in days, it makes sense to output it at a slower rate. The default is 3600, once per hour
 * timeout: Float time in seconds before timing out the connect to the url.  Increase if needed for very slow servers, but making this too long will increase the time this plugin takes to run if the server for the url is down. The default is 1.0 seconds
+
+## Certificate Expiration (PEM file)
+An extension to the Agent provides the ability to determine the expiration date
+of the PEM formatted X.509 certificate in a file. The metric is days until the
+certificate expires. If the given certificate has already expired, it will
+return a negative number. For example, if the certificate has already expired
+5 days prior to the check, -5 will be returned.
+
+Notice that the days till expiration value is calculated based on every 24
+hours block, rounded down. For example, if the certificate will be expiring in
+23 hours, the days till expiration value will be 0. Here are some more
+examples.
+
+| Certificate Expiration Date | Plugin Execution Date | cert_file.cert_expire_days |
+| --------------------------- | --------------------- | -------------------------- |
+| Nov  1 23:00:50 2019 GMT | Oct  29 23:01:00 2019 GMT | 2 |
+| Nov  1 23:00:50 2019 GMT | Oct  30 23:01:00 2019 GMT | 1 |
+| Nov  1 23:00:50 2019 GMT | Nov  1 10:00:50 2019 GMT | 0 |
+| Nov  1 23:00:50 2019 GMT | Nov  1 23:01:50 2019 GMT | 0 |
+| Nov  1 23:00:50 2019 GMT | Nov  2 23:01:50 2019 GMT | -1 |
+| Nov  1 23:00:50 2019 GMT | Nov  3 23:23:00 2019 GMT | -2 |
+
+The following dimensions are included with the metric by default:
+```
+    cert_file: cert_file
+```
+
+### Configuration
+A YAML file (cert_file_check.yaml) contains the list of cert_files to check.
+
+The configuration of the certificate expiration check is done in YAML, and consists of two keys:
+
+* init_config
+* instances
+
+The init_config section lists the global configuration settings, such as the
+period (in seconds) at which to output the metric. The default value for
+collect_period is 1 hour (3600 seconds). To change it to emit metric every
+24 hours, set it to 86400.
+
+```yaml
+init_config:
+  collect_period: 3600
+```
+
+The instances section contains the urls to check.
+
+```yaml
+instances:
+- built_by: CertificateFileCheck
+  cert_file: /etc/myservice/myservice.pem
+- built_by: CertificateFileCheck
+  cert_file: /etc/ssl/myotherservice.pem
+```
+
+The certicate expiration checks return the following metrics
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| cert_file.cert_expire_days | cert_file=supplied certificate file being checked | The number of days until the certificate expires
+
+
+There is a detection plugin that should be used to configure this extension. It is invoked as:
+
+    $ monasca-setup -d CertificateFileCheck -a "cert_files=/etc/myservice/myservice.pem,/etc/myotherservice/myotherservice.pem"
+
+The cert_files option is a comma separated list of certificate files to check.
+
+These options can be set if desired:
+* collect_period: Integer time in seconds between outputting the metric.
+Since the metric is in days, it makes sense to output it at a slower rate.
+The default is 3600, once per hour
 
 ## Congestion
 
