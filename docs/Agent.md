@@ -21,7 +21,7 @@ The Monasca Agent is the component of the [Monasca](https://wiki.openstack.org/w
 
 A metric is identified by a name and dimensions.  The fields required in a metric are name, timestamp, and value.  A metric can also have 0..n dimensions.  Some standard dimensions are sent with all metrics that are sent by the agent.
 
-<img src="https://github.com/openstack/monasca-agent/raw/master/docs/monasca-agent_arch.png" alt="Monasca Agent Diagram">
+![Monasca Agent Diagram](monasca-agent_arch.png)
 
 The flow of the agent application goes like this:
 
