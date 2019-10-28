@@ -232,8 +232,8 @@ class ElasticSearch(AgentCheck):
             # ES versions 0.90.10 and above
             # Metrics architecture changed starting with version 0.90.10
             self.HEALTH_URL = "/_cluster/health?pretty=true"
-            self.STATS_URL = "/_nodes/stats?all=true"
-            self.NODES_URL = "/_nodes?network=true"
+            self.STATS_URL = "/_nodes/stats/_all"
+            self.NODES_URL = "/_nodes/_all"
 
             additional_metrics = {
                 "elasticsearch.search.fetch.open_contexts": ("gauge",
