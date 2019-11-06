@@ -459,6 +459,7 @@ instances:
 | mem.used_cached |  | Mbytes of memory used for the page cache
 | mem.used_shared  |  | Mbytes of memory shared between separate processes and typically used for inter-process communication
 | mem.used_real_mb |  | Mbytes of memory currently in use less mem.used_buffers and mem.used_cached
+| mem.used_slab_mb  |  | Mbytes of memory currently allocated to slab. Requires psutil >=5.4.4.
 
 ### Disk
 | Metric Name | Dimensions | Semantics |

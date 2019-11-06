@@ -97,4 +97,11 @@ class Memory(checks.AgentCheck):
                        dimensions=dimensions)
             count += 1
 
+        # The slab metric was added in psutil 5.4.4
+        if hasattr(mem_info, 'slab') and mem_info.slab:
+            self.gauge('mem.used_slab_mb',
+                       int(mem_info.slab / 1048576),
+                       dimensions=dimensions)
+            count += 1
+
         log.debug('Collected {0} memory metrics'.format(count))
