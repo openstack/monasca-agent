@@ -30,7 +30,7 @@
   - [Check_MK_Local](#check_mk_local)
   - [Ceph](#ceph)
   - [Certificate Expiration (HTTPS)](#certificate-expiration-https)
-  - [Certificate Expiration (PEM File)](#certificate-expiration-file)
+  - [Certificate Expiration (PEM File)](#certificate-expiration-pem-file)
   - [Congestion](#congestion)
   - [Couch](#couch)
   - [Couchbase](#couchbase)
