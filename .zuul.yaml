@@ -1,12 +1,9 @@
 - project:
     templates:
-      - openstack-python-jobs
       - openstack-python3-ussuri-jobs
     check:
       jobs:
         - build-monasca-docker-image
-        - monasca-tempest-python2-influxdb:
-            voting: false
         - monasca-tempest-python3-influxdb:
             voting: false
     post:
