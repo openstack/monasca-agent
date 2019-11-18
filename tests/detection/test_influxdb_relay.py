@@ -70,7 +70,7 @@ class TestInfluxDBRelayDetection(base.BaseTestCase):
     def setUp(self):
         super(TestInfluxDBRelayDetection, self).setUp()
         with mock.patch.object(ir.InfluxDBRelay, '_detect') as mock_detect:
-            self._ir = ir.InfluxDBRelay('inflxudb-relay')
+            self._ir = ir.InfluxDBRelay('influxdb-relay')
             self.assertTrue(mock_detect.called)
 
     def test_should_not_configure_if_no_process(self):
