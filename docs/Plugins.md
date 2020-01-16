@@ -50,6 +50,7 @@
   - [Host Alive](#host-alive)
   - [HTTP (endpoint status)](#http-endpoint-status)
   - [HTTP Metrics](#http-metrics)
+  - [Infiniband](#infiniband)
   - [InfluxDB](#influxdb)
   - [InfluxDB-Relay](#influxdb-relay)
   - [IIS](#iis)
@@ -343,6 +344,7 @@ These are the detection plugins included with the Monasca Agent.  See [Customiza
 | heat | ServicePlugin |
 | host_alive | ArgsPlugin |
 | http_check | ArgsPlugin |
+| ib_network | Plugin |
 | ironic | ServicePlugin |
 | kafka_consumer | Plugin |
 | keystone | ServicePlugin |
@@ -1536,6 +1538,31 @@ instances:
               path: gauges/jvm.memory.total.max/value
               type: gauge
 ```
+
+## Infiniband
+
+This section describes the Infiniband metrics check (IBNetwork) that can be performed by the agent.
+
+The plugin reads network traffic counters for all IB devices from /sys/class/infiniband/.
+
+Auto-detection for this plugin yields a basic configuration file, with no configuration
+options:
+
+ib_network.yaml:
+```yaml
+init_config:
+
+instances:
+- built_by: IBNetworkDetect
+  name: ib_network_stats
+```
+
+The following metrics are provided:
+
+| Metric Name | Dimensions | Semantics |
+| ----------- | ---------- | --------- |
+| net.in_bytes_sec | device | Number of network bytes received per second
+| net.out_bytes_sec | device | Number of network bytes sent per second
 
 ## InfluxDB
 
