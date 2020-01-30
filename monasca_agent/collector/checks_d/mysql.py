@@ -101,6 +101,7 @@ class MySql(checks.AgentCheck):
         # Metric collection
         self._collect_metrics(host, db, dimensions, options)
         self._collect_system_metrics(host, db, dimensions)
+        db.close()
 
     @staticmethod
     def _get_config(instance):
