@@ -41,7 +41,7 @@ log = logging.getLogger(__name__)
 
 VALID_HOSTNAME_RFC_1123_PATTERN = re.compile(
     r"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*"
-    "([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$")
+    r"([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$")
 MAX_HOSTNAME_LEN = 255
 LOGGING_MAX_BYTES = 5 * 1024 * 1024
 
@@ -571,7 +571,7 @@ def load_check_directory():
             try:
                 c = check_class(check_name, init_config=init_config,
                                 agent_config=agent_config, instances=instances)
-            except TypeError as e:
+            except TypeError:
                 # Backwards compatibility for checks which don't support the
                 # instances argument in the constructor.
                 c = check_class(check_name, init_config=init_config,

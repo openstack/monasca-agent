@@ -30,7 +30,7 @@ class Keystone(monasca_setup.detection.ServicePlugin):
                               'keystone-main',
                               'keystone-all'],
             'service_api_url': 'http://localhost:35357/v3',
-            'search_pattern': '.*v3\..*'
+            'search_pattern': r'.*v3\..*'
         }
 
         super(Keystone, self).__init__(service_params)

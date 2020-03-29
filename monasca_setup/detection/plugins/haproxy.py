@@ -60,7 +60,7 @@ class HAProxy(monasca_setup.detection.Plugin):
             password = None
             for line in proxy_cfg.splitlines():
                 if line.startswith('listen'):
-                    listen_match = re.search('^listen.*stats\S*\s(.*)', line)
+                    listen_match = re.search(r'^listen.*stats\S*\s(.*)', line)
                     if listen_match is None:
                         continue
                     listen_socket = listen_match.group(1).split(':', 1)
@@ -71,7 +71,7 @@ class HAProxy(monasca_setup.detection.Plugin):
                     port = listen_socket[1].strip()
                     url = 'http://{0}:{1}'.format(host, port)
                 if url is not None and line.strip().startswith('stats auth'):
-                    auth = re.search('stats auth\s(.*)', line).group(1).split(':')
+                    auth = re.search(r'stats auth\s(.*)', line).group(1).split(':')
                     user = auth[0].strip()
                     password = auth[1].strip()
 

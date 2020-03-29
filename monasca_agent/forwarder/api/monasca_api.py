@@ -153,10 +153,10 @@ class MonascaAPI(object):
             self._mon_client.metrics.create(**kwargs)
             return True
         except exceptions.ClientException as ex:
-                log.exception("ClientException: error sending "
-                              "message to monasca-api.")
-                self._failure_reason = ('Error sending message to '
-                                        'the Monasca API: {0}').format(str(ex))
+            log.exception("ClientException: error sending "
+                          "message to monasca-api.")
+            self._failure_reason = ('Error sending message to '
+                                    'the Monasca API: {0}').format(str(ex))
         except Exception:
             log.exception("Error sending message to Monasca API.")
             self._failure_reason = 'The Monasca API is DOWN or unreachable'

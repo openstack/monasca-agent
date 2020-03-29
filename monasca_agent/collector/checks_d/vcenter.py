@@ -617,7 +617,7 @@ class VcenterOperations(object):
                     instance = perf_metric_series_csv.id.instance
                     if (instance is not None and
                         len(instance) > 0 and
-                            instance is not "*"):
+                            instance != "*"):
                         name += "." + instance
                     perf_result[name] = perf_metric_series_csv.value
 

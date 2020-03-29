@@ -339,6 +339,7 @@ def run_check(check):
     check.get_metrics(prettyprint=True)
     print("#" * 80 + "\n\n")
 
+
 if __name__ == '__main__':
     try:
         sys.exit(main())

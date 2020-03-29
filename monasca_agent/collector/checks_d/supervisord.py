@@ -67,6 +67,7 @@ PROCESS_TAG = 'supervisord_process'
 def _format_time(x):
     return time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(x))
 
+
 SERVER_SERVICE_CHECK = 'supervisord.can_connect'
 PROCESS_SERVICE_CHECK = 'supervisord.process.status'
 PROCESS_UP_TIME_CHECK = 'supervisord.process.uptime'
@@ -101,7 +102,7 @@ class Supervisord(checks.AgentCheck):
                 'An error occurred while reading process information: %s %s'
                 % (error.faultCode, error.faultString)
             )
-        except socket.error as error:
+        except socket.error:
             host = instance.get('host', DEFAULT_HOST)
             port = instance.get('port', DEFAULT_PORT)
             sock = instance.get('socket')

@@ -55,6 +55,7 @@ class HDFSCheck(AgentCheck):
         self.gauge('hdfs.missing_blocks', stats['missing_blocks'], dimensions=dimensions)
         self.gauge('hdfs.corrupt_blocks', stats['corrupt_blocks'], dimensions=dimensions)
 
+
 if __name__ == '__main__':
     check, instances = HDFSCheck.from_yaml('./hdfs.yaml')
     for instance in instances:

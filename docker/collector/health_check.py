@@ -20,7 +20,7 @@
 
 def main():
     """Health check for Monasca-agent collector."""
-    # TODO wait for health check endpoint ...
+    # TODO(Dobroslaw Zybort) wait for health check endpoint ...
     return 0
 
 

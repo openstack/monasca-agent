@@ -362,7 +362,7 @@ class _DropwizardJavaHelper(object):
     * monasca-persister [**Java**]
     """
 
-    YAML_PATTERN = re.compile('.*\.ya?ml', re.IGNORECASE)
+    YAML_PATTERN = re.compile(r'.*\.ya?ml', re.IGNORECASE)
 
     def __init__(self, cmdline=None):
         self._cmdline = cmdline
