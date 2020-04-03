@@ -171,7 +171,6 @@ class Libvirt(plugin.Plugin):
                             ' '.join(ping_cmd))
                     log.info(
                         "\tEnabling ping checks using {0}".format(ping_cmd[0]))
-                    init_config['ping_check'] = True
                     break
             if init_config['ping_check'] is False:
                 log.warn('\tUnable to find suitable ping command, '
