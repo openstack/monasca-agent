@@ -5,9 +5,6 @@
 import logging
 import os
 import pwd
-from shutil import copy
-import subprocess
-import sys
 
 from oslo_config import cfg
 from oslo_utils import importutils
@@ -39,7 +36,7 @@ ping_options = [["/usr/bin/fping", "-n", "-c1", "-t250", "-q"],
                 ["/bin/ping", "-n", "-c1", "-w1", "-q"],
                 ["/usr/bin/ping", "-n", "-c1", "-w1", "-q"]]
 # Path to 'ip' command (needed to execute ping within network namespaces)
-ip_cmd = "/sbin/ip"
+ip_cmd = "sudo /bin/ip"
 # How many ping commands to run concurrently
 default_max_ping_concurrency = 8
 # Disk metrics can be collected at a larger interval than other vm metrics
@@ -135,54 +132,27 @@ class Libvirt(plugin.Plugin):
             log.warn("\tUnable to determine agent user. Skipping ping checks.")
             return
 
-        try:
-            client = importutils.try_import('neutronclient.v2_0.client',
-                                            False)
-            if not client:
-                log.warning(
-                    '\tpython-neutronclient module missing, '
-                    'required for ping checks.')
-                return
+        client = importutils.try_import('neutronclient.v2_0.client',
+                                        False)
+        if not client:
+            log.warning(
+                '\tpython-neutronclient module missing, '
+                'required for ping checks.')
+            return
 
-            # Copy system 'ip' command to local directory
-            copy(ip_cmd, sys.path[0])
-
-            # Restrict permissions on the local 'ip' command
-            os.chown("{0}/ip".format(sys.path[0]),
-                     *self._get_user_uid_gid(self._agent_user))
-            os.chmod("{0}/ip".format(sys.path[0]),
-                     0o700)
-
-            # Set capabilities on 'ip' which will allow
-            # self.agent_user to exec commands in namespaces
-            setcap_cmd = ['/sbin/setcap', 'cap_sys_admin+ep',
-                          "{0}/ip".format(sys.path[0])]
-            subprocess.Popen(setcap_cmd, stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-            # Verify that the capabilities were set
-            setcap_cmd.extend(['-v', '-q'])
-            subprocess.check_call(setcap_cmd)
-            # Look for the best ping command
-            for ping_cmd in ping_options:
-                if os.path.isfile(ping_cmd[0]):
-                    init_config[
-                        'ping_check'] = "{0}/ip netns exec NAMESPACE {1}".format(
-                            sys.path[0],
-                            ' '.join(ping_cmd))
-                    log.info(
-                        "\tEnabling ping checks using {0}".format(ping_cmd[0]))
-                    break
-            if init_config['ping_check'] is False:
-                log.warn('\tUnable to find suitable ping command, '
-                         'disabling ping checks.')
-        except IOError:
-            log.warn('\tUnable to copy {0}, '
-                     'ping checks disabled.'.format(ip_cmd))
-            pass
-        except (subprocess.CalledProcessError, OSError):
-            log.warn('\tUnable to set up ping checks, '
-                     'setcap failed ({0})'.format(' '.join(setcap_cmd)))
-            pass
+        # Look for the best ping command
+        for ping_cmd in ping_options:
+            if os.path.isfile(ping_cmd[0]):
+                init_config[
+                    'ping_check'] = "{0} netns exec NAMESPACE {1}".format(
+                        ip_cmd,
+                        ' '.join(ping_cmd))
+                log.info(
+                    "\tEnabling ping checks using {0}".format(ping_cmd[0]))
+                break
+        if init_config['ping_check'] is False:
+            log.warn('\tUnable to find suitable ping command, '
+                     'disabling ping checks.')
 
     def dependencies_installed(self):
         return importutils.try_import('novaclient.client', False)
