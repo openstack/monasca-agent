@@ -10,7 +10,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import mock
+from unittest import mock
 import unittest
 from collections import defaultdict
 from tempfile import mkdtemp

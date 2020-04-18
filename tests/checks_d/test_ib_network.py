@@ -12,9 +12,9 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from unittest import mock
 import unittest
 
-import mock
 
 import monasca_agent.collector.checks_d.ib_network as ib_network
 

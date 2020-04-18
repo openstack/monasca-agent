@@ -13,7 +13,7 @@
 # under the License.
 
 from collections import namedtuple
-import mock
+from unittest import mock
 import unittest
 
 from oslo_config import cfg

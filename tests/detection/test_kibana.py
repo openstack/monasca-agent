@@ -14,8 +14,8 @@
 
 import logging
 import os
+from unittest import mock
 import unittest
-import mock
 import psutil
 import json
 import six

@@ -14,8 +14,8 @@
 
 import os
 import logging
+from unittest import mock
 import unittest
-import mock
 import json
 import random
 

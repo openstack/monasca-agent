@@ -14,10 +14,10 @@
 
 import datetime
 import logging
-import mock
 import os
 import shutil
 import tempfile
+from unittest import mock
 import unittest
 
 from cryptography import x509

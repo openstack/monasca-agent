@@ -12,7 +12,7 @@
 # under the License.
 
 import collections
-import mock
+from unittest import mock
 import unittest
 
 import monasca_setup

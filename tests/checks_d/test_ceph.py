@@ -11,9 +11,9 @@
 # under the License.
 
 import json
-import mock
 import os
 import subprocess
+from unittest import mock
 import unittest
 
 from monasca_agent.common import util

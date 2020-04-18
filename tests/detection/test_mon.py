@@ -12,10 +12,10 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 import random
+from unittest import mock
 import unittest
 
 import logging
-import mock
 import psutil
 import six
 
