@@ -18,9 +18,9 @@ import copy
 import json
 import logging
 
-from osc_lib import exceptions
-
+from keystoneauth1.exceptions import base as keystoneauth_exception
 from monascaclient import client
+from osc_lib import exceptions
 
 from monasca_agent.common import keystone
 
@@ -136,17 +136,20 @@ class MonascaAPI(object):
             self._post(tenant_group[tenant], tenant)
 
     def _get_mon_client(self):
-        k = keystone.Keystone(self._config)
-        endpoint = k.get_monasca_url()
-        session = k.get_session()
-        c = client.Client(
-            api_version=self._api_version,
-            endpoint=endpoint,
-            session=session,
-            timeout=self.write_timeout,
-            **keystone.get_args(self._config)
-        )
-        return c
+        try:
+            k = keystone.Keystone(self._config)
+            endpoint = k.get_monasca_url()
+            session = k.get_session()
+            c = client.Client(
+                api_version=self._api_version,
+                endpoint=endpoint,
+                session=session,
+                timeout=self.write_timeout,
+                **keystone.get_args(self._config)
+            )
+            return c
+        except keystoneauth_exception.ClientException as ex:
+            log.error('Failed to initialize Monasca client. {}'.format(ex))
 
     def _send_message(self, **kwargs):
         try:
