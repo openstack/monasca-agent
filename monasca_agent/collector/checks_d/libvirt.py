@@ -24,6 +24,7 @@ import os
 import re
 import stat
 import subprocess
+import tempfile
 import time
 
 from calendar import timegm
@@ -684,20 +685,30 @@ class LibvirtCheck(AgentCheck):
         dims_operations_ip = dims_operations.copy()
         dims_customer_ip['ip'] = net['ip']
         dims_operations_ip['ip'] = net['ip']
-        with open(os.devnull, "w") as fnull:
+        res = 0
+        with tempfile.TemporaryFile() as tfile:
             try:
                 self.log.debug("Running ping test: {0}".format(' '.join(ping_cmd)))
-                res = subprocess.call(ping_cmd,
-                                      stdout=fnull,
-                                      stderr=fnull)
-                tenant_id = instance_cache.get(inst_name)['tenant_id']
-                hostname = instance_cache.get(inst_name)['hostname']
-                return (res, dims_customer_ip, dims_operations_ip, tenant_id,
-                        hostname)
-
+                subprocess.check_call(ping_cmd,
+                                      stdout=tfile,
+                                      stderr=subprocess.STDOUT)
+                tfile.seek(0)
+                self.log.debug("Output from running '{0}' is: '{1}'".format
+                               (' '.join(ping_cmd), tfile.read()))
+            except subprocess.CalledProcessError as ce:
+                tfile.seek(0)
+                res = ce.returncode
+                self.log.debug("Exception from '{0}' command is: '{1}'".format
+                               (' '.join(ping_cmd), tfile.read()))
             except Exception as e:
                 self.log.exception("OS error running '{0}' failed".format(ping_cmd), e)
                 raise e
+
+            tenant_id = instance_cache.get(inst_name)['tenant_id']
+            hostname = instance_cache.get(inst_name)['hostname']
+            self.log.debug("Metric value of ping check {0} is: {1}".format
+                           (' '.join(ping_cmd), res))
+            return (res, dims_customer_ip, dims_operations_ip, tenant_id, hostname)
 
     def _check_ping_results(self, ping_results):
         """Iterate through ping results and create measurements"""
