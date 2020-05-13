@@ -66,7 +66,8 @@ class TCPCheck(ServicesCheck):
         addr, port, socket_type, timeout, response_time = self._load_conf(instance)
         dimensions = self._set_dimensions(None, instance)
         if instance.get('host'):
-            dimensions.update({'url': '%s:%s'.format(instance.get('host'), port)})
+            dimensions.update({'url': '{}:{}'.format(instance.get('host'),
+                                                     port)})
         start = time.time()
         try:
             self.log.debug("Connecting to %s %s" % (addr, port))

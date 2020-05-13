@@ -407,8 +407,8 @@ class Ceph(checks.AgentCheck):
         # In Luminous the format of output parsed here changed slightly.
         # Check for both known variations.
         ceph_status_plain = ceph_status_plain.split('\n')
-        for l in ceph_status_plain:
-            line = l.strip(' ')
+        for raw_line in ceph_status_plain:
+            line = raw_line.strip(' ')
             if line.startswith('recovery io') or line.startswith('recovery:'):
                 metrics.update(self._get_recovery_io(line))
             elif line.startswith('client io') or line.startswith('client:'):

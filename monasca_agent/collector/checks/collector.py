@@ -267,7 +267,7 @@ class Collector(util.Dimensions):
         if len(self.collection_results) >= self.pool_size:
             self.pool_full_count += 1
             if (self.pool_full_count > self.pool_full_max_retries):
-                log.error('Thread Pool full and %d plugins still running for ' +
+                log.error('Thread Pool full and %d plugins still running for '
                           '%d collection cycles, exiting' %
                           (len(self.collection_results), self.pool_full_count))
                 os._exit(1)
