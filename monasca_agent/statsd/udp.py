@@ -159,6 +159,7 @@ class Server(object):
     def submit_packets(self, packets):
         for packet in packets.split(b"\n"):
 
+            packet = packet.decode("utf-8")
             if not packet.strip():
                 continue
 
