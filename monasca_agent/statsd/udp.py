@@ -16,6 +16,8 @@ import logging
 import select
 import socket
 
+from oslo_utils import encodeutils
+
 import monasca_agent.common.metrics as metrics_pkg
 
 log = logging.getLogger(__name__)
@@ -159,6 +161,7 @@ class Server(object):
     def submit_packets(self, packets):
         for packet in packets.split(b"\n"):
 
+            packet = encodeutils.safe_decode(packet)
             if not packet.strip():
                 continue
 
