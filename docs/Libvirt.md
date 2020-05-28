@@ -314,30 +314,54 @@ Memory statistics require a balloon driver on the VM.  For the Linux kernel, thi
 Since separate metrics are sent to the VM's owner as well as Operations, all metric names designed for Operations are prefixed with "vm." to easily distinguish between VM metrics and compute host's metrics.
 
 ### Ping Checks
-The Libvirt plugin provides the ability to perform an ICMP ping test against hosted VMs.
-It is helpful for determining, for example, if a VM is in a panicked or halted state, which in both cases may appear to the hypervisor as "Running / OK."  However, in order for ping checks to work, certain environmental requirements must be met.
+The Libvirt plugin provides the ability to perform an ICMP ping test
+againsthosted VMs.  It is helpful for determining, for example, if a VM is in a
+panicked or halted state, which in both cases may appear to the hypervisor as
+"Running / OK."  However, in order for ping checks to work, certain
+environmental requirements must be met.
 
 #### Requirements
-1. Neutron L3 agent in DVR mode (legacy mode is supported on single-node installations, such as devstack).
-2. Neutron L2 plugin with a tenant network type of `vlan` or `vxlan` (other types may be supported, but have not been tested).
-3. The `python-neutronclient` library and its dependencies installed and available to the Monasca Agent
-4. Each VM needs an appropriate security group configuration to allow ICMP
-5. A sudoers entry for the monasca-agent user needs to be created which allows access to /bin/ip. For example:
-
-Defaults:monasca-agent !requiretty
-Defaults:monasca-agent  secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-
-monasca-agent ALL = (root) NOPASSWD:/bin/ip
+1. Neutron L3 agent in DVR mode (legacy mode is supported on single-node
+   installations, such as devstack).
+2. Neutron L2 plugin with a tenant network type of `vlan` or `vxlan` (other
+   types may be supported, but have not been tested).
+3. The `python-neutronclient` library and its dependencies installed and
+   available to the Monasca Agent.
+4. Each VM needs an appropriate security group configuration to allow ICMP.
+5. Existance of `/bin/ip` with privilege to execute ping within network
+   namespaces. This can be achieved by granting `cap_sys_admin` capability or
+   configuring _sudoers_ entry for monasca-agent user. See
+   [Detection](#detection) for an example.
 
 #### Detection
-The monasca-setup detection plugin for libvirt performs the following tests and tasks before configuring ping checks:
+The monasca-setup detection plugin for libvirt performs the following tests and
+tasks before configuring ping checks:
 
-1. Ability to determine the name of the user under which monasca-agent processes run (eg, `mon-agent`)
-2. Availability of the `python-neutronclient` library (by attempting to import `client` from `neutronclient.v2_0`)
-3. Existance of /bin/ip. A separate enhanced-capabilities `ip` command exists:
-4. Existence of a ping command; detection will try `/usr/bin/fping`, `/sbin/fping`, and `/bin/ping` in that order.  `fping` is preferred because it allows for sub-second timeouts, but is not installed by default in some Linux distributions.
+1. Availability of the `python-neutronclient` library (by attempting to import
+   `client` from `neutronclient.v2_0`)
+2. Existence of a ping command; detection will try `/usr/bin/fping`,
+   `/sbin/fping`, and `/bin/ping` in that order.  `fping` is preferred because
+   it allows for sub-second timeouts, but is not installed by default in some
+   Linux distributions.
 
-If any of the above requirements fail, a WARN-level message is output, describing the problem.  The libvirt plugin will continue to function without these requirements, but ping checks will be disabled.
+If any of the above requirements fail, a WARN-level message is output,
+describing the problem.  The libvirt plugin will continue to function without
+these requirements, but ping checks will be disabled.
+
+The detection plugin configures the ping check command with _sudo_:
+
+`ping_check: sudo /bin/ip ...`
+
+Please provide respective _sudoers_ configuration to allow this. For example:
+
+```
+Defaults:monasca-agent !requiretty
+Defaults:monasca-agent secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+monasca-agent ALL = (root) NOPASSWD:/bin/ip
+```
+
+See also [Troubleshooting](#troubleshooting).
 
 #### Algorithm
 Instance IP and namespace information is stored in the instance cache, rebuilt only when a new VM has been detected, or every 300 second (by default), whichever comes first.  Here is the general algorithm for how IP, namespace, and security parameters are detected.
