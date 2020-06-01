@@ -15,6 +15,7 @@ import fcntl
 import json
 from shutil import rmtree
 from socket import gethostname
+import mock
 import tempfile
 import os
 import unittest
@@ -23,9 +24,6 @@ from oslo_utils import encodeutils
 
 from monasca_agent.collector.checks_d import json_plugin
 import monasca_agent.common.config
-
-
-HOSTNAME = gethostname()
 
 
 def _create_agent_conf():
@@ -44,7 +42,7 @@ def _create_agent_conf():
               check_freq: 60
               dimensions: {{}}
               hostname: {hostname}
-            """.format(hostname=HOSTNAME), incoming="utf-8")
+            """.format(hostname='testhost'), incoming="utf-8")
         )
 
     config_obj = monasca_agent.common.config.Config(conf_file)
@@ -72,7 +70,9 @@ class MockJsonPlugin(json_plugin.JsonPlugin):
         )
         self._metrics = []
 
-    def check(self, instance):
+    @mock.patch("monasca_agent.common.util.get_hostname")
+    def check(self, instance, mock_host):
+        mock_host.return_value = "testhost"
         self._metrics = []
         return super(MockJsonPlugin, self).check(instance)
 
@@ -134,10 +134,10 @@ def make_expected(metrics, file_name, now, ts_override=None):
     for metric in list(metrics):
         if ts_override:
             metric['timestamp'] = ts_override
-        metric['dimensions'].update({'hostname': HOSTNAME})
+        metric['dimensions'].update({'hostname': 'testhost'})
         expected.append(metric)
     json_plugin_status = {'metric': 'monasca.json_plugin.status', 'value': 0,
-                          'dimensions': {'hostname': HOSTNAME},
+                          'dimensions': {'hostname': 'testhost'},
                           'timestamp': now}
     expected.append(json_plugin_status)
     return expected
@@ -159,7 +159,7 @@ class JsonPluginCheckTest(unittest.TestCase):
         self.assertEqual([], self.json_plugin.metrics_files)
         expected = [
             {'metric': 'monasca.json_plugin.status', 'value': 0,
-             'dimensions': {'hostname': HOSTNAME}}]
+             'dimensions': {'hostname': 'testhost'}}]
         differs = metricsDiffer(expected, self.json_plugin._metrics)
         self.assertEqual('', differs, msg=differs)
 
@@ -177,7 +177,7 @@ class JsonPluginCheckTest(unittest.TestCase):
 
         expected = [
             {'metric': 'monasca.json_plugin.status', 'value': 0,
-             'dimensions': {'hostname': HOSTNAME}}
+             'dimensions': {'hostname': 'testhost'}}
         ]
         differs = metricsDiffer(expected, self.json_plugin._metrics)
         self.assertEqual('', differs, msg=differs)
@@ -199,7 +199,7 @@ class JsonPluginCheckTest(unittest.TestCase):
         for now in [1000, 2000]:
             fake_now = now
             expected = [{'metric': 'monasca.json_plugin.status', 'value': 1,
-                         'dimensions': {'hostname': HOSTNAME},
+                         'dimensions': {'hostname': 'testhost'},
                          'value_meta': {'msg': '%s: %s' % (file1, errmsg)}}]
             differs = metricsDiffer(expected, self.json_plugin._metrics)
             self.assertEqual('', differs, msg=differs)
@@ -280,7 +280,7 @@ class JsonPluginCheckTest(unittest.TestCase):
         now = 2000
         fake_now = now
         expected = [{'metric': 'monasca.json_plugin.status', 'value': 1,
-                     'dimensions': {'hostname': HOSTNAME},
+                     'dimensions': {'hostname': 'testhost'},
                      'value_meta': {
                          'msg': '%s: Metrics are older than 500 seconds;'
                                 ' file not updating?' % file1}}]
@@ -321,7 +321,7 @@ class JsonPluginCheckTest(unittest.TestCase):
         # We don't get the metrics from the file again -- just the plugin
         # status metric
         expected = [{'metric': 'monasca.json_plugin.status', 'value': 0,
-                     'dimensions': {'hostname': HOSTNAME},
+                     'dimensions': {'hostname': 'testhost'},
                      'timestamp': now}]
         self.json_plugin.check({'dimensions': {},
                                'metrics_file': file1})
