@@ -16,8 +16,6 @@
 If you are writing your own checks you should subclass the AgentCheck class.
 The Check class is being deprecated so don't write new checks with it.
 """
-# This file uses 'print' as a function rather than a statement, a la Python3
-from __future__ import print_function
 
 import logging
 import os
