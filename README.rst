@@ -1,4 +1,4 @@
-Team and repository tags
+Openstack Monasca Agent
 ========================
 
 |Team and repository tags|
