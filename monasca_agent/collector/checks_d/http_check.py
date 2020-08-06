@@ -184,7 +184,7 @@ class HTTPCheck(services_checks.ServicesCheck):
             self._warn_msg.discard(addr)
 
             done = True
-            return True, content
+            return True, content.decode('utf-8')
 
     def _check(self, instance):
         addr = instance.get("url", None)
