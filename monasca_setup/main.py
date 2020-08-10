@@ -442,7 +442,7 @@ def parse_arguments(parser):
                         help="Statsd metric aggregation interval (seconds)",
                         default=20)
     parser.add_argument('--agent_service_name',
-                        help="agent's systemd/sysv service name",
+                        help="systemd/sysv service name of agent",
                         required=False,
                         default='monasca-agent')
     parser.add_argument('--enable_logrotate', help="Controls log file rotation", default=True)
