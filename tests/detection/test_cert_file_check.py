@@ -15,8 +15,6 @@
 import logging
 import unittest
 
-from mock import patch
-
 from monasca_setup.detection.plugins.cert_file_check import CertificateFileCheck
 
 LOG = logging.getLogger('monasca_setup.detection.plugins.cert_check')
@@ -26,21 +24,21 @@ class TestCertFileCheck(unittest.TestCase):
 
     def setUp(self):
         unittest.TestCase.setUp(self)
-        with patch.object(CertificateFileCheck, '_detect') as mock_detect:
+        with unittest.mock.patch.object(CertificateFileCheck, '_detect') as mock_detect:
             self.cert_obj = CertificateFileCheck('temp_dir')
             self.assertTrue(mock_detect.called)
             self.cert_obj.args = {'cert_files': '/etc/myservice/myserver.pem'}
 
     def test_detect(self):
         self.cert_obj.available = False
-        with patch.object(self.cert_obj, '_check_required_args',
+        with unittest.mock.patch.object(self.cert_obj, '_check_required_args',
                           return_value=True) as mock_check_required_args:
             self.cert_obj._detect()
             self.assertTrue(self.cert_obj.available)
             self.assertTrue(mock_check_required_args.called)
 
     def _build_config(self):
-        with patch.object(self.cert_obj, '_build_instance',
+        with unittest.mock.patch.object(self.cert_obj, '_build_instance',
                           return_value={}) as mock_build_instance:
             result = self.cert_obj.build_config()
             self.assertTrue(mock_build_instance.called)

@@ -15,12 +15,10 @@ import logging
 import os
 import psutil
 import re
-import unittest
+from unittest import mock
+from unittest import TestCase
 
 from oslo_config import cfg
-
-from mock import patch
-from mock.mock import MagicMock
 from six.moves import configparser
 
 from monasca_setup.detection import utils
@@ -45,15 +43,15 @@ class ps_util_get_proc:
             return ['/opt/fake.txt']
 
 
-class TestOvs(unittest.TestCase):
+class TestOvs(TestCase):
 
     def setUp(self):
-        unittest.TestCase.setUp(self)
-        with patch.object(Ovs, '_detect') as mock_detect:
+        TestCase.setUp(self)
+        with mock.patch.object(Ovs, '_detect') as mock_detect:
             self.ovs_obj = Ovs('temp_dir')
             self.has_option = [True, False, True, False, False, True]
-            self.get_value = [MagicMock(), MagicMock(), MagicMock(),
-                              MagicMock(), MagicMock(), 'http://10.10.10.10',
+            self.get_value = [mock.MagicMock(), mock.MagicMock(), mock.MagicMock(),
+                              mock.MagicMock(), mock.MagicMock(), 'http://10.10.10.10',
                               'region1']
             self.assertTrue(mock_detect.called)
 
@@ -61,34 +59,34 @@ class TestOvs(unittest.TestCase):
         ovs_obj.neutron_conf = None
         ovs_obj.available = False
 
-        with patch.object(cfg, 'CONF') as mock_conf, \
-                patch.object(psutil, 'process_iter',
-                             return_value=[ps_util_get_proc()]) \
+        with mock.patch.object(cfg, 'CONF') as mock_conf, \
+                mock.patch.object(psutil, 'process_iter',
+                                  return_value=[ps_util_get_proc()]) \
                         as mock_process_iter, \
-                patch.object(os.path, 'isfile', return_value=True) \
+                mock.patch.object(os.path, 'isfile', return_value=True) \
                         as mock_isfile,\
-                patch.object(ovs_obj, 'dependencies_installed', return_value=True) \
+                mock.patch.object(ovs_obj, 'dependencies_installed', return_value=True) \
                         as dependencies,\
-                patch.object(ovs_obj, '_is_neutron_conf_valid',
-                             return_value=file_config_valid) as _:
+                mock.patch.object(ovs_obj, '_is_neutron_conf_valid',
+                                  return_value=file_config_valid) as _:
             ovs_obj._detect()
             self.assertTrue(mock_process_iter.called)
             if not ps_util_get_proc.cmdLine:
                 self.assertFalse(mock_isfile.called)
 
     def _build_config(self, ovs_obj, dependencies_installed=True):
-        ovs_obj.conf = MagicMock()
+        ovs_obj.conf = mock.MagicMock()
         ovs_obj.conf.default_config_files = ovs_obj.neutron_conf
         ovs_obj.conf.default_config_dirs = os.path.abspath(os.path.join(ovs_obj.neutron_conf, os.pardir))
-        with patch.object(configparser, 'SafeConfigParser') as mock_config_parser:
+        with mock.patch.object(configparser, 'SafeConfigParser') as mock_config_parser:
             config_parser_obj = mock_config_parser.return_value
 
-            with patch.object(cfg, 'CONF') as mock_conf, \
-                    patch.object(LOG, 'info') as mock_log_info,\
-                    patch.object(ovs_obj, 'has_option',
-                                 side_effect=self.has_option) as mock_has_option, \
-                    patch.object(ovs_obj, 'get_option',
-                                 side_effect=self.get_value) as mock_get:
+            with mock.patch.object(cfg, 'CONF') as mock_conf, \
+                    mock.patch.object(LOG, 'info') as mock_log_info, \
+                    mock.patch.object(ovs_obj, 'has_option',
+                                      side_effect=self.has_option) as mock_has_option, \
+                    mock.patch.object(ovs_obj, 'get_option',
+                                      side_effect=self.get_value) as mock_get:
                 result = ovs_obj.build_config()
                 if dependencies_installed:
                     self.assertTrue(mock_log_info.called)
@@ -108,11 +106,11 @@ class TestOvs(unittest.TestCase):
                              13000)
             self.assertFalse(result['ovs']['init_config']['network_use_bits'])
             self.assertIsInstance(result['ovs']['init_config']['username'],
-                                  MagicMock)
+                                  mock.MagicMock)
             self.assertIsInstance(result['ovs']['init_config']['password'],
-                                  MagicMock)
+                                  mock.MagicMock)
             self.assertIsInstance(result['ovs']['init_config']['project_name'],
-                                  MagicMock)
+                                  mock.MagicMock)
             self.assertEqual(result['ovs']['init_config']['auth_url'],
                              'http://10.10.10.10')
             self.assertEqual(result['ovs']['init_config']['region_name'],
@@ -138,18 +136,18 @@ class TestOvs(unittest.TestCase):
         self.assertEqual(result['ovs']['init_config']['included_interface_re'],
                          'qg.*|vhu.*|sg.*')
         self.assertIsInstance(result['ovs']['init_config']['username'],
-                              MagicMock)
+                              mock.MagicMock)
         self.assertIsInstance(result['ovs']['init_config']['password'],
-                              MagicMock)
+                              mock.MagicMock)
         self.assertIsInstance(result['ovs']['init_config']['project_name'],
-                              MagicMock)
+                              mock.MagicMock)
         self.assertTrue(result['ovs']['init_config']['use_absolute_metrics'])
         self.assertTrue(result['ovs']['init_config']['use_rate_metrics'])
         self.assertTrue(result['ovs']['init_config']['use_health_metrics'])
         return result
 
     def test_detect(self):
-        with patch.object(utils, 'load_oslo_configuration'):
+        with mock.patch.object(utils, 'load_oslo_configuration'):
             self._detect(self.ovs_obj)
             self.assertTrue(self.ovs_obj.available)
             self.assertEqual(self.ovs_obj.neutron_conf,
@@ -162,13 +160,13 @@ class TestOvs(unittest.TestCase):
 
     def test_detect_devstack(self):
         ps_util_get_proc.cmdLine = ['--config-file=/opt/stack/neutron.conf']
-        with patch.object(utils, 'load_oslo_configuration'):
+        with mock.patch.object(utils, 'load_oslo_configuration'):
             self._detect(self.ovs_obj)
             self.assertTrue(self.ovs_obj.available)
             self.assertEqual(self.ovs_obj.neutron_conf, '/opt/stack/neutron.conf')
 
     def test_detect_info(self):
-        with patch.object(LOG, 'info') as mock_log_warn:
+        with mock.patch.object(LOG, 'info') as mock_log_warn:
             ps_util_get_proc.detect_warning = True
             self._detect(self.ovs_obj)
             self.assertFalse(self.ovs_obj.available)
@@ -179,14 +177,14 @@ class TestOvs(unittest.TestCase):
         self.ovs_obj.neutron_conf = None
         self.ovs_obj.args = {'conf_file_path': '/opt/stack/neutron.conf'}
 
-        with patch.object(utils, 'load_oslo_configuration') as mock_conf, \
-                patch.object(psutil, 'process_iter',
-                             return_value=[ps_util_get_proc()]) as mock_process_iter, \
-                patch.object(os.path, 'isfile', return_value=True) as mock_isfile, \
-                patch.object(self.ovs_obj, 'dependencies_installed',
-                             return_value=True) as dependencies, \
-                patch.object(self.ovs_obj, '_is_neutron_conf_valid',
-                             return_value=True) as _:
+        with mock.patch.object(utils, 'load_oslo_configuration') as mock_conf, \
+                mock.patch.object(psutil, 'process_iter',
+                                  return_value=[ps_util_get_proc()]) as mock_process_iter, \
+                mock.patch.object(os.path, 'isfile', return_value=True) as mock_isfile, \
+                mock.patch.object(self.ovs_obj, 'dependencies_installed',
+                                  return_value=True) as dependencies, \
+                mock.patch.object(self.ovs_obj, '_is_neutron_conf_valid',
+                                  return_value=True) as _:
             self.ovs_obj._detect()
             self.assertTrue(mock_isfile.called)
             self.assertTrue(self.ovs_obj.available)
@@ -198,7 +196,7 @@ class TestOvs(unittest.TestCase):
         self._build_config_without_args(self.ovs_obj)
 
     def test_build_config_with_args(self):
-        with patch.object(LOG, 'warn') as mock_log_warn:
+        with mock.patch.object(LOG, 'warn') as mock_log_warn:
             self.ovs_obj.neutron_conf = 'neutron-conf'
             self.ovs_obj.args = {'username': 'admin',
                                  'password': 'password',
@@ -218,7 +216,7 @@ class TestOvs(unittest.TestCase):
         self.assertEqual(result, False)
 
     def test_build_config_invalid_arg_warning(self):
-        with patch.object(LOG, 'warn') as mock_log_warn:
+        with mock.patch.object(LOG, 'warn') as mock_log_warn:
             self.ovs_obj.neutron_conf = 'neutron-conf'
             self.ovs_obj.args = {'username': 'admin',
                                  'password': 'password',
@@ -239,8 +237,8 @@ class TestOvs(unittest.TestCase):
     def test_build_config_if_auth_version(self):
         self.ovs_obj.neutron_conf = 'neutron-conf'
         self.has_option = [True, False, True, False, True, True]
-        self.get_value = [MagicMock(), MagicMock(), MagicMock(), MagicMock(),
-                          MagicMock(), 'http://10.10.10.10',
+        self.get_value = [mock.MagicMock(), mock.MagicMock(), mock.MagicMock(), mock.MagicMock(),
+                          mock.MagicMock(), 'http://10.10.10.10',
                           'http://10.10.10.10', 'region1']
         result = self._build_config_without_args(self.ovs_obj)
         self.assertEqual(result['ovs']['init_config']['auth_url'],
@@ -249,8 +247,8 @@ class TestOvs(unittest.TestCase):
     def test_build_config_if_auth_url_has_version(self):
         self.ovs_obj.neutron_conf = 'neutron-conf'
         self.has_option = [True, False, True, False, True, True]
-        self.get_value = [MagicMock(), MagicMock(), MagicMock(), MagicMock(),
-                          MagicMock(), 'http://10.10.10.10/v1',
+        self.get_value = [mock.MagicMock(), mock.MagicMock(), mock.MagicMock(), mock.MagicMock(),
+                          mock.MagicMock(), 'http://10.10.10.10/v1',
                           'http://10.10.10.10/v1', 'region1']
         result = self._build_config_without_args(self.ovs_obj)
         self.assertEqual(result['ovs']['init_config']['auth_url'],
@@ -259,8 +257,8 @@ class TestOvs(unittest.TestCase):
     def test_build_config_region_name_from_nova(self):
         self.ovs_obj.neutron_conf = 'neutron-conf'
         self.has_option = [True, False, True, False, False, False]
-        self.get_value = [MagicMock(), MagicMock(), MagicMock(), MagicMock(),
-                          MagicMock(), 'http://10.10.10.10', 'region2']
+        self.get_value = [mock.MagicMock(), mock.MagicMock(), mock.MagicMock(), mock.MagicMock(),
+                          mock.MagicMock(), 'http://10.10.10.10', 'region2']
         result = self._build_config_without_args(self.ovs_obj)
         self.assertEqual(result['ovs']['init_config']['auth_url'],
                          'http://10.10.10.10')
@@ -281,8 +279,8 @@ class TestOvs(unittest.TestCase):
         self.ovs_obj.args = {'included_interface_re': '[',
                              'neutron_refresh': 13000}
 
-        with patch.object(re, 'compile', side_effect=re.error('error')) as mock_re_error, \
-                patch.object(LOG, 'exception') as mock_log:
+        with mock.patch.object(re, 'compile', side_effect=re.error('error')) as mock_re_error, \
+                mock.patch.object(LOG, 'exception') as mock_log:
             self.assertRaises(Exception, self._build_config_with_arg, self.ovs_obj)
             self.assertTrue(mock_re_error.called)
             self.assertTrue(mock_log.called)

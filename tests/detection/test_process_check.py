@@ -17,8 +17,6 @@ import psutil
 import tempfile
 import unittest
 
-from mock import patch
-
 from monasca_setup.detection.plugins.process import ProcessCheck
 
 LOG = logging.getLogger('monasca_setup.detection.plugins.process')
@@ -39,7 +37,7 @@ class TestProcessCheck(unittest.TestCase):
 
     def setUp(self):
         unittest.TestCase.setUp(self)
-        with patch.object(ProcessCheck, '_detect') as mock_detect:
+        with unittest.mock.patch.object(ProcessCheck, '_detect') as mock_detect:
             self.proc_plugin = ProcessCheck('temp_dir')
             self.assertTrue(mock_detect.called)
 
@@ -50,9 +48,9 @@ class TestProcessCheck(unittest.TestCase):
         proc_plugin.available = False
         psutil_mock = PSUtilGetProc()
 
-        process_iter_patch = patch.object(psutil, 'process_iter',
-                                          return_value=[psutil_mock])
-        isfile_patch = patch.object(os.path, 'isfile',
+        process_iter_patch = unittest.mock.patch.object(psutil, 'process_iter',
+                                                        return_value=[psutil_mock])
+        isfile_patch = unittest.mock.patch.object(os.path, 'isfile',
                                     return_value=config_is_file)
 
         with process_iter_patch as mock_process_iter, \

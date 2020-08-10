@@ -12,8 +12,8 @@
 # under the License.
 
 import collections
-import mock
-import unittest
+from unittest import mock
+from unittest import TestCase
 
 import monasca_setup
 import monasca_setup.agent_config
@@ -160,7 +160,7 @@ INPUT_ARGS_WITH_DIMENSIONS = collections.namedtuple(
                   "template_dir", "dimensions"])
 
 
-class TestRemoveConfig(unittest.TestCase):
+class TestRemoveConfig(TestCase):
     """ Unit tests for removing_config function in monasca_setup/main.py
         More details are documented in:
         monasca-agent/docs/DeveloperDocs/agent_internals.md

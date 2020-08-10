@@ -14,8 +14,6 @@
 import logging
 import unittest
 
-from mock import patch
-
 from monasca_setup.detection.plugins.cert_check import CertificateCheck
 
 LOG = logging.getLogger('monasca_setup.detection.plugins.cert_check')
@@ -25,21 +23,21 @@ class TestCertCheck(unittest.TestCase):
 
     def setUp(self):
         unittest.TestCase.setUp(self)
-        with patch.object(CertificateCheck, '_detect') as mock_detect:
+        with unittest.mock.patch.object(CertificateCheck, '_detect') as mock_detect:
             self.cert_obj = CertificateCheck('temp_dir')
             self.assertTrue(mock_detect.called)
             self.cert_obj.args = {'urls': 'http://fake-cert.com'}
 
     def test_detect(self):
         self.cert_obj.available = False
-        with patch.object(self.cert_obj, '_check_required_args',
+        with unittest.mock.patch.object(self.cert_obj, '_check_required_args',
                           return_value=True) as mock_check_required_args:
             self.cert_obj._detect()
             self.assertTrue(self.cert_obj.available)
             self.assertTrue(mock_check_required_args.called)
 
     def _build_config(self):
-        with patch.object(self.cert_obj, '_build_instance',
+        with unittest.mock.patch.object(self.cert_obj, '_build_instance',
                           return_value={}) as mock_build_instance:
             result = self.cert_obj.build_config()
             self.assertTrue(mock_build_instance.called)
@@ -80,7 +78,7 @@ class TestCertCheck(unittest.TestCase):
                                    'ciphers': 'fake-cipher',
                                    'timeout': 0.0,
                                    'collect_period': 1200})
-        with patch.object(LOG, 'error') as mock_log:
+        with unittest.mock.patch.object(LOG, 'error') as mock_log:
             result = self._build_config()
             self.assertEqual(result['cert_check']['init_config']['ca_certs'],
                              '/tmp/ssl/certs/ca-certificates.crt')
