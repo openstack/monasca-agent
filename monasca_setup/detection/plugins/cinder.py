@@ -27,7 +27,7 @@ class Cinder(monasca_setup.detection.ServicePlugin):
             'process_names': ['cinder-scheduler',
                               'cinder-api'],
             'service_api_url': 'http://localhost:8776/v2',
-            'search_pattern': '.*version=1.*'
+            'search_pattern': '.*version=[1-3].*'
         }
         # process_names: cinder-volume and cinder-backup can
         # migrate legitimately so monitor those selectively
