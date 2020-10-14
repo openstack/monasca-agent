@@ -12,7 +12,7 @@
 # under the License.
 
 from collections import defaultdict
-from six.moves import urllib
+import urllib
 
 
 from monasca_agent.collector.checks import AgentCheck

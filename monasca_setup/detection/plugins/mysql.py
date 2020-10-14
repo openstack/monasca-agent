@@ -11,9 +11,9 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import configparser
 import logging
 import os
-from six.moves import configparser
 
 import monasca_setup.agent_config
 import monasca_setup.detection

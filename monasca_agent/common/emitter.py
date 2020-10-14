@@ -13,11 +13,10 @@
 
 from hashlib import md5
 import json
-from six.moves.urllib.error import HTTPError
-from six.moves.urllib.request import build_opener
-from six.moves.urllib.request import ProxyHandler
-from six.moves.urllib.request import Request
-from six import PY3
+from urllib.error import HTTPError
+from urllib.request import build_opener
+from urllib.request import ProxyHandler
+from urllib.request import Request
 
 
 def post_headers(payload):
@@ -41,8 +40,7 @@ def http_emitter(message, log, url):
         partial_payload.append(measurement)
 
     payload = json.dumps(partial_payload)
-    if PY3:
-        payload = payload.encode('utf-8')
+    payload = payload.encode('utf-8')
     url = "%s/intake" % url
     headers = post_headers(payload)
 

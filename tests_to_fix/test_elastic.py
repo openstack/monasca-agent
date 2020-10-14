@@ -11,14 +11,13 @@
 # under the License.
 
 import unittest
+import urllib
 import logging
 logging.basicConfig()
 import subprocess
 import time
 from nose.plugins.skip import SkipTest
 from tests.common import load_check
-
-from six.moves import urllib
 
 
 PORT = 9200

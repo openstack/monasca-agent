@@ -17,7 +17,6 @@ import logging
 from keystoneauth1 import identity
 from keystoneauth1 import session
 from keystoneclient import discover
-import six
 
 from monasca_agent.common import singleton
 from monasca_agent import version as ma_version
@@ -244,8 +243,7 @@ def get_args(config):
     return clean_args
 
 
-@six.add_metaclass(singleton.Singleton)
-class Keystone(object):
+class Keystone(object, metaclass=singleton.Singleton):
 
     def __init__(self, config):
         self._config = get_args(config)

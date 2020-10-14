@@ -11,8 +11,7 @@
 # under the License.
 
 import unittest
-
-from six import StringIO
+from io import StringIO
 
 from tests.common import get_check
 

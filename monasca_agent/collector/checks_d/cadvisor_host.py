@@ -13,8 +13,8 @@
 
 import requests
 
-from six.moves.urllib.parse import urlparse
-from six.moves.urllib.parse import urlunparse
+from urllib.parse import urlparse
+from urllib.parse import urlunparse
 
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.collector.checks import utils

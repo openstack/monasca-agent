@@ -11,13 +11,13 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import configparser
 import logging
 import os
 import re
 
 from oslo_config import cfg
 from oslo_utils import importutils
-from six.moves import configparser
 
 from monasca_setup import agent_config
 from monasca_setup import detection

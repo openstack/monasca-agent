@@ -22,9 +22,9 @@ import socket
 import sys
 import time
 
+from http import client as http_client
 from httplib2 import Http
 from httplib2 import HttpLib2Error
-from six.moves import http_client
 
 import monasca_agent.collector.checks.services_checks as services_checks
 import monasca_agent.common.config as cfg

@@ -13,7 +13,6 @@
 
 import unittest
 
-import six
 
 import monasca_agent.common.aggregator as aggregator
 import monasca_agent.common.metrics as metrics_pkg
@@ -66,7 +65,7 @@ class TestMetricsAggregator(unittest.TestCase):
                            value_meta=value_meta)
 
     def testValidMetricUnicodeDimensionValue(self):
-        dimensions = {six.unichr(2440): 'B', 'B': 'C', 'D': 'E'}
+        dimensions = {chr(2440): 'B', 'B': 'C', 'D': 'E'}
         value_meta = {"This is a test": "test, test, test"}
         self.submit_metric("Foo",
                            5,
@@ -74,7 +73,7 @@ class TestMetricsAggregator(unittest.TestCase):
                            value_meta=value_meta)
 
     def testValidMetricUnicodeDimensionKey(self):
-        dimensions = {'A': 'B', 'B': six.unichr(920), 'D': 'E'}
+        dimensions = {'A': 'B', 'B': chr(920), 'D': 'E'}
         value_meta = {"This is a test": "test, test, test"}
         self.submit_metric("Foo",
                            5,
@@ -84,7 +83,7 @@ class TestMetricsAggregator(unittest.TestCase):
     def testValidMetricUnicodeMetricName(self):
         dimensions = {'A': 'B', 'B': 'C', 'D': 'E'}
         value_meta = {"This is a test": "test, test, test"}
-        self.submit_metric(six.unichr(6021),
+        self.submit_metric(chr(6021),
                            5,
                            dimensions=dimensions,
                            value_meta=value_meta)

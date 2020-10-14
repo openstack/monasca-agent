@@ -15,8 +15,7 @@
 
 import logging
 import socket
-
-from six.moves import urllib
+import urllib
 
 # project
 import monasca_agent.collector.checks as checks

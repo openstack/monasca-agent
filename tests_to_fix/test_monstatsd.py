@@ -15,7 +15,6 @@ import time
 import unittest
 
 import nose.tools as nt
-from six.moves import range
 
 from monasca_agent.common.aggregator import MetricsAggregator
 

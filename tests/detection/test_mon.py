@@ -17,7 +17,7 @@ import unittest
 
 import logging
 import psutil
-import six
+import configparser
 
 from monasca_setup.detection.plugins import mon
 
@@ -187,8 +187,6 @@ class TestMonPersisterDetectionPlugin(unittest.TestCase):
         )
 
         mod = "builtins.open"
-        if six.PY2:
-            mod = "__builtin__.open"
 
         with mock.patch(
                 mod,
@@ -220,7 +218,7 @@ class TestMonPersisterDetectionPlugin(unittest.TestCase):
             rcf.assert_called_once_with(config_file)
             self.assertTrue(iih.get_bound_port.called_once)
 
-    @mock.patch('six.moves.configparser.RawConfigParser')
+    @mock.patch('configparser.RawConfigParser')
     def test_should_detect_python_persister_has_config(self, _):
         # NOTE(trebskit) this cannot use mocking the read of the file
         # because when either RawConfigParser or mock_open messes up with
@@ -261,8 +259,6 @@ class TestMonPersisterDetectionPlugin(unittest.TestCase):
         )
 
         mod = "builtins.open"
-        if six.PY2:
-            mod = "__builtin__.open"
 
         with mock.patch(
                 mod,
@@ -501,8 +497,6 @@ class TestMonAPIDetectionPlugin(unittest.TestCase):
         )
 
         mod = "builtins.open"
-        if six.PY2:
-            mod = "__builtin__.open"
 
         with mock.patch(
                 mod,
@@ -513,7 +507,7 @@ class TestMonAPIDetectionPlugin(unittest.TestCase):
 
         self.assertTrue(self._mon_api.available)
 
-    @mock.patch('six.moves.configparser.RawConfigParser')
+    @mock.patch('configparser.RawConfigParser')
     def test_should_detect_python_api_has_config(self, rcp):
         expected_port = 6666
         actual_port = 6666
@@ -535,7 +529,7 @@ class TestMonAPIDetectionPlugin(unittest.TestCase):
         self._detect(retval=[fake_processes])
         self.assertTrue(self._mon_api.available)
 
-    @mock.patch('six.moves.configparser.RawConfigParser')
+    @mock.patch('configparser.RawConfigParser')
     def test_should_not_detect_if_port_dont_match(self, rcp):
         expected_port = 6666
         actual_port = 8070
@@ -569,7 +563,7 @@ class TestMonAPIDetectionPlugin(unittest.TestCase):
     def test_build_java_config_with_hibernate(self):
         self._run_java_build_config(hibernate_enabled=True)
 
-    @mock.patch('six.moves.configparser.RawConfigParser')
+    @mock.patch('configparser.RawConfigParser')
     def test_build_python_config(self, rcp):
         expected_port = 8070
 
@@ -620,8 +614,6 @@ class TestMonAPIDetectionPlugin(unittest.TestCase):
         )
 
         mod = "builtins.open"
-        if six.PY2:
-            mod = "__builtin__.open"
 
         with mock.patch(
                 mod,

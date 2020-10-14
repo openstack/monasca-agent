@@ -34,7 +34,6 @@ import logging
 import logging.handlers
 from numbers import Number
 from oslo_utils import encodeutils
-from six import integer_types
 
 log = logging.getLogger(__name__)
 
@@ -45,7 +44,7 @@ VALID_HOSTNAME_RFC_1123_PATTERN = re.compile(
 MAX_HOSTNAME_LEN = 255
 LOGGING_MAX_BYTES = 5 * 1024 * 1024
 
-NumericTypes = (float,) + integer_types
+NumericTypes = (float,) + (int,)
 
 import monasca_agent.common.config as configuration
 from monasca_agent.common.exceptions import PathNotFound

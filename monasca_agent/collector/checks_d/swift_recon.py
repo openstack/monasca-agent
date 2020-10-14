@@ -1,8 +1,7 @@
 import json
 import os
-import six
-from six.moves import urllib
 import socket
+import urllib
 
 import monasca_agent.collector.checks as checks
 
@@ -32,7 +31,7 @@ class SwiftRecon(checks.AgentCheck):
         url = base_url + recon_type
         try:
             body = urllib.request.urlopen(url, timeout=timeout).read()
-            if six.PY3 and isinstance(body, six.binary_type):
+            if isinstance(body, bytes):
                 body = body.decode('utf8')
             content = json.loads(body)
             self.log.debug("-> %s: %s" % (url, content))
@@ -180,7 +179,7 @@ class SwiftRecon(checks.AgentCheck):
                 continue
             dimensions['device'] = drive['device']
             for stat in ('mounted', 'size', 'used', 'avail'):
-                if isinstance(drive[stat], six.string_types) and \
+                if isinstance(drive[stat], str) and \
                         not drive[stat].isdigit():
                     continue
                 self.gauge('swift_recon.disk_usage.{0}'.format(stat),

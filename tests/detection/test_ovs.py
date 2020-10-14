@@ -11,6 +11,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import configparser
 import logging
 import os
 import psutil
@@ -19,7 +20,6 @@ from unittest import mock
 from unittest import TestCase
 
 from oslo_config import cfg
-from six.moves import configparser
 
 from monasca_setup.detection import utils
 from monasca_setup.detection.plugins.ovs import Ovs

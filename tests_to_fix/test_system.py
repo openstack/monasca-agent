@@ -10,13 +10,11 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from functools import reduce
 import logging
 import platform
 import re
 import unittest
 
-from six.moves import reduce
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__file__)

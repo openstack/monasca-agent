@@ -19,7 +19,6 @@ import binascii
 import re
 import shutil
 from nose.plugins.skip import SkipTest
-from six.moves import range
 
 class TestPostfix(unittest.TestCase):
     #

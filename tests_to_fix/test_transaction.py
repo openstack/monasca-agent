@@ -13,8 +13,6 @@
 import unittest
 from datetime import timedelta, datetime
 
-from six.moves import range
-
 from monasca_agent.forwarder.transaction import Transaction, TransactionManager
 from monasca_agent.forwarder.daemon import MAX_QUEUE_SIZE, THROTTLING_DELAY
 

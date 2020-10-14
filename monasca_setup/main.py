@@ -26,7 +26,6 @@ import socket
 import subprocess
 import sys
 
-import six
 
 from monasca_setup import agent_config
 from monasca_setup.service.detection import detect_init
@@ -288,7 +287,7 @@ def parse_arguments(parser):
     parser.add_argument(
         '--monasca_url',
         help="Monasca API url, if not defined the url is pulled from keystone",
-        type=six.text_type,
+        type=str,
         default='')
     parser.add_argument(
         '--service_type',

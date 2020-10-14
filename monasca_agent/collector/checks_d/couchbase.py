@@ -14,8 +14,8 @@
 import json
 import re
 import sys
+import urllib
 
-from six.moves import urllib
 
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.collector.checks.utils import add_basic_auth
