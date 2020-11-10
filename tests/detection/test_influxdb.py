@@ -180,7 +180,7 @@ class TestInfluxDBDetection(base.BaseTestCase):
             }
             built_config = self._ir.build_config()
 
-            self.assertItemsEqual(monitored_items, built_config.keys())
+            self.assertCountEqual(monitored_items, built_config.keys())
             for key in built_config.keys():
                 if key == 'process':
                     self._verify_process_conf(built_config[key])
