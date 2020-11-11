@@ -54,6 +54,11 @@ init_config:
     # Interval between vnic metric collections in seconds. If this is less than
     # the agent collection period, it will be ignored.
     vnic_collection_period: 0
+    # Libvirt domain type. ('kvm', 'lxc', 'qemu', 'uml', 'xen')
+    libvirt_type: kvm
+    # Override the default libvirt URI (which is dependent on libvirt_type).
+    # eg. 'qemu+tcp://hostname/system'
+    libvirt_uri: qemu:///system
 instances:
     # Instances are automatically detected through queries to the Nova API,
     # and therefore do not need to be listed here, so this remains empty.
