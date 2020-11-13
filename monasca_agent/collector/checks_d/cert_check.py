@@ -15,7 +15,7 @@ from datetime import datetime
 import socket
 import ssl
 
-from six.moves.urllib.parse import urlparse
+from urllib.parse import urlparse
 
 from monasca_agent.collector.checks import AgentCheck
 

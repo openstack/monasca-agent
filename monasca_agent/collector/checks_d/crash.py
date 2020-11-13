@@ -16,7 +16,6 @@ import os
 import re
 
 from datetime import datetime
-from six import text_type
 
 import monasca_agent.collector.checks as checks
 
@@ -78,7 +77,7 @@ class Crash(checks.AgentCheck):
 
                     # Return the date-/timestamp of the most recent crash
                     if dump_count == 1:
-                        value_meta = {'latest': text_type(dt)}
+                        value_meta = {'latest': str(dt)}
 
         log.debug('dump_count: %s', dump_count)
         self.gauge('crash.dump_count', dump_count, dimensions=dimensions,

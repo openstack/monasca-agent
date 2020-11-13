@@ -18,8 +18,7 @@ import itertools
 import re
 import socket
 import time
-
-from six.moves import xmlrpc_client
+from xmlrpc import client as xmlrpc_client
 
 # 3p
 import supervisor.xmlrpc

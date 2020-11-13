@@ -18,7 +18,6 @@ from unittest import mock
 import unittest
 import psutil
 import json
-import six
 
 from monasca_setup.detection.plugins import kibana
 
@@ -91,7 +90,7 @@ class KibanaDetectionTest(unittest.TestCase):
         for instance in kibana_check['instances']:
             self.assertIn('metrics', instance)
             self.assertEqual(list, type(instance['metrics']))
-            six.assertCountEqual(self, _KIBANA_METRICS, instance['metrics'])
+            self.assertCountEqual(_KIBANA_METRICS, instance['metrics'])
 
     def _verify_process_conf(self, process_check, kibana_user):
         # minimize check here, do not check how process should work
@@ -249,6 +248,6 @@ class KibanaDetectionTest(unittest.TestCase):
             conf = self.kibana_plugin.build_config()
             self.assertIsNotNone(conf)
 
-            six.assertCountEqual(self, ['kibana', 'process'], conf.keys())
+            self.assertCountEqual(['kibana', 'process'], conf.keys())
             self._verify_kibana_conf(conf['kibana'], kibana_url)
             self._verify_process_conf(conf['process'], kibana_user)

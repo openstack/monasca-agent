@@ -10,13 +10,13 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import functools
 import json
 import logging
 import time
 
 import requests
 from requests.packages.urllib3 import exceptions
-import six
 import warnings
 
 import monasca_agent.collector.checks as checks
@@ -186,7 +186,7 @@ class SolidFire(checks.AgentCheck):
 def retry(exc_tuple, tries=5, delay=1, backoff=2):
     # Retry decorator used for issuing API requests.
     def retry_dec(f):
-        @six.wraps(f)
+        @functools.wraps(f)
         def func_retry(*args, **kwargs):
             _tries, _delay = tries, delay
             while _tries > 1:

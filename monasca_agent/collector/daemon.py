@@ -14,11 +14,11 @@
 
 # Core modules
 import glob
+import io
 import logging
 import os
 import pstats
 import signal
-import six
 import sys
 import time
 
@@ -137,7 +137,7 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
             if config.get('profile', False) and profiled:
                 try:
                     profiler.disable()
-                    s = six.StringIO()
+                    s = io.StringIO()
                     ps = pstats.Stats(profiler, stream=s).sort_stats("cumulative")
                     ps.print_stats()
                     log.debug(s.getvalue())

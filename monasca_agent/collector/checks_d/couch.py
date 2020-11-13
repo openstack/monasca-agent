@@ -12,8 +12,7 @@
 # under the License.
 
 import json
-
-from six.moves import urllib
+import urllib
 
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.common.util import headers

@@ -12,8 +12,7 @@
 # under the License.
 
 import logging
-
-from six.moves import urllib
+import urllib
 
 from monasca_setup import agent_config
 from monasca_setup.detection.plugin import Plugin

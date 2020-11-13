@@ -13,8 +13,7 @@
 
 from collections import defaultdict
 import re
-
-from six.moves import urllib
+import urllib
 
 from monasca_agent.collector.checks import AgentCheck
 

@@ -14,8 +14,6 @@
 Performance tests for the agent/dogstatsd metrics aggregator.
 """
 
-from six.moves import range
-
 
 from monasca_agent.common.aggregator import MetricsAggregator
 

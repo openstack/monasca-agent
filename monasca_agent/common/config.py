@@ -14,7 +14,6 @@
 
 import logging
 import os
-import six
 import yaml
 
 from monasca_agent.common import exceptions
@@ -30,8 +29,7 @@ log = logging.getLogger(__name__)
 
 # Make this a singleton class so we don't get the config every time
 # the class is created
-@six.add_metaclass(singleton.Singleton)
-class Config(object):
+class Config(object, metaclass=singleton.Singleton):
 
     def __init__(self, configFile=None):
         # importing it here, in order to avoid a circular import
@@ -107,7 +105,7 @@ class Config(object):
     def get_config(self, sections='Main'):
         """Get the config info."""
         section_list = []
-        if isinstance(sections, six.string_types):
+        if isinstance(sections, str):
             section_list.append(sections)
         elif isinstance(sections, list):
             section_list.extend(sections)

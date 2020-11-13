@@ -14,7 +14,6 @@
 import os.path
 from unittest import mock
 
-import six
 import tempfile
 import unittest
 
@@ -129,5 +128,5 @@ class TestConfig(unittest.TestCase):
     def test_verify_common_config_opts(self):
         opts = util.get_parsed_args(prog='test')
         opts_dict = vars(opts[0])
-        six.assertCountEqual(self, ['config_file', 'clean', 'verbose'],
+        self.assertCountEqual(['config_file', 'clean', 'verbose'],
                              opts_dict.keys())

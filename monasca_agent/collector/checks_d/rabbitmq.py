@@ -13,8 +13,7 @@
 
 import json
 import re
-
-from six.moves import urllib
+import urllib
 
 import monasca_agent.collector.checks as checks
 

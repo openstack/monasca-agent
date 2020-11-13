@@ -11,7 +11,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from six.moves import urllib
+import urllib
 
 from monasca_agent.collector.checks import AgentCheck
 from monasca_agent.collector.checks.utils import add_basic_auth

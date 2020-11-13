@@ -17,8 +17,6 @@ import subprocess
 import sys
 import traceback
 
-from six import text_type
-
 import monasca_agent.collector.checks as checks
 
 GAUGE = "gauge"
@@ -256,7 +254,7 @@ class MySql(checks.AgentCheck):
         return self._collect_type(key, dict, float)
 
     def _collect_string(self, key, dict):
-        return self._collect_type(key, dict, text_type)
+        return self._collect_type(key, dict, str)
 
     def _collect_type(self, key, dict, the_type):
         self.log.debug("Collecting data with %s" % key)

@@ -15,13 +15,13 @@ import subprocess
 import time
 import tempfile
 import os
+import urllib
 import logging
 
 from tests.common import load_check, kill_subprocess
 from nose.plugins.attrib import attr
 from nose.plugins.skip import SkipTest
 
-from six.moves import urllib
 
 
 logging.basicConfig()

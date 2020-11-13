@@ -20,11 +20,11 @@
     uses statsd.
 """
 
+import configparser
 import logging
 import re
 import yaml
 
-from six.moves import configparser
 
 import monasca_setup.agent_config
 import monasca_setup.detection

@@ -20,7 +20,6 @@ import logging
 from lxml import etree
 import os
 from oslo_utils import units
-import six
 
 from monasca_agent.collector.virt import inspector as virt_inspector
 import monasca_agent.common.config as configuration
@@ -104,7 +103,7 @@ class LibvirtInspector(virt_inspector.Inspector):
             return self._get_connection().lookupByUUIDString(instance.UUIDString())
         except Exception as ex:
             if not libvirt or not isinstance(ex, libvirt.libvirtError):
-                raise virt_inspector.InspectorException(six.text_type(ex))
+                raise virt_inspector.InspectorException(str(ex))
             error_code = ex.get_error_code()
             if (error_code == libvirt.VIR_ERR_SYSTEM_ERROR and
                 ex.get_error_domain() in (libvirt.VIR_FROM_REMOTE,

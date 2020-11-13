@@ -39,8 +39,8 @@ import re
 import socket
 import struct
 
+from io import StringIO
 from oslo_utils import encodeutils
-from six import StringIO
 
 from monasca_agent.collector.checks import AgentCheck
 
