@@ -14,7 +14,7 @@
 import argparse
 import glob
 import hashlib
-import imp
+import importlib.util
 import inspect
 import itertools
 import math
@@ -462,6 +462,15 @@ def get_parsed_args(prog=None):
     return options
 
 
+def load_module(name, path):
+    module_spec = importlib.util.spec_from_file_location(
+        name, path
+    )
+    module = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(module)
+    return module
+
+
 def load_check_directory():
     """Return the initialized checks from checks_d, and a mapping of checks that failed to
     initialize. Only checks that have a configuration
@@ -508,7 +517,7 @@ def load_check_directory():
                 'Skipping check %s because it has already been loaded from another location', check)
             continue
         try:
-            check_module = imp.load_source('checksd_%s' % check_name, check)
+            check_module = load_module('checksd_%s' % check_name, check)
         except Exception as e:
             traceback_message = traceback.format_exc()
 

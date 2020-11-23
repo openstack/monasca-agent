@@ -12,7 +12,7 @@
 # under the License.
 
 import glob
-import imp
+import importlib.util
 import inspect
 import logging
 import os
@@ -22,6 +22,15 @@ import yaml
 from monasca_setup.detection import Plugin
 
 log = logging.getLogger(__name__)
+
+
+def load_module(name, path):
+    module_spec = importlib.util.spec_from_file_location(
+        name, path
+    )
+    module = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(module)
+    return module
 
 
 def discover_plugins(custom_path):
@@ -47,7 +56,7 @@ def discover_plugins(custom_path):
         if os.path.basename(plugin_path) == '__init__.py':
             continue
         try:
-            plugin = imp.load_source(
+            plugin = load_module(
                 os.path.splitext(
                     os.path.basename(plugin_path))[0],
                 plugin_path)
