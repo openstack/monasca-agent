@@ -9,10 +9,10 @@
       shell: "docker images --format '{% raw %}{{ .Repository }}:{{ .Tag }}{% endraw %}' | grep monasca"
 
     - name: Push to Docker Hub all agent-collector tags
-      shell: "docker push monasca/agent-collector"
+      shell: "docker push monasca/agent-collector:{{ zuul.tag if zuul.pipeline == 'release' else 'stable-ussuri' }}"
 
     - name: Push to Docker Hub all agent-forwarder tags
-      shell: "docker push monasca/agent-forwarder"
+      shell: "docker push monasca/agent-forwarder:{{ zuul.tag if zuul.pipeline == 'release' else 'stable-ussuri' }}"
 
     - name: Push to Docker Hub all statsd tags
-      shell: "docker push monasca/statsd"
+      shell: "docker push monasca/statsd:{{ zuul.tag if zuul.pipeline == 'release' else 'stable-ussuri' }}"
