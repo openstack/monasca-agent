@@ -301,7 +301,7 @@ class Docker(checks.AgentCheck):
         with open(os.path.join(self.docker_root, "/proc/mounts"), 'r') as f:
             mounts = map(lambda x: x.split(), f.read().splitlines())
 
-        cgroup_mounts = filter(lambda x: x[2] == "cgroup", mounts)
+        cgroup_mounts = list(filter(lambda x: x[2] == "cgroup", mounts))
         if len(cgroup_mounts) == 0:
             raise Exception("Can't find mounted cgroups. If you run the Agent inside a container,"
                             " please refer to the documentation.")
