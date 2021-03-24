@@ -94,12 +94,6 @@ if [ "$MONASCA_MONITORING" = "true" ] || [ "$MONASCA_LOG_MONITORING" = "true" ];
   template $PLUGIN_TEMPLATES/process.yaml.j2 $AGENT_PLUGINS/process.yaml
 fi
 
-# System.
-template $PLUGIN_TEMPLATES/cpu.yaml.j2 $AGENT_PLUGINS/cpu.yaml
-template $PLUGIN_TEMPLATES/disk.yaml.j2 $AGENT_PLUGINS/disk.yaml
-template $PLUGIN_TEMPLATES/load.yaml.j2 $AGENT_PLUGINS/load.yaml
-template $PLUGIN_TEMPLATES/memory.yaml.j2 $AGENT_PLUGINS/memory.yaml
-
 # Apply user templates.
 for f in $USER_PLUGINS/*.yaml.j2; do
   if [ -e "$f" ]; then
