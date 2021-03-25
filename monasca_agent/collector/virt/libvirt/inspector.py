@@ -18,30 +18,46 @@
 import logging
 
 from lxml import etree
-from oslo_config import cfg
+import os
 from oslo_utils import units
 import six
 
 from monasca_agent.collector.virt import inspector as virt_inspector
+import monasca_agent.common.config as configuration
+import monasca_agent.common.util as util
 
 libvirt = None
 
 log = logging.getLogger(__name__)
 
 
-OPTS = [
-    cfg.StrOpt('libvirt_type',
-               default='kvm',
-               choices=['kvm', 'lxc', 'qemu', 'uml', 'xen'],
-               help='Libvirt domain type.'),
-    cfg.StrOpt('libvirt_uri',
-               default='',
-               help='Override the default libvirt URI '
-                    '(which is dependent on libvirt_type).'),
-]
+# Relevant configuration options must be set in 'conf.d/libvirt.yaml'
+# file under 'init_config'.
+# eg.
+# init_config:
+#   libvirt_type: kvm
+#   libvirt_uri: qemu:///system
+#
+# 'libvirt_type' valid choices: ('kvm', 'lxc', 'qemu', 'uml', 'xen')
+# 'libvirt_uri' is dependent on 'libvirt_type'
 
-CONF = cfg.CONF
-CONF.register_opts(OPTS)
+paths = util.Paths()
+conf_path = os.path.join(paths.get_confd_path(), 'libvirt.yaml')
+
+config = configuration.Config()
+
+if os.path.exists(conf_path):
+    try:
+        check_config = config.check_yaml(conf_path)
+    except Exception as e:
+        log.exception('Unable to parse yaml config in {}\n{}'
+                      .format(conf_path, str(e)))
+else:
+    log.debug('No conf.d/libvirt.yaml found for virt/libvirt/inspector.py')
+
+init_config = check_config.get('init_config', {})
+if init_config is None:
+    init_config = {}
 
 
 def retry_on_disconnect(function):
@@ -68,8 +84,9 @@ class LibvirtInspector(virt_inspector.Inspector):
         self.connection = None
 
     def _get_uri(self):
-        return CONF.libvirt_uri or self.per_type_uris.get(CONF.libvirt_type,
-                                                          'qemu:///system')
+        return init_config.get('libvirt_uri') or \
+            self.per_type_uris.get(init_config.get('libvirt_type'),
+                                   'qemu:///system')
 
     def _get_connection(self):
         if not self.connection:
