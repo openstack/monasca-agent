@@ -57,7 +57,7 @@ class VsphereOperations(object):
                                     False)
         while result:
             for vm_object in result.objects:
-                vm_moid = vm_object.obj.value
+                vm_moid = vim_util.get_moref_value(vm_object.obj)
                 # propSet will be set only if the server provides value
                 if hasattr(vm_object, 'propSet') and vm_object.propSet:
                     vm_instance_id = vm_object.propSet[0].val

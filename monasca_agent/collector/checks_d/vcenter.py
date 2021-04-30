@@ -125,7 +125,7 @@ class VCenterCheck(AgentCheck):
             }
         }
         """
-        cluster_moid = str(object_content.obj.value)
+        cluster_moid = str(vim_util.get_moref_value(object_content.obj))
         # extract host and datastore names
         host_names = []
         datastore_names = []
@@ -138,10 +138,11 @@ class VCenterCheck(AgentCheck):
             else:
                 for obj in mor_array:
                     for mor in obj[1]:
+                        mor_value = vim_util.get_moref_value(mor)
                         if dynamic_prop.name == 'datastore':
-                            datastore_names.append(str(mor.value))
+                            datastore_names.append(str(mor_value))
                         elif dynamic_prop.name == 'host':
-                            host_names.append(str(mor.value))
+                            host_names.append(str(mor_value))
         if dict_key:
             self._resource_moid_dict[str(dict_key)] = {
                 'moid': cluster_moid,
@@ -193,7 +194,7 @@ class VCenterCheck(AgentCheck):
         host_set = set(res_dict.get('host'))
         for object_contents in datastore_stats:
             for object_content in object_contents[1]:
-                ds_mor = object_content.obj.value
+                ds_mor = vim_util.get_moref_value(object_content.obj)
                 datastore_host_ids = []
                 if ds_mor in res_dict.get('datastore'):
                     propSets = object_content.propSet
@@ -202,7 +203,9 @@ class VCenterCheck(AgentCheck):
                             ds_hm_array = propSet.val
                             host_mounts = ds_hm_array[0]
                             for host_mount in host_mounts:
-                                datastore_host_ids.append(host_mount.key.value)
+                                host_mount_key_val = vim_util.get_moref_value(
+                                    host_mount.key)
+                                datastore_host_ids.append(host_mount_key_val)
                     if host_set.issubset(set(datastore_host_ids)):
                         shared_datastores_ids.append(ds_mor)
                     self.log.debug("Cluster host list ==" + str(host_set))
@@ -227,7 +230,7 @@ class VCenterCheck(AgentCheck):
         self.log.info("Polling for the datastores: " + str(shared_ds))
         for object_contents in datastore_stats:
             for object_content in object_contents[1]:
-                ds_mor = object_content.obj.value
+                ds_mor = vim_util.get_moref_value(object_content.obj)
                 if ds_mor in shared_ds:
                     propSets = object_content.propSet
                     if self._is_valid_datastore(propSets):
