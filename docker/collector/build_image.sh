@@ -45,7 +45,7 @@ set -eo pipefail  # Exit the script if any statement returns error.
 #   $ ./build_image.sh master master refs/changes/19/595719/3
 
 # Go to folder with Docker files.
-REAL_PATH=$(python -c "import os,sys; print(os.path.realpath('$0'))")
+REAL_PATH=$(python3 -c "import os,sys; print(os.path.realpath('$0'))")
 cd "$(dirname "$REAL_PATH")/../collector/"
 
 [ -z "$DOCKER_IMAGE" ] && \
