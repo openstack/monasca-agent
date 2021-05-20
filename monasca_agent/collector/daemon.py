@@ -149,7 +149,7 @@ class CollectorDaemon(monasca_agent.common.daemon.Daemon):
                 self.run_forever = False
                 exitCode = monasca_agent.common.daemon.AgentSupervisor.RESTART_EXIT_STATUS
                 exitTimeout = 120
-                log.info('Startng an auto restart')
+                log.info('Starting an auto restart')
 
             # Only plan for the next loop if we will continue,
             # otherwise just exit quickly.
