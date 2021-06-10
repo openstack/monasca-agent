@@ -17,6 +17,7 @@ import subprocess
 import sys
 import traceback
 
+from six import PY2
 from six import text_type
 
 import monasca_agent.collector.checks as checks
@@ -372,7 +373,10 @@ class MySql(checks.AgentCheck):
                                            'pid'],
                                           stdout=subprocess.PIPE,
                                           close_fds=True).communicate()[0]
-                    pslines = ps.strip().split('\n')
+                    if PY2:
+                        pslines = ps.strip().split('\n')
+                    else:
+                        pslines = ps.decode('utf-8').strip().split('\n')
                     # First line is header, second line is mysql pid
                     if len(pslines) == 2 and pslines[1] != '':
                         pid = int(pslines[1])
