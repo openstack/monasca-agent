@@ -1,8 +1,8 @@
 # (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
 
 from collections import namedtuple
+from fnmatch import fnmatch
 import os
-from oslo_utils import fnmatch
 import time
 
 from monasca_agent.collector.checks import AgentCheck
