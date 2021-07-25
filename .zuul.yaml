@@ -12,9 +12,6 @@
     post:
       jobs:
         - publish-monasca-agent-docker-images
-    periodic:
-      jobs:
-        - publish-monasca-agent-docker-images
     release:
       jobs:
         - publish-monasca-agent-docker-images
