@@ -57,10 +57,12 @@ def main(argv=None):
         LOG.info("Running in dry run mode, no changes will be made only"
                  " reported")
 
-    # Detect and if possibly enable the agent service
-    agent_service = detect_init(PREFIX_DIR, args.config_dir, args.log_dir,
-                                args.template_dir, username=args.user,
-                                name=args.agent_service_name)
+    # Skip agent service detection if only installing plugins
+    if not args.install_plugins_only:
+        # Detect and if possibly enable the agent service
+        agent_service = detect_init(PREFIX_DIR, args.config_dir, args.log_dir,
+                                    args.template_dir, username=args.user,
+                                    name=args.agent_service_name)
 
     # Skip base setup if only installing plugins or running specific detection
     # plugins
