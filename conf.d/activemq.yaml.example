@@ -66,4 +66,4 @@ init_config:
             MemoryPercentUsage:
               alias: activemq.broker.memory_pct
               metric_type: gauge
-         
+

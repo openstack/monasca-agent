@@ -41,5 +41,5 @@ instances:
         #field_names:
         #    - ifName
         #    - dskDevice
-        #    - ifIndex       
+        #    - ifIndex
         #rrd_whitelist: /path/to/rrd_whitelist.txt
