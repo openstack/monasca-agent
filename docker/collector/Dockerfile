@@ -29,7 +29,7 @@ COPY kubernetes_get_host.py /
 # Stay with only one `RUN` and use `&& \` for next steps to don't create
 # unnecessary image layers. Clean at the end to conserve space.
 RUN \
-   apk add --no-cache util-linux libxml2 py2-psutil libffi-dev openssl-dev
+   apk add --no-cache util-linux libxml2 libffi-dev openssl-dev
 
 # Implement start script in `start.sh` file.
 CMD ["/start.sh"]
