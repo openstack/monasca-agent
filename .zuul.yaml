@@ -3,18 +3,8 @@
       - openstack-python3-yoga-jobs
     check:
       jobs:
-        - build-monasca-docker-image
         - monasca-tempest-python3-influxdb:
             voting: false
-    post:
-      jobs:
-        - publish-monasca-agent-docker-images
-    periodic:
-      jobs:
-        - publish-monasca-agent-docker-images
-    release:
-      jobs:
-        - publish-monasca-agent-docker-images
 
 - job:
     name: publish-monasca-agent-docker-images
