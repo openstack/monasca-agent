@@ -45,7 +45,7 @@ class A10Session(object):
         payload = {"credentials": {"username": self.username, "password": self.passwd}}
         try:
             get_request = requests.post(url=url, headers={"content-type": "application/json"},
-                                        data=json.dumps(payload), verify=False)
+                                        data=json.dumps(payload), verify=False, timeout=5)
         except urllib3.exceptions.SSLError as e:
             self.log.warning("Caught SSL exception {}".format(e))
 
@@ -55,8 +55,12 @@ class A10Session(object):
 
     def log_out(self, auth_sig):
         url = "https://" + self.device + "/axapi/v3/logoff"
-        requests.post(url=url, headers={"Content-type": "application/json",
-                                        "Authorization": "A10 %s" % auth_sig}, verify=False)
+        requests.post(
+            url=url,
+            headers={"Content-type": "application/json", "Authorization": "A10 %s" % auth_sig},
+            verify=False,
+            timeout=5,
+        )
 
 
 class A10MemoryCheck(AgentCheck):
@@ -101,7 +105,8 @@ class A10MemoryCheck(AgentCheck):
                         "Content-type": "application/json",
                         "Authorization": "A10 %s" %
                         self.auth_sig},
-                    verify=False)
+                    verify=False,
+                    timeout=5)
             except urllib3.exceptions.SSLError as e:
                 self.log.warning("Caught SSL exception {}".format(e))
 

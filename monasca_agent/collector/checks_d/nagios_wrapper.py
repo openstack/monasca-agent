@@ -78,7 +78,7 @@ class WrapNagios(ServicesCheck):
             last_run_path +
             'nagios_wrapper_' +
             hashlib.md5(
-                instance['name']).hexdigest() +
+                instance['name'], usedforsecurity=False).hexdigest() +
             '.pck')
 
         # Load last-run data from shared memory file

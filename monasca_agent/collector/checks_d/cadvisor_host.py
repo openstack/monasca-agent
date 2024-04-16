@@ -120,7 +120,7 @@ class CadvisorHost(AgentCheck):
             self.cadvisor_url = "{}/{}".format(cadvisor_url, "api/v2.0/stats?count=1")
         dimensions = self._set_dimensions(None, instance)
         try:
-            host_metrics = requests.get(self.cadvisor_url, self.connection_timeout).json()
+            host_metrics = requests.get(self.cadvisor_url, timeout=self.connection_timeout).json()
         except Exception as e:
             self.log.error("Error communicating with cAdvisor to collect data - {}".format(e))
         else:
@@ -130,7 +130,7 @@ class CadvisorHost(AgentCheck):
                 result = urlparse(self.cadvisor_url)
                 self.cadvisor_machine_url = urlunparse(result._replace(path="api/v2.0/machine"))
                 try:
-                    machine_info = requests.get(self.cadvisor_machine_url).json()
+                    machine_info = requests.get(self.cadvisor_machine_url, timeout=5).json()
                 except Exception as ex:
                     self.log.error(
                         "Error communicating with cAdvisor to collect machine data - {}".format(ex))

@@ -119,7 +119,7 @@ class LaconicFilter(logging.Filter):
 
     @staticmethod
     def hash(msg):
-        return hashlib.md5(msg).hexdigest()
+        return hashlib.md5(msg, usedforsecurity=False).hexdigest()
 
     def filter(self, record):
         try:

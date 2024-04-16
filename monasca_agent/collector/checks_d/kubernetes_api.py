@@ -84,7 +84,7 @@ class KubernetesAPI(checks.AgentCheck):
         if self.kubernetes_connector:
             return self.kubernetes_connector.get_request(endpoint, as_json=as_json)
         else:
-            result = requests.get("{}/{}".format(self.kubernetes_api, endpoint))
+            result = requests.get("{}/{}".format(self.kubernetes_api, endpoint), timeout=5)
             return result.json() if as_json else result
 
     def _get_api_health(self):

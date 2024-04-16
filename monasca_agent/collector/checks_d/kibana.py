@@ -73,7 +73,8 @@ class Kibana(checks.AgentCheck):
     def _get_data(self, url):
         return requests.get(
             url=url,
-            headers=util.headers(self.agent_config)
+            headers=util.headers(self.agent_config),
+            timeout=5
         ).json()
 
     def _process_metrics(self, stats, dimensions, instance_metrics):
@@ -136,4 +137,4 @@ class Kibana(checks.AgentCheck):
                 )
 
     def _get_kibana_version(self, url):
-        return requests.head(url=url).headers['kbn-version']
+        return requests.head(url=url, timeout=5).headers['kbn-version']

@@ -24,7 +24,7 @@ def post_headers(payload):
         'User-Agent': 'Mon/Agent',
         'Content-Type': 'application/json',
         'Accept': 'text/html, */*',
-        'Content-MD5': md5(payload).hexdigest()
+        'Content-MD5': md5(payload, usedforsecurity=False).hexdigest()
     }
 
 
