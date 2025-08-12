@@ -1,8 +1,0 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
-
-init_config:
-    # crash_dir: /var/crash
-
-instances:
-    # Crash check only supports one configured instance
-    - name: crash_stats

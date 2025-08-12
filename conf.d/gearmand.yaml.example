@@ -1,9 +1,0 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
-
-init_config:
-
-instances:
-  - server: localhost
-    port: 4730
-    dimensions:
-        dim1: value11

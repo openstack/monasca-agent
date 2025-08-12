@@ -1,7 +1,0 @@
-# (C) Copyright 2017 Hewlett Packard Enterprise Development LP
-
-init_config:
-  docker_root: "{{ DOCKER_ROOT | default('/host') }}"
-
-instances:
-  - url: "{{ DOCKER_SOCKET | default('unix://var/run/docker.sock') }}"

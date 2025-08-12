@@ -1,7 +1,0 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
-
-init_config:
-
-instances:
-    # Run swift checks once for this definition
-    - name: swift_stats

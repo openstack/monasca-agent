@@ -1,6 +1,0 @@
-# (C) Copyright 2015 Hewlett Packard Enterprise Development Company LP
-
-init_config:
-
-instances:
-#  - url: http://127.0.0.1:8098/stats
